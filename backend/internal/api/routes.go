@@ -12,7 +12,7 @@ import (
 	"cozyroom/internal/library"
 	"cozyroom/internal/mcp"
 	"cozyroom/internal/metrics"
-	sqlite "cozyroom/internal/repository/sqlite"
+	pg "cozyroom/internal/repository/postgres"
 	"cozyroom/internal/usecase"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -180,7 +180,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		comicsGB = 50
 	}
 	dl := newComicsDownloader(
-		&sqlite.ComicsDownloadsRepo{DB: d.ScanDB},
+		&pg.ComicsDownloadsRepo{DB: d.ScanDB},
 		d.ComicsDir,
 		comicsGB,
 		eh,

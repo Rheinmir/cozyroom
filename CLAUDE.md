@@ -68,21 +68,21 @@ These guidelines are working if: fewer unnecessary changes in diffs, fewer rewri
 
 ## Skills
 
-Skills are organized in `llmwiki/skills/<category>/`.
+Skills managed globally via `npx skills`. Use `Skill` tool to invoke.
 
-| Skill | Invoke when | File |
-|-------|------------|------|
-| `ingest` | A new file appears in `llmwiki/raw/` | `llmwiki/skills/wiki-loop/ingest.md` |
-| `query` | User asks a question requiring wiki synthesis | `llmwiki/skills/wiki-loop/query.md` |
-| `lint` | After every 10 ingests, or wiki feels stale | `llmwiki/skills/wiki-loop/lint.md` |
-| `propose` | Any new feature or change is requested | `llmwiki/skills/dev-loop/propose.md` |
-| `impact-check` | Before modifying any shared symbol | `llmwiki/skills/dev-loop/impact-check.md` |
-| `safe-change` | Editing code called from more than one place | `llmwiki/skills/dev-loop/safe-change.md` |
-| `verify-before-commit` | Before every commit | `llmwiki/skills/dev-loop/verify-before-commit.md` |
-| `new-project-setup` | Deploy llmwiki vào project mới từ đầu | `llmwiki/skills/dev-loop/new-project-setup.md` |
-| `join-project` | Orient nhanh vào project đã có llmwiki | `llmwiki/skills/dev-loop/join-project.md` |
-| `orca-workflow` | Orchestrating multi-agent tasks | `llmwiki/skills/orchestrate/orca-workflow.md` |
-| `orca-onboard` | Onboarding new agent to Orca | `llmwiki/skills/orchestrate/orca-onboard.md` |
+| Skill | Invoke when |
+|-------|------------|
+| `ingest` | New file in `llmwiki/raw/` |
+| `query` | Question requiring wiki synthesis |
+| `lint` | After every 10 ingests, or wiki feels stale |
+| `propose` | Any new feature or change requested |
+| `impact-check` | Before modifying any shared symbol |
+| `safe-change` | Editing code called from more than one place |
+| `verify-before-commit` | Before every commit |
+| `new-project-setup` | Deploy llmwiki vào project mới từ đầu |
+| `join-project` | Orient nhanh vào project đã có llmwiki |
+| `orca-workflow` | Orchestrating multi-agent tasks |
+| `orca-onboard` | Onboarding new agent to Orca |
 
 ## Invocation rules
 - New file in `llmwiki/raw/` → invoke `ingest` immediately

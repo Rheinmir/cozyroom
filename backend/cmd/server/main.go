@@ -15,7 +15,7 @@ import (
 	"cozyroom/internal/enricher"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
-	repo "cozyroom/internal/repository/sqlite"
+	repo "cozyroom/internal/repository/postgres"
 	"cozyroom/internal/usecase"
 )
 
@@ -28,7 +28,7 @@ func main() {
 	anthropicKey    := envOr("ANTHROPIC_API_KEY", "")
 	deepseekKey     := envOr("DEEPSEEK_API_KEY", "")
 	githubToken     := envOr("GITHUB_TOKEN", "")
-	dbPath          := envOr("DB_PATH", "/data/metadata.db")
+	databaseURL     := envOr("DATABASE_URL", "postgres://cozyroom:cozyroom@localhost:5432/cozyroom?sslmode=disable")
 	musicPath       := envOr("MUSIC_PATH", "/music")
 	coversDir       := envOr("COVERS_DIR", "/data/covers")
 	artistImgDir    := envOr("ARTIST_IMG_DIR", "/data/artist-images")
@@ -45,7 +45,7 @@ func main() {
 	tmdbAPIKey      := envOr("TMDB_API_KEY", "")
 	cloakProxyURL   := envOr("CLOAK_PROXY_URL", "")
 
-	database, err := db.Open(dbPath)
+	database, err := db.Open(databaseURL)
 	if err != nil {
 		log.Fatalf("open db: %v", err)
 	}

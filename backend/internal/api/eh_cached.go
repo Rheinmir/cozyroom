@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"cozyroom/internal/repository/sqlite"
+	"cozyroom/internal/repository/postgres"
 )
 
 type EHCachedHandler struct {
 	pool      *HeadlessEHPool
-	cache     *sqlite.ComicsCacheRepo
+	cache     *postgres.ComicsCacheRepo
 	apiMu     sync.Mutex
 	apiRate   time.Time
 	cloakURL  string
@@ -29,7 +29,7 @@ type EHCachedHandler struct {
 func NewEHCachedHandler(db *sql.DB, cloakURL string) *EHCachedHandler {
 	return &EHCachedHandler{
 		pool:      NewHeadlessEHPool(),
-		cache:     &sqlite.ComicsCacheRepo{DB: db},
+		cache:     &postgres.ComicsCacheRepo{DB: db},
 		cloakURL:  cloakURL,
 		ehLatestC: newLatestCache(30 * time.Minute),
 	}

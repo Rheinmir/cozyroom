@@ -13,14 +13,14 @@ import (
 	"strings"
 	"time"
 
-	sqlite "cozyroom/internal/repository/sqlite"
+	pg "cozyroom/internal/repository/postgres"
 )
 
 // ComicsDownloader discovers EH/MD covers every 6h, and downloads galleries/chapters
 // on user request. Each download is routed through the cloak proxy (EH) or the
 // MangaDex at-home CDN (MD).
 type ComicsDownloader struct {
-	db        *sqlite.ComicsDownloadsRepo
+	db        *pg.ComicsDownloadsRepo
 	comicsDir string
 	maxBytes  int64
 	eh        *EHCachedHandler
@@ -30,7 +30,7 @@ type ComicsDownloader struct {
 }
 
 func newComicsDownloader(
-	db *sqlite.ComicsDownloadsRepo,
+	db *pg.ComicsDownloadsRepo,
 	comicsDir string,
 	maxGB int64,
 	eh *EHCachedHandler,
@@ -101,7 +101,7 @@ func (d *ComicsDownloader) discoverEH() {
 		if raw, err := url.QueryUnescape(strings.TrimPrefix(cover, "/api/scraper/eh/image?url=")); err == nil && strings.HasPrefix(raw, "http") {
 			cover = raw
 		}
-		d.db.InsertCover(sqlite.ComicsDownload{
+		d.db.InsertCover(pg.ComicsDownload{
 			ID:     id,
 			Source: "eh",
 			Title:  r.Name,
@@ -149,7 +149,7 @@ func (d *ComicsDownloader) discoverMD() {
 				break
 			}
 		}
-		d.db.InsertCover(sqlite.ComicsDownload{
+		d.db.InsertCover(pg.ComicsDownload{
 			ID:     id,
 			Source: "md",
 			Title:  title,
@@ -235,7 +235,7 @@ func (d *ComicsDownloader) processQueue(ctx context.Context) {
 
 // ── EH download ──────────────────────────────────────────────────────────────
 
-func (d *ComicsDownloader) downloadEH(ctx context.Context, item sqlite.ComicsDownload) error {
+func (d *ComicsDownloader) downloadEH(ctx context.Context, item pg.ComicsDownload) error {
 	gid := strings.TrimPrefix(item.ID, "eh_")
 
 	pages, err := d.eh.fetchPagesViaAPI(gid, item.Token)
@@ -303,7 +303,7 @@ func (d *ComicsDownloader) downloadEH(ctx context.Context, item sqlite.ComicsDow
 
 // ── MD download (all chapters) ───────────────────────────────────────────────
 
-func (d *ComicsDownloader) downloadMD(ctx context.Context, item sqlite.ComicsDownload) error {
+func (d *ComicsDownloader) downloadMD(ctx context.Context, item pg.ComicsDownload) error {
 	mangaID := strings.TrimPrefix(item.ID, "md_")
 
 	// Fetch full chapter list (paginate)
@@ -490,7 +490,7 @@ func (d *ComicsDownloader) listDownloads(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if items == nil {
-		items = []sqlite.ComicsDownload{}
+		items = []pg.ComicsDownload{}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
@@ -552,7 +552,7 @@ func (d *ComicsDownloader) enqueueEH(w http.ResponseWriter, r *http.Request) {
 		cover = existing.Cover
 	}
 
-	if err := d.db.Enqueue(sqlite.ComicsDownload{
+	if err := d.db.Enqueue(pg.ComicsDownload{
 		ID:     id,
 		Source: "eh",
 		Title:  title,
@@ -594,7 +594,7 @@ func (d *ComicsDownloader) enqueueMD(w http.ResponseWriter, r *http.Request) {
 		cover = existing.Cover
 	}
 
-	if err := d.db.Enqueue(sqlite.ComicsDownload{
+	if err := d.db.Enqueue(pg.ComicsDownload{
 		ID:     id,
 		Source: "md",
 		Title:  title,

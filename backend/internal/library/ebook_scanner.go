@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"cozyroom/internal/domain"
-	repo "cozyroom/internal/repository/sqlite"
+	repo "cozyroom/internal/repository/postgres"
 )
 
 func id8Ebook(s string) string {
