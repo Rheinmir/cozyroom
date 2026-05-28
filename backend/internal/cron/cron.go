@@ -75,7 +75,7 @@ func (m *CronManager) LoadAndScheduleAll() error {
 			log.Printf("[Cron] Task %s executed successfully. AI Response: %q", task.ID, resText)
 
 			// Update last run at
-			nowStr := time.Now().Format("2006-05-02 15:04:05")
+			nowStr := time.Now().Format("2006-01-02 15:04:05")
 			_, err = m.db.Exec(`UPDATE scheduled_tasks SET last_run_at = ? WHERE id = ?`, nowStr, task.ID)
 			if err != nil {
 				log.Printf("[Cron] Error updating last_run_at for task %s: %v", task.ID, err)

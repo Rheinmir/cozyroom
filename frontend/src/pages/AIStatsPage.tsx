@@ -264,9 +264,10 @@ export default function AIStatsPage() {
     })
   })()
 
-  // price rate comparison: $/1M tokens — all models with prices set, sorted by output price desc
+  // price rate comparison: $/1M tokens — only models that have been used, sorted by output price desc
+  const usedModels = new Set(logs.map(l => l.model))
   const modelRateData = Object.entries(modelPrices)
-    .filter(([, p]) => p.i || p.o)
+    .filter(([model, p]) => usedModels.has(model) && (p.i || p.o))
     .map(([model, p]) => ({ model: modelLabel(model), input: p.i || 0, output: p.o || 0 }))
     .sort((a, b) => (b.output + b.input) - (a.output + a.input))
 

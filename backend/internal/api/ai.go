@@ -147,7 +147,7 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 	var toolErrors []string
 	var totalIn, totalOut int
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 12; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
 		if err != nil {
 			errStr := err.Error()
@@ -320,7 +320,7 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 	var toolErrors []string
 	var totalIn, totalOut int
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 12; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
 		if err != nil {
 			if strings.Contains(err.Error(), "429") {
@@ -1203,7 +1203,7 @@ func (h *AIHandlers) ExecutePrompt(sessionID, message string, history []ChatMess
 	var toolErrors []string
 	var totalIn, totalOut int
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 12; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
 		if err != nil {
 			return "", nil, err

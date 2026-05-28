@@ -105,6 +105,7 @@ func main() {
 		Playback:     playbackUC,
 		UoW:          uowFactory,
 		ScanDB:       database,
+		DBPath:       dbPath,
 		MusicPath:    musicPath,
 		FilmsPath:    filmsPath,
 		CoversDir:    coversDir,

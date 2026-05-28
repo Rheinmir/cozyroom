@@ -29,6 +29,7 @@ type handlers struct {
 	settings     *usecase.SettingsUsecase
 	playback     *usecase.PlaybackUsecase
 	scanDB       *sql.DB // only for scanner/enricher (own internal TXs)
+	dbPath       string
 	musicPath    string
 	filmsPath    string
 	coversDir    string

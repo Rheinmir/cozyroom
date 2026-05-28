@@ -66,6 +66,7 @@ type RouterDeps struct {
 	Playback     *usecase.PlaybackUsecase
 	UoW          domain.UnitOfWorkFactory
 	ScanDB       *sql.DB // for scanner/enricher (own internal TXs)
+	DBPath       string
 	MusicPath    string
 	FilmsPath    string
 	CoversDir    string
@@ -99,6 +100,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		settings:     d.Settings,
 		playback:     d.Playback,
 		scanDB:       d.ScanDB,
+		dbPath:       d.DBPath,
 		musicPath:    d.MusicPath,
 		filmsPath:    d.FilmsPath,
 		coversDir:    d.CoversDir,
