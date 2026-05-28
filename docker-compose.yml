@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./data:/data
+      - /mnt/c/Users/olive/orca/workspaces/home-spotify/m/data:/data
       - /mnt/f/250930music:/music
       - /mnt/f/Films:/films
       - /mnt/f/Ebooks:/ebooks
@@ -22,10 +22,10 @@ services:
       LASTFM_API_KEY: ""
       LASTFM_API_SECRET: ""
       CLOAK_PROXY_URL: "http://cloak-proxy:8765"
-      GEMINI_API_KEY: ""
-      OPENROUTER_API_KEY: ""
-      DEEPSEEK_API_KEY: ""
-      GITHUB_TOKEN: ""
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
     depends_on:
       - cloak-proxy
     restart: unless-stopped
