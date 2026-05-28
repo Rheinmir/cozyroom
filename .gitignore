@@ -1,7 +1,9 @@
 # credentials
+.env
 .env.cognee
 .env*.local
 deepseek-api-key.md
+*.key
 
 # build artifacts
 backend/dist/

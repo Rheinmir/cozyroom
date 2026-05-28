@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"cozyroom/internal/domain"
-	repo "cozyroom/internal/repository/sqlite"
+	repo "cozyroom/internal/repository/postgres"
 )
 
 // ensure id8 can be shared or redefine locally
