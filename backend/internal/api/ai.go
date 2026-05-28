@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -1132,6 +1133,8 @@ func btoi(b bool) int {
 
 // selectProvider picks a provider based on model name prefix and available API keys.
 func (h *AIHandlers) selectProvider(model string) (aiProvider, error) {
+	log.Printf("[AI] selectProvider: model=%q deepseekKey=%v openRouterKey=%v geminiKey=%v anthropicKey=%v",
+		model, h.deepseekKey != "", h.openRouterKey != "", h.geminiKey != "", h.anthropicKey != "")
 	if model == "" {
 		switch {
 		case h.deepseekKey != "":
