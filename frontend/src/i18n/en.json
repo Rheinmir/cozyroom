@@ -1,0 +1,157 @@
+{
+  "nav": {
+    "library": "Your Library",
+    "home": "Home",
+    "search": "Search",
+    "artists": "Artists",
+    "films": "Films",
+    "ebooks": "Ebooks",
+    "books": "Books",
+    "comics": "Comics",
+    "trending": "Trending",
+    "ai": "AI Assistant"
+  },
+  "ai": {
+    "greeting": "Hi! I can search music, play tracks, download from YouTube, manage playlists, and check trending repos. What can I do for you?",
+    "placeholder": "Ask me anything… (Enter to send, Shift+Enter for newline)",
+    "send": "Send",
+    "model_placeholder": "model (e.g. claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — empty = auto"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Login",
+    "cancel": "Cancel",
+    "disconnect": "Disconnect",
+    "connect_lastfm": "Connect Last.fm",
+    "network_error": "Network error"
+  },
+  "search": {
+    "placeholder": "Artists, albums, tracks…",
+    "title": "Search",
+    "hint": "Type something to search your library.",
+    "searching": "Searching…",
+    "results_for": "Results for \"{{q}}\"",
+    "no_results": "No results found.",
+    "artists": "Artists",
+    "albums": "Albums",
+    "tracks": "Tracks",
+    "artist": "Artist",
+    "title_col": "Title",
+    "album_col": "Album",
+    "duration_col": "Duration"
+  },
+  "trending": {
+    "title": "Trending on GitHub",
+    "chart_mode": "Chart",
+    "grid_mode": "Grid",
+    "refresh": "↻ Refresh",
+    "refreshing": "Fetching…",
+    "no_data": "No data yet — server is fetching trending repos in the background.",
+    "ai_pending": "AI analysis pending…",
+    "solved": "Solved",
+    "technology": "Technology",
+    "flow": "Flow",
+    "ai_estimated": "ℹ️ AI-estimated",
+    "ai_disclaimer": "Impact labels are AI-generated estimates",
+    "tiers": {
+      "transformative": "Transformative",
+      "significant": "Significant",
+      "incremental": "Incremental",
+      "niche": "Niche"
+    }
+  },
+  "charts": {
+    "stars_vs_impact": "Stars vs Impact",
+    "top_star_gains": "Top Star Gains",
+    "languages": "Languages",
+    "star_delta_dist": "Star Delta Distribution",
+    "impact_dist": "Impact Score Distribution",
+    "growth_lines": "Star Growth (top 5)",
+    "net_velocity": "Net Velocity",
+    "topics": "Topics",
+    "impact_lang": "Impact × Language",
+    "no_history": "No history data yet",
+    "not_enough_data": "Not enough data",
+    "no_topics": "Not enough topic data",
+    "loading_history": "Loading history…"
+  },
+  "player": {
+    "hint": "Select a track to start playing",
+    "now_playing": "Now Playing",
+    "previous": "Previous",
+    "next": "Next",
+    "pause": "Pause",
+    "play": "Play",
+    "smart_radio_hint": "Click for Smart Radio",
+    "smart_radio_active": "Smart Radio active — click for shuffle",
+    "shuffle_active": "Shuffle active — click to turn off",
+    "smart_on": "Smart Radio on",
+    "smart_off": "Turn on Smart Radio",
+    "show_translation": "Show translation",
+    "hide_translation": "Hide translation"
+  },
+  "lyrics": {
+    "finding": "Finding lyrics…",
+    "not_found": "No lyrics found",
+    "retry": "Search again",
+    "save": "Save",
+    "overwrite": "Overwrite",
+    "save_title": "Save lyrics",
+    "overwrite_title": "Overwrite lyrics",
+    "wrong_password": "Wrong password",
+    "none_selected": "No lyrics selected",
+    "saved": "Saved!",
+    "refetch": "Re-fetch from all sources",
+    "source_monitor": "Source monitor",
+    "plain": "plain",
+    "not_found_source": "not found",
+    "cached": "cached"
+  },
+  "library": {
+    "artists": "Artists",
+    "artist": "Artist",
+    "album": "Album",
+    "tracks_count": "{{n}} tracks",
+    "back": "← Back",
+    "loading": "Loading…"
+  },
+  "playlist": {
+    "remove_star": "Remove star",
+    "add_star": "Star",
+    "add_to_playlist": "Add to playlist",
+    "my_playlists": "Playlists",
+    "no_playlists": "No playlists yet",
+    "create_placeholder": "New playlist name...",
+    "create_btn": "Create",
+    "password_required": "Password Required",
+    "password_desc": "Please enter the owner password to modify permanent data.",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete_confirm": "Are you sure you want to delete this playlist?",
+    "local": "Local Playlist",
+    "permanent": "Permanent Playlist",
+    "play": "Play",
+    "no_tracks": "No tracks in this playlist yet.",
+    "no_playlists_yet": "No playlists yet. Add a track to a playlist to create one!",
+    "badge_local": "Local",
+    "badge_perm": "Perm",
+    "delete": "Delete Playlist"
+  },
+  "youtube": {
+    "title": "YouTube",
+    "stream": "Stream",
+    "download": "Download",
+    "downloading": "Downloading…",
+    "downloaded": "Downloaded ✓",
+    "failed": "Failed",
+    "no_results": "No YouTube results found."
+  },
+  "install": {
+    "description": "Install app for offline & fullscreen",
+    "action": "Install"
+  },
+  "lang": {
+    "switch": "🇻🇳 VI"
+  }
+}

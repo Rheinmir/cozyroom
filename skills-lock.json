@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "skills": {
+    "cavecrew": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/cavecrew/SKILL.md",
+      "computedHash": "c8f8004d2e9cf8b98b4555c43807f646c0faf593a55470164e4a6f3ab28f5811"
+    },
+    "caveman": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/caveman/SKILL.md",
+      "computedHash": "c9bc6c69829953233bb175d1e3951a7bc53ebbf573bddcaadc3299ca8154bbb2"
+    },
+    "caveman-commit": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-commit/SKILL.md",
+      "computedHash": "89fd592e14079fc99a3ccd4dfca5d609bac6a0252e4ec4e3939f1497e53c4cbe"
+    },
+    "caveman-compress": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-compress/SKILL.md",
+      "computedHash": "fbe53643dc5dd42aebc94b80d8d4326daacb0ab43cce8be0cbe51693adc1123a"
+    },
+    "caveman-help": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-help/SKILL.md",
+      "computedHash": "aedc2838f73761c5d7f1417e58bf4ffbb27b91c0b2d6f8e8b86e43a0a791fab1"
+    },
+    "caveman-review": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-review/SKILL.md",
+      "computedHash": "368a26f2b079ffe0d584f48006524f65cf997cb9369411aa8c6ead216dee22eb"
+    },
+    "caveman-stats": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-stats/SKILL.md",
+      "computedHash": "b48007894af51298ecf717ef6d62d7c2aaf4d67185dfcf06a96a3edcbf6b3968"
+    },
+    "docs-site-macos": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/docs-site-macos-skill/SKILL.md",
+      "computedHash": "1dcc3b30b41a9de859a85d9382db646e6fd187cca994630f79ae30d473a052bd"
+    },
+    "extract-site": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/extract-site/SKILL.md",
+      "computedHash": "32e44f922e986d130ce0441cbcae65f586234b08217cee69a6cdde4e27887151"
+    },
+    "impact-check": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/impact-check/SKILL.md",
+      "computedHash": "70f89456c079c4edc2ef30f50b406454c6b3c968886e51f26ab9d993e59fb764"
+    },
+    "ingest": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/ingest/SKILL.md",
+      "computedHash": "e6e7a16bfaace7370808a8ca05d33b51b8b594c0e886f338a8d47ae6eea9aa59"
+    },
+    "join-project": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/join-project/SKILL.md",
+      "computedHash": "1953eb5aca7e9b82d0ec1aaea16b7fcb77d9f26deb70621ca9131865b339cad1"
+    },
+    "lint": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/lint/SKILL.md",
+      "computedHash": "03b0d15fceb5f015301ef8ba4380569351698db77b6f7970a3165d43289b7bd0"
+    },
+    "md-to-html": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/md-to-html/SKILL.md",
+      "computedHash": "c9be71e6f9669fd27a00a14f1f603a4e18cfced9cd4becd88a762697d1213cef"
+    },
+    "new-project-setup": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/new-project-setup/SKILL.md",
+      "computedHash": "8bdec77730ef7b494c73250b6ba148c5a651bcfd05662b09e1ddd12c63d35dbb"
+    },
+    "onboard-codebase": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/onboard-codebase/SKILL.md",
+      "computedHash": "81b8d47b6e7be3f99afc1d4b302f2dace19a57e26f4701875c834e6328accb57"
+    },
+    "orca-dispatch-reference": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/orca-dispatch-reference/SKILL.md",
+      "computedHash": "539d6d0fa0e4ddc36eee4ef02846195bdb946e5a0b9406298360723722d90180"
+    },
+    "orca-onboard": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/orca-onboard/SKILL.md",
+      "computedHash": "efa8d5f93adbe0461528fddc69aa1c49d028773401d4850671323b1c4207f94f"
+    },
+    "orca-workflow": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/orca-workflow/SKILL.md",
+      "computedHash": "5388e5f317a882e1e2321bc9fb284d94fa8a9bd01bb11cc967ab2d1e15071127"
+    },
+    "propose": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/propose/SKILL.md",
+      "computedHash": "d5d3085159bce0ba712db86587ae64adfe991462e91b239e0c18739ff8a3c02b"
+    },
+    "query": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/query/SKILL.md",
+      "computedHash": "ecfda785ffcea4018ad8d2e08575a28f1bd5adc4df0a85e3d8868128576bdb31"
+    },
+    "safe-change": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/safe-change/SKILL.md",
+      "computedHash": "e29903c8aad950cb30f7c8458170975aa7f294d0b7be975b13a470a62879de77"
+    },
+    "sync-template": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/sync-template/SKILL.md",
+      "computedHash": "93a24b4829f3a593f25ad59d834edd91879f0c940ca94cc41c55c0c3e4e32508"
+    },
+    "verify-before-commit": {
+      "source": "rheinmir/setup",
+      "ref": "orca",
+      "sourceType": "github",
+      "skillPath": "skills/verify-before-commit/SKILL.md",
+      "computedHash": "27bcb0d3341123863212d0dc744a0de774d72450781aef8a75664cc2612b3979"
+    }
+  }
+}

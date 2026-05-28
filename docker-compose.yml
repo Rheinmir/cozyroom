@@ -1,0 +1,41 @@
+services:
+  cloak-proxy:
+    build:
+      context: ./cloak-proxy
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/data
+      - /mnt/f/250930music:/music
+      - /mnt/f/Films:/films
+      - /mnt/f/Ebooks:/ebooks
+    environment:
+      DB_PATH: /data/metadata.db
+      MUSIC_PATH: /music
+      FILMS_PATH: /films
+      EBOOKS_PATH: /ebooks
+      EBOOK_COVERS_DIR: /data/ebook-covers
+      LASTFM_API_KEY: ""
+      LASTFM_API_SECRET: ""
+      CLOAK_PROXY_URL: "http://cloak-proxy:8765"
+      GEMINI_API_KEY: ""
+      OPENROUTER_API_KEY: ""
+      DEEPSEEK_API_KEY: ""
+      GITHUB_TOKEN: ""
+    depends_on:
+      - cloak-proxy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "18080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

@@ -1,0 +1,28 @@
+# credentials
+.env.cognee
+.env*.local
+deepseek-api-key.md
+
+# build artifacts
+backend/dist/
+frontend/node_modules/
+frontend/dist/
+
+# database & generated assets
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/artist-images/
+data/covers/
+
+# tool dirs
+.agent
+.opencode
+
+# Go
+backend/server
+backend/*.exe
+
+# OS
+.DS_Store
+Thumbs.db

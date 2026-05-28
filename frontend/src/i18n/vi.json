@@ -1,0 +1,157 @@
+{
+  "nav": {
+    "library": "Thư viện",
+    "home": "Trang chủ",
+    "search": "Tìm kiếm",
+    "artists": "Nghệ sĩ",
+    "films": "Phim",
+    "ebooks": "Sách điện tử",
+    "books": "Sách",
+    "comics": "Truyện tranh",
+    "trending": "Xu hướng",
+    "ai": "Trợ lý AI"
+  },
+  "ai": {
+    "greeting": "Xin chào! Tôi có thể tìm nhạc, phát bài, tải từ YouTube, quản lý playlist, và xem repo trending. Bạn cần gì?",
+    "placeholder": "Hỏi tôi bất cứ điều gì… (Enter để gửi, Shift+Enter để xuống dòng)",
+    "send": "Gửi",
+    "model_placeholder": "model (vd: claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — để trống = tự động"
+  },
+  "auth": {
+    "username": "Tên đăng nhập",
+    "password": "Mật khẩu",
+    "login": "Đăng nhập",
+    "cancel": "Huỷ",
+    "disconnect": "Ngắt kết nối",
+    "connect_lastfm": "Kết nối Last.fm",
+    "network_error": "Lỗi mạng"
+  },
+  "search": {
+    "placeholder": "Nghệ sĩ, album, bài hát…",
+    "title": "Tìm kiếm",
+    "hint": "Nhập từ khoá để tìm trong thư viện.",
+    "searching": "Đang tìm…",
+    "results_for": "Kết quả cho \"{{q}}\"",
+    "no_results": "Không tìm thấy kết quả.",
+    "artists": "Nghệ sĩ",
+    "albums": "Album",
+    "tracks": "Bài hát",
+    "artist": "Nghệ sĩ",
+    "title_col": "Tên bài",
+    "album_col": "Album",
+    "duration_col": "Thời lượng"
+  },
+  "trending": {
+    "title": "Xu hướng trên GitHub",
+    "chart_mode": "Biểu đồ",
+    "grid_mode": "Lưới",
+    "refresh": "↻ Làm mới",
+    "refreshing": "Đang tải…",
+    "no_data": "Chưa có dữ liệu — máy chủ đang tải danh sách trending.",
+    "ai_pending": "Đang phân tích AI…",
+    "solved": "Giải quyết",
+    "technology": "Công nghệ",
+    "flow": "Luồng",
+    "ai_estimated": "ℹ️ Ước tính bởi AI",
+    "ai_disclaimer": "Nhãn impact do AI tạo ra, chỉ mang tính tham khảo",
+    "tiers": {
+      "transformative": "Đột phá",
+      "significant": "Đáng kể",
+      "incremental": "Cải tiến",
+      "niche": "Ngách"
+    }
+  },
+  "charts": {
+    "stars_vs_impact": "Sao & Đánh giá",
+    "top_star_gains": "Tăng trưởng sao nhanh nhất",
+    "languages": "Ngôn ngữ",
+    "star_delta_dist": "Phân bổ lượt sao tăng",
+    "impact_dist": "Phân bổ điểm đánh giá",
+    "growth_lines": "Tăng trưởng sao (top 5)",
+    "net_velocity": "Tốc độ tăng thực",
+    "topics": "Chủ đề",
+    "impact_lang": "Đánh giá × Ngôn ngữ",
+    "no_history": "Chưa có dữ liệu lịch sử",
+    "not_enough_data": "Không đủ dữ liệu",
+    "no_topics": "Không đủ dữ liệu chủ đề",
+    "loading_history": "Đang tải lịch sử…"
+  },
+  "player": {
+    "hint": "Chọn bài hát để bắt đầu phát",
+    "now_playing": "Đang phát",
+    "previous": "Trước",
+    "next": "Tiếp",
+    "pause": "Tạm dừng",
+    "play": "Phát",
+    "smart_radio_hint": "Bật Smart Radio",
+    "smart_radio_active": "Smart Radio đang bật — click để shuffle",
+    "shuffle_active": "Shuffle đang bật — click để tắt",
+    "smart_on": "Smart Radio đang bật",
+    "smart_off": "Bật Smart Radio",
+    "show_translation": "Hiện bản dịch",
+    "hide_translation": "Ẩn bản dịch"
+  },
+  "lyrics": {
+    "finding": "Đang tìm lời bài hát…",
+    "not_found": "Không tìm thấy lời bài hát",
+    "retry": "Tìm lại",
+    "save": "Lưu",
+    "overwrite": "Ghi đè",
+    "save_title": "Lưu lời bài hát",
+    "overwrite_title": "Ghi đè lời bài hát",
+    "wrong_password": "Sai mật khẩu",
+    "none_selected": "Chưa chọn lời bài hát",
+    "saved": "Đã lưu!",
+    "refetch": "Tìm lại từ tất cả nguồn",
+    "source_monitor": "Nguồn dữ liệu",
+    "plain": "thuần túy",
+    "not_found_source": "không tìm thấy",
+    "cached": "đã cache"
+  },
+  "library": {
+    "artists": "Nghệ sĩ",
+    "artist": "Nghệ sĩ",
+    "album": "Album",
+    "tracks_count": "{{n}} bài",
+    "back": "← Quay lại",
+    "loading": "Đang tải…"
+  },
+  "playlist": {
+    "remove_star": "Gỡ gắn sao",
+    "add_star": "Gắn sao",
+    "add_to_playlist": "Thêm vào playlist",
+    "my_playlists": "Danh sách phát",
+    "no_playlists": "Chưa có danh sách phát nào",
+    "create_placeholder": "Tên danh sách mới...",
+    "create_btn": "Tạo",
+    "password_required": "Yêu cầu Mật khẩu",
+    "password_desc": "Vui lòng nhập mật khẩu chủ sở hữu để chỉnh sửa dữ liệu vĩnh viễn.",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "delete_confirm": "Bạn có chắc chắn muốn xóa playlist này không?",
+    "local": "Local Playlist",
+    "permanent": "Permanent Playlist",
+    "play": "Phát",
+    "no_tracks": "Chưa có bài hát nào trong playlist này.",
+    "no_playlists_yet": "Chưa có playlist nào. Hãy thêm một bài hát vào playlist để tạo mới!",
+    "badge_local": "Cục bộ",
+    "badge_perm": "Vĩnh viễn",
+    "delete": "Xóa Playlist"
+  },
+  "youtube": {
+    "title": "YouTube",
+    "stream": "Nghe",
+    "download": "Tải về",
+    "downloading": "Đang tải…",
+    "downloaded": "Đã tải ✓",
+    "failed": "Thất bại",
+    "no_results": "Không tìm thấy kết quả YouTube."
+  },
+  "install": {
+    "description": "Cài app để dùng offline & toàn màn hình",
+    "action": "Cài ngay"
+  },
+  "lang": {
+    "switch": "🇬🇧 EN"
+  }
+}

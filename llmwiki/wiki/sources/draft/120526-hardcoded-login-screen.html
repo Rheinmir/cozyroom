@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal: Hardcoded Login Screen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #38bdf8;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-toc {
+            position: sticky;
+            top: 2rem;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 2rem; border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem; }
+        h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+        h3 { font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #7dd3fc; }
+
+        code {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #fb7185;
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .check-box {
+            width: 1.2rem;
+            height: 1.2rem;
+            border: 2px solid var(--accent-color);
+            border-radius: 4px;
+            margin-right: 0.75rem;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            background: #1e293b;
+            color: var(--accent-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid var(--accent-color);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar TOC -->
+        <aside class="hidden lg:block">
+            <div class="sidebar-toc glass p-6 rounded-2xl">
+                <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Mục lục</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="#summary" class="hover:text-sky-400 transition">1. Request Summary</a></li>
+                    <li><a href="#affected" class="hover:text-sky-400 transition">2. Affected Files</a></li>
+                    <li><a href="#side-effects" class="hover:text-sky-400 transition">3. Side Effects</a></li>
+                    <li><a href="#plan" class="hover:text-sky-400 transition">4. Implementation Plan</a></li>
+                    <li><a href="#success" class="hover:text-sky-400 transition">5. Success Criteria</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="lg:col-span-3">
+            <div class="glass p-8 md:p-12 rounded-3xl shadow-2xl">
+                <header class="mb-12">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="badge">PROPOSAL</span>
+                        <span class="text-slate-400 text-sm">Created: 2026-05-12</span>
+                    </div>
+                    <h1>Hardcoded Login Screen</h1>
+                    <p class="text-xl text-slate-300">Nâng cao bảo mật ứng dụng với cơ chế xác thực tập trung và giao diện đăng nhập hiện đại.</p>
+                </header>
+
+                <section id="summary" class="mb-12">
+                    <h2 id="summary">1. Request Summary</h2>
+                    <div class="bg-sky-900/20 border-l-4 border-sky-500 p-6 rounded-r-xl">
+                        Thêm màn hình đăng nhập vào ứng dụng để bảo vệ các tài nguyên API và giao diện người dùng. 
+                        Xác thực dựa trên thông tin tài khoản được cố định (hardcoded):
+                        <ul class="mt-4 space-y-2">
+                            <li><strong class="text-sky-400">Username:</strong> <code>giatbh</code></li>
+                            <li><strong class="text-sky-400">Password:</strong> <code>0797042389gia</code></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="affected" class="mb-12">
+                    <h2 id="affected">2. Affected Files/Modules</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                            <h3>Backend</h3>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><code class="text-xs">backend/internal/api/routes.go</code><br>Đăng ký route login và middleware.</li>
+                                <li><code class="text-xs">backend/internal/api/handler.go</code><br>Thêm handler login.</li>
+                                <li><code class="text-xs">backend/internal/api/auth.go</code><br><span class="text-emerald-400 font-bold">[NEW]</span> Logic JWT & Middleware.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                            <h3>Frontend</h3>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><code class="text-xs">frontend/src/api.ts</code><br>API calls & Auth interceptors.</li>
+                                <li><code class="text-xs">frontend/src/App.tsx</code><br>Routing & Auth guards.</li>
+                                <li><code class="text-xs">frontend/src/pages/LoginPage.tsx</code><br><span class="text-emerald-400 font-bold">[NEW]</span> Premium Login UI.</li>
+                                <li><code class="text-xs">frontend/src/context/AuthContext.tsx</code><br><span class="text-emerald-400 font-bold">[NEW]</span> State management.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="side-effects" class="mb-12">
+                    <h2 id="side-effects">3. Potential Side Effects</h2>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-amber-500/20 p-2 rounded-lg"><svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                            <div>
+                                <h4 class="font-bold text-slate-200">API Access</h4>
+                                <p class="text-slate-400 text-sm">Tất cả các endpoint API sẽ yêu cầu token hợp lệ. Các công cụ bên ngoài nếu có sẽ cần được cập nhật.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-sky-500/20 p-2 rounded-lg"><svg class="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <div>
+                                <h4 class="font-bold text-slate-200">User Experience</h4>
+                                <p class="text-slate-400 text-sm">Người dùng sẽ được chuyển hướng đến trang đăng nhập trong lần đầu truy cập.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="plan" class="mb-12">
+                    <h2 id="plan">4. Implementation Plan</h2>
+                    
+                    <div class="mermaid mb-8">
+                    graph TD
+                        A[Backend Auth Logic] --> B[API Registration]
+                        B --> C[AuthContext & Persistence]
+                        C --> D[Premium Login UI]
+                        D --> E[App Routing & Guard]
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="relative pl-8 border-l-2 border-slate-700">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_10px_rgba(56,189,248,0.5)]"></div>
+                            <h4 class="font-bold text-sky-300">Bước 1: Backend Auth Logic</h4>
+                            <p class="text-sm text-slate-400">Triển khai JWT đơn giản, hardcode credentials, và tạo middleware kiểm tra header <code>Authorization: Bearer</code>.</p>
+                        </div>
+                        <div class="relative pl-8 border-l-2 border-slate-700">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-sky-500"></div>
+                            <h4 class="font-bold text-sky-300">Bước 2: Backend Integration</h4>
+                            <p class="text-sm text-slate-400">Đăng ký endpoint <code>POST /api/login</code> và áp dụng middleware cho các nhóm route cần bảo vệ.</p>
+                        </div>
+                        <div class="relative pl-8 border-l-2 border-slate-700">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-sky-500"></div>
+                            <h4 class="font-bold text-sky-300">Bước 3: Frontend State</h4>
+                            <p class="text-sm text-slate-400">Sử dụng React Context API để quản lý <code>token</code>, tự động lưu và đọc từ <code>localStorage</code>.</p>
+                        </div>
+                        <div class="relative pl-8 border-l-2 border-slate-700">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-sky-500"></div>
+                            <h4 class="font-bold text-sky-300">Bước 4: Frontend UI</h4>
+                            <p class="text-sm text-slate-400">Thiết kế <code>LoginPage.tsx</code> với hiệu ứng glassmorphism, background gradient động và xử lý lỗi trực quan.</p>
+                        </div>
+                        <div class="relative pl-8">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-sky-500"></div>
+                            <h4 class="font-bold text-sky-300">Bước 5: Frontend Routing</h4>
+                            <p class="text-sm text-slate-400">Bọc các component chính bằng <code>AuthGuard</code> và cấu hình axios/fetch để tự động đính kèm token vào request.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="success" class="mb-12">
+                    <h2 id="success">5. Success Criteria</h2>
+                    <div class="bg-emerald-900/20 p-8 rounded-3xl border border-emerald-500/30">
+                        <div class="space-y-4">
+                            <div class="check-item">
+                                <div class="check-box"></div>
+                                <span>Tự động chuyển hướng về <code>/login</code> nếu chưa xác thực.</span>
+                            </div>
+                            <div class="check-item">
+                                <div class="check-box"></div>
+                                <span>Đăng nhập thành công với <code>giatbh</code> / <code>0797042389gia</code>.</span>
+                            </div>
+                            <div class="check-item">
+                                <div class="check-box"></div>
+                                <span>Hiển thị thông báo lỗi khi nhập sai thông tin.</span>
+                            </div>
+                            <div class="check-item">
+                                <div class="check-box"></div>
+                                <span>Duy trì trạng thái đăng nhập sau khi làm mới (refresh) trình duyệt.</span>
+                            </div>
+                            <div class="check-item">
+                                <div class="check-box"></div>
+                                <span>Logout thành công và xóa hoàn toàn session dữ liệu.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <footer class="mt-12 text-center text-slate-500 text-sm">
+                Generated by <span class="text-sky-500 font-semibold">Antigravity AI</span> &bull; 2026-05-12
+            </footer>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+</body>
+</html>

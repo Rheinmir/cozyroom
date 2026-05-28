@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cozyroom - Tài liệu Hermes Agent Core</title>
+  <meta name="description" content="Tài liệu thiết kế, kiến trúc và hướng dẫn sử dụng của Cozyroom Hermes Agent Core - Bộ não AI Go-native tự trị siêu nhẹ.">
+  
+  <!-- Google Fonts - Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Reset & Base System */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background-color: #f2f0f7;
+      color: #0f0f12;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: #6366f1;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    a:hover {
+      color: #4338ca;
+    }
+
+    /* Fixed Top Navigation Bar */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(242, 240, 247, 0.82);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: #0f0f12;
+    }
+
+    .logo-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: #4a4a55;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    /* Hero Section */
+    header.hero {
+      padding: 120px 24px 60px;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .hero-gradient-title {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #6366f1 10%, #a855f7 50%, #ec4899 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      color: #4a4a55;
+      max-width: 600px;
+      margin: 0 auto 28px;
+      font-weight: 400;
+    }
+
+    /* macOS Window Chrome / Mockup Box */
+    .mac-window {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      max-width: 800px;
+      margin: 0 auto 40px;
+    }
+
+    .mac-chrome {
+      height: 36px;
+      background: rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .mac-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mac-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .mac-dot.red { background-color: #ff5f57; }
+    .mac-dot.yellow { background-color: #ffbd2e; }
+    .mac-dot.green { background-color: #28c840; }
+
+    .mac-title {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #7a7a85;
+      padding-right: 51px; /* to compensate for left dots */
+    }
+
+    .mac-body {
+      padding: 24px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #2e2e38;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Sections System */
+    section {
+      padding: 80px 24px 90px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-bg {
+      position: relative;
+    }
+    .section-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      font-size: 15px;
+      color: #4a4a55;
+    }
+
+    /* Glassmorphism Cards Grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 36px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      padding: 24px;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #4a4a55;
+      margin-bottom: 16px;
+    }
+
+    .card ul {
+      list-style: none;
+    }
+
+    .card li {
+      font-size: 13px;
+      color: #4a4a55;
+      margin-bottom: 8px;
+      position: relative;
+      padding-left: 18px;
+    }
+
+    .card li::before {
+      content: '›';
+      position: absolute;
+      left: 4px;
+      top: -2px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* Animated Diagram Box */
+    .diagram-box {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+      padding: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+    }
+
+    svg {
+      width: 100%;
+      max-width: 900px;
+      height: auto;
+    }
+
+    /* Collapse System styling */
+    .collapse-container {
+      margin-top: 36px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .collapse-toggle {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a4a55;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      transition: all 0.2s ease;
+    }
+
+    .collapse-toggle:hover {
+      background: #ffffff;
+      color: #0f0f12;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .collapse-toggle .arrow {
+      font-size: 9px;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .collapse-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+
+    .collapse-body {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+      text-align: left;
+      margin-top: 16px;
+    }
+
+    .collapse-body.open {
+      max-height: 1200px;
+      opacity: 1;
+    }
+
+    .collapse-inner {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.01);
+    }
+
+    /* Section Details Footers */
+    .section-footer {
+      margin-top: 32px;
+      text-align: right;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .section-footer a {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #4a4a55;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
+    }
+    
+    .section-footer a:hover {
+      color: #0f0f12;
+      background: rgba(255,255,255,0.8);
+      border-color: rgba(0,0,0,0.08);
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #1e1e24;
+      color: #e2e2e9;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 24px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    th {
+      background: rgba(0, 0, 0, 0.02);
+      font-weight: 600;
+      color: #2e2e38;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Footer */
+    footer {
+      background: #0f0f12;
+      color: #a8a8b3;
+      padding: 48px 24px;
+      text-align: center;
+      font-size: 13px;
+      margin-top: 100px;
+    }
+    
+    .footer-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: white;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    /* Section Accent Generators */
+    /* Sec 0: Indigo */
+    #sec-0 .tag { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+    #sec-0 .card h4 { color: #6366f1; }
+    #sec-0 .card li::before { color: #6366f1; }
+    #sec-0 .section-header h2 { color: #4338ca; }
+    .s-bg0::before { background: linear-gradient(180deg, rgba(99, 102, 241, 0.04) 0%, transparent 60%); }
+
+    /* Sec 1: Emerald */
+    #sec-1 .tag { background: rgba(5, 150, 105, 0.12); color: #059669; }
+    #sec-1 .card h4 { color: #059669; }
+    #sec-1 .card li::before { color: #059669; }
+    #sec-1 .section-header h2 { color: #047857; }
+    .s-bg1::before { background: linear-gradient(180deg, rgba(5, 150, 105, 0.04) 0%, transparent 60%); }
+
+    /* Sec 2: Amber */
+    #sec-2 .tag { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+    #sec-2 .card h4 { color: #d97706; }
+    #sec-2 .card li::before { color: #d97706; }
+    #sec-2 .section-header h2 { color: #b45309; }
+    .s-bg2::before { background: linear-gradient(180deg, rgba(217, 119, 6, 0.04) 0%, transparent 60%); }
+
+    /* Sec 3: Pink */
+    #sec-3 .tag { background: rgba(219, 39, 119, 0.12); color: #db2777; }
+    #sec-3 .card h4 { color: #db2777; }
+    #sec-3 .card li::before { color: #db2777; }
+    #sec-3 .section-header h2 { color: #be185d; }
+    .s-bg3::before { background: linear-gradient(180deg, rgba(219, 39, 119, 0.04) 0%, transparent 60%); }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-links {
+        display: none; /* simple mobile simplification */
+      }
+      header.hero {
+        padding-top: 90px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav>
+    <div class="logo-container">
+      <div class="logo-badge">H</div>
+      Cozyroom Hermes
+    </div>
+    <div class="nav-links">
+      <a href="#sec-0" class="active">Kiến trúc</a>
+      <a href="#sec-1">Bộ Lập Lịch</a>
+      <a href="#sec-2">Tự Tiến Hóa</a>
+      <a href="#sec-3">Chat Gateways</a>
+    </div>
+  </nav>
+
+  <!-- Hero Banner -->
+  <header class="hero">
+    <h1 class="hero-gradient-title">Hermes Agent Core</h1>
+    <p class="hero-subtitle">Bộ não AI tự trị, siêu nhẹ, Go-native. Không cồng kềnh, không overhead, tích hợp sâu vào hệ sinh thái Cozyroom.</p>
+    
+    <!-- Cozyroom Agent Shell Mockup -->
+    <div class="mac-window">
+      <div class="mac-chrome">
+        <div class="mac-dots">
+          <span class="mac-dot red"></span>
+          <span class="mac-dot yellow"></span>
+          <span class="mac-dot green"></span>
+        </div>
+        <div class="mac-title">hermes-agent-console</div>
+      </div>
+      <div class="mac-body">
+        <span style="color: #8a8a8a;">// Khởi động Cozyroom Server với Hermes Core...</span><br>
+        <span style="color: #28c840;">[OK]</span> SQLite Migration: 'scheduled_tasks' table created successfully.<br>
+        <span style="color: #28c840;">[OK]</span> CronManager: Loaded 3 background tasks from SQLite.<br>
+        <span style="color: #28c840;">[OK]</span> DiscordBot: Secure connection established. Whitelist: UserID 1827xxxx<br>
+        <span style="color: #28c840;">[OK]</span> TelegramBot: Secure connection established. Whitelist: UserID 9821xxxx<br>
+        <span style="color: #6366f1;">[INFO]</span> Hermes Core initialized dynamically under 1.8MB RAM footprint.
+      </div>
+    </div>
+  </header>
+
+  <!-- SECTION 0: KIẾN TRÚC TỔNG QUAN -->
+  <section id="sec-0" class="section-bg s-bg0">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="tag">01 · Overview</span>
+        <h2>Kiến Trúc Go-Native Siêu Nhẹ</h2>
+        <p>Bypass hoàn toàn các framework Python cồng kềnh của Hermes gốc. Tích hợp trực tiếp vào nhân Go của Cozyroom, giúp tiết kiệm bộ nhớ & xử lý bất đồng bộ cực nhanh.</p>
+      </div>
+
+      <!-- ANIMATED DIAGRAM: SYSTEM OVERVIEW -->
+      <div class="diagram-box">
+        <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style>
+              @keyframes flowArrow { 0% { stroke-dashoffset: 20; } 100% { stroke-dashoffset: 0; } }
+              @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+              @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+              .flow { stroke: #6366f1; stroke-dasharray: 6, 4; animation: flowArrow 0.8s linear infinite; }
+              .pulse { animation: pulse 2s ease-in-out infinite; }
+              .float { animation: float 3s ease-in-out infinite; }
+            </style>
+            <marker id="arrowIndigo" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#6366f1"/>
+            </marker>
+          </defs>
+          
+          <!-- Outer Boundary -->
+          <rect x="10" y="10" width="880" height="300" rx="12" fill="rgba(255,255,255,0.4)" stroke="rgba(0,0,0,0.05)" stroke-width="2"/>
+          
+          <!-- Inputs Block -->
+          <g transform="translate(40, 50)" class="float">
+            <rect x="0" y="0" width="160" height="220" rx="8" fill="rgba(99, 102, 241, 0.05)" stroke="rgba(99, 102, 241, 0.2)" stroke-width="1.5"/>
+            <text x="80" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#4338ca">KÊNH ĐẦU VÀO</text>
+            
+            <g transform="translate(15, 45)">
+              <rect x="0" y="0" width="130" height="36" rx="6" fill="#fff" stroke="#e2e2e9"/>
+              <text x="65" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Telegram / Discord</text>
+            </g>
+            <g transform="translate(15, 95)">
+              <rect x="0" y="0" width="130" height="36" rx="6" fill="#fff" stroke="#e2e2e9"/>
+              <text x="65" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Cozyroom Web GUI</text>
+            </g>
+            <g transform="translate(15, 145)">
+              <rect x="0" y="0" width="130" height="36" rx="6" fill="#fff" stroke="#e2e2e9"/>
+              <text x="65" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Cron Scheduler (SQLite)</text>
+            </g>
+          </g>
+          
+          <!-- Core Runtime Block -->
+          <g transform="translate(320, 90)">
+            <rect x="0" y="0" width="240" height="140" rx="10" fill="#fff" stroke="#6366f1" stroke-width="2" class="pulse"/>
+            <rect x="5" y="5" width="230" height="130" rx="8" fill="none" stroke="rgba(99, 102, 241, 0.1)" stroke-width="6"/>
+            <text x="120" y="32" text-anchor="middle" font-size="14" font-weight="700" fill="#4338ca">AIAgentRuntime (Go Core)</text>
+            <text x="120" y="54" text-anchor="middle" font-size="9" fill="#7a7a85">Thread-safe Prompt Handler</text>
+            
+            <g transform="translate(20, 80)">
+              <rect x="0" y="0" width="95" height="36" rx="4" fill="rgba(99, 102, 241, 0.08)" stroke="#6366f1" stroke-width="1"/>
+              <text x="47.5" y="22" text-anchor="middle" font-size="9" font-weight="600" fill="#4338ca">Tool Registry</text>
+            </g>
+            <g transform="translate(125, 80)">
+              <rect x="0" y="0" width="95" height="36" rx="4" fill="rgba(99, 102, 241, 0.08)" stroke="#6366f1" stroke-width="1"/>
+              <text x="47.5" y="22" text-anchor="middle" font-size="9" font-weight="600" fill="#4338ca">LLM Engine</text>
+            </g>
+          </g>
+          
+          <!-- Outputs Block -->
+          <g transform="translate(680, 50)" class="float" style="animation-delay: 1.5s;">
+            <rect x="0" y="0" width="160" height="220" rx="8" fill="rgba(168, 85, 247, 0.05)" stroke="rgba(168, 85, 247, 0.2)" stroke-width="1.5"/>
+            <text x="80" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#7e22ce">HÀNH ĐỘNG HỆ THỐNG</text>
+            
+            <g transform="translate(15, 45)">
+              <rect x="0" y="0" width="130" height="36" rx="6" fill="#fff" stroke="#e2e2e9"/>
+              <text x="65" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Tự Sinh Skill (.md)</text>
+            </g>
+            <g transform="translate(15, 95)">
+              <rect x="0" y="0" width="130" height="36" rx="6" fill="#fff" stroke="#e2e2e9"/>
+              <text x="65" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Thực Thi Media (YT)</text>
+            </g>
+            <g transform="translate(15, 145)">
+              <rect x="0" y="0" width="130" height="36" rx="6" fill="#fff" stroke="#e2e2e9"/>
+              <text x="65" y="22" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Phản Hồi Chat Trực Tiếp</text>
+            </g>
+          </g>
+          
+          <!-- Connective Arrows -->
+          <line x1="200" y1="160" x2="310" y2="160" stroke="#6366f1" stroke-width="2" class="flow" marker-end="url(#arrowIndigo)"/>
+          <line x1="560" y1="160" x2="670" y2="160" stroke="#6366f1" stroke-width="2" class="flow" marker-end="url(#arrowIndigo)"/>
+        </svg>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">🔋</span>
+            Hiệu Năng Vượt Trội
+          </h4>
+          <p>Thiết kế dành cho homelab cấu hình thấp. Thay vì tiêu tốn hàng GB RAM cho các tiến trình Python nền, Go-native Core chạy mượt mà với chỉ vài MB RAM.</p>
+          <ul>
+            <li>Bộ nhớ tĩnh: &lt; 2 MB RAM</li>
+            <li>Khởi động: Tức thì (&lt;10ms)</li>
+            <li>Database: SQLite gọn nhẹ tích hợp sẵn</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">🛡️</span>
+            Luồng An Toàn Đa Luồng
+          </h4>
+          <p>Mọi hành động và lệnh tự động đều được quản lý bởi cấu trúc Handler đồng thì (concurrent-safe), chống race condition khi chạy nhiều task nền.</p>
+          <ul>
+            <li>Dynamic Tool Registry bảo mật cao</li>
+            <li>Context-based timeout hủy task treo tự động</li>
+            <li>Zero dependencies cồng kềnh phía ngoài</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="section-footer">
+        <a href="file:///C:/Users/olive/orca/workspaces/home-spotify/m/llmwiki/wiki/sources/draft/280526-hermes-research-distillation.md">Chi tiết: 280526-hermes-research-distillation.md</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 1: BỘ LẬP LỊCH CHẠY NỀN CRON -->
+  <section id="sec-1" class="section-bg s-bg1">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="tag">02 · Automation</span>
+        <h2>Bộ Lập Lịch Tự Trị SQLite</h2>
+        <p>Bao gồm cơ chế nạp cấu hình động và lập lịch thông qua biểu thức Cron tiêu chuẩn. Tự động đánh thức Agent thực thi các prompt định sẵn không cần người dùng online.</p>
+      </div>
+
+      <!-- ANIMATED DIAGRAM: CRON SCHEDULER -->
+      <div class="diagram-box">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style>
+              @keyframes rotateGear { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+              @keyframes blinkRed { 0%, 100% { fill: #059669; } 50% { fill: #34d399; } }
+              .gear { transform-origin: 450px 140px; animation: rotateGear 10s linear infinite; }
+              .indicator { animation: blinkRed 1s infinite; }
+            </style>
+            <marker id="arrowEmerald" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#059669"/>
+            </marker>
+          </defs>
+          
+          <!-- SQLite DB Node -->
+          <g transform="translate(80, 85)">
+            <rect x="0" y="0" width="160" height="110" rx="8" fill="#fff" stroke="#e2e2e9" stroke-width="1.5"/>
+            <rect x="0" y="0" width="160" height="30" rx="8" fill="rgba(5, 150, 105, 0.08)" stroke="none"/>
+            <text x="80" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#047857">SQLite DB</text>
+            <text x="80" y="55" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Bảng: `scheduled_tasks`</text>
+            <text x="80" y="75" text-anchor="middle" font-size="9" fill="#7a7a85">Lưu cron expr & prompt</text>
+          </g>
+          
+          <!-- Background Cron Runner (Central Gear) -->
+          <g transform="translate(360, 60)">
+            <rect x="0" y="0" width="180" height="160" rx="10" fill="#fff" stroke="#059669" stroke-width="2"/>
+            <circle cx="90" cy="80" r="30" fill="none" stroke="rgba(5, 150, 105, 0.15)" stroke-width="8" stroke-dasharray="12 6" class="gear"/>
+            <circle cx="90" cy="80" r="10" fill="#059669" class="indicator"/>
+            <text x="90" y="135" text-anchor="middle" font-size="12" font-weight="700" fill="#047857">CronManager</text>
+            <text x="90" y="150" text-anchor="middle" font-size="9" fill="#7a7a85">Tick rate: Hàng giây</text>
+          </g>
+          
+          <!-- AIAgentRuntime Execution -->
+          <g transform="translate(660, 85)">
+            <rect x="0" y="0" width="160" height="110" rx="8" fill="#fff" stroke="#e2e2e9" stroke-width="1.5"/>
+            <rect x="0" y="0" width="160" height="30" rx="8" fill="rgba(5, 150, 105, 0.08)" stroke="none"/>
+            <text x="80" y="19" text-anchor="middle" font-size="11" font-weight="700" fill="#047857">ExecutePrompt()</text>
+            <text x="80" y="60" text-anchor="middle" font-size="10" font-weight="600" fill="#2e2e38">Chạy ngầm AI</text>
+            <text x="80" y="80" text-anchor="middle" font-size="9" fill="#7a7a85">Ghi log & Cập nhật LastRun</text>
+          </g>
+          
+          <!-- Connectors -->
+          <line x1="240" y1="140" x2="350" y2="140" stroke="#059669" stroke-width="2" class="flow" stroke-dasharray="5 5" marker-end="url(#arrowEmerald)"/>
+          <line x1="540" y1="140" x2="650" y2="140" stroke="#059669" stroke-width="2" class="flow" stroke-dasharray="5 5" marker-end="url(#arrowEmerald)"/>
+        </svg>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">⏰</span>
+            Dynamic Reloading (Tải lại động)
+          </h4>
+          <p>Mọi thay đổi từ bộ API (thêm/sửa/xóa lịch hẹn) ngay lập tức kích hoạt hàm callback an toàn và tải lại bộ nhớ lập lịch mà không cần reboot phần cứng.</p>
+          <ul>
+            <li>Reload tức thì thông qua callback pointer</li>
+            <li>Tránh import vòng tròn (circular imports)</li>
+            <li>Lấy danh sách dễ dàng bằng tool tích hợp</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">📦</span>
+            SQLite Schema Tiêu Chuẩn
+          </h4>
+          <p>Bảng nhiệm vụ lưu trữ các trường dữ liệu thiết yếu, tương thích hoàn toàn với ORM/Native SQL của Cozyroom backend.</p>
+          <pre><code>CREATE TABLE IF NOT EXISTS scheduled_tasks (
+    id TEXT PRIMARY KEY,
+    cron_expression TEXT NOT NULL,
+    prompt TEXT NOT NULL,
+    created_at DATETIME NOT NULL,
+    last_run_at DATETIME
+);</code></pre>
+        </div>
+      </div>
+      
+      <!-- Interactive Sandbox View More -->
+      <div class="collapse-container">
+        <button class="collapse-toggle" onclick="toggleCollapse('cron-more', 'cron-arrow')">
+          <span class="arrow" id="cron-arrow">▶</span> Xem cấu trúc API chi tiết
+        </button>
+        <div class="collapse-body" id="cron-more">
+          <div class="collapse-inner">
+            <h5 style="margin-bottom:12px; font-weight:700;">Các API & MCP Tool hỗ trợ Bộ lập lịch:</h5>
+            <table style="width:100%;">
+              <thead>
+                <tr>
+                  <th>Tên Tool / API</th>
+                  <th>Chức Năng</th>
+                  <th>Tham Số Truyền</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>schedule_agent_task</code></td>
+                  <td>Đăng ký lịch trình mới vào DB và nạp lại scheduler.</td>
+                  <td><code>cron_expression</code>, <code>prompt</code></td>
+                </tr>
+                <tr>
+                  <td><code>get_scheduled_tasks</code></td>
+                  <td>Lấy toàn bộ danh sách các task đang được lên lịch.</td>
+                  <td><i>Không có</i></td>
+                </tr>
+                <tr>
+                  <td><code>delete_scheduled_task</code></td>
+                  <td>Xóa một task khỏi DB bằng ID và nạp lại scheduler.</td>
+                  <td><code>id</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: TỰ NÂNG CẤP SKILL -->
+  <section id="sec-2" class="section-bg s-bg2">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="tag">03 · Self-Improvement</span>
+        <h2>Công Cụ Tự Nâng Cấp Kỹ Năng</h2>
+        <p>Cung cấp khả năng tự trị cho Agent. Khi Agent nhận thấy một luồng công việc lặp đi lặp lại hoặc được yêu cầu, nó sẽ tự viết mã, đóng gói tài liệu, và đăng ký Skill mới vào thư viện.</p>
+      </div>
+
+      <!-- ANIMATED DIAGRAM: SKILL MANIFESTATION -->
+      <div class="diagram-box">
+        <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style>
+              @keyframes writeLine { 0% { stroke-dashoffset: 40; } 100% { stroke-dashoffset: 0; } }
+              .write { stroke: #d97706; stroke-dasharray: 8, 4; animation: writeLine 1.2s linear infinite; }
+            </style>
+            <marker id="arrowAmber" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#d97706"/>
+            </marker>
+          </defs>
+          
+          <!-- Generator -->
+          <g transform="translate(60, 85)">
+            <rect x="0" y="0" width="160" height="110" rx="8" fill="#fff" stroke="#e2e2e9" stroke-width="1.5"/>
+            <text x="80" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">AI Agent Decision</text>
+            <text x="80" y="60" text-anchor="middle" font-size="9" fill="#7a7a85">"Phát hiện nhu cầu skill"</text>
+            <rect x="30" y="75" width="100" height="22" rx="4" fill="rgba(217, 119, 6, 0.1)" stroke="none"/>
+            <text x="80" y="89" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">Kích hoạt Tool</text>
+          </g>
+          
+          <!-- Dynamic Action Execution -->
+          <g transform="translate(340, 45)">
+            <rect x="0" y="0" width="220" height="190" rx="10" fill="#fff" stroke="#d97706" stroke-width="2"/>
+            <text x="110" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">create_custom_skill</text>
+            
+            <g transform="translate(15, 45)">
+              <rect x="0" y="0" width="190" height="34" rx="4" fill="#f8f9fa" stroke="#e2e2e9"/>
+              <text x="95" y="20" text-anchor="middle" font-size="9" font-weight="600" fill="#2e2e38">1. Ghi file: llmwiki/skills/&lt;cat&gt;/&lt;name&gt;.md</text>
+            </g>
+            <g transform="translate(15, 90)">
+              <rect x="0" y="0" width="190" height="34" rx="4" fill="#f8f9fa" stroke="#e2e2e9"/>
+              <text x="95" y="20" text-anchor="middle" font-size="9" font-weight="600" fill="#2e2e38">2. Thêm file vào .template-manifest.json</text>
+            </g>
+            <g transform="translate(15, 135)">
+              <rect x="0" y="0" width="190" height="34" rx="4" fill="#f8f9fa" stroke="#e2e2e9"/>
+              <text x="95" y="20" text-anchor="middle" font-size="9" font-weight="600" fill="#2e2e38">3. Chèn hàng bảng README.md</text>
+            </g>
+          </g>
+          
+          <!-- Registered Library State -->
+          <g transform="translate(680, 85)">
+            <rect x="0" y="0" width="160" height="110" rx="8" fill="#fff" stroke="#e2e2e9" stroke-width="1.5"/>
+            <text x="80" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">Ecosystem Manifest</text>
+            <text x="80" y="55" text-anchor="middle" font-size="9" fill="#7a7a85">Đã đăng ký hệ thống</text>
+            <rect x="25" y="70" width="110" height="24" rx="4" fill="rgba(217, 119, 6, 0.08)" stroke="#d97706" stroke-width="1"/>
+            <text x="80" y="85" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">Skill Sẵn Sàng Chạy</text>
+          </g>
+          
+          <!-- Connectors -->
+          <line x1="220" y1="140" x2="330" y2="140" stroke="#d97706" stroke-width="2" class="write" marker-end="url(#arrowAmber)"/>
+          <line x1="560" y1="140" x2="670" y2="140" stroke="#d97706" stroke-width="2" class="write" marker-end="url(#arrowAmber)"/>
+        </svg>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">✍️</span>
+            Cập Nhật Bảng Mục Lục Tự Động
+          </h4>
+          <p>Không chỉ ghi file tài liệu, công cụ phân tích cấu trúc của file `llmwiki/skills/README.md` để tìm đúng bảng thuộc nhóm category và chèn thêm hàng dữ liệu chi tiết một cách chính xác.</p>
+          <ul>
+            <li>Tìm kiếm tiêu đề category động</li>
+            <li>Tính toán định dạng Markdown table tự động</li>
+            <li>Tránh ghi đè gây mất mát dữ liệu cũ</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">🔗</span>
+            Liên Kết Manifest Đồng Bộ
+          </h4>
+          <p>Mỗi skill mới tạo đều được cập nhật vào cấu trúc JSON để các agent khác trong hệ thống có thể nhận biết và sử dụng ngay lập tức.</p>
+          <ul>
+            <li>Tệp Manifest: <code>.template-manifest.json</code></li>
+            <li>Khóa lưu trữ: Danh sách các skill của Cozyroom</li>
+            <li>Tính năng: Đồng bộ hóa trạng thái tức thì</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="section-footer">
+        <a href="file:///C:/Users/olive/orca/workspaces/home-spotify/m/llmwiki/skills/README.md">Chi tiết: llmwiki/skills/README.md</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: CHAT GATEWAYS SECURE -->
+  <section id="sec-3" class="section-bg s-bg3">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="tag">04 · Connectivity</span>
+        <h2>Bộ Cổng Kết Nối Chat Bot Bảo Mật</h2>
+        <p>Hỗ trợ truy xuất từ xa cực kỳ an toàn. Điều khiển ngôi nhà hay Cozyroom thông qua Telegram và Discord với danh sách trắng (Whitelist) bảo vệ nghiêm ngặt.</p>
+      </div>
+
+      <!-- ANIMATED DIAGRAM: BOT SECURITY GATE -->
+      <div class="diagram-box">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style>
+              @keyframes blinkGreen { 0%, 100% { fill: #10b981; } 50% { fill: #a7f3d0; } }
+              @keyframes blinkRedShield { 0%, 100% { fill: #ef4444; } 50% { fill: #fca5a5; } }
+              .pass-indicator { animation: blinkGreen 1.5s infinite; }
+              .block-indicator { animation: blinkRedShield 1.5s infinite; }
+            </style>
+            <marker id="arrowPink" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#db2777"/>
+            </marker>
+          </defs>
+          
+          <!-- Remote Users -->
+          <g transform="translate(40, 55)">
+            <rect x="0" y="0" width="160" height="170" rx="8" fill="rgba(219,39,119,0.05)" stroke="rgba(219,39,119,0.2)" stroke-width="1.5"/>
+            <text x="80" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#be185d">USER GỬI LỆNH</text>
+            
+            <g transform="translate(15, 45)">
+              <rect x="0" y="0" width="130" height="34" rx="4" fill="#fff" stroke="#ef4444" stroke-width="1.5"/>
+              <text x="65" y="21" text-anchor="middle" font-size="9" font-weight="700" fill="#ef4444">User Lạ (Không Whitelist)</text>
+            </g>
+            <g transform="translate(15, 100)">
+              <rect x="0" y="0" width="130" height="34" rx="4" fill="#fff" stroke="#10b981" stroke-width="1.5"/>
+              <text x="65" y="21" text-anchor="middle" font-size="9" font-weight="700" fill="#10b981">Chủ Nhà (Có Whitelist)</text>
+            </g>
+          </g>
+          
+          <!-- Whitelist Guard Gate -->
+          <g transform="translate(330, 75)">
+            <rect x="0" y="0" width="220" height="130" rx="10" fill="#fff" stroke="#db2777" stroke-width="2"/>
+            <text x="110" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#be185d">Bộ Lọc Whitelist ID</text>
+            
+            <g transform="translate(20, 60)">
+              <!-- Block shield -->
+              <rect x="0" y="0" width="80" height="40" rx="4" fill="none" stroke="#ef4444" stroke-width="1"/>
+              <text x="40" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#ef4444" class="block-indicator">🔒 Bác Bỏ</text>
+            </g>
+            <g transform="translate(120, 60)">
+              <!-- Pass gate -->
+              <rect x="0" y="0" width="80" height="40" rx="4" fill="none" stroke="#10b981" stroke-width="1"/>
+              <text x="40" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#10b981" class="pass-indicator">⚡ Thông Qua</text>
+            </g>
+          </g>
+          
+          <!-- Executing Runtime -->
+          <g transform="translate(680, 85)">
+            <rect x="0" y="0" width="160" height="110" rx="8" fill="#fff" stroke="#e2e2e9" stroke-width="1.5"/>
+            <text x="80" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#2e2e38">AIAgentRuntime</text>
+            <text x="80" y="60" text-anchor="middle" font-size="9" fill="#7a7a85">Thực thi & Tải nhạc</text>
+            <text x="80" y="80" text-anchor="middle" font-size="9" fill="#7a7a85">Phản hồi lại Chatbot</text>
+          </g>
+          
+          <!-- Connector Arrows -->
+          <path d="M 200,90 C 260,90 260,110 320,110" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
+          <path d="M 200,150 C 260,150 260,160 320,160" stroke="#10b981" stroke-width="2" fill="none"/>
+          <line x1="550" y1="140" x2="670" y2="140" stroke="#db2777" stroke-width="2" class="flow" marker-end="url(#arrowPink)"/>
+        </svg>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">💬</span>
+            Độ Trễ Phản Hồi Thấp (Typing Indicator)
+          </h4>
+          <p>Tự động gửi trạng thái "đang nhập..." (typing status) liên tục trong lúc AI xử lý câu hỏi. Mang lại trải nghiệm mượt mà, phản hồi tự nhiên cho người dùng chat bot.</p>
+          <ul>
+            <li>Telegram: Sử dụng API <code>SendChatAction("typing")</code> liên tục</li>
+            <li>Discord: Sử dụng API <code>ChannelTyping()</code> tương thích</li>
+            <li>Phản hồi streaming nhanh chóng</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>
+            <span style="font-size:18px;">🔑</span>
+            Cấu Hình Biến Môi Trường (.env)
+          </h4>
+          <p>Dễ dàng tắt/bật linh hoạt mà không lỗi khởi động bằng cách điền đầy đủ hoặc bỏ trống các cấu hình dưới đây:</p>
+          <pre><code># Telegram Config
+TELEGRAM_BOT_TOKEN="your-bot-token"
+TELEGRAM_ALLOWED_USER_ID="your-chat-id"
+
+# Discord Config
+DISCORD_BOT_TOKEN="your-discord-token"
+DISCORD_ALLOWED_USER_ID="your-user-id"</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Footer -->
+  <footer>
+    <div class="footer-logo">
+      <div class="logo-badge" style="background: white; color: #0f0f12;">H</div>
+      Cozyroom Hermes Agent
+    </div>
+    <p style="margin-bottom: 8px;">Thiết kế & phát triển với triết lý Go-native tối giản bởi Antigravity.</p>
+    <p style="font-size: 11px; opacity: 0.6;">© 2026 Cozyroom. Bảo lưu mọi quyền.</p>
+  </footer>
+
+  <script>
+    // Smooth navigation links highlight based on scroll position
+    const links = document.querySelectorAll('.nav-links a');
+    const sections = document.querySelectorAll('section');
+
+    const observer = new IntersectionObserver(entries => {
+      let active = '';
+      for (const entry of entries) {
+        if (entry.isIntersecting) active = entry.target.id;
+      }
+      if (active) {
+        links.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + active);
+        });
+      }
+    }, { rootMargin: '-40% 0px -55% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+
+    // Collapse toggle mechanism
+    function toggleCollapse(id, arrowId) {
+      const body = document.getElementById(id);
+      const arrow = document.getElementById(arrowId);
+      
+      body.classList.toggle('open');
+      arrow.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>
