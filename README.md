@@ -4,6 +4,8 @@ Self-hosted personal media streaming — music, video, comics & ebooks from your
 
 **Stack:** Go backend · React/TypeScript frontend · SQLite metadata · Docker/WSL2
 
+> **Status:** Active development. AI agent integration (OpenRouter/DeepSeek/Gemini), MCP tools, trending analytics, YouTube streaming, playlist management, and bilingual i18n.
+
 ---
 
 ## Prerequisites
@@ -21,7 +23,7 @@ Self-hosted personal media streaming — music, video, comics & ebooks from your
 
 ```bash
 cd backend
-go mod tidy          # downloads modernc.org/sqlite, github.com/dhowden/tag
+go mod tidy
 mkdir -p ../data
 go run ./cmd/server
 # → http://localhost:8080/api/health
@@ -38,21 +40,15 @@ npm run dev
 
 ---
 
-## Docker (production-like)
+## Docker
 
 ```bash
-# 1. Build the frontend into backend/dist/
 cd frontend && npm install && npm run build && cd ..
-
-# 2. Start the container
 docker compose up --build
 # → http://localhost:8080
 ```
 
-> Adjust the media paths in `docker-compose.yml` if your library is not at default locations:
-> ```yaml
-> - /mnt/d/Music:/music:ro   # change /mnt/d/Music to your WSL2 path
-> ```
+> Adjust media paths in `docker-compose.yml` if your library is not at default locations.
 
 ---
 
@@ -64,7 +60,20 @@ docker compose up --build
 | GET | `/api/artists` | List all artists |
 | GET | `/api/albums` | List all albums |
 | GET | `/api/tracks` | List all tracks |
-| GET | `/stream/{id}` | Stream audio file (supports Range) |
+| GET | `/api/trending/topics` | Trending topic time-series |
+| GET | `/api/ai/chat` | AI chat (SSE streaming) |
+| GET | `/api/ai/logs` | Chat log history |
+| GET | `/api/ai/stats` | Token usage analytics |
+| GET | `/api/ai/memory` | Agent memory CRUD |
+| GET | `/api/playlists` | Playlist management |
+| GET | `/api/search?q=` | Search tracks/artists/albums |
+| GET | `/stream/{id}` | Stream audio (Range) |
+| GET | `/api/youtube/search?q=` | YouTube search |
+| POST | `/api/youtube/download` | yt-dlp download |
+| GET | `/api/video/stream/{id}` | Video streaming (HLS) |
+| GET | `/api/comics` | Comics library |
+| GET | `/api/ebooks` | Ebook library |
+| POST | `/api/lastfm/scrobble` | Last.fm scrobbling |
 
 ---
 
@@ -73,22 +82,29 @@ docker compose up --build
 ```
 cozyroom/
 ├── backend/
-│   ├── cmd/server/main.go        entry point
+│   ├── cmd/server/main.go
 │   ├── internal/
 │   │   ├── api/                  HTTP handlers + router
-│   │   └── db/                   SQLite open + migrations
-│   ├── dist/                     built frontend (git-ignored)
+│   │   ├── db/                   SQLite + migrations
+│   │   ├── mcp/                  MCP server + tools
+│   │   ├── enricher/             Deezer/GitHub/TMDB/AI trends
+│   │   ├── hls/                  Video transcoding (HLS)
+│   │   ├── library/              Scanner (audio/video/ebook)
+│   │   ├── transcode/            FFmpeg device profiles
+│   │   └── usecase/              Business logic
 │   ├── go.mod
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx               landing page / health indicator
-│   │   ├── main.tsx              React + QueryClient bootstrap
-│   │   └── index.css
+│   │   ├── components/           Sidebar, RadialNav, PlayerBar, LyricsView
+│   │   ├── pages/                AIAssistant, Trending, Albums, Artists, Playlists,...
+│   │   └── i18n/                 EN/VI translations
 │   ├── index.html
-│   ├── vite.config.ts            proxies API, builds into backend/dist
+│   ├── vite.config.ts
 │   └── package.json
-├── data/                         SQLite DB (git-ignored)
+├── cloak-proxy/                  HTTP proxy for AI providers
+├── observability/                Prometheus config
+├── llmwiki/                      Agent-maintained knowledge base
 ├── docker-compose.yml
-└── wiki/                         agent-maintained knowledge base
+└── nginx.conf
 ```
