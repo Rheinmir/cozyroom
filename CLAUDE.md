@@ -1,3 +1,17 @@
+## ⚠️ TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỤNG VÀO DATABASE ⚠️
+
+**PRODUCTION DATABASE: `/mnt/c/Users/olive/orca/workspaces/home-spotify/m/data/metadata.db`**
+
+TRƯỚC KHI `docker compose up --force-recreate` hoặc bất kỳ thao tác nào với container:
+1. PHẢI kiểm tra volume mount path của container đang chạy: `docker inspect <container> | grep -A5 Mounts`
+2. PHẢI đảm bảo path mount KHÔNG THAY ĐỔI so với container cũ
+3. KHÔNG BAO GIỜ đổi `./data` path mà không backup trước
+4. KHÔNG BAO GIỜ recreate container mà không xác nhận DB path với user
+
+Vi phạm rule này = mất dữ liệu người dùng không thể khôi phục.
+
+---
+
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 Tradeoff: These guidelines bias toward caution over speed. For trivial tasks, use judgment.
