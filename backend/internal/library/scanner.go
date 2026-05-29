@@ -121,7 +121,7 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 	albumID := id8(artistID + albumTitle)
 	trackID := id8(path)
 
-	if _, err := tx.Exec(`INSERT OR IGNORE INTO artists(id, name) VALUES(?, ?)`,
+	if _, err := tx.Exec(`INSERT INTO artists(id, name) VALUES($1, $2) ON CONFLICT(id) DO NOTHING`,
 		artistID, artistName); err != nil {
 		return err
 	}
@@ -152,14 +152,14 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 	}
 
 	if _, err := tx.Exec(
-		`INSERT OR IGNORE INTO albums(id, artist_id, title, year, cover_path) VALUES(?, ?, ?, ?, ?)`,
+		`INSERT INTO albums(id, artist_id, title, year, cover_path) VALUES($1, $2, $3, $4, $5) ON CONFLICT(id) DO NOTHING`,
 		albumID, artistID, albumTitle, 0, coverPath,
 	); err != nil {
 		return err
 	}
 
 	_, err = tx.Exec(
-		`INSERT OR REPLACE INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES(?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
 		trackID, albumID, trackTitle, 0, path, "",
 	)
 	if err != nil {
@@ -168,6 +168,12 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 
 	return tx.Commit()
 }
+
+// DownloadYTThumbnail fetches a YouTube thumbnail synchronously to destPath.
+func DownloadYTThumbnail(ytID, destPath string) { downloadYTThumbnail(ytID, destPath) }
+
+// AlbumID returns the album ID that would be assigned to an artist+title pair.
+func AlbumID(artist, title string) string { return id8(id8(artist) + title) }
 
 func downloadYTThumbnail(ytID, destPath string) {
 	urls := []string{
@@ -219,7 +225,7 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 	if isYT || isWav || isMp3Subdir {
 		trackID := id8(path)
 		var exists int
-		tx.QueryRow(`SELECT 1 FROM tracks WHERE id = ?`, trackID).Scan(&exists)
+		tx.QueryRow(`SELECT 1 FROM tracks WHERE id = $1`, trackID).Scan(&exists)
 		if exists == 1 {
 			return nil
 		}
@@ -264,7 +270,7 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 	albumID := id8(artistID + albumTitle)
 	trackID := id8(path)
 
-	if _, err := tx.Exec(`INSERT OR IGNORE INTO artists(id, name) VALUES(?, ?)`,
+	if _, err := tx.Exec(`INSERT INTO artists(id, name) VALUES($1, $2) ON CONFLICT(id) DO NOTHING`,
 		artistID, artistName); err != nil {
 		return err
 	}
@@ -280,14 +286,14 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 	}
 
 	if _, err := tx.Exec(
-		`INSERT OR IGNORE INTO albums(id, artist_id, title, year, cover_path) VALUES(?, ?, ?, ?, ?)`,
+		`INSERT INTO albums(id, artist_id, title, year, cover_path) VALUES($1, $2, $3, $4, $5) ON CONFLICT(id) DO NOTHING`,
 		albumID, artistID, albumTitle, year, coverPath,
 	); err != nil {
 		return err
 	}
 
 	_, err = tx.Exec(
-		`INSERT OR REPLACE INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES(?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
 		trackID, albumID, trackTitle, trackNum, path, genre,
 	)
 	return err
@@ -297,3 +303,6 @@ func id8(s string) string {
 	h := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(s))))
 	return fmt.Sprintf("%x", h[:8])
 }
+
+// TrackIDFromPath returns the track ID that would be assigned to a file at the given path.
+func TrackIDFromPath(path string) string { return id8(path) }

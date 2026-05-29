@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/domain"
 )
 
 type PlaylistHandlers struct {
-	db *sql.DB
+	db *db.RDB
 }
 
 const OwnerPassword = "owner712002"
@@ -81,7 +82,7 @@ func (h *PlaylistHandlers) listPlaylists(w http.ResponseWriter, r *http.Request)
 			`SELECT DISTINCT al.id FROM playlist_tracks pt
 			 JOIN tracks t ON t.id = pt.track_id
 			 JOIN albums al ON al.id = t.album_id
-			 WHERE pt.playlist_id = ? ORDER BY pt.position ASC LIMIT 4`, p.ID)
+			 WHERE pt.playlist_id = ? LIMIT 4`, p.ID)
 		if err == nil {
 			for cRows.Next() {
 				var aid string

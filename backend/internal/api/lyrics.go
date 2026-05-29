@@ -856,7 +856,7 @@ func (h *handlers) translateLyricsHandler(w http.ResponseWriter, r *http.Request
 
 	// Cache in DB
 	h.scanDB.ExecContext(context.Background(),
-		`INSERT OR REPLACE INTO lyrics_translations(track_id,lang,lines_json) VALUES(?,?,?)`,
+		`INSERT INTO lyrics_translations(track_id,lang,lines_json) VALUES(?,?,?) ON CONFLICT(track_id,lang) DO UPDATE SET lines_json=EXCLUDED.lines_json`,
 		id, lang, string(b),
 	)
 

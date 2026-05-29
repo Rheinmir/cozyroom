@@ -82,7 +82,7 @@ func EnrichWithAI(db *sql.DB, geminiKey, openRouterKey string) {
 		SELECT r.id, r.name, r.description, r.language, r.topics
 		FROM trending_repos r
 		JOIN trending_daily d ON r.id = d.repo_id
-		WHERE d.date = ? AND d.problem_solved IS NULL
+		WHERE d.date = $1 AND d.problem_solved IS NULL
 	`, today)
 	if err != nil {
 		log.Printf("aitrends: query: %v", err)
@@ -146,8 +146,8 @@ func EnrichWithAI(db *sql.DB, geminiKey, openRouterKey string) {
 			score = 10
 		}
 		db.Exec(`
-			UPDATE trending_daily SET problem_solved=?, tech_used=?, simple_flow=?, impact_score=?, impact_label=?
-			WHERE repo_id=? AND date=?
+			UPDATE trending_daily SET problem_solved=$1, tech_used=$2, simple_flow=$3, impact_score=$4, impact_label=$5
+			WHERE repo_id=$6 AND date=$7
 		`, analysis[0], analysis[1], analysis[2], score, analysis[4], t.id, today)
 
 		log.Printf("aitrends: ok %s [%s]", t.id, slots[slotIdx].model)

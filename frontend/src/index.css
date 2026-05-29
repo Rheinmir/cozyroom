@@ -133,7 +133,7 @@
 /* AI Media Card */
 .ai-bubble--assistant { position: relative; }
 .ai-media-card { background: rgba(255,255,255,0.06); border-radius: 0 0 12px 12px; overflow: hidden; margin: 6px -14px -10px; }
-.ai-media-card-cover { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+.ai-media-card-cover { width: 100%; height: 160px; object-fit: cover; display: block; }
 .ai-media-card-info { padding: 10px 12px 6px; }
 .ai-media-card-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
 .ai-media-card-row { font-size: 12px; opacity: 0.65; margin-bottom: 2px; }

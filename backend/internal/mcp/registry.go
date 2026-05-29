@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/usecase"
 )
 
@@ -28,10 +28,13 @@ func randomHexID() string {
 // ToolDeps are the dependencies needed to handle MCP tool calls natively.
 type ToolDeps struct {
 	Lib           *usecase.LibraryUsecase
-	DB            *sql.DB
+	DB            *db.RDB
 	ScanFunc      func() (int, error) // triggers library.Scan; nil = no-op
 	CloakProxyURL string
 	ReloadCronFunc func() error // reloads cron tasks
+	// DownloadYTFunc downloads a YouTube video server-side and indexes it.
+	// Returns the indexed track ID on success.
+	DownloadYTFunc func(id, title, artist string) (trackID string, err error)
 }
 
 // NewRegistry returns all MCP tools wired to native backend services.
@@ -528,7 +531,7 @@ func searchYouTubeTool(d ToolDeps) Tool {
 func downloadYouTubeTool(d ToolDeps) Tool {
 	return Tool{
 		Name:        "download_youtube",
-		Description: "Download YouTube audio to library (async, no immediate playback). Use play_youtube_stream to play immediately.",
+		Description: "Download YouTube audio to library and index it. Returns track_id on success — use this id directly with add_to_playlist without calling search_music.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -539,11 +542,27 @@ func downloadYouTubeTool(d ToolDeps) Tool {
 			"required": []string{"id", "title"},
 		},
 		Handler: func(input map[string]any) (any, error) {
+			id := strInput(input, "id")
+			title := strInput(input, "title")
+			artist := strInput(input, "artist")
+			if d.DownloadYTFunc != nil {
+				trackID, err := d.DownloadYTFunc(id, title, artist)
+				if err != nil {
+					return nil, fmt.Errorf("download failed: %w", err)
+				}
+				return map[string]any{
+					"ok":       true,
+					"track_id": trackID,
+					"title":    title,
+					"artist":   artist,
+				}, nil
+			}
+			// fallback: frontend action
 			return map[string]any{
 				"_frontend_action": "download_youtube",
-				"id":               strInput(input, "id"),
-				"title":            strInput(input, "title"),
-				"artist":           strInput(input, "artist"),
+				"id":               id,
+				"title":            title,
+				"artist":           artist,
 			}, nil
 		},
 	}
@@ -846,7 +865,7 @@ func addToPlaylistTool(d ToolDeps) Tool {
 			_ = d.DB.QueryRowContext(context.Background(),
 				`SELECT COALESCE(MAX(position),0)+1 FROM playlist_tracks WHERE playlist_id=?`, pid).Scan(&pos)
 			_, err := d.DB.ExecContext(context.Background(),
-				`INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id, position) VALUES (?,?,?)`,
+				`INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?,?,?) ON CONFLICT DO NOTHING`,
 				pid, tid, pos)
 			if err != nil {
 				return nil, err
@@ -878,7 +897,7 @@ func getTrendingTool(d ToolDeps) Tool {
 			rows, err := d.DB.QueryContext(context.Background(), `
 				SELECT r.id, r.name, r.language, r.topics,
 				       d.stars,
-				       MAX(0, d.stars - COALESCE((
+				       GREATEST(0, d.stars - COALESCE((
 				         SELECT stars FROM trending_star_history WHERE repo_id=r.id ORDER BY sampled_at ASC LIMIT 1
 				       ), d.stars)) AS star_delta,
 				       COALESCE(d.impact_score,0), COALESCE(d.impact_label,'')
@@ -1122,7 +1141,7 @@ func rememberTool(d ToolDeps) Tool {
 				return nil, fmt.Errorf("key and value required")
 			}
 			_, err := d.DB.ExecContext(context.Background(),
-				`INSERT OR REPLACE INTO agent_memory (key, value, updated_at) VALUES (?, ?, datetime('now','+7 hours'))`,
+				`INSERT INTO agent_memory (key, value, updated_at) VALUES (?, ?, (NOW() + INTERVAL '7 hours')::TEXT) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`,
 				key, value)
 			if err != nil {
 				return nil, err

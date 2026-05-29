@@ -1,17 +1,17 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"sync/atomic"
 	"time"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/enricher"
 )
 
 type TrendingHandlers struct {
-	db            *sql.DB
+	db            *db.RDB
 	geminiKey     string
 	openRouterKey string
 	githubToken   string
@@ -51,7 +51,7 @@ func (h *TrendingHandlers) listTrending(w http.ResponseWriter, r *http.Request) 
 		SELECT r.id, r.name, r.url,
 		       r.language, r.topics,
 		       d.stars,
-		       MAX(0, d.stars - COALESCE((
+		       GREATEST(0, d.stars - COALESCE((
 		         SELECT stars FROM trending_star_history
 		         WHERE repo_id = r.id
 		         ORDER BY sampled_at ASC LIMIT 1
@@ -124,10 +124,10 @@ func (h *TrendingHandlers) refresh(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		enricher.SaveTrendingSnapshot(h.db, repos)
-		enricher.BackfillStarHistory(h.db, repos, h.githubToken)
+		enricher.SaveTrendingSnapshot(h.db.DB, repos)
+		enricher.BackfillStarHistory(h.db.DB, repos, h.githubToken)
 		if h.geminiKey != "" || h.openRouterKey != "" {
-			enricher.EnrichWithAI(h.db, h.geminiKey, h.openRouterKey)
+			enricher.EnrichWithAI(h.db.DB, h.geminiKey, h.openRouterKey)
 		}
 	}()
 	w.Header().Set("Content-Type", "application/json")

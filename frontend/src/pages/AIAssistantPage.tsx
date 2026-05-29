@@ -77,7 +77,28 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
 }) {
   const player = usePlayer()
   const [activeMode, setActiveMode] = useState<'smart' | 'shuffle' | null>(null)
-  const coverUrl = action.album_id ? `/api/covers/${action.album_id}` : null
+  const [dlState, setDlState] = useState<'idle' | 'loading' | 'done'>('idle')
+
+  const ytId = action.id?.startsWith('yt:') ? action.id.slice(3) : null
+  const localAlbumId = action.album_id && !action.album_id.startsWith('yt:') ? action.album_id : null
+  const coverUrl = localAlbumId
+    ? `/api/covers/${localAlbumId}`
+    : ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : null
+
+  const handleDownload = async () => {
+    if (!ytId || dlState !== 'idle') return
+    setDlState('loading')
+    try {
+      await fetch('/api/youtube/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: ytId, title: action.title || '', artist: action.artist || '' }),
+      })
+      setDlState('done')
+    } catch {
+      setDlState('idle')
+    }
+  }
 
   const handleSmartMix = () => {
     player.setShuffleMode('smart')
@@ -128,6 +149,28 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
           onClick={handleShuffle} title="Shuffle ngẫu nhiên"
         >🎲 Shuffle</button>
       </div>
+      {(ytId || action.album_id) && (
+        <div className="ai-media-card-modes">
+          {ytId && (
+            <button
+              className={'ai-media-card-mode-btn' + (dlState === 'done' ? ' ai-media-card-mode-btn--active' : '')}
+              onClick={handleDownload}
+              disabled={dlState === 'loading'}
+              title="Tải về thư viện"
+            >
+              {dlState === 'loading' ? '⏳ Đang tải...' : dlState === 'done' ? '✅ Đã lưu' : '📥 Tải về'}
+            </button>
+          )}
+          {localAlbumId && (
+            <Link
+              to={`/album/${localAlbumId}`}
+              className="ai-media-card-mode-btn"
+              style={{ textAlign: 'center', textDecoration: 'none' }}
+              title="Xem album trong thư viện"
+            >💿 Album</Link>
+          )}
+        </div>
+      )}
       {activeMode && nextTrack && (
         <div className="ai-media-card-next">
           <em>Tiếp theo: {nextTrack.title}{nextTrack.artist_name ? ` — ${nextTrack.artist_name}` : ''}</em>

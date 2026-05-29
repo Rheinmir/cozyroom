@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/mcp"
 )
 
@@ -22,7 +23,11 @@ Khi cần context về user trước khi trả lời → dùng recall() trước
 QUAN TRỌNG về playlist:
 - create_playlist trả về playlist_id — KHÔNG phải track id, KHÔNG dùng làm input cho play_track.
 - Để tạo playlist và phát: (1) create_playlist → lấy playlist_id, (2) search_music → lấy track id thật, (3) add_to_playlist với track id thật, (4) play_playlist với playlist_id.
-- play_track chỉ nhận track id từ search_music hoặc list_tracks.`
+- play_track chỉ nhận track id từ search_music hoặc list_tracks.
+QUAN TRỌNG về download YouTube:
+- Sau khi download_youtube xong, bài đã tự động được index vào thư viện — KHÔNG cần gọi scan_library.
+- Dùng search_music ngay để tìm bài vừa tải (tìm theo title hoặc artist).
+- Tối thiểu hóa số tool call: KHÔNG gọi get_stats, list_artists, list_tracks không cần thiết khi chỉ cần download và add playlist.`
 
 // aiSystemPrompt returns base prompt + memories + optional now-playing context.
 func (h *AIHandlers) aiSystemPromptWith(np *nowPlayingInfo) string {
@@ -64,7 +69,7 @@ type AIHandlers struct {
 	openRouterKey string
 	deepseekKey   string
 	tools         []mcp.Tool
-	db            *sql.DB
+	db            *db.RDB
 }
 
 type ChatMessage struct {
@@ -211,7 +216,7 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			b, _ := json.Marshal(result)
-			r := mcp.TruncStr(string(b), 3000)
+			r := mcp.TruncStr(string(b), 1500)
 			toolCache[cacheKey] = r
 			results[j] = r
 		}
@@ -219,7 +224,7 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
 
-		if totalIn > 60_000 {
+		if totalIn > 90_000 {
 			finalText = "Context quá lớn — dừng sớm. Thử yêu cầu cụ thể hơn."
 			break
 		}
@@ -408,14 +413,14 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			b, _ := json.Marshal(result)
-			r := mcp.TruncStr(string(b), 3000)
+			r := mcp.TruncStr(string(b), 1500)
 			toolCache[cacheKey] = r
 			results[j] = r
 		}
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
 
-		if totalIn > 60_000 {
+		if totalIn > 90_000 {
 			send(map[string]any{"status": "⚠️ Context quá lớn, dừng sớm"})
 			finalText = "Context quá lớn — dừng sớm. Thử yêu cầu cụ thể hơn."
 			break
@@ -514,7 +519,7 @@ func (h *AIHandlers) memoryImport(w http.ResponseWriter, r *http.Request) {
 		if strings.TrimSpace(f.Key) == "" {
 			continue
 		}
-		tx.Exec(`INSERT INTO agent_memory (key, value, updated_at) VALUES (?, ?, datetime('now','+7 hours'))`,
+		tx.Exec(`INSERT INTO agent_memory (key, value, updated_at) VALUES (?, ?, (NOW() + INTERVAL '7 hours')::TEXT) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`,
 			strings.TrimSpace(f.Key), f.Value)
 	}
 	if err := tx.Commit(); err != nil {
@@ -634,7 +639,7 @@ func (h *AIHandlers) stats(w http.ResponseWriter, r *http.Request) {
 	var daily []dayStat
 	rows, err := h.db.QueryContext(r.Context(),
 		`SELECT substr(created_at,1,10) d, COUNT(*) c, SUM(failed), SUM(tokens_in), SUM(tokens_out), AVG(NULLIF(response_ms,0))
-		 FROM chat_logs WHERE created_at >= date('now','-30 days') GROUP BY d ORDER BY d`)
+		 FROM chat_logs WHERE created_at >= to_char(CURRENT_DATE - INTERVAL '30 days', 'YYYY-MM-DD') GROUP BY d ORDER BY d`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {

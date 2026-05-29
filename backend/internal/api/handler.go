@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -17,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/metrics"
 	"cozyroom/internal/transcode"
 	"cozyroom/internal/usecase"
@@ -28,7 +28,7 @@ type handlers struct {
 	lyrics       *usecase.LyricsUsecase
 	settings     *usecase.SettingsUsecase
 	playback     *usecase.PlaybackUsecase
-	scanDB       *sql.DB // only for scanner/enricher (own internal TXs)
+	scanDB       *db.RDB // only for scanner/enricher (own internal TXs)
 	dbPath       string
 	musicPath    string
 	filmsPath    string

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,13 +11,14 @@ import (
 	"regexp"
 	"strings"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/library"
 )
 
 var reYouTubeID = regexp.MustCompile(`^[a-zA-Z0-9_-]{11}$`)
 
 type YouTubeHandlers struct {
-	db        *sql.DB
+	db        *db.RDB
 	musicPath string
 	coversDir string
 }
@@ -177,7 +177,7 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		log.Printf("youtube download: indexing single file %s with metadata (Title: %q, Artist: %q, Album: %q)", filePath, body.Title, uploader, body.Title)
-		if err := library.IndexFileWithMetadata(h.db, filePath, h.coversDir, body.Title, uploader, body.Title); err != nil {
+		if err := library.IndexFileWithMetadata(h.db.DB, filePath, h.coversDir, body.Title, uploader, body.Title); err != nil {
 			log.Printf("error indexing single file: %v", err)
 		}
 	} else {
@@ -189,6 +189,49 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 		"status":         "ok",
 		"tracks_scanned": 1,
 	})
+}
+
+// DownloadYT downloads a YouTube video, indexes it into the library, and returns the track ID.
+// Used by the MCP download_youtube tool for synchronous server-side downloads.
+func DownloadYT(db *db.RDB, musicPath, coversDir, id, title, artist string) (string, error) {
+	if !reYouTubeID.MatchString(id) {
+		return "", fmt.Errorf("invalid video id")
+	}
+	cmd := exec.Command("yt-dlp",
+		"-f", "bestaudio",
+		"-x", "--audio-format", "best",
+		"--paths", musicPath,
+		"-o", "%(id)s.%(ext)s",
+		"https://www.youtube.com/watch?v="+id,
+	)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("yt-dlp: %w\n%s", err, string(out))
+	}
+	var filePath string
+	for _, ext := range []string{".opus", ".webm", ".m4a", ".mp3"} {
+		p := filepath.Join(musicPath, id+ext)
+		if _, err := os.Stat(p); err == nil {
+			filePath = p
+			break
+		}
+	}
+	if filePath == "" {
+		return "", fmt.Errorf("downloaded file not found in %s", musicPath)
+	}
+	uploader := strings.TrimSpace(artist)
+	if uploader == "" || (strings.HasPrefix(uploader, "UC") && len(uploader) == 24) {
+		uploader = "Unknown Artist"
+	}
+	if err := library.IndexFileWithMetadata(db.DB, filePath, coversDir, title, uploader, title); err != nil {
+		log.Printf("DownloadYT: index error: %v", err)
+	}
+	// Synchronously fetch YouTube thumbnail so cover is ready immediately.
+	albumID := library.AlbumID(uploader, title)
+	thumbnailDest := filepath.Join(coversDir, albumID+".jpg")
+	if _, err := os.Stat(thumbnailDest); os.IsNotExist(err) {
+		library.DownloadYTThumbnail(id, thumbnailDest)
+	}
+	return library.TrackIDFromPath(filePath), nil
 }
 
 // channel fetches latest videos from a YouTube channel URL, or searches within it.

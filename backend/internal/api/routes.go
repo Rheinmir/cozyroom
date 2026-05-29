@@ -1,12 +1,12 @@
 package api
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"regexp"
 	"time"
 
+	"cozyroom/internal/db"
 	"cozyroom/internal/domain"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
@@ -65,7 +65,7 @@ type RouterDeps struct {
 	Settings     *usecase.SettingsUsecase
 	Playback     *usecase.PlaybackUsecase
 	UoW          domain.UnitOfWorkFactory
-	ScanDB       *sql.DB // for scanner/enricher (own internal TXs)
+	ScanDB       *db.RDB // for scanner/enricher (own internal TXs)
 	DBPath       string
 	MusicPath    string
 	FilmsPath    string
@@ -182,7 +182,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		comicsGB = 50
 	}
 	dl := newComicsDownloader(
-		&pg.ComicsDownloadsRepo{DB: d.ScanDB},
+		&pg.ComicsDownloadsRepo{DB: d.ScanDB.DB},
 		d.ComicsDir,
 		comicsGB,
 		eh,
@@ -220,7 +220,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		Lib: d.Lib,
 		DB:  d.ScanDB,
 		ScanFunc: func() (int, error) {
-			res, err := library.Scan(d.ScanDB, d.MusicPath, d.CoversDir)
+			res, err := library.Scan(d.ScanDB.DB, d.MusicPath, d.CoversDir)
 			return res.Tracks, err
 		},
 		CloakProxyURL: d.CloakProxyURL,
@@ -229,6 +229,9 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 				return GlobalReloadCron()
 			}
 			return nil
+		},
+		DownloadYTFunc: func(id, title, artist string) (string, error) {
+			return DownloadYT(d.ScanDB, d.MusicPath, d.CoversDir, id, title, artist)
 		},
 	})
 	mux.HandleFunc("/mcp", mcp.NewHTTPHandler(mcpTools))

@@ -24,7 +24,7 @@ func (h *handlers) backupDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	backupPath, err := db.PerformBackup(h.scanDB, h.dbPath)
+	backupPath, err := db.PerformBackup(h.scanDB.DB, h.dbPath)
 	if err != nil {
 		log.Printf("[API] Backup failed: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -120,7 +120,7 @@ func (h *handlers) restoreDB(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[API] Initiating restore from backup: %s", backupPath)
 
-	err := db.RestoreFromBackup(h.scanDB, backupPath)
+	err := db.RestoreFromBackup(h.scanDB.DB, backupPath)
 	if err != nil {
 		log.Printf("[API] Restore failed: %v", err)
 		w.Header().Set("Content-Type", "application/json")

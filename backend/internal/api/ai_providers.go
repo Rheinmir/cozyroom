@@ -415,7 +415,7 @@ func (p *deepseekProvider) call(msgs any, tools []mcp.Tool) (string, []toolCall,
 		calls = append(calls, toolCall{ID: tc.ID, Name: tc.Function.Name, Input: input})
 	}
 	done := choice.FinishReason == "stop" || len(calls) == 0
-	return text, calls, promptTokens, parsed.Usage.CompletionTokens, done, nil
+	return text, calls, parsed.Usage.PromptTokens, parsed.Usage.CompletionTokens, done, nil
 }
 
 func (p *deepseekProvider) appendAssistant(msgs any, text string, calls []toolCall) any {

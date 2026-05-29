@@ -170,7 +170,7 @@ func BackfillStarHistory(db *sql.DB, repos []TrendingRepo, githubToken string) {
 		var dayCount int
 		if err := db.QueryRow(`
 			SELECT COUNT(DISTINCT substr(sampled_at,1,10))
-			FROM trending_star_history WHERE repo_id=?
+			FROM trending_star_history WHERE repo_id=$1
 		`, r.ID).Scan(&dayCount); err != nil || dayCount >= 7 {
 			continue
 		}
@@ -194,8 +194,8 @@ func BackfillStarHistory(db *sql.DB, repos []TrendingRepo, githubToken string) {
 				estimated = 0
 			}
 			db.Exec(`
-				INSERT OR IGNORE INTO trending_star_history (repo_id, sampled_at, stars)
-				VALUES (?, ?, ?)
+				INSERT INTO trending_star_history (repo_id, sampled_at, stars)
+				VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
 			`, r.ID, dayStart.Format("2006-01-02")+"T12:00:00Z", estimated)
 		}
 	}
@@ -283,7 +283,7 @@ func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
 
 		if _, err := tx.Exec(`
 			INSERT INTO trending_repos (id, name, url, description, language, topics)
-			VALUES (?, ?, ?, ?, ?, ?)
+			VALUES ($1, $2, $3, $4, $5, $6)
 			ON CONFLICT(id) DO UPDATE SET
 			  name=excluded.name, url=excluded.url, description=excluded.description,
 			  language=excluded.language, topics=excluded.topics
@@ -292,8 +292,8 @@ func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
 		}
 
 		if _, err := tx.Exec(`
-			INSERT OR IGNORE INTO trending_star_history (repo_id, sampled_at, stars)
-			VALUES (?, ?, ?)
+			INSERT INTO trending_star_history (repo_id, sampled_at, stars)
+			VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
 		`, r.ID, now, r.Stars); err != nil {
 			return err
 		}
@@ -302,7 +302,7 @@ func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
 		var prevStars int
 		err := tx.QueryRow(`
 			SELECT stars FROM trending_star_history
-			WHERE repo_id = ? AND sampled_at < ?
+			WHERE repo_id = $1 AND sampled_at < $2
 			ORDER BY sampled_at DESC LIMIT 1
 		`, r.ID, now).Scan(&prevStars)
 		if err == nil {
@@ -311,7 +311,7 @@ func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
 
 		if _, err := tx.Exec(`
 			INSERT INTO trending_daily (repo_id, date, stars, star_delta)
-			VALUES (?, ?, ?, ?)
+			VALUES ($1, $2, $3, $4)
 			ON CONFLICT(repo_id, date) DO UPDATE SET
 			  stars=excluded.stars, star_delta=excluded.star_delta
 		`, r.ID, today, r.Stars, r.StarDelta); err != nil {
