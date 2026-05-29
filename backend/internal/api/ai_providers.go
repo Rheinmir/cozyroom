@@ -319,6 +319,7 @@ type deepseekProvider struct {
 	systemPrompt    string
 	disableThinking bool
 	fallback        *openRouterProvider // used when DeepSeek returns 429 or 5xx
+	lastCacheHit    int                 // prompt_cache_hit_tokens from last call
 }
 
 func (p *deepseekProvider) initMessages(history []ChatMessage, userMsg string) any {
@@ -393,13 +394,15 @@ func (p *deepseekProvider) call(msgs any, tools []mcp.Tool) (string, []toolCall,
 			FinishReason string `json:"finish_reason"`
 		} `json:"choices"`
 		Usage struct {
-			PromptTokens     int `json:"prompt_tokens"`
-			CompletionTokens int `json:"completion_tokens"`
+			PromptTokens         int `json:"prompt_tokens"`
+			CompletionTokens     int `json:"completion_tokens"`
+			PromptCacheHitTokens int `json:"prompt_cache_hit_tokens"`
 		} `json:"usage"`
 	}
 	if err := json.Unmarshal(raw, &parsed); err != nil {
 		return "", nil, 0, 0, false, err
 	}
+	p.lastCacheHit = parsed.Usage.PromptCacheHitTokens
 	if len(parsed.Choices) == 0 {
 		return "", nil, parsed.Usage.PromptTokens, parsed.Usage.CompletionTokens, true, nil
 	}
@@ -412,7 +415,7 @@ func (p *deepseekProvider) call(msgs any, tools []mcp.Tool) (string, []toolCall,
 		calls = append(calls, toolCall{ID: tc.ID, Name: tc.Function.Name, Input: input})
 	}
 	done := choice.FinishReason == "stop" || len(calls) == 0
-	return text, calls, parsed.Usage.PromptTokens, parsed.Usage.CompletionTokens, done, nil
+	return text, calls, promptTokens, parsed.Usage.CompletionTokens, done, nil
 }
 
 func (p *deepseekProvider) appendAssistant(msgs any, text string, calls []toolCall) any {

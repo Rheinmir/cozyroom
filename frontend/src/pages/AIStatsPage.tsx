@@ -34,6 +34,7 @@ interface LogEntry {
   tool_errors: string
   tokens_in: number
   tokens_out: number
+  tokens_cached_in: number
 }
 
 const COLORS = ['#6366f1','#22d3ee','#f59e0b','#10b981','#f87171','#a78bfa','#fb923c','#34d399']
@@ -71,16 +72,18 @@ export default function AIStatsPage() {
   const today = new Date().toISOString().slice(0, 10)
   const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10) })
   const [dateTo, setDateTo] = useState(today)
-  const [modelPrices, setModelPrices] = useState<Record<string, { i: number; o: number }>>(() => {
+  const [modelPrices, setModelPrices] = useState<Record<string, { i: number; o: number; ci?: number; co?: number }>>(() => {
     try { return JSON.parse(localStorage.getItem('ai-model-prices') || '{}') } catch { return {} }
   })
   const [showPricing, setShowPricing] = useState(false)
+  const [showOcrPanel, setShowOcrPanel] = useState(false)
   const [ocrLoading, setOcrLoading] = useState(false)
+  const [ocrText, setOcrText] = useState('')
   const [ocrPending, setOcrPending] = useState<{ b64: string; mime: string; dataUrl: string; prompt: string } | null>(null)
   const ocrInputRef = useRef<HTMLInputElement>(null)
   const priceSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [dailyModelData, setDailyModelData] = useState<DailyModelStat[]>([])
-  const OCR_DEFAULT_PROMPT = 'Extract model pricing from this image. Return ONLY a JSON array (no markdown): [{"model":"<exact model id>","input_per_1m":<number>,"output_per_1m":<number>}]. Prices in USD per 1 million tokens.'
+  const OCR_DEFAULT_PROMPT = 'Extract model pricing from this image. Return ONLY a JSON array (no markdown): [{"model":"<exact model id>","input_per_1m":<number>,"output_per_1m":<number>,"cached_input_per_1m":<number or null>,"cached_output_per_1m":<number or null>}]. Prices in USD per 1 million tokens.'
   const PAGE = 50
 
   useEffect(() => {
@@ -102,11 +105,11 @@ export default function AIStatsPage() {
 
   // Load prices from DB on mount (DB wins over localStorage)
   useEffect(() => {
-    fetch('/api/ai/model-prices').then(r => r.json()).then((list: Array<{model: string; price_in: number; price_out: number}>) => {
+    fetch('/api/ai/model-prices').then(r => r.json()).then((list: Array<{model: string; price_in: number; price_out: number; cached_in?: number; cached_out?: number}>) => {
       if (list.length > 0) {
         setModelPrices(prev => {
           const next = { ...prev }
-          for (const p of list) next[p.model] = { i: p.price_in, o: p.price_out }
+          for (const p of list) next[p.model] = { i: p.price_in, o: p.price_out, ci: p.cached_in, co: p.cached_out }
           return next
         })
       }
@@ -117,7 +120,7 @@ export default function AIStatsPage() {
   useEffect(() => {
     if (priceSyncRef.current) clearTimeout(priceSyncRef.current)
     priceSyncRef.current = setTimeout(() => {
-      const payload = Object.entries(modelPrices).map(([model, p]) => ({ model, price_in: p.i, price_out: p.o }))
+      const payload = Object.entries(modelPrices).map(([model, p]) => ({ model, price_in: p.i, price_out: p.o, cached_in: p.ci, cached_out: p.co }))
       if (payload.length > 0) {
         fetch('/api/ai/model-prices', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {})
       }
@@ -132,32 +135,91 @@ export default function AIStatsPage() {
     fetch(`/api/ai/stats/daily?${p}`).then(r => r.json()).then(d => setDailyModelData(d)).catch(() => {})
   }, [dateFrom, dateTo])
 
-  const updatePrice = (model: string, field: 'i' | 'o', val: string) => {
+  const updatePrice = (model: string, field: 'i' | 'o' | 'ci' | 'co', val: string) => {
     const num = parseFloat(val)
     setModelPrices(prev => ({ ...prev, [model]: { ...prev[model], [field]: isNaN(num) ? 0 : num } }))
   }
 
-  const calcCost = (log: ExtremeLog | undefined): string | null => {
+  const calcCost = (log: ExtremeLog | undefined, cachedIn?: number): string | null => {
     if (!log?.id) return null
     const p = modelPrices[log.model]
     if (!p) return null
-    const cost = (log.tokens_in * (p.i || 0) / 1_000_000) + (log.tokens_out * (p.o || 0) / 1_000_000)
+    const cached = cachedIn || 0
+    const regularIn = Math.max(0, log.tokens_in - cached)
+    const cost = (cached * (p.ci || p.i || 0) / 1_000_000)
+              + (regularIn * (p.i || 0) / 1_000_000)
+              + (log.tokens_out * (p.o || 0) / 1_000_000)
     if (!cost) return null
     return cost < 0.0001 ? '<$0.0001' : `≈$${cost.toFixed(4)}`
+  }
+
+  const loadOcrFromBlob = (blob: Blob) => {
+    const r = new FileReader()
+    r.onload = async () => {
+      const dataUrl = r.result as string
+      const b64 = dataUrl.split(',')[1]
+      const mime = blob.type || 'image/png'
+      setOcrPending({ b64, mime, dataUrl, prompt: '' })
+      setOcrText('⏳ Đang nhận dạng...')
+      try {
+        const resp = await fetch('/api/ai/ocr-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_b64: b64, mime }),
+        })
+        if (resp.ok) {
+          const data = await resp.json()
+          setOcrText(data.text || '')
+          setOcrPending(p => p ? { ...p, prompt: data.text || '' } : p)
+        } else {
+          setOcrText('Lỗi OCR')
+        }
+      } catch {
+        setOcrText('Lỗi kết nối')
+      }
+    }
+    r.readAsDataURL(blob)
   }
 
   const handleOcrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const r = new FileReader()
-    r.onload = () => {
-      const dataUrl = r.result as string
-      const b64 = dataUrl.split(',')[1]
-      setOcrPending({ b64, mime: file.type, dataUrl, prompt: OCR_DEFAULT_PROMPT })
-    }
-    r.readAsDataURL(file)
+    loadOcrFromBlob(file)
     if (ocrInputRef.current) ocrInputRef.current.value = ''
   }
+
+  const handleOcrClick = () => {
+    setShowOcrPanel(p => !p)
+  }
+
+  const handleOcrPaste = async () => {
+    try {
+      const items = await navigator.clipboard.read()
+      for (const item of items) {
+        const imageType = item.types.find(t => t.startsWith('image/'))
+        if (imageType) {
+          const blob = await item.getType(imageType)
+          loadOcrFromBlob(blob)
+          setShowOcrPanel(false)
+          return
+        }
+      }
+    } catch {}
+    alert('Không có ảnh trong clipboard')
+  }
+
+  useEffect(() => {
+    if (!showOcrPanel) return
+    const onPaste = (e: ClipboardEvent) => {
+      const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith('image/'))
+      if (item) {
+        const blob = item.getAsFile()
+        if (blob) { loadOcrFromBlob(blob); setShowOcrPanel(false) }
+      }
+    }
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+  }, [showOcrPanel])
 
   const submitOcr = async () => {
     if (!ocrPending) return
@@ -166,10 +228,11 @@ export default function AIStatsPage() {
       const resp = await fetch('/api/ai/ocr-pricing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_b64: ocrPending.b64, mime: ocrPending.mime, prompt: ocrPending.prompt }),
+        body: JSON.stringify({ text: ocrPending.prompt }),
       })
       if (resp.ok) {
         const data = await resp.json()
+        if (data.ocr_text) setOcrText(data.ocr_text)
         const prices: Array<{ model: string; input_per_1m: number; output_per_1m: number }> = data.prices || []
         if (prices.length > 0) {
           const knownNames = all_models.map(m => m.name)
@@ -182,11 +245,12 @@ export default function AIStatsPage() {
           setModelPrices(prev => {
             const next = { ...prev }
             for (const p of prices) {
-              if (p.model) next[fuzzyMatch(p.model)] = { i: p.input_per_1m || 0, o: p.output_per_1m || 0 }
+              if (p.model) next[fuzzyMatch(p.model)] = { i: p.input_per_1m || 0, o: p.output_per_1m || 0, ci: (p as any).cached_input_per_1m || undefined, co: (p as any).cached_output_per_1m || undefined }
             }
             return next
           })
           setOcrPending(null)
+          setOcrText('')
         }
       }
     } finally {
@@ -377,20 +441,36 @@ export default function AIStatsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.6 }}>Giá ($/1M tokens)</span>
               <input ref={ocrInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleOcrUpload} />
-              <button onClick={() => ocrInputRef.current?.click()} disabled={ocrLoading} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', color: '#fff', opacity: ocrLoading ? 0.5 : 1 }}>
+              <button onClick={handleOcrClick} disabled={ocrLoading} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showOcrPanel ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)', color: '#fff', opacity: ocrLoading ? 0.5 : 1 }}>
                 📷 OCR từ ảnh
               </button>
             </div>
+            {showOcrPanel && !ocrPending && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.06)', borderRadius: 8 }}>
+                <button onClick={() => { ocrInputRef.current?.click() }} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.12)', color: '#fff' }}>
+                  📁 Chọn file
+                </button>
+                <button onClick={handleOcrPaste} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(99,102,241,0.5)', color: '#fff' }}>
+                  📋 Dán từ clipboard
+                </button>
+                <span style={{ fontSize: 10, opacity: 0.4 }}>hoặc Ctrl+V</span>
+                <button onClick={() => setShowOcrPanel(false)} style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.4)' }}>✕</button>
+              </div>
+            )}
             {ocrPending && (
               <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <img src={ocrPending.dataUrl} alt="preview" style={{ width: 100, borderRadius: 6, flexShrink: 0, objectFit: 'cover' }} />
-                  <textarea
-                    value={ocrPending.prompt}
-                    onChange={e => setOcrPending(p => p ? { ...p, prompt: e.target.value } : p)}
-                    rows={4}
-                    style={{ flex: 1, fontSize: 11, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: '#fff', padding: '6px 8px', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
-                  />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: 10, opacity: 0.5 }}>OCR text (có thể sửa trước khi gửi AI):</span>
+                    <textarea
+                      value={ocrPending.prompt}
+                      onChange={e => setOcrPending(p => p ? { ...p, prompt: e.target.value } : p)}
+                      placeholder={ocrText.startsWith('⏳') ? ocrText : 'Đang nhận dạng...'}
+                      rows={5}
+                      style={{ fontSize: 11, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: '#fff', padding: '6px 8px', resize: 'vertical', fontFamily: 'monospace', lineHeight: 1.5 }}
+                    />
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                   <button onClick={() => setOcrPending(null)} style={{ fontSize: 11, padding: '3px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>Hủy</button>
@@ -400,18 +480,24 @@ export default function AIStatsPage() {
                 </div>
               </div>
             )}
+            {ocrText && !ocrPending && (
+              <div style={{ marginBottom: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 6, fontSize: 10, opacity: 0.6, whiteSpace: 'pre-wrap', maxHeight: 80, overflow: 'auto' }}>
+                <span style={{ fontWeight: 600, opacity: 0.8 }}>OCR text: </span>{ocrText}
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 6 }}>
               {all_models.map((m, i) => {
                 const p = modelPrices[m.name] || { i: 0, o: 0 }
                 const color = COLORS[i % COLORS.length]
+                const inputStyle = { fontSize: 10, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4, color: '#fff', padding: '2px 5px', textAlign: 'right' as const }
                 return (
-                  <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
                     <span style={{ fontSize: 10, opacity: 0.7, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{modelLabel(m.name)}</span>
-                    <input type="number" min="0" step="0.01" value={p.i || ''} placeholder="in" onChange={e => updatePrice(m.name, 'i', e.target.value)}
-                      style={{ width: 56, fontSize: 10, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4, color: '#fff', padding: '2px 5px', textAlign: 'right' }} />
-                    <input type="number" min="0" step="0.01" value={p.o || ''} placeholder="out" onChange={e => updatePrice(m.name, 'o', e.target.value)}
-                      style={{ width: 56, fontSize: 10, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4, color: '#fff', padding: '2px 5px', textAlign: 'right' }} />
+                    <input type="text" inputMode="decimal" value={p.i || ''} placeholder="in" title="Input $/1M" onChange={e => updatePrice(m.name, 'i', e.target.value)} style={{ ...inputStyle, width: 50 }} />
+                    <input type="text" inputMode="decimal" value={p.o || ''} placeholder="out" title="Output $/1M" onChange={e => updatePrice(m.name, 'o', e.target.value)} style={{ ...inputStyle, width: 50 }} />
+                    <input type="text" inputMode="decimal" value={p.ci || ''} placeholder="c-in" title="Cached input $/1M" onChange={e => updatePrice(m.name, 'ci', e.target.value)} style={{ ...inputStyle, width: 50, opacity: 0.6 }} />
+                    <input type="text" inputMode="decimal" value={p.co || ''} placeholder="c-out" title="Cached output $/1M" onChange={e => updatePrice(m.name, 'co', e.target.value)} style={{ ...inputStyle, width: 50, opacity: 0.6 }} />
                   </div>
                 )
               })}

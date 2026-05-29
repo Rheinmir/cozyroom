@@ -12,7 +12,7 @@ import (
 	"cozyroom/internal/library"
 	"cozyroom/internal/mcp"
 	"cozyroom/internal/metrics"
-	sqlite "cozyroom/internal/repository/sqlite"
+	pg "cozyroom/internal/repository/postgres"
 	"cozyroom/internal/usecase"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -182,7 +182,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		comicsGB = 50
 	}
 	dl := newComicsDownloader(
-		&sqlite.ComicsDownloadsRepo{DB: d.ScanDB},
+		&pg.ComicsDownloadsRepo{DB: d.ScanDB},
 		d.ComicsDir,
 		comicsGB,
 		eh,
@@ -248,6 +248,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/ai/sessions/{id}/messages", aiH.sessionMessages)
 	mux.HandleFunc("GET /api/ai/stats", aiH.stats)
 	mux.HandleFunc("GET /api/ai/extremes", aiH.extremes)
+	mux.HandleFunc("POST /api/ai/ocr-text", aiH.ocrText)
 	mux.HandleFunc("POST /api/ai/ocr-pricing", aiH.ocrPricing)
 	mux.HandleFunc("GET /api/ai/memory", aiH.memoryList)
 	mux.HandleFunc("PUT /api/ai/memory", aiH.memoryImport)

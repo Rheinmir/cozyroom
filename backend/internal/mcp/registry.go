@@ -253,11 +253,12 @@ func browseURLTool(d ToolDeps) Tool {
 func searchMusicTool(d ToolDeps) Tool {
 	return Tool{
 		Name:        "search_music",
-		Description: "Search music: artists+albums+tracks. Returns top 20.",
+		Description: "Search tracks by name/artist. Returns [{id,t,ar}]. Use id for play/playlist ops. limit: max results (default 10, max 20).",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"query": map[string]any{"type": "string", "description": "search term"},
+				"query": map[string]any{"type": "string"},
+				"limit": map[string]any{"type": "integer", "description": "max results, default 10"},
 			},
 			"required": []string{"query"},
 		},
@@ -266,29 +267,22 @@ func searchMusicTool(d ToolDeps) Tool {
 			if q == "" {
 				return nil, fmt.Errorf("query required")
 			}
+			limit := 10
+			if v, ok := input["limit"].(float64); ok && v > 0 && v <= 20 {
+				limit = int(v)
+			}
 			res, err := d.Lib.SearchAll(context.Background(), q)
 			if err != nil {
 				return nil, err
 			}
-			artists, _ := Paginate(res.Artists, 5)
-			albums, _ := Paginate(res.Albums, 8)
-			tracks, totalTracks := Paginate(res.Tracks, 20)
-
-			ta := make([]map[string]any, len(artists))
-			for i, a := range artists {
-				ta[i] = TrimArtist(a.ID, a.Name)
-			}
-			tal := make([]map[string]any, len(albums))
-			for i, al := range albums {
-				tal[i] = map[string]any{"id": al.ID, "t": al.Title, "ar": al.ArtistName, "y": al.Year}
-			}
+			tracks, total := Paginate(res.Tracks, limit)
 			ttr := make([]map[string]any, len(tracks))
 			for i, tr := range tracks {
-				ttr[i] = TrimTrack(tr.ID, tr.Title, tr.ArtistName, tr.AlbumTitle, tr.DurationS)
+				ttr[i] = map[string]any{"id": tr.ID, "t": tr.Title, "ar": tr.ArtistName}
 			}
-			out := map[string]any{"artists": ta, "albums": tal, "tracks": ttr}
-			if totalTracks > 20 {
-				out["tracks_total"] = totalTracks
+			out := map[string]any{"tracks": ttr}
+			if total > limit {
+				out["more"] = total - limit
 			}
 			return out, nil
 		},
