@@ -8,8 +8,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/dhowden/tag"
@@ -158,15 +160,34 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 		return err
 	}
 
+	durS := probeDuration(path)
 	_, err = tx.Exec(
-		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
-		trackID, albumID, trackTitle, 0, path, "",
+		`INSERT INTO tracks(id, album_id, title, track_num, duration_s, file_path, genre) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, duration_s=EXCLUDED.duration_s, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
+		trackID, albumID, trackTitle, 0, durS, path, "",
 	)
 	if err != nil {
 		return err
 	}
 
 	return tx.Commit()
+}
+
+// probeDuration calls ffprobe to get audio duration in seconds. Returns 0 on error.
+func probeDuration(path string) int {
+	out, err := exec.Command("ffprobe",
+		"-v", "error",
+		"-show_entries", "format=duration",
+		"-of", "default=noprint_wrappers=1:nokey=1",
+		path,
+	).Output()
+	if err != nil {
+		return 0
+	}
+	f, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
+	if err != nil {
+		return 0
+	}
+	return int(f)
 }
 
 // DownloadYTThumbnail fetches a YouTube thumbnail synchronously to destPath.
@@ -206,6 +227,39 @@ func downloadYTThumbnail(ytID, destPath string) {
 			return
 		}
 	}
+}
+
+// BackfillDurations updates duration_s for tracks where it is 0 or NULL.
+// Runs ffprobe against the file_path for each such track.
+func BackfillDurations(db *sql.DB) {
+	rows, err := db.Query(`SELECT id, file_path FROM tracks WHERE duration_s IS NULL OR duration_s = 0`)
+	if err != nil {
+		log.Printf("backfill durations: query: %v", err)
+		return
+	}
+	defer rows.Close()
+	type entry struct{ id, path string }
+	var todo []entry
+	for rows.Next() {
+		var e entry
+		if rows.Scan(&e.id, &e.path) == nil {
+			todo = append(todo, e)
+		}
+	}
+	rows.Close()
+	if len(todo) == 0 {
+		return
+	}
+	log.Printf("backfill durations: probing %d tracks", len(todo))
+	updated := 0
+	for _, e := range todo {
+		d := probeDuration(e.path)
+		if d > 0 {
+			db.Exec(`UPDATE tracks SET duration_s = $1 WHERE id = $2`, d, e.id)
+			updated++
+		}
+	}
+	log.Printf("backfill durations: updated %d/%d tracks", updated, len(todo))
 }
 
 // IsEmpty returns true when the tracks table has no rows.
@@ -292,9 +346,10 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 		return err
 	}
 
+	durS := probeDuration(path)
 	_, err = tx.Exec(
-		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
-		trackID, albumID, trackTitle, trackNum, path, genre,
+		`INSERT INTO tracks(id, album_id, title, track_num, duration_s, file_path, genre) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, duration_s=EXCLUDED.duration_s, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
+		trackID, albumID, trackTitle, trackNum, durS, path, genre,
 	)
 	return err
 }

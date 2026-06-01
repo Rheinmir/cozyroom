@@ -19,7 +19,7 @@ const IcComics   = () => I('M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-
 const IcTrend    = () => I('M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z')
 const IcPlaylist = () => I('M4 10h12v2H4zm0-4h12v2H4zm0 8h8v2H4zm10 0v6l5-3z')
 
-const IcAI       = () => I('M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2m0 8a5 5 0 0 0-5 5v3h10v-3a5 5 0 0 0-5-5m-2 6a1 1 0 0 1-1-1 1 1 0 0 1 1-1 1 1 0 0 1 1 1 1 1 0 0 1-1 1m4 0a1 1 0 0 1-1-1 1 1 0 0 1 1-1 1 1 0 0 1 1 1 1 1 0 0 1-1 1z')
+const IcAI       = () => I('M12 2L13.09 9.26L20 12L13.09 14.74L12 22L10.91 14.74L4 12L10.91 9.26Z M19 3L19.5 5.5L22 6L19.5 6.5L19 9L18.5 6.5L16 6L18.5 5.5Z')
 const IcChart    = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
 const IcGrid     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M4 4h7v7H4zm10 0h7v7h-7zM4 14h7v7H4zm10 0h7v7h-7z"/></svg>
 const IcRefresh  = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
@@ -225,7 +225,7 @@ export default function RadialNav() {
 
   const innerItems = [
     { route: '/',          label: t('nav.artists'),                     icon: <IcHome />,     r: 86 },
-    { route: '/search',    label: t('nav.search'),                      icon: <IcSearch />,   r: 80 },
+    { route: '/ai',        label: 'AI',                                 icon: <IcAI />,       r: 80 },
     { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist />, r: 92 },
   ]
 
@@ -234,7 +234,7 @@ export default function RadialNav() {
     { route: '/ebooks',    label: t('nav.ebooks', { defaultValue: 'Sách' }), icon: <IcBook />,  r: 136 },
     { route: '/comics',    label: t('nav.comics'),                      icon: <IcComics />,   r: 142 },
     { route: '/trending',  label: t('nav.trending'),                    icon: <IcTrend />,    r: 132 },
-    { route: '/ai',        label: t('nav.ai'),                          icon: <IcAI />,       r: 140 },
+    { route: '/search',    label: t('nav.search'),                      icon: <IcSearch />,   r: 140 },
   ]
 
   const isTrending = location.pathname.startsWith('/trending')

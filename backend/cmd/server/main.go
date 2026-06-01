@@ -15,7 +15,7 @@ import (
 	"cozyroom/internal/enricher"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
-	repo "cozyroom/internal/repository/sqlite"
+	repo "cozyroom/internal/repository/postgres"
 	"cozyroom/internal/usecase"
 )
 
@@ -28,7 +28,7 @@ func main() {
 	anthropicKey    := envOr("ANTHROPIC_API_KEY", "")
 	deepseekKey     := envOr("DEEPSEEK_API_KEY", "")
 	githubToken     := envOr("GITHUB_TOKEN", "")
-	dbPath          := envOr("DB_PATH", "/data/metadata.db")
+	dbPath          := envOr("DATABASE_URL", envOr("DB_PATH", "postgres://cozyroom:cozyroom@postgres:5432/cozyroom?sslmode=disable"))
 	musicPath       := envOr("MUSIC_PATH", "/music")
 	coversDir       := envOr("COVERS_DIR", "/data/covers")
 	artistImgDir    := envOr("ARTIST_IMG_DIR", "/data/artist-images")
@@ -71,17 +71,18 @@ func main() {
 	}
 	hlsMgr := hls.New(hlsDir)
 
-	// ---- Repository layer ----
-	artistRepo  := repo.NewArtistRepo(database)
-	albumRepo   := repo.NewAlbumRepo(database)
-	trackRepo   := repo.NewTrackRepo(database)
-	searchRepo  := &repo.SearchRepo{DB: database}
-	statsRepo   := &repo.StatsRepo{DB: database}
-	cacheRepo   := &repo.LyricsCacheRepo{DB: database}
-	settingsRepo := &repo.SettingsRepo{DB: database}
-	videoRepo    := repo.NewVideoRepo(database)
-	playbackRepo := &repo.PlaybackRepo{DB: database}
-	uowFactory   := &repo.UoWFactory{DB: database}
+	// ---- Repository layer (uses raw *sql.DB — rebind handled by db.RDB for handler queries) ----
+	rawDB := database.DB
+	artistRepo  := repo.NewArtistRepo(rawDB)
+	albumRepo   := repo.NewAlbumRepo(rawDB)
+	trackRepo   := repo.NewTrackRepo(rawDB)
+	searchRepo  := &repo.SearchRepo{DB: rawDB}
+	statsRepo   := &repo.StatsRepo{DB: rawDB}
+	cacheRepo   := &repo.LyricsCacheRepo{DB: rawDB}
+	settingsRepo := &repo.SettingsRepo{DB: rawDB}
+	videoRepo    := repo.NewVideoRepo(rawDB)
+	playbackRepo := &repo.PlaybackRepo{DB: rawDB}
+	uowFactory   := &repo.UoWFactory{DB: rawDB}
 
 	// ---- Usecase layer ----
 	libUC := &usecase.LibraryUsecase{
@@ -156,7 +157,7 @@ func main() {
 	go func() {
 		if libUC.IsEmpty(context.Background()) {
 			log.Printf("background scan started: %s", musicPath)
-			res, err := library.Scan(database, musicPath, coversDir)
+			res, err := library.Scan(rawDB, musicPath, coversDir)
 			if err != nil {
 				log.Printf("scan error: %v", err)
 			} else {
@@ -165,7 +166,7 @@ func main() {
 		}
 		if videoRepo.IsEmpty(context.Background()) {
 			log.Printf("background scan videos started: %s", filmsPath)
-			if err := library.ScanVideos(database, filmsPath); err != nil {
+			if err := library.ScanVideos(rawDB, filmsPath); err != nil {
 				log.Printf("video scan error: %v", err)
 			}
 		}
@@ -177,12 +178,13 @@ func main() {
 		}
 		if true { // Force scan to get covers
 			log.Printf("background scan ebooks started: %s", ebooksPath)
-			_ = library.ScanEbooks(database, ebooksPath, ebookCoversDir)
+			_ = library.ScanEbooks(rawDB, ebooksPath, ebookCoversDir)
 		}
 		enricher.FetchArtistImages(enricher.DeezerProvider{}, artistRepo, artistImgDir)
 		if tmdbAPIKey != "" {
 			enricher.FetchVideoPosters(enricher.TMDbProvider{APIKey: tmdbAPIKey}, videoRepo, videoPosterDir)
 		}
+		library.BackfillDurations(rawDB)
 	}()
 
 	// ---- Trending repos poll (every 12h) ----
@@ -193,14 +195,14 @@ func main() {
 				log.Printf("trending: fetch: %v", err)
 				return
 			}
-			if err := enricher.SaveTrendingSnapshot(database, repos); err != nil {
+			if err := enricher.SaveTrendingSnapshot(rawDB, repos); err != nil {
 				log.Printf("trending: save: %v", err)
 				return
 			}
 			log.Printf("trending: saved %d repos", len(repos))
-			go enricher.BackfillStarHistory(database, repos, githubToken)
+			go enricher.BackfillStarHistory(rawDB, repos, githubToken)
 			if geminiKey != "" || openRouterKey != "" {
-				enricher.EnrichWithAI(database, geminiKey, openRouterKey)
+				enricher.EnrichWithAI(rawDB, geminiKey, openRouterKey)
 			}
 		}
 		run()

@@ -18,7 +18,7 @@
 /* Bubble group — wraps bubble + reaction bar */
 .ai-bubble-group { display: flex; flex-direction: column; max-width: 80%; }
 .ai-bubble-group--user { align-self: flex-end; align-items: flex-end; }
-.ai-bubble-group--assistant { align-self: flex-start; align-items: flex-start; }
+.ai-bubble-group--assistant { align-self: flex-start; align-items: flex-start; width: min(100%, 600px); max-width: 100%; }
 
 .ai-bubble {
   padding: 10px 14px;
@@ -47,7 +47,7 @@
   animation: ai-blink 1s infinite;
 }
 @keyframes ai-blink { 0%,100% { opacity: 1 } 50% { opacity: 0.2 } }
-.ai-actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; width: 100%; max-width: min(520px, 100%); }
 .ai-action-btn {
   background: var(--elevated);
   border: 1px solid var(--green);
@@ -132,8 +132,8 @@
 
 /* AI Media Card */
 .ai-bubble--assistant { position: relative; }
-.ai-media-card { background: rgba(255,255,255,0.06); border-radius: 0 0 12px 12px; overflow: hidden; margin: 6px -14px -10px; }
-.ai-media-card-cover { width: 100%; height: 160px; object-fit: cover; display: block; }
+.ai-media-card { background: rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; width: 100%; box-sizing: border-box; }
+.ai-media-card-cover { width: 100%; height: 220px; object-fit: cover; object-position: center top; display: block; }
 .ai-media-card-info { padding: 10px 12px 6px; }
 .ai-media-card-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
 .ai-media-card-row { font-size: 12px; opacity: 0.65; margin-bottom: 2px; }
@@ -3463,8 +3463,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   transition: box-shadow 0.2s;
   -webkit-user-select: none;
   user-select: none;
-  background: #111;
-  animation: vinyl-spin 4s linear infinite;
+  background: #060604;
+  animation: vinyl-spin 12s linear infinite;
   animation-play-state: paused;
 }
 .radial-bubble:hover {
@@ -3484,27 +3484,44 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   pointer-events: none;
   display: block;
 }
-/* groove ring (vinyl only) */
+/* vinyl: shrink label to center, black vinyl disc outside */
+.radial-bubble--vinyl img {
+  width: 46%;
+  height: 46%;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: 1;
+}
+/* vinyl 4-quadrant optical illusion: 2 dark + 2 gray alternating */
 .radial-bubble--vinyl::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, transparent 38%, rgba(0,0,0,0.55) 40%, rgba(0,0,0,0.1) 54%, transparent 56%);
+  background: conic-gradient(
+    from 45deg,
+    #060604  0deg,
+    #282826  70deg,
+    #060604 180deg,
+    #282826 250deg,
+    #060604 360deg
+  );
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
 }
-/* center hole (vinyl only) */
+/* tiny center hole */
 .radial-bubble--vinyl::after {
   content: '';
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 8px; height: 8px;
+  width: 3px; height: 3px;
   border-radius: 50%;
-  background: #111;
-  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.18);
-  z-index: 2;
+  background: #0a0a0a;
+  box-shadow: 0 0 0 0.5px rgba(255,255,255,0.2);
+  z-index: 3;
   pointer-events: none;
 }
 

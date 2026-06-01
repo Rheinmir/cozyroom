@@ -260,6 +260,7 @@ export default function AIAssistantPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const importRef = useRef<HTMLInputElement>(null)
+  const lastUserTextRef = useRef<string>('')
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -392,6 +393,7 @@ export default function AIAssistantPage() {
         duration_s: action.duration_s || 0,
         artist_name: action.artist || '',
       }
+      player.setShuffleMode('smart')
       player.play(t, [t])
     } else if (action.type === 'download_youtube' && action.id) {
       fetch('/api/youtube/download', {
@@ -414,15 +416,32 @@ export default function AIAssistantPage() {
     }
   }
 
-  const send = async () => {
+  const retry = () => {
+    const text = lastUserTextRef.current
+    if (!text || loading) return
+    setMessages(prev => prev.filter(m => !(m.role === 'assistant' && m.text.startsWith('⚠️'))))
+    sendMessage(text)
+  }
+
+  const send = () => {
     const text = input.trim()
     if (!text || loading) return
-
-    const userMsg: Message = { id: msgSeq++, role: 'user', text }
-    setMessages(prev => [...prev, userMsg])
     setInput('')
+    sendMessage(text)
+  }
+
+  const sendMessage = async (text: string, attempt = 1) => {
+    if (!text || loading) return
+    lastUserTextRef.current = text
+
+    if (attempt === 1) {
+      const userMsg: Message = { id: msgSeq++, role: 'user', text }
+      setMessages(prev => [...prev, userMsg])
+    }
     setLoading(true)
-    setStatusText('')
+    setStatusText(attempt > 1 ? `Thử lại lần ${attempt - 1}...` : '')
+
+    const MAX_RETRIES = 1
 
     try {
       const res = await fetch('/api/ai/chat/stream', {
@@ -438,6 +457,11 @@ export default function AIAssistantPage() {
       })
       if (!res.ok || !res.body) {
         const err = await res.text()
+        if (attempt <= MAX_RETRIES) {
+          setLoading(false)
+          await new Promise(r => setTimeout(r, 2000))
+          return sendMessage(text, attempt + 1)
+        }
         setMessages(prev => [...prev, { id: msgSeq++, role: 'assistant', text: `⚠️ ${err}` }])
         return
       }
@@ -486,6 +510,12 @@ export default function AIAssistantPage() {
         }
       }
     } catch (e: any) {
+      if (attempt <= MAX_RETRIES) {
+        setLoading(false)
+        setStatusText('Mất kết nối, thử lại...')
+        await new Promise(r => setTimeout(r, 2000))
+        return sendMessage(text, attempt + 1)
+      }
       setMessages(prev => [...prev, { id: msgSeq++, role: 'assistant', text: `⚠️ ${e.message}` }])
     } finally {
       setLoading(false)
@@ -524,22 +554,29 @@ export default function AIAssistantPage() {
                   ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                   : msg.text}
               </div>
-              {msg.actions && msg.actions.length > 0 && (
-                <div className="ai-actions">
-                  {msg.actions.map((a, i) => (
-                    a.type === 'play_track' ? (
-                      <MediaCard
-                        key={i}
-                        action={a}
-                        onPlay={() => executeAction(a)}
-                        onNext={() => player.next()}
-                        onPrev={() => player.prev()}
-                      />
-                    ) : null
-                  ))}
-                </div>
-              )}
             </div>
+            {msg.actions && msg.actions.filter(a => a.type === 'play_track').length > 0 && (
+              <div className="ai-actions">
+                {msg.actions.map((a, i) => (
+                  a.type === 'play_track' ? (
+                    <MediaCard
+                      key={i}
+                      action={a}
+                      onPlay={() => executeAction(a)}
+                      onNext={() => player.next()}
+                      onPrev={() => player.prev()}
+                    />
+                  ) : null
+                ))}
+              </div>
+            )}
+            {msg.role === 'assistant' && msg.text.startsWith('⚠️') && lastUserTextRef.current && (
+              <button
+                onClick={retry}
+                disabled={loading}
+                style={{ marginTop: 4, background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 12, padding: '3px 10px' }}
+              >🔄 Thử lại</button>
+            )}
             {msg.role === 'assistant' && msg.logId && (
               <ReactionBar logId={msg.logId} />
             )}
