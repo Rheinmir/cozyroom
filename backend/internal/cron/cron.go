@@ -1,16 +1,16 @@
 package cron
 
 import (
-	"database/sql"
 	"log"
 	"time"
 
 	"cozyroom/internal/api"
+	"cozyroom/internal/db"
 	"github.com/robfig/cron/v3"
 )
 
 type CronManager struct {
-	db         *sql.DB
+	db         *db.RDB
 	cron       *cron.Cron
 	aiHandlers *api.AIHandlers
 }
@@ -23,7 +23,7 @@ type ScheduledTask struct {
 	CreatedAt      string
 }
 
-func NewCronManager(db *sql.DB, aiHandlers *api.AIHandlers) *CronManager {
+func NewCronManager(db *db.RDB, aiHandlers *api.AIHandlers) *CronManager {
 	return &CronManager{
 		db:         db,
 		cron:       cron.New(),

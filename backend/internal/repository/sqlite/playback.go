@@ -26,8 +26,8 @@ func (r *PlaybackRepo) Get(ctx context.Context, itemType, itemID string) (*domai
 
 func (r *PlaybackRepo) Set(ctx context.Context, p domain.PlaybackProgress) error {
 	_, err := r.DB.ExecContext(ctx,
-		`INSERT INTO playback_progress (item_type, item_id, position_s, updated_at) VALUES (?,?,?,unixepoch())
-		 ON CONFLICT(item_type, item_id) DO UPDATE SET position_s=excluded.position_s, updated_at=unixepoch()`,
+		`INSERT INTO playback_progress (item_type, item_id, position_s, updated_at) VALUES ($1,$2,$3,EXTRACT(EPOCH FROM NOW())::INTEGER)
+		 ON CONFLICT(item_type, item_id) DO UPDATE SET position_s=excluded.position_s, updated_at=EXTRACT(EPOCH FROM NOW())::INTEGER`,
 		p.ItemType, p.ItemID, p.PositionS)
 	return err
 }

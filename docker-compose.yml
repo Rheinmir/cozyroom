@@ -4,6 +4,21 @@ services:
       context: ./cloak-proxy
     restart: unless-stopped
 
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cozyroom
+      POSTGRES_USER: cozyroom
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-cozyroom}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cozyroom"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -14,7 +29,7 @@ services:
       - /mnt/f/Films:/films
       - /mnt/f/Ebooks:/ebooks
     environment:
-      DB_PATH: /data/metadata.db
+      DATABASE_URL: "postgres://cozyroom:${POSTGRES_PASSWORD:-cozyroom}@postgres:5432/cozyroom?sslmode=disable"
       MUSIC_PATH: /music
       FILMS_PATH: /films
       EBOOKS_PATH: /ebooks
@@ -27,7 +42,10 @@ services:
       DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
       GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
     depends_on:
-      - cloak-proxy
+      cloak-proxy:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -39,3 +57,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  pgdata:

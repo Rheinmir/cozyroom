@@ -21,33 +21,9 @@ func GetBackupsDir(dbPath string) string {
 	return filepath.Join(filepath.Dir(dbPath), "backups")
 }
 
-// PerformBackup creates a transaction-consistent backup of the open database using VACUUM INTO.
+// PerformBackup is a no-op for PostgreSQL. Use pg_dump for backups.
 func PerformBackup(db *sql.DB, dbPath string) (string, error) {
-	backupsDir := GetBackupsDir(dbPath)
-	if err := os.MkdirAll(backupsDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create backups dir: %w", err)
-	}
-
-	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().Nanosecond()/1000000)
-	backupPath := filepath.Join(backupsDir, fmt.Sprintf("metadata_auto_%s.db", timestamp))
-
-	// Remove target file if it already exists to prevent SQLite error
-	_ = os.Remove(backupPath)
-
-	// Run VACUUM INTO
-	query := fmt.Sprintf("VACUUM INTO '%s';", strings.ReplaceAll(backupPath, "'", "''"))
-	if _, err := db.Exec(query); err != nil {
-		return "", fmt.Errorf("VACUUM INTO failed: %w", err)
-	}
-
-	log.Printf("[Database] Successfully backed up database to %s", backupPath)
-
-	// Prune old backups
-	if err := PruneBackups(dbPath); err != nil {
-		log.Printf("[Database] Warning: failed to prune backups: %v", err)
-	}
-
-	return backupPath, nil
+	return "", nil
 }
 
 // PruneBackups keeps only the last MaxBackups backups.
@@ -85,31 +61,8 @@ func PruneBackups(dbPath string) error {
 	return nil
 }
 
-// VerifyAndRecover checks the integrity of the database file at dbPath.
-// If the database is missing, it does nothing (SQLite will create it).
-// If the database is corrupted (fails basic integrity check), it attempts to restore the latest valid backup.
+// VerifyAndRecover is a no-op for PostgreSQL.
 func VerifyAndRecover(dbPath string) error {
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		return nil
-	}
-
-	// Try to open the database and run integrity check
-	db, err := sql.Open("sqlite", dbPath)
-	if err != nil {
-		log.Printf("[Database] Failed to open database at %s for integrity check: %v", dbPath, err)
-		return restoreLatestBackup(dbPath)
-	}
-	defer db.Close()
-
-	var integrityResult string
-	err = db.QueryRow("PRAGMA integrity_check(1);").Scan(&integrityResult)
-	if err != nil || strings.ToLower(integrityResult) != "ok" {
-		log.Printf("[Database] Integrity check failed for %s (result: %s, err: %v). Initiating recovery...", dbPath, integrityResult, err)
-		db.Close()
-		return restoreLatestBackup(dbPath)
-	}
-
-	log.Printf("[Database] Integrity check PASSED for %s", dbPath)
 	return nil
 }
 

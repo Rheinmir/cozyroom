@@ -20,8 +20,9 @@ func (r *LyricsCacheRepo) Get(ctx context.Context, trackID string) (string, erro
 
 func (r *LyricsCacheRepo) Set(ctx context.Context, trackID string, jsonData string) error {
 	_, err := r.DB.ExecContext(ctx,
-		`INSERT OR REPLACE INTO lyrics_cache (track_id, results, fetched_at)
-		 VALUES (?, ?, unixepoch())`, trackID, jsonData)
+		`INSERT INTO lyrics_cache (track_id, results, fetched_at)
+		 VALUES ($1, $2, EXTRACT(EPOCH FROM NOW())::INTEGER)
+		 ON CONFLICT(track_id) DO UPDATE SET results=excluded.results, fetched_at=EXTRACT(EPOCH FROM NOW())::INTEGER`, trackID, jsonData)
 	return err
 }
 
