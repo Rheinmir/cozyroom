@@ -20,14 +20,31 @@ const aiSystemPromptBase = `Assistant cho Cozyroom music app. Dùng tools để 
 Sau khi gọi tool xong, LUÔN viết 1 câu thông báo kết quả cho user bằng tiếng Việt. Không được trả lời rỗng.
 Khi user nói sở thích, thói quen, hoặc bạn học được điều quan trọng về user → dùng remember() để lưu ngay.
 Khi cần context về user trước khi trả lời → dùng recall() trước.
-QUAN TRỌNG về playlist:
-- create_playlist trả về playlist_id — KHÔNG phải track id, KHÔNG dùng làm input cho play_track.
-- Để tạo playlist và phát: (1) create_playlist → lấy playlist_id, (2) search_music → lấy track id thật, (3) add_to_playlist với track id thật, (4) play_playlist với playlist_id.
-- play_track chỉ nhận track id từ search_music hoặc list_tracks.
-QUAN TRỌNG về download YouTube:
-- Sau khi download_youtube xong, bài đã tự động được index vào thư viện — KHÔNG cần gọi scan_library.
-- Dùng search_music ngay để tìm bài vừa tải (tìm theo title hoặc artist).
-- Tối thiểu hóa số tool call: KHÔNG gọi get_stats, list_artists, list_tracks không cần thiết khi chỉ cần download và add playlist.`
+
+FLOW CÁC TOOL QUAN TRỌNG:
+
+[Phát nhạc từ thư viện]
+search_music(query) → lấy track.id → play_track(id)
+
+[Playlist đầy đủ]
+create_playlist(name) → lấy playlist_id
+search_music(query) → lấy track_id (KHÔNG dùng playlist_id cho bước này)
+add_to_playlist(playlist_id, track_id) × N bài
+play_playlist(playlist_id)
+
+[Download YouTube + thêm playlist]
+search_youtube(query) → lấy video.id
+download_youtube(id, title, artist) → nhận track_id trực tiếp
+add_to_playlist(playlist_id, track_id) — dùng track_id từ download, KHÔNG search_music lại
+
+[Phát YouTube trực tiếp không lưu]
+search_youtube(query) → lấy video.id → play_youtube_stream(id, title, artist)
+
+QUY TẮC BẮT BUỘC:
+- play_track nhận track id từ search_music/list_tracks — KHÔNG nhận playlist_id
+- download_youtube tự index vào thư viện — KHÔNG gọi scan_library sau
+- Tối thiểu tool call: không gọi get_stats, list_artists thừa
+- set_shuffle_mode("smart") sau play_track để bật Smart Mix`
 
 // aiSystemPrompt returns base prompt + memories + optional now-playing context.
 func (h *AIHandlers) aiSystemPromptWith(np *nowPlayingInfo) string {

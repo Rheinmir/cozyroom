@@ -154,30 +154,33 @@ func (h *handlers) cover(w http.ResponseWriter, r *http.Request) {
 			}
 			var saved bool
 			for _, u := range urls {
-				ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
-				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-				resp, err := client.Do(req)
-				cancel()
-				if err != nil || resp.StatusCode != http.StatusOK {
-					if resp != nil {
-						resp.Body.Close()
+				func() {
+					ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+					defer cancel()
+					req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+					resp, err := client.Do(req)
+					if err != nil || resp.StatusCode != http.StatusOK {
+						if resp != nil {
+							resp.Body.Close()
+						}
+						return
 					}
-					continue
-				}
-				f, err := os.Create(cachePath)
-				if err != nil {
-					resp.Body.Close()
+					defer resp.Body.Close()
+					f, err := os.Create(cachePath)
+					if err != nil {
+						return
+					}
+					_, copyErr := io.Copy(f, resp.Body)
+					f.Close()
+					if copyErr == nil {
+						saved = true
+					} else {
+						os.Remove(cachePath)
+					}
+				}()
+				if saved {
 					break
 				}
-				_, copyErr := io.Copy(f, resp.Body)
-				f.Close()
-				resp.Body.Close()
-				if copyErr == nil {
-					saved = true
-				} else {
-					os.Remove(cachePath)
-				}
-				break
 			}
 			if !saved {
 				http.NotFound(w, r)

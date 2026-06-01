@@ -229,6 +229,107 @@ func downloadYTThumbnail(ytID, destPath string) {
 	}
 }
 
+// ReconcileResult holds the outcome of a reconciliation run.
+type ReconcileResult struct {
+	Removed int // DB entries removed because file missing on disk
+	Added   int // files found on disk that were not in DB
+	Errors  int
+}
+
+// ReconcileLibrary ensures DB and disk are in sync:
+//   - Removes DB track entries whose file_path no longer exists on disk.
+//   - Indexes audio files found on disk that have no DB entry.
+//
+// Safe to run at any time; all SQL uses ON CONFLICT semantics.
+func ReconcileLibrary(db *sql.DB, musicPath, coversDir string) ReconcileResult {
+	var res ReconcileResult
+
+	// ── Pass 1: DB → disk (remove orphan DB entries) ──────────────────────────
+	rows, err := db.Query(`SELECT id, file_path FROM tracks`)
+	if err != nil {
+		log.Printf("reconcile: query tracks: %v", err)
+		res.Errors++
+		return res
+	}
+	type entry struct{ id, path string }
+	var all []entry
+	for rows.Next() {
+		var e entry
+		if rows.Scan(&e.id, &e.path) == nil {
+			all = append(all, e)
+		}
+	}
+	rows.Close()
+
+	for _, e := range all {
+		if _, err := os.Stat(e.path); os.IsNotExist(err) {
+			db.Exec(`DELETE FROM tracks WHERE id = $1`, e.id)
+			log.Printf("reconcile: removed orphan track %s (missing file: %s)", e.id, e.path)
+			res.Removed++
+		}
+	}
+
+	// ── Pass 2: disk → DB (index any untracked audio files) ───────────────────
+	// Build set of known file_paths for fast lookup.
+	known := make(map[string]bool, len(all))
+	rows2, err := db.Query(`SELECT file_path FROM tracks`)
+	if err == nil {
+		defer rows2.Close()
+		for rows2.Next() {
+			var p string
+			if rows2.Scan(&p) == nil {
+				known[p] = true
+			}
+		}
+	}
+
+	exts := map[string]bool{
+		".flac": true, ".mp3": true, ".opus": true,
+		".m4a": true, ".webm": true, ".wav": true,
+	}
+	err = filepath.WalkDir(musicPath, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		ext := strings.ToLower(filepath.Ext(path))
+		if !exts[ext] {
+			return nil
+		}
+		// Translate to container path (/music/...) from walk path.
+		containerPath := "/music" + path[len(musicPath):]
+		if known[containerPath] {
+			return nil
+		}
+		// File exists on disk but not in DB — index it.
+		tx, err := db.Begin()
+		if err != nil {
+			res.Errors++
+			return nil
+		}
+		if err := indexFile(tx, path, coversDir); err != nil {
+			tx.Rollback()
+			log.Printf("reconcile: index %s: %v", path, err)
+			res.Errors++
+		} else {
+			tx.Commit()
+			log.Printf("reconcile: indexed missing file %s", path)
+			res.Added++
+		}
+		return nil
+	})
+	if err != nil {
+		log.Printf("reconcile: walk error: %v", err)
+		res.Errors++
+	}
+
+	if res.Removed > 0 || res.Added > 0 || res.Errors > 0 {
+		log.Printf("reconcile: removed=%d added=%d errors=%d", res.Removed, res.Added, res.Errors)
+	} else {
+		log.Printf("reconcile: library consistent — no discrepancies")
+	}
+	return res
+}
+
 // BackfillDurations updates duration_s for tracks where it is 0 or NULL.
 // Runs ffprobe against the file_path for each such track.
 func BackfillDurations(db *sql.DB) {

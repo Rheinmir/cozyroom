@@ -7,6 +7,22 @@ import (
 	"cozyroom/internal/library"
 )
 
+func (h *handlers) reconcile(w http.ResponseWriter, r *http.Request) {
+	res := library.ReconcileLibrary(h.scanDB.DB, h.musicPath, h.coversDir)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{
+		"removed": res.Removed,
+		"added":   res.Added,
+		"errors":  res.Errors,
+	})
+}
+
+func (h *handlers) repairYTMeta(w http.ResponseWriter, r *http.Request) {
+	go RepairYouTubeMetadata(h.scanDB, h.musicPath, h.coversDir)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "repair started in background"})
+}
+
 // scanLibrary triggers a library scan using the handler's config.
 func scanLibrary(h *handlers, w http.ResponseWriter) {
 	// Music scan

@@ -191,6 +191,71 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// RepairYouTubeMetadata fixes opus/webm files indexed as "Unknown Artist" by fetching
+// real title/uploader from YouTube and updating DB in-place.
+func RepairYouTubeMetadata(rdb *db.RDB, musicPath, coversDir string) {
+	rows, err := rdb.Query(
+		`SELECT t.id, t.file_path FROM tracks t
+		 JOIN albums al ON al.id = t.album_id
+		 JOIN artists ar ON ar.id = al.artist_id
+		 WHERE ar.name = 'Unknown Artist'
+		   AND (t.file_path LIKE '/music/%.opus'
+		     OR t.file_path LIKE '/music/%.webm'
+		     OR t.file_path LIKE '/music/%.m4a')`)
+	if err != nil {
+		log.Printf("repair-yt-meta: query: %v", err)
+		return
+	}
+	type entry struct{ id, path string }
+	var todo []entry
+	for rows.Next() {
+		var e entry
+		if rows.Scan(&e.id, &e.path) == nil {
+			todo = append(todo, e)
+		}
+	}
+	rows.Close()
+	if len(todo) == 0 {
+		return
+	}
+	log.Printf("repair-yt-meta: fetching metadata for %d files", len(todo))
+	fixed := 0
+	for _, e := range todo {
+		base := strings.TrimSuffix(filepath.Base(e.path), filepath.Ext(e.path))
+		if !reYouTubeID.MatchString(base) {
+			continue
+		}
+		out, err := exec.Command("yt-dlp",
+			"--print", "%(title)s\n%(uploader)s",
+			"--no-playlist",
+			"https://www.youtube.com/watch?v="+base,
+		).Output()
+		if err != nil {
+			log.Printf("repair-yt-meta: yt-dlp %s: %v", base, err)
+			continue
+		}
+		lines := strings.SplitN(strings.TrimSpace(string(out)), "\n", 2)
+		title := strings.TrimSpace(lines[0])
+		artist := "Unknown Artist"
+		if len(lines) > 1 && strings.TrimSpace(lines[1]) != "" {
+			artist = strings.TrimSpace(lines[1])
+		}
+		if title == "" {
+			continue
+		}
+		// Delete the track and re-index with correct metadata so all relations update cleanly.
+		rdb.Exec(`DELETE FROM tracks WHERE id = $1`, e.id)
+		diskPath := filepath.Join(musicPath, filepath.Base(e.path))
+		if err := library.IndexFileWithMetadata(rdb.DB, diskPath, coversDir, title, artist, title); err != nil {
+			log.Printf("repair-yt-meta: re-index %s: %v", base, err)
+		} else {
+			log.Printf("repair-yt-meta: fixed %s → \"%s\" / %s", base, title, artist)
+			fixed++
+		}
+	}
+	log.Printf("repair-yt-meta: done — fixed %d/%d", fixed, len(todo))
+}
+
 // DownloadYT downloads a YouTube video, indexes it into the library, and returns the track ID.
 // Used by the MCP download_youtube tool for synchronous server-side downloads.
 func DownloadYT(db *db.RDB, musicPath, coversDir, id, title, artist string) (string, error) {

@@ -155,15 +155,15 @@ func main() {
 
 	// ---- Background scan + enricher ----
 	go func() {
-		if libUC.IsEmpty(context.Background()) {
-			log.Printf("background scan started: %s", musicPath)
-			res, err := library.Scan(rawDB, musicPath, coversDir)
-			if err != nil {
-				log.Printf("scan error: %v", err)
-			} else {
-				log.Printf("scan done: %d tracks, %d errors", res.Tracks, res.Errors)
-			}
+		log.Printf("background scan started: %s", musicPath)
+		res, err := library.Scan(rawDB, musicPath, coversDir)
+		if err != nil {
+			log.Printf("scan error: %v", err)
+		} else {
+			log.Printf("scan done: %d tracks, %d errors", res.Tracks, res.Errors)
 		}
+		library.ReconcileLibrary(rawDB, musicPath, coversDir)
+		api.RepairYouTubeMetadata(database, musicPath, coversDir)
 		if videoRepo.IsEmpty(context.Background()) {
 			log.Printf("background scan videos started: %s", filmsPath)
 			if err := library.ScanVideos(rawDB, filmsPath); err != nil {

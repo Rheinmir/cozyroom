@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { usePlayer } from '../PlayerContext'
 import type { RepeatMode, ShuffleMode } from '../PlayerContext'
 import type { Track } from '../types'
 import FavoritePill from '../components/FavoritePill'
+import { MCP_TOOLS } from '../data/mcpTools'
 
 type Role = 'user' | 'assistant'
 
@@ -239,10 +240,11 @@ function ReactionBar({ logId }: { logId: string }) {
 export default function AIAssistantPage() {
   const { t } = useTranslation()
   const player = usePlayer()
+  const location = useLocation()
   const [messages, setMessages] = useState<Message[]>([
     { id: msgSeq++, role: 'assistant', text: t('ai.greeting') },
   ])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState((location.state as any)?.prompt ?? '')
   const [model, setModel] = useState('')
   const [loading, setLoading] = useState(false)
   const [statusText, setStatusText] = useState('')
@@ -261,6 +263,8 @@ export default function AIAssistantPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const importRef = useRef<HTMLInputElement>(null)
   const lastUserTextRef = useRef<string>('')
+  const [slashSuggestions, setSlashSuggestions] = useState<typeof MCP_TOOLS>([])
+  const [slashIdx, setSlashIdx] = useState(0)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -533,7 +537,8 @@ export default function AIAssistantPage() {
 
   return (
     <div className="ai-page">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 8px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '4px 8px 0' }}>
+        <Link to="/tools" style={{ fontSize: 11, opacity: 0.45, color: 'inherit', textDecoration: 'none' }}>🛠 Tools</Link>
         <Link to="/ai/stats" style={{ fontSize: 11, opacity: 0.45, color: 'inherit', textDecoration: 'none' }}>📊 Analytics</Link>
       </div>
       <div className="ai-messages">
@@ -671,17 +676,72 @@ export default function AIAssistantPage() {
           )}
         </div>
       )}
+      {slashSuggestions.length > 0 && (
+        <div className="slash-suggestions">
+          {slashSuggestions.map((t, i) => (
+            <div
+              key={t.name}
+              className={`slash-suggestion-item${i === slashIdx ? ' slash-suggestion-item--active' : ''}`}
+              onMouseDown={e => { e.preventDefault(); setInput(t.prompt); setSlashSuggestions([]) }}
+            >
+              <span className="slash-suggestion-name">/{t.name}</span>
+              <span className="slash-suggestion-desc">{t.description}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="ai-input-row">
+        <div className="ai-input-wrap">
+        {slashSuggestions.length > 0 && (() => {
+          const top = slashSuggestions[slashIdx]
+          const typed = input  // e.g. "/play"
+          const full = '/' + top.name  // e.g. "/play_track"
+          const ghost = full.startsWith(typed) ? full.slice(typed.length) : ''
+          return ghost ? (
+            <div className="ai-ghost-text" aria-hidden="true">
+              <span style={{ visibility: 'hidden' }}>{typed}</span>
+              <span className="ai-ghost-completion">{ghost} </span>
+              <span className="ai-ghost-label">Tab</span>
+            </div>
+          ) : null
+        })()}
         <textarea
           ref={inputRef}
           className="ai-input"
           rows={2}
           placeholder={t('ai.placeholder')}
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
+          onChange={e => {
+            const v = e.target.value
+            setInput(v)
+            const slashMatch = v.match(/^\/(\S*)$/)
+            if (slashMatch) {
+              const q = slashMatch[1].toLowerCase()
+              const hits = MCP_TOOLS.filter(t => t.name.includes(q) || t.description.toLowerCase().includes(q)).slice(0, 8)
+              setSlashSuggestions(hits)
+              setSlashIdx(0)
+            } else {
+              setSlashSuggestions([])
+            }
+          }}
+          onKeyDown={e => {
+            if (slashSuggestions.length > 0) {
+              if (e.key === 'ArrowDown') { e.preventDefault(); setSlashIdx(i => Math.min(i + 1, slashSuggestions.length - 1)); return }
+              if (e.key === 'ArrowUp') { e.preventDefault(); setSlashIdx(i => Math.max(i - 1, 0)); return }
+              if (e.key === 'Tab' || e.key === 'Enter') {
+                e.preventDefault()
+                const t = slashSuggestions[slashIdx]
+                setInput(t.prompt)
+                setSlashSuggestions([])
+                return
+              }
+              if (e.key === 'Escape') { setSlashSuggestions([]); return }
+            }
+            onKeyDown(e)
+          }}
           disabled={loading}
         />
+        </div>
         <button
           className="ai-send-btn"
           onClick={send}

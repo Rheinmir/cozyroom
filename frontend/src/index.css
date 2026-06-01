@@ -1,3 +1,86 @@
+/* ── Slash command autocomplete ────────────────────────── */
+/* Ghost text inline completion */
+.ai-input-wrap {
+  flex: 1;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--surface-hover);
+  border-radius: 12px;
+}
+.ai-input-wrap .ai-input {
+  background: transparent;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 1;
+}
+.ai-input-wrap .ai-input:focus { border-color: transparent; outline: none; }
+.ai-ghost-text {
+  font-family: -apple-system, BlinkMacSystemFont, Circular, "Segoe UI", sans-serif;
+  font-size: 0.9rem;
+  left: 0;
+  line-height: 1.4;
+  padding: 10px 14px;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  white-space: pre-wrap;
+  width: 100%;
+  z-index: 2;
+  word-break: break-word;
+  color: transparent;
+}
+.ai-ghost-completion { color: rgba(255,255,255,0.3); }
+.ai-ghost-label { background: rgba(255,255,255,0.1); border-radius: 3px; color: rgba(255,255,255,0.35); font-size: 10px; margin-left: 4px; padding: 1px 5px; vertical-align: middle; }
+
+.slash-suggestions { background: var(--surface); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
+.slash-suggestion-item { align-items: center; cursor: pointer; display: flex; gap: 10px; padding: 8px 12px; transition: background 0.1s; }
+.slash-suggestion-item:hover, .slash-suggestion-item--active { background: rgba(255,255,255,0.07); }
+.slash-suggestion-name { color: var(--green); font-family: 'SFMono-Regular', monospace; font-size: 13px; flex-shrink: 0; }
+.slash-suggestion-desc { color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── MCP Tool Gallery ────────────────────────────────── */
+/* Tool detail modal */
+.tool-detail-backdrop { align-items: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); bottom: 0; display: flex; justify-content: center; left: 0; position: fixed; right: 0; top: 0; z-index: 1000; padding: 20px; }
+.tool-detail-modal { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; max-width: 420px; padding: 20px; width: 100%; }
+.tool-detail-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 12px; }
+.tool-detail-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px 8px; }
+.tool-detail-name { font-family: 'SFMono-Regular', monospace; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.tool-detail-desc { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+.tool-detail-section { margin-bottom: 12px; }
+.tool-detail-label { color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; margin-bottom: 4px; text-transform: uppercase; }
+.tool-detail-route { font-size: 13px; }
+.tool-detail-route code { background: rgba(255,255,255,0.08); border-radius: 4px; color: var(--green); font-family: 'SFMono-Regular', monospace; padding: 2px 6px; }
+.tool-detail-prompt { background: rgba(255,255,255,0.05); border-left: 2px solid var(--green); border-radius: 0 6px 6px 0; color: var(--text-muted); font-size: 13px; font-style: italic; padding: 8px 12px; }
+.tool-detail-flow { counter-reset: flow; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tool-detail-flow-step { background: rgba(255,255,255,0.04); border-radius: 6px; color: var(--text-muted); counter-increment: flow; font-size: 12px; line-height: 1.5; padding: 6px 10px 6px 32px; position: relative; }
+.tool-detail-flow-step::before { background: var(--green); border-radius: 50%; color: #000; content: counter(flow); font-size: 10px; font-weight: 700; height: 16px; left: 8px; line-height: 16px; position: absolute; text-align: center; top: 8px; width: 16px; }
+.tool-detail-use-btn { background: var(--green); border: none; border-radius: 8px; color: #000; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 16px; padding: 10px 16px; width: 100%; }
+.tool-detail-use-btn:hover { background: var(--green-hover); }
+
+/* Tool search */
+.tools-search { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; margin-bottom: 12px; padding: 8px 12px; width: 100%; box-sizing: border-box; }
+.tools-search:focus { border-color: var(--green); outline: none; }
+
+.tools-page { padding: 24px 20px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+.tools-header { margin-bottom: 24px; }
+.tools-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+.tools-subtitle { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+.tools-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+.tools-filter-btn { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 4px 12px; transition: all 0.15s; }
+.tools-filter-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+.tools-filter-btn--active { background: var(--green); border-color: var(--green); color: #000; }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.tool-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--surface); border: 1px solid rgba(255,255,255,0.07); transition: transform 0.18s, border-color 0.18s; height: 200px; }
+.tool-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+.tool-card-iframe-wrap { position: absolute; inset: 0; overflow: hidden; }
+.tool-card-iframe { width: 1280px; height: 800px; border: none; transform: scale(0.22); transform-origin: top left; pointer-events: none; }
+.tool-card-iframe-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #111 100%); }
+.tool-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.15) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 12px 12px; }
+.tool-card-category { align-self: flex-start; border: 1px solid; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 6px; padding: 2px 7px; }
+.tool-card-name { font-size: 13px; font-weight: 600; font-family: 'SFMono-Regular', monospace; margin-bottom: 4px; }
+.tool-card-desc { font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.4; }
+
 /* ── AI Assistant ───────────────────────────────────── */
 .ai-page {
   display: flex;
@@ -77,7 +160,8 @@
   font-family: inherit;
   line-height: 1.4;
 }
-.ai-input:focus { outline: none; border-color: var(--green); }
+.ai-input:focus { outline: none; border-color: transparent; }
+.ai-input-wrap:focus-within { border-color: var(--green); }
 .ai-input:disabled { opacity: 0.5; }
 .ai-send-btn {
   width: 40px;
@@ -376,6 +460,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* ── Sidebar ────────────────────────────────────────── */

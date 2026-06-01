@@ -120,6 +120,8 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/health", h.health)
 	mux.HandleFunc("GET /api/stats", h.stats)
 	mux.HandleFunc("POST /api/scan", h.scan)
+	mux.HandleFunc("POST /api/admin/reconcile", h.reconcile)
+	mux.HandleFunc("POST /api/admin/repair-yt-meta", h.repairYTMeta)
 	mux.HandleFunc("GET /api/artists", h.listArtists)
 	mux.HandleFunc("GET /api/artists/{id}", h.artistDetail)
 	mux.HandleFunc("GET /api/albums", h.listAlbums)

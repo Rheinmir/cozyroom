@@ -20,6 +20,7 @@ import ComicsPageMobile from './pages/ComicsPageMobile'
 import PlaylistsPage from './pages/PlaylistsPage'
 import AIAssistantPage from './pages/AIAssistantPage'
 import AIStatsPage from './pages/AIStatsPage'
+import ToolsPage from './pages/ToolsPage'
 
 export default function AppRoutes() {
   return (
@@ -45,6 +46,7 @@ export default function AppRoutes() {
               <Route path="/playlists"   element={<PlaylistsPage />} />
               <Route path="/ai"          element={<AIAssistantPage />} />
               <Route path="/ai/stats"    element={<AIStatsPage />} />
+              <Route path="/tools"       element={<ToolsPage />} />
             </Routes>
           </main>
         </div>
