@@ -92,10 +92,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [analyser,    setAnalyser]   = useState<AnalyserNode | null>(null)
   const [coverColors, setCoverColors] = useState<string[]>(['#1db954', '#191414']) // default palette
 
-  // Set crossOrigin to anonymous to avoid Web Audio API CORS block on cross-origin YouTube streams
+  // Set crossOrigin + preload="auto" so browser buffers ahead aggressively
   useEffect(() => {
-    audioA.current.crossOrigin = 'anonymous'
-    audioB.current.crossOrigin = 'anonymous'
+    for (const el of [audioA.current, audioB.current, audioYT.current]) {
+      el.crossOrigin = 'anonymous'
+      el.preload = 'auto'
+    }
   }, [])
 
   // Restore last session — set src + seek on audioA, but don't autoplay
@@ -384,12 +386,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // When stalled (no data for 3s), nudge currentTime to force browser to re-request
+    const onStalled = (e: Event) => {
+      const el = e.target as HTMLAudioElement
+      if (el !== getActive() || !el.src) return
+      const pos = el.currentTime
+      el.currentTime = Math.max(0, pos - 0.1)
+      el.play().catch(() => {})
+    }
+
     for (const el of [a, b, yt]) {
       el.addEventListener('timeupdate',     onTime)
       el.addEventListener('loadedmetadata', onMeta)
       el.addEventListener('ended',          onEnd)
       el.addEventListener('pause',          onPause)
       el.addEventListener('error',          onError)
+      el.addEventListener('stalled',        onStalled)
+      el.addEventListener('waiting',        onStalled)
     }
     return () => {
       for (const el of [a, b, yt]) {
@@ -398,6 +411,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         el.removeEventListener('ended',          onEnd)
         el.removeEventListener('pause',          onPause)
         el.removeEventListener('error',          onError)
+        el.removeEventListener('stalled',        onStalled)
+        el.removeEventListener('waiting',        onStalled)
       }
     }
   }, [startTrack])

@@ -1,6 +1,7 @@
 package transcode
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"os/exec"
@@ -20,6 +21,7 @@ func IsLossless(path string) bool {
 // ToMP3_320 pipes the audio file through ffmpeg and writes 320 kbps MP3 to w.
 // The ffmpeg process is killed when ctx is cancelled (e.g. client disconnects).
 func ToMP3_320(ctx context.Context, path string, w io.Writer) error {
+	bw := bufio.NewWriterSize(w, 256*1024) // 256 KB buffer smooths ffmpeg burst writes
 	cmd := exec.CommandContext(ctx, "ffmpeg",
 		"-hide_banner", "-loglevel", "error",
 		"-i", path,
@@ -27,8 +29,10 @@ func ToMP3_320(ctx context.Context, path string, w io.Writer) error {
 		"-f", "mp3",
 		"pipe:1",
 	)
-	cmd.Stdout = w
-	return cmd.Run()
+	cmd.Stdout = bw
+	err := cmd.Run()
+	bw.Flush()
+	return err
 }
 
 // ToFragmentedMP4 remuxes a video file to a fragmented MP4 stream suitable for
