@@ -1,5 +1,55 @@
 # Operation Log
 
+## 2026-06-06 — orca-workflow — infra-monitoring-complete
+
+## 2026-06-06 — orca-workflow — ansible-k8s-cozyroom-deploy
+
+## 2026-06-07 — propose — k3s-cozyroom-master-control-plane
+## 2026-06-07 — implemented — k3s-cluster-cozyroom-deployed (2-node: master+k8s2, NodePort 30080)
+
+## 2026-06-06 — orca-workflow — ai-build-jenkins-deploy
+
+## 2026-06-05 — design-feedback — playlist-play-btn-fix-fe
+
+## 2026-06-05 — orca-workflow — fix-playback-sql-bugs
+
+## 2026-06-02 — fix — YouTube stream proxy: giải quyết lỗi mất tiếng & 403 Forbidden
+
+- **YouTube Stream Proxy** (`api/youtube.go`): Chuyển đổi cơ chế stream từ `http.Redirect` (direct link googlevideo.com) sang **Reverse Proxy trực tiếp**.
+  - Người dùng truy cập stream thông qua `/api/youtube/stream/{id}` trên cùng tên miền `music.giatbh.io.vn`, triệt tiêu hoàn toàn lỗi **CORS** và **Mixed Content**.
+  - Luồng request đến Google Video luôn sử dụng IP của máy chủ backend, giải quyết triệt để cơ chế chặn IP (IP binding) và lỗi **403 Forbidden** của YouTube.
+  - Hỗ trợ đầy đủ **HTTP Range Requests** (`206 Partial Content`), giúp trình duyệt tải buffer nhanh và tua (seek) mượt mà với băng thông tối ưu nhất.
+  - Tự động phát hiện và thử lại (retry) với URL mới nếu link YouTube trong cache bị hết hạn (expired/410).
+- **Nginx configuration** (`nginx.conf`): Tắt proxy buffering cho `/api/youtube/stream/` (`proxy_buffering off`) để truyền phát âm thanh trực tiếp (real-time streaming) mượt mà không bị trễ hoặc đứng hình.
+- Đồng bộ hóa các thay đổi hoàn toàn sạch sẽ trên cả hai thư mục nguồn (`cozyroom` và `workspaces/cozyroom/m`).
+
+## 2026-06-02 — feat — YouTube download: embed metadata + thumbnail làm cover
+
+- `--embed-metadata`: title, artist, album, date được embed thẳng vào file tag (opus/m4a/mp3) khi download
+- `--write-thumbnail --convert-thumbnails jpg`: yt-dlp lưu thumbnail ra `<ytID>.jpg`, backend copy vào `coversDir/<albumID>.jpg` đồng bộ (không dùng goroutine nữa), clean up khỏi music dir
+- Thumbnail cover endpoint ưu tiên `maxresdefault` (1280×720) → `sddefault` → `hqdefault` → `mqdefault`
+- `id8hex()` trong `api/youtube.go` reproduce đúng SHA-256 logic của `scanner.go:id8()` để albumID match
+
+## 2026-06-02 — fix — Reliability: panic recovery, timeouts, stream cache, HLS watcher
+
+- **`panicRecovery` middleware** (`routes.go`): catch Go panic, log full 64KB stack trace, trả 500 thay vì crash server
+- **HTTP timeouts** (`main.go`): `WriteTimeout=5m`, `IdleTimeout=2m`, `ReadHeaderTimeout=10s` — unblock goroutine khi client 5G drop
+- **YouTube stream URL cache** (`youtube.go`): TTL 4h, lần 2+ trở đi serve ngay không cần gọi yt-dlp
+- **Thumbnail qua cloak-proxy** (`handler.go`): fallback placeholder JPEG thay vì 404, log khi fail
+- **HLS watcher** (`hls/manager.go`): `Watch(ctx)` goroutine poll 30s, kill ffmpeg job stuck > 3h; `exec.CommandContext` 2h hard timeout
+- Root causes: yt-dlp blocking mỗi request, fetch thẳng internet, không có HTTP timeout, không có panic recover, ffmpeg không có timeout
+- Draft: `wiki/sources/draft/020626-reliability-fixes-streaming-be.md`
+
+## 2026-06-02 — feat — ADK Scoped State: migrate agent_memory → agent_state
+
+- **Motivation**: Distilled ADK (adk.dev) concepts — State prefix pattern gives one dict, four scopes, zero extra infrastructure.
+- **DB**: New `agent_state` table with `(scope, scope_id, key, value, updated_at)` PK `(scope, scope_id, key)`. One-time migration copies `agent_memory` → `agent_state` with `scope='user', scope_id='default'`.
+- **MCP tools** (`registry.go`): `remember()` now accepts optional `scope` param (`user`|`session`|`app`); `recall()` uses `ILIKE` (Postgres) and queries `agent_state`; `forget()` accepts scope. Fixed SQLite `?` placeholder bug → Postgres `$N`.
+- **AI handler** (`ai.go`): `aiSystemPrompt()` queries `agent_state` separately for `user` and `app` scopes, injects both sections into prompt. `memoryList/Import/Delete` endpoints migrated to `agent_state`.
+- **System prompt**: Removed `recall()` instruction (context now auto-injected); added scope guidance for `remember()`.
+- **Scopes**: `user/default` (persists across sessions), `session/<id>` (current conversation), `app/global` (all users).
+- Build: `go build ./...` — clean, no errors.
+
 ## 2026-05-28 — research — Nous Research Hermes Agent Distillation Proposal
 
 - Draft created: `sources/draft/280526-hermes-research-distillation.md`

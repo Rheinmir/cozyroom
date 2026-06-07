@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: k8s-data
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes: [ReadWriteOnce]
+  hostPath:
+    path: /tmp/k8s-cozyroom-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [rhein-13700hxes-4070-64-4t]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cozyroom-data
+  namespace: cozyroom-k8s
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ""
+  volumeName: k8s-data
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: cozyroom-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: rhein-13700hxes-4070-64-4t
+      containers:
+        - name: backend
+          image: 100.88.197.64:5000/cozyroom-backend:k8s
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgres://cozyroom:$(POSTGRES_PASSWORD)@postgres:5432/cozyroom?sslmode=disable"
+            - name: MUSIC_PATH
+              value: /music
+            - name: FILMS_PATH
+              value: /films
+            - name: EBOOKS_PATH
+              value: /ebooks
+            - name: EBOOK_COVERS_DIR
+              value: /data/ebook-covers
+            - name: CLOAK_PROXY_URL
+              value: "http://cloak-proxy:8765"
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: OPENROUTER_API_KEY
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: DEEPSEEK_API_KEY
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: GEMINI_API_KEY
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: GITHUB_TOKEN
+          volumeMounts:
+            - name: music
+              mountPath: /music
+              readOnly: true
+            - name: films
+              mountPath: /films
+              readOnly: true
+            - name: ebooks
+              mountPath: /ebooks
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: music
+          hostPath:
+            path: /mnt/f/250930music
+        - name: films
+          hostPath:
+            path: /mnt/f/Films
+        - name: ebooks
+          hostPath:
+            path: /mnt/f/Ebooks
+        - name: data
+          persistentVolumeClaim:
+            claimName: cozyroom-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: cozyroom-k8s
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8080
+      targetPort: 8080
