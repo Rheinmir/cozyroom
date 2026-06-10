@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { Track } from './types'
 import { fetchSmartQueue, lastfmNowPlaying, lastfmScrobble } from './api'
+import pkg from '../package.json'
 
 export type RepeatMode  = 'off' | 'one' | 'all'
 export type ShuffleMode = 'off' | 'shuffle' | 'smart'
@@ -27,6 +28,8 @@ type PlayerCtx = {
   setShuffleMode:(m: ShuffleMode) => void
   setQuality:    (q: Quality)     => void
   setCoverColors:(c: string[])    => void
+  playbackError:  { code: number; message: string; trackId: string } | null
+  setPlaybackError: (err: { code: number; message: string; trackId: string } | null) => void
 }
 
 const Ctx = createContext<PlayerCtx>({} as PlayerCtx)
@@ -50,9 +53,12 @@ function loadSaved(): SavedState | null {
 }
 
 /** Build the stream URL for a track + quality setting. */
-function streamUrl(trackId: string, q: Quality): string {
+function streamUrl(trackId: string, q: Quality | 'lossless-clean'): string {
   if (trackId.startsWith('yt:')) {
     return `/api/youtube/stream/${trackId.slice(3)}`
+  }
+  if (q === 'lossless-clean') {
+    return `/stream/${trackId}?q=lossless-clean`
   }
   return `/stream/${trackId}${q === '320' ? '?q=320' : ''}`
 }
@@ -91,6 +97,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [quality,     setQuality]    = useState<Quality>       (init.current?.quality     ?? 'lossless')
   const [analyser,    setAnalyser]   = useState<AnalyserNode | null>(null)
   const [coverColors, setCoverColors] = useState<string[]>(['#1db954', '#191414']) // default palette
+  const [playbackError, setPlaybackError] = useState<{ code: number; message: string; trackId: string } | null>(null)
 
   // Set crossOrigin + preload="auto" so browser buffers ahead aggressively
   useEffect(() => {
@@ -229,6 +236,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const startTrack = useCallback((t: Track, idx: number) => {
+    setPlaybackError(null)
     initAudioCtx()
     const q = qualityRef.current
 
@@ -268,6 +276,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     preloadedTrackId.current = null
     retriesRef.current = {}
+    trackRef.current = t  // sync immediately so getActive() is correct before next render
     setTrack(t)
     setQueueIdx(idx)
     setPlaying(true)
@@ -289,6 +298,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const el = e.target as HTMLAudioElement
       if (el !== getActive()) return
       setProgress(el.currentTime)
+      if (isFinite(el.duration) && el.duration > 0) setDuration(el.duration)
     }
 
     const onMeta = (e: Event) => {
@@ -351,16 +361,32 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (el !== getActive()) return
       const err = el.error
       const tId = trackRef.current?.id ?? 'unknown'
+      const errMsg = err?.message || 'Unknown playback error'
+      const errCode = err?.code || 0
       
       console.error('Audio error:', {
-        code: err?.code,
-        message: err?.message,
+        code: errCode,
+        message: errMsg,
         src: el.src,
         trackId: tId
       })
 
+      // Send error details to backend for tracing!
+      fetch('/api/playback/error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          track_id: tId,
+          src: el.src,
+          error_code: errCode,
+          error_message: errMsg,
+          user_agent: navigator.userAgent,
+          version: pkg.version
+        })
+      }).catch(console.error)
+
       // MEDIA_ERR_NETWORK = 2
-      if (err?.code === 2) {
+      if (errCode === 2) {
         const count = retriesRef.current[tId] ?? 0
         if (count < 3) {
           console.warn(`Network error. Retrying (${count + 1}/3)...`)
@@ -380,10 +406,62 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           }
           el.addEventListener('canplay', onReady, { once: true })
           el.load()
+          return
         } else {
           console.error('Max retries reached for network error.')
         }
       }
+
+      // If we encounter a source/decode error (Code 3 or 4) on lossless,
+      // try to fall back to clean lossless (metadata-stripped copy).
+      // If that also fails, fall back to 320kbps MP3 transcode.
+      if ((errCode === 3 || errCode === 4) && qualityRef.current === 'lossless' && !tId.startsWith('yt:')) {
+        const isCleanAlready = el.src.includes('q=lossless-clean')
+        if (!isCleanAlready) {
+          console.warn('Lossless playback failed (source/decode error). Falling back to clean lossless (FLAC copy without metadata)...')
+          
+          const currentPos = el.currentTime
+          const fallbackSrc = streamUrl(tId, 'lossless-clean')
+          
+          el.src = ''
+          el.load()
+          el.src = fallbackSrc
+          
+          const onReady = () => {
+            el.currentTime = currentPos
+            el.play().catch(console.error)
+          }
+          el.addEventListener('canplay', onReady, { once: true })
+          el.load()
+          return
+        } else {
+          console.warn('Clean lossless playback failed. Falling back to 320K MP3 transcode...')
+          setQuality('320')
+          
+          const currentPos = el.currentTime
+          const fallbackSrc = streamUrl(tId, '320')
+          
+          el.src = ''
+          el.load()
+          el.src = fallbackSrc
+          
+          const onReady = () => {
+            el.currentTime = currentPos
+            el.play().catch(console.error)
+          }
+          el.addEventListener('canplay', onReady, { once: true })
+          el.load()
+          return
+        }
+      }
+
+      // Non-retryable error or retries exhausted: set error state
+      setPlaybackError({
+        code: errCode,
+        message: errMsg,
+        trackId: tId
+      })
+      setPlaying(false)
     }
 
     // When stalled (no data for 3s), nudge currentTime to force browser to re-request
@@ -589,6 +667,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       repeat, shuffleMode, quality, analyser, coverColors,
       play, toggle, seek, prev, next,
       setRepeat, setShuffleMode: handleSetShuffleMode, setQuality, setCoverColors,
+      playbackError, setPlaybackError,
     }}>
       {children}
     </Ctx.Provider>
