@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	idb "cozyroom/internal/db"
 	"cozyroom/internal/repository/postgres"
 )
 
@@ -26,10 +26,10 @@ type EHCachedHandler struct {
 	ehLatestC *latestCache
 }
 
-func NewEHCachedHandler(db *idb.RDB, cloakURL string) *EHCachedHandler {
+func NewEHCachedHandler(db *sql.DB, cloakURL string) *EHCachedHandler {
 	return &EHCachedHandler{
 		pool:      NewHeadlessEHPool(),
-		cache:     &postgres.ComicsCacheRepo{DB: db.DB},
+		cache:     &postgres.ComicsCacheRepo{DB: db},
 		cloakURL:  cloakURL,
 		ehLatestC: newLatestCache(30 * time.Minute),
 	}

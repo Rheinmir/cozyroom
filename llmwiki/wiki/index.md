@@ -67,6 +67,17 @@
 | [concepts/ProgressRestoreReload.md](concepts/ProgressRestoreReload.md) | concept | beforeunload saves currentTime to localStorage for progress restore on page reload |
 | [concepts/QueueLocking.md](concepts/QueueLocking.md) | concept | lockedQueueRef prevents smart radio fillSmartQueue from contaminating explicit playlist queues |
 | [sources/draft/280526-hermes-research-distillation.md](sources/draft/280526-hermes-research-distillation.md) | draft | Proposal: Nous Research Hermes Agent research and distillation (self-improving skills, Telegram bot, background task automation) |
+| [draft/orca/050626-fix-playback-sql-bugs.md](draft/orca/050626-fix-playback-sql-bugs.md) | draft | Fix playback PIPELINE_ERROR_DECODE (mono/stereo) + trending SQLSTATE 42601 + all ? → $N migration |
+| [draft/cave/050626-playlist-play-btn-fix-fe.md](draft/cave/050626-playlist-play-btn-fix-fe.md) | draft | 2026-06-05 |
+| [draft/orca/060626-ai-build-jenkins-deploy.md](draft/orca/060626-ai-build-jenkins-deploy.md) | draft | 2026-06-06 |
+| [draft/orca/060626-ansible-k8s-cozyroom-deploy.md](draft/orca/060626-ansible-k8s-cozyroom-deploy.md) | draft | 2026-06-06 |
+| [sources/060626-infra-best-practices.md](sources/060626-infra-best-practices.md) | source | 2026-06-06 |
+| [sources/draft/070626-k3s-cozyroom-master-control-plane.md](sources/draft/070626-k3s-cozyroom-master-control-plane.md) | draft | 2026-06-07 |
+| [sources/080626-wsl2-ssh-autostart.md](sources/080626-wsl2-ssh-autostart.md) | source | WSL2 SSH/Docker/Tailscale auto-start: root causes, boot script, Docker CE migration |
+| [sources/080626-k3s-install-best-practices.md](sources/080626-k3s-install-best-practices.md) | source | K3S cluster install: Tailscale networking, WSL2 quirks, cAdvisor, node-exporter, job naming |
+| [sources/080626-grafana-dashboard-best-practices.md](sources/080626-grafana-dashboard-best-practices.md) | source | Grafana 11 dashboard: variable gotchas, ds_prometheus, API patterns, no-data root causes |
+| [sources/draft/080626-k8s-dashboard-headlamp.md](sources/draft/080626-k8s-dashboard-headlamp.md) | draft | 2026-06-08 |
+| [draft/orca/100626-cover-fetch-race-fix.md](draft/orca/100626-cover-fetch-race-fix.md) | draft | Fix cover art race conditions (singleflight), K8s deploy — 10/06/2026 |
 
 
 

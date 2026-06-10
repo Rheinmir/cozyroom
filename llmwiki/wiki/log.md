@@ -1,5 +1,22 @@
 # Operation Log
 
+## 2026-06-10 — orca-workflow — cover-fetch-race-fix + K8s deploy
+
+- **Root cause**: TOCTOU race in `handler.go` — 2 concurrent requests cùng write `yt_<ytID>.jpg` → JPEG corrupt, cached 7 ngày
+- **Fix 1**: `singleflight.Group` cho `serveResizedImage` và YouTube cover fetch — chỉ 1 goroutine làm, còn lại chờ
+- **Fix 2**: `downloadYTThumbnail` thêm `context.WithTimeout(15s)` + cleanup partial write
+- **Fix 3**: `PlayerBar.tsx` stale image load callback — `cancelled = true` flag + cleanup `img.src = ''`
+- **Compile fixes (5 files)**: `*db.RDB → *sql.DB` type mismatch từ Postgres migration WIP — trending.go, eh_cached.go, db_handlers.go, scan.go, main.go
+- **K8s**: Build image, push → `100.88.197.64:5000`, `kubectl rollout restart deployment/backend` → 3 replicas Running
+- **HTML docs**: `llmwiki/html/100626-cover-race-k8s-deploy.html` — interactive node diagrams, app UI mockup before/after, code diffs
+- Files changed: `handler.go`, `scanner.go`, `PlayerBar.tsx`, `trending.go`, `eh_cached.go`, `db_handlers.go`, `scan.go`, `main.go`
+
+## 2026-06-08 — propose — k8s-dashboard-headlamp
+
+## 2026-06-08 — source — wsl2-ssh-autostart
+## 2026-06-08 — source — k3s-install-best-practices
+## 2026-06-08 — source — grafana-dashboard-best-practices
+
 ## 2026-06-06 — orca-workflow — infra-monitoring-complete
 
 ## 2026-06-06 — orca-workflow — ansible-k8s-cozyroom-deploy

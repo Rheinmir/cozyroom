@@ -11,8 +11,9 @@ import (
 	"cozyroom/internal/cron"
 	"cozyroom/internal/db"
 	"cozyroom/internal/discord"
-	"cozyroom/internal/telegram"
 	"cozyroom/internal/enricher"
+	"cozyroom/internal/teams"
+	"cozyroom/internal/telegram"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
 	repo "cozyroom/internal/repository/postgres"
@@ -28,7 +29,7 @@ func main() {
 	anthropicKey    := envOr("ANTHROPIC_API_KEY", "")
 	deepseekKey     := envOr("DEEPSEEK_API_KEY", "")
 	githubToken     := envOr("GITHUB_TOKEN", "")
-	dbPath          := envOr("DATABASE_URL", envOr("DB_PATH", "postgres://cozyroom:cozyroom@postgres:5432/cozyroom?sslmode=disable"))
+	databaseURL     := envOr("DATABASE_URL", "postgres://cozyroom:cozyroom@localhost:5432/cozyroom?sslmode=disable")
 	musicPath       := envOr("MUSIC_PATH", "/music")
 	coversDir       := envOr("COVERS_DIR", "/data/covers")
 	artistImgDir    := envOr("ARTIST_IMG_DIR", "/data/artist-images")
@@ -45,11 +46,12 @@ func main() {
 	tmdbAPIKey      := envOr("TMDB_API_KEY", "")
 	cloakProxyURL   := envOr("CLOAK_PROXY_URL", "")
 
-	database, err := db.Open(dbPath)
+	database, err := db.Open(databaseURL)
 	if err != nil {
 		log.Fatalf("open db: %v", err)
 	}
 	defer database.Close()
+	rawDB := database.DB // *sql.DB for packages that don't use the rebind wrapper
 
 	if err := os.MkdirAll(lyricsDir, 0755); err != nil {
 		log.Fatalf("create lyrics dir: %v", err)
@@ -70,9 +72,9 @@ func main() {
 		log.Fatalf("create comics dir: %v", err)
 	}
 	hlsMgr := hls.New(hlsDir)
+	hlsMgr.Watch(ctx) // detect + kill stuck ffmpeg transcode jobs
 
-	// ---- Repository layer (uses raw *sql.DB — rebind handled by db.RDB for handler queries) ----
-	rawDB := database.DB
+	// ---- Repository layer ----
 	artistRepo  := repo.NewArtistRepo(rawDB)
 	albumRepo   := repo.NewAlbumRepo(rawDB)
 	trackRepo   := repo.NewTrackRepo(rawDB)
@@ -105,8 +107,7 @@ func main() {
 		Settings:     settingsUC,
 		Playback:     playbackUC,
 		UoW:          uowFactory,
-		ScanDB:       database,
-		DBPath:       dbPath,
+		ScanDB:       rawDB,
 		MusicPath:    musicPath,
 		FilmsPath:    filmsPath,
 		CoversDir:    coversDir,
@@ -132,7 +133,7 @@ func main() {
 	})
 	go dl.Start(ctx)
 
-	cronMgr := cron.NewCronManager(database, aiHandlers)
+	cronMgr := cron.NewCronManager(rawDB, aiHandlers)
 	api.GlobalReloadCron = cronMgr.LoadAndScheduleAll
 	if err := cronMgr.Start(); err != nil {
 		log.Printf("[Cron] Start error: %v", err)
@@ -143,6 +144,8 @@ func main() {
 	if tgBot != nil {
 		tgBot.Start()
 	}
+
+	teamsBot := teams.NewTeamsBot(aiHandlers)
 
 	discordBot := discord.NewDiscordBot(aiHandlers)
 	if discordBot != nil {
@@ -155,15 +158,15 @@ func main() {
 
 	// ---- Background scan + enricher ----
 	go func() {
-		log.Printf("background scan started: %s", musicPath)
-		res, err := library.Scan(rawDB, musicPath, coversDir)
-		if err != nil {
-			log.Printf("scan error: %v", err)
-		} else {
-			log.Printf("scan done: %d tracks, %d errors", res.Tracks, res.Errors)
+		if libUC.IsEmpty(context.Background()) {
+			log.Printf("background scan started: %s", musicPath)
+			res, err := library.Scan(rawDB, musicPath, coversDir)
+			if err != nil {
+				log.Printf("scan error: %v", err)
+			} else {
+				log.Printf("scan done: %d tracks, %d errors", res.Tracks, res.Errors)
+			}
 		}
-		library.ReconcileLibrary(rawDB, musicPath, coversDir)
-		api.RepairYouTubeMetadata(database, musicPath, coversDir)
 		if videoRepo.IsEmpty(context.Background()) {
 			log.Printf("background scan videos started: %s", filmsPath)
 			if err := library.ScanVideos(rawDB, filmsPath); err != nil {
@@ -184,7 +187,6 @@ func main() {
 		if tmdbAPIKey != "" {
 			enricher.FetchVideoPosters(enricher.TMDbProvider{APIKey: tmdbAPIKey}, videoRepo, videoPosterDir)
 		}
-		library.BackfillDurations(rawDB)
 	}()
 
 	// ---- Trending repos poll (every 12h) ----
@@ -215,7 +217,28 @@ func main() {
 
 	addr := ":8080"
 	log.Printf("cozyroom listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+
+	// Wrap mux to intercept Teams webhook without circular import
+	handler := http.Handler(mux)
+	if teamsBot != nil {
+		teamsHandler := teamsBot.Handler()
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/teams/messages" && r.Method == http.MethodPost {
+				teamsHandler(w, r)
+				return
+			}
+			mux.ServeHTTP(w, r)
+		})
+	}
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,  // chặn slowloris
+		WriteTimeout:      5 * time.Minute,   // đủ cho HLS + audio stream qua 5G
+		IdleTimeout:       2 * time.Minute,   // giải phóng goroutine khi client drop
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

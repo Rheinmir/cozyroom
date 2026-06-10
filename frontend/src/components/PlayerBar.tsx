@@ -7,6 +7,7 @@ import type { ArtistDetail } from '../api'
 import Equalizer from './Equalizer'
 import LyricsView from './LyricsView'
 import type { LyricsViewHandle } from './LyricsView'
+import FavoritePill from './FavoritePill'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -68,6 +69,7 @@ export default function PlayerBar() {
     repeat, shuffleMode, quality, analyser,
     toggle, seek, prev, next,
     setRepeat, setShuffleMode, setQuality, coverColors, setCoverColors,
+    playbackError, setPlaybackError,
   } = usePlayer()
 
   const [open,         setOpen]         = useState(false)
@@ -95,10 +97,12 @@ export default function PlayerBar() {
   // ── Extract dominant colors from cover for gradient ────────────────
   useEffect(() => {
     if (!track) return
+    let cancelled = false
     const img = new Image()
     img.crossOrigin = 'Anonymous'
     img.src = `/api/covers/${track.album_id}?w=80`
     img.onload = () => {
+      if (cancelled) return
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       if (!ctx) return
@@ -106,13 +110,13 @@ export default function PlayerBar() {
       canvas.width = 1; canvas.height = 2
       ctx.drawImage(img, 0, 0, 1, 2)
       const data = ctx.getImageData(0, 0, 1, 2).data
-      
+
       const colors = []
       for (let i = 0; i < 2; i++) {
         let r = data[i * 4]
         let g = data[i * 4 + 1]
         let b = data[i * 4 + 2]
-        
+
         // Boost brightness if the color is too dark
         const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
         if (luminance < 60) {
@@ -130,6 +134,10 @@ export default function PlayerBar() {
         colors.push('#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1))
       }
       setCoverColors(colors)
+    }
+    return () => {
+      cancelled = true
+      img.src = ''
     }
   }, [track, setCoverColors])
 
@@ -188,6 +196,12 @@ export default function PlayerBar() {
             </div>
 
             <div className="player-right">
+              {/* Add to playlist pill */}
+              {track && (
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  <FavoritePill trackId={track.id} />
+                </span>
+              )}
               {/* hamburger — opens unified now-playing overlay */}
               <button className={'ctrl-btn' + (open ? ' ctrl-btn--active' : '')} onClick={() => setOpen(o => !o)} title={t('player.now_playing')}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -236,6 +250,23 @@ export default function PlayerBar() {
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
+
+              {/* Mobile Tab Switcher */}
+              <div className="npo-tabs-mobile">
+                <button 
+                  className={`npo-tab-btn ${mobileTab === 'player' ? 'npo-tab-btn--active' : ''}`} 
+                  onClick={() => setMobileTab('player')}
+                >
+                  {t('player.now_playing')}
+                </button>
+                <button 
+                  className={`npo-tab-btn ${mobileTab === 'lyrics' ? 'npo-tab-btn--active' : ''}`} 
+                  onClick={() => setMobileTab('lyrics')}
+                >
+                  {t('player.lyrics')}
+                </button>
+              </div>
+
               {/* lyrics settings — 3 dots, no circle */}
               <button className="npo-btn-dots" onClick={() => lyricsRef.current?.toggleTools()} title="Lyric settings">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -314,6 +345,18 @@ export default function PlayerBar() {
             </div>
           </div>
         </>
+      )}
+      {playbackError && (
+        <div className="playback-error-toast">
+          <div className="playback-error-icon">⚠️</div>
+          <div className="playback-error-content">
+            <div className="playback-error-title">{t('player.playback_failed')}</div>
+            <div className="playback-error-msg">
+              {t('player.playback_error', { message: playbackError.message, code: playbackError.code })}
+            </div>
+          </div>
+          <button className="playback-error-close" onClick={() => setPlaybackError(null)}>✕</button>
+        </div>
       )}
     </div>
   )

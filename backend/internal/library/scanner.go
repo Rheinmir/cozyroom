@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"fmt"
@@ -8,11 +9,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dhowden/tag"
 )
@@ -160,10 +160,9 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 		return err
 	}
 
-	durS := probeDuration(path)
 	_, err = tx.Exec(
-		`INSERT INTO tracks(id, album_id, title, track_num, duration_s, file_path, genre) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, duration_s=EXCLUDED.duration_s, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
-		trackID, albumID, trackTitle, 0, durS, path, "",
+		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=excluded.album_id, title=excluded.title, track_num=excluded.track_num, file_path=excluded.file_path, genre=excluded.genre`,
+		trackID, albumID, trackTitle, 0, path, "",
 	)
 	if err != nil {
 		return err
@@ -172,30 +171,6 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 	return tx.Commit()
 }
 
-// probeDuration calls ffprobe to get audio duration in seconds. Returns 0 on error.
-func probeDuration(path string) int {
-	out, err := exec.Command("ffprobe",
-		"-v", "error",
-		"-show_entries", "format=duration",
-		"-of", "default=noprint_wrappers=1:nokey=1",
-		path,
-	).Output()
-	if err != nil {
-		return 0
-	}
-	f, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
-	if err != nil {
-		return 0
-	}
-	return int(f)
-}
-
-// DownloadYTThumbnail fetches a YouTube thumbnail synchronously to destPath.
-func DownloadYTThumbnail(ytID, destPath string) { downloadYTThumbnail(ytID, destPath) }
-
-// AlbumID returns the album ID that would be assigned to an artist+title pair.
-func AlbumID(artist, title string) string { return id8(id8(artist) + title) }
-
 func downloadYTThumbnail(ytID, destPath string) {
 	urls := []string{
 		"https://img.youtube.com/vi/" + ytID + "/maxresdefault.jpg",
@@ -203,164 +178,38 @@ func downloadYTThumbnail(ytID, destPath string) {
 		"https://img.youtube.com/vi/" + ytID + "/mqdefault.jpg",
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
 	for _, url := range urls {
-		resp, err := http.Get(url)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			continue
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil {
 				resp.Body.Close()
 			}
 			continue
 		}
-		
+
 		out, err := os.Create(destPath)
 		if err != nil {
 			resp.Body.Close()
 			return
 		}
-		
-		_, err = io.Copy(out, resp.Body)
+
+		_, copyErr := io.Copy(out, resp.Body)
 		out.Close()
 		resp.Body.Close()
-		
-		if err == nil {
+
+		if copyErr == nil {
 			log.Printf("youtube download cover: successfully saved cover to %s", destPath)
 			return
 		}
+		os.Remove(destPath)
 	}
-}
-
-// ReconcileResult holds the outcome of a reconciliation run.
-type ReconcileResult struct {
-	Removed int // DB entries removed because file missing on disk
-	Added   int // files found on disk that were not in DB
-	Errors  int
-}
-
-// ReconcileLibrary ensures DB and disk are in sync:
-//   - Removes DB track entries whose file_path no longer exists on disk.
-//   - Indexes audio files found on disk that have no DB entry.
-//
-// Safe to run at any time; all SQL uses ON CONFLICT semantics.
-func ReconcileLibrary(db *sql.DB, musicPath, coversDir string) ReconcileResult {
-	var res ReconcileResult
-
-	// ── Pass 1: DB → disk (remove orphan DB entries) ──────────────────────────
-	rows, err := db.Query(`SELECT id, file_path FROM tracks`)
-	if err != nil {
-		log.Printf("reconcile: query tracks: %v", err)
-		res.Errors++
-		return res
-	}
-	type entry struct{ id, path string }
-	var all []entry
-	for rows.Next() {
-		var e entry
-		if rows.Scan(&e.id, &e.path) == nil {
-			all = append(all, e)
-		}
-	}
-	rows.Close()
-
-	for _, e := range all {
-		if _, err := os.Stat(e.path); os.IsNotExist(err) {
-			db.Exec(`DELETE FROM tracks WHERE id = $1`, e.id)
-			log.Printf("reconcile: removed orphan track %s (missing file: %s)", e.id, e.path)
-			res.Removed++
-		}
-	}
-
-	// ── Pass 2: disk → DB (index any untracked audio files) ───────────────────
-	// Build set of known file_paths for fast lookup.
-	known := make(map[string]bool, len(all))
-	rows2, err := db.Query(`SELECT file_path FROM tracks`)
-	if err == nil {
-		defer rows2.Close()
-		for rows2.Next() {
-			var p string
-			if rows2.Scan(&p) == nil {
-				known[p] = true
-			}
-		}
-	}
-
-	exts := map[string]bool{
-		".flac": true, ".mp3": true, ".opus": true,
-		".m4a": true, ".webm": true, ".wav": true,
-	}
-	err = filepath.WalkDir(musicPath, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		ext := strings.ToLower(filepath.Ext(path))
-		if !exts[ext] {
-			return nil
-		}
-		// Translate to container path (/music/...) from walk path.
-		containerPath := "/music" + path[len(musicPath):]
-		if known[containerPath] {
-			return nil
-		}
-		// File exists on disk but not in DB — index it.
-		tx, err := db.Begin()
-		if err != nil {
-			res.Errors++
-			return nil
-		}
-		if err := indexFile(tx, path, coversDir); err != nil {
-			tx.Rollback()
-			log.Printf("reconcile: index %s: %v", path, err)
-			res.Errors++
-		} else {
-			tx.Commit()
-			log.Printf("reconcile: indexed missing file %s", path)
-			res.Added++
-		}
-		return nil
-	})
-	if err != nil {
-		log.Printf("reconcile: walk error: %v", err)
-		res.Errors++
-	}
-
-	if res.Removed > 0 || res.Added > 0 || res.Errors > 0 {
-		log.Printf("reconcile: removed=%d added=%d errors=%d", res.Removed, res.Added, res.Errors)
-	} else {
-		log.Printf("reconcile: library consistent — no discrepancies")
-	}
-	return res
-}
-
-// BackfillDurations updates duration_s for tracks where it is 0 or NULL.
-// Runs ffprobe against the file_path for each such track.
-func BackfillDurations(db *sql.DB) {
-	rows, err := db.Query(`SELECT id, file_path FROM tracks WHERE duration_s IS NULL OR duration_s = 0`)
-	if err != nil {
-		log.Printf("backfill durations: query: %v", err)
-		return
-	}
-	defer rows.Close()
-	type entry struct{ id, path string }
-	var todo []entry
-	for rows.Next() {
-		var e entry
-		if rows.Scan(&e.id, &e.path) == nil {
-			todo = append(todo, e)
-		}
-	}
-	rows.Close()
-	if len(todo) == 0 {
-		return
-	}
-	log.Printf("backfill durations: probing %d tracks", len(todo))
-	updated := 0
-	for _, e := range todo {
-		d := probeDuration(e.path)
-		if d > 0 {
-			db.Exec(`UPDATE tracks SET duration_s = $1 WHERE id = $2`, d, e.id)
-			updated++
-		}
-	}
-	log.Printf("backfill durations: updated %d/%d tracks", updated, len(todo))
 }
 
 // IsEmpty returns true when the tracks table has no rows.
@@ -447,10 +296,9 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 		return err
 	}
 
-	durS := probeDuration(path)
 	_, err = tx.Exec(
-		`INSERT INTO tracks(id, album_id, title, track_num, duration_s, file_path, genre) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT(id) DO UPDATE SET album_id=EXCLUDED.album_id, title=EXCLUDED.title, track_num=EXCLUDED.track_num, duration_s=EXCLUDED.duration_s, file_path=EXCLUDED.file_path, genre=EXCLUDED.genre`,
-		trackID, albumID, trackTitle, trackNum, durS, path, genre,
+		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=excluded.album_id, title=excluded.title, track_num=excluded.track_num, file_path=excluded.file_path, genre=excluded.genre`,
+		trackID, albumID, trackTitle, trackNum, path, genre,
 	)
 	return err
 }
@@ -459,6 +307,3 @@ func id8(s string) string {
 	h := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(s))))
 	return fmt.Sprintf("%x", h[:8])
 }
-
-// TrackIDFromPath returns the track ID that would be assigned to a file at the given path.
-func TrackIDFromPath(path string) string { return id8(path) }

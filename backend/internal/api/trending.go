@@ -1,17 +1,17 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"sync/atomic"
 	"time"
 
-	"cozyroom/internal/db"
 	"cozyroom/internal/enricher"
 )
 
 type TrendingHandlers struct {
-	db            *db.RDB
+	db            *sql.DB
 	geminiKey     string
 	openRouterKey string
 	githubToken   string
@@ -60,7 +60,7 @@ func (h *TrendingHandlers) listTrending(w http.ResponseWriter, r *http.Request) 
 		       COALESCE(d.impact_score,0), COALESCE(d.impact_label,'')
 		FROM trending_daily d
 		JOIN trending_repos r ON r.id = d.repo_id
-		WHERE d.date = ?
+		WHERE d.date = $1
 		ORDER BY d.impact_score DESC, star_delta DESC, d.stars DESC
 	`, date)
 	if err != nil {
@@ -124,10 +124,10 @@ func (h *TrendingHandlers) refresh(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		enricher.SaveTrendingSnapshot(h.db.DB, repos)
-		enricher.BackfillStarHistory(h.db.DB, repos, h.githubToken)
+		enricher.SaveTrendingSnapshot(h.db, repos)
+		enricher.BackfillStarHistory(h.db, repos, h.githubToken)
 		if h.geminiKey != "" || h.openRouterKey != "" {
-			enricher.EnrichWithAI(h.db.DB, h.geminiKey, h.openRouterKey)
+			enricher.EnrichWithAI(h.db, h.geminiKey, h.openRouterKey)
 		}
 	}()
 	w.Header().Set("Content-Type", "application/json")
@@ -144,7 +144,7 @@ func (h *TrendingHandlers) repoHistory(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := h.db.Query(`
 		SELECT sampled_at, stars FROM trending_star_history
-		WHERE repo_id = ? ORDER BY sampled_at ASC
+		WHERE repo_id = $1 ORDER BY sampled_at ASC
 	`, id)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
