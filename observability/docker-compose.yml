@@ -21,6 +21,15 @@ services:
     command:
       - --web.listen-address=0.0.0.0:9091
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    network_mode: host
+    restart: unless-stopped
+    command: tunnel --metrics 0.0.0.0:2000 run homelab
+    volumes:
+      - ~/.cloudflared:/home/nonroot/.cloudflared:ro
+
   grafana:
     image: grafana/grafana:13.0.1
     container_name: grafana
@@ -34,3 +43,4 @@ services:
       GF_PATHS_PLUGINS: /var/lib/grafana/plugins
     volumes:
       - ./grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning:ro

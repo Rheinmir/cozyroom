@@ -1,5 +1,7 @@
 # Operation Log
 
+## 2026-06-11 — harness-update — migrate/update xong, nợ đã backfill: 0 file
+
 ## 2026-06-10 — orca-workflow — cover-fetch-race-fix + K8s deploy
 
 - **Root cause**: TOCTOU race in `handler.go` — 2 concurrent requests cùng write `yt_<ytID>.jpg` → JPEG corrupt, cached 7 ngày
@@ -899,3 +901,23 @@
 - All files have `## Origin` sections
 - Updated `wiki/index.md` with 7 new concept entries
 
+
+## 2026-06-11 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+- ⚠ CÓ NỢ wiki (thiếu Origin / index lệch) — backfill trước khi tin Stop hook
+
+## 2026-06-11 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+- ⚠ CÓ NỢ wiki (thiếu Origin / index lệch) — backfill trước khi tin Stop hook
+
+## 2026-06-11 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+- ⚠ CÓ NỢ wiki (thiếu Origin / index lệch) — backfill trước khi tin Stop hook
+
+## 2026-06-11 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+
+## 2026-06-11 — harness-update — migrate/update xong, nợ đã backfill: 12 file
+
+## 2026-06-11 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)

@@ -2,49 +2,28 @@ package api
 
 import (
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
-	"cozyroom/internal/db"
 	"cozyroom/internal/mcp"
 )
 
 const aiSystemPromptBase = `Assistant cho Cozyroom music app. Dùng tools để tìm nhạc, phát bài, tải YouTube, quản lý playlist. Trả lời tiếng Việt nếu user nói tiếng Việt.
 Sau khi gọi tool xong, LUÔN viết 1 câu thông báo kết quả cho user bằng tiếng Việt. Không được trả lời rỗng.
-Khi user nói sở thích, thói quen, hoặc bạn học được điều quan trọng về user → dùng remember() để lưu ngay.
-Khi cần context về user trước khi trả lời → dùng recall() trước.
-
-FLOW CÁC TOOL QUAN TRỌNG:
-
-[Phát nhạc từ thư viện]
-search_music(query) → lấy track.id → play_track(id)
-
-[Playlist đầy đủ]
-create_playlist(name) → lấy playlist_id
-search_music(query) → lấy track_id (KHÔNG dùng playlist_id cho bước này)
-add_to_playlist(playlist_id, track_id) × N bài
-play_playlist(playlist_id)
-
-[Download YouTube + thêm playlist]
-search_youtube(query) → lấy video.id
-download_youtube(id, title, artist) → nhận track_id trực tiếp
-add_to_playlist(playlist_id, track_id) — dùng track_id từ download, KHÔNG search_music lại
-
-[Phát YouTube trực tiếp không lưu]
-search_youtube(query) → lấy video.id → play_youtube_stream(id, title, artist)
-
-QUY TẮC BẮT BUỘC:
-- play_track nhận track id từ search_music/list_tracks — KHÔNG nhận playlist_id
-- download_youtube tự index vào thư viện — KHÔNG gọi scan_library sau
-- Tối thiểu tool call: không gọi get_stats, list_artists thừa
-- set_shuffle_mode("smart") sau play_track để bật Smart Mix`
+Khi user nói sở thích, thói quen, hoặc bạn học được điều quan trọng về user → dùng remember() để lưu ngay (scope="user" mặc định).
+Khi muốn lưu thứ gì chỉ cho cuộc hội thoại hiện tại → remember() với scope="session".
+Khi muốn lưu cài đặt toàn app (tất cả users) → remember() với scope="app".
+Context về user đã được tự động inject vào prompt — KHÔNG cần gọi recall() trước mỗi câu trả lời.
+QUAN TRỌNG về playlist:
+- create_playlist trả về playlist_id — KHÔNG phải track id, KHÔNG dùng làm input cho play_track.
+- Để tạo playlist và phát: (1) create_playlist → lấy playlist_id, (2) search_music → lấy track id thật, (3) add_to_playlist với track id thật, (4) play_playlist với playlist_id.
+- play_track chỉ nhận track id từ search_music hoặc list_tracks.`
 
 // aiSystemPrompt returns base prompt + memories + optional now-playing context.
 func (h *AIHandlers) aiSystemPromptWith(np *nowPlayingInfo) string {
@@ -57,27 +36,44 @@ func (h *AIHandlers) aiSystemPromptWith(np *nowPlayingInfo) string {
 	return base
 }
 
-// aiSystemPrompt returns base prompt + top agent memories injected.
+// aiSystemPrompt returns base prompt + user memories + app-wide settings injected.
 func (h *AIHandlers) aiSystemPrompt() string {
 	if h.db == nil {
 		return aiSystemPromptBase
 	}
-	rows, err := h.db.Query(
-		`SELECT key, value FROM agent_memory ORDER BY updated_at DESC LIMIT 8`)
+	// User-scoped memories (most recent 8)
+	userRows, err := h.db.Query(
+		`SELECT key, value FROM agent_state WHERE scope='user' AND scope_id='default' ORDER BY updated_at DESC LIMIT 8`)
 	if err != nil {
 		return aiSystemPromptBase
 	}
-	defer rows.Close()
-	var parts []string
-	for rows.Next() {
+	defer userRows.Close()
+	var userParts []string
+	for userRows.Next() {
 		var k, v string
-		rows.Scan(&k, &v)
-		parts = append(parts, k+": "+v)
+		userRows.Scan(&k, &v)
+		userParts = append(userParts, k+": "+v)
 	}
-	if len(parts) == 0 {
-		return aiSystemPromptBase
+	// App-wide settings
+	appRows, _ := h.db.Query(
+		`SELECT key, value FROM agent_state WHERE scope='app' AND scope_id='global' ORDER BY updated_at DESC LIMIT 5`)
+	var appParts []string
+	if appRows != nil {
+		defer appRows.Close()
+		for appRows.Next() {
+			var k, v string
+			appRows.Scan(&k, &v)
+			appParts = append(appParts, k+": "+v)
+		}
 	}
-	return aiSystemPromptBase + "\n\nBạn nhớ về user:\n- " + strings.Join(parts, "\n- ")
+	result := aiSystemPromptBase
+	if len(userParts) > 0 {
+		result += "\n\nBạn nhớ về user:\n- " + strings.Join(userParts, "\n- ")
+	}
+	if len(appParts) > 0 {
+		result += "\n\nCài đặt ứng dụng:\n- " + strings.Join(appParts, "\n- ")
+	}
+	return result
 }
 
 type AIHandlers struct {
@@ -86,7 +82,7 @@ type AIHandlers struct {
 	openRouterKey string
 	deepseekKey   string
 	tools         []mcp.Tool
-	db            *db.RDB
+	db            *sql.DB
 }
 
 type ChatMessage struct {
@@ -169,14 +165,10 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 	var finalText string
 	var actions []map[string]any
 	var toolErrors []string
-	var totalIn, totalOut, totalCachedIn int
-	toolCache := map[string]string{} // key: "toolname|input_json" → cached result
+	var totalIn, totalOut int
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 6; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
-		if dp, ok := provider.(*deepseekProvider); ok {
-			totalCachedIn += dp.lastCacheHit
-		}
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "429") {
@@ -197,14 +189,6 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 
 		results := make([]string, len(calls))
 		for j, tc := range calls {
-			inputJSON, _ := json.Marshal(tc.Input)
-			cacheKey := tc.Name + "|" + string(inputJSON)
-
-			if cached, hit := toolCache[cacheKey]; hit {
-				results[j] = cached
-				continue
-			}
-
 			tool, found := byName[tc.Name]
 			if !found {
 				msg := tc.Name + ": tool not found"
@@ -233,18 +217,11 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			b, _ := json.Marshal(result)
-			r := mcp.TruncStr(string(b), 1500)
-			toolCache[cacheKey] = r
-			results[j] = r
+			results[j] = string(b)
 		}
 
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
-
-		if totalIn > 90_000 {
-			finalText = "Context quá lớn — dừng sớm. Thử yêu cầu cụ thể hơn."
-			break
-		}
 	}
 
 	// fallback: model called tools but returned no text
@@ -270,7 +247,7 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 	modelID := provider.ModelID()
 	providerName := provider.Provider()
 
-	logID := h.saveLog(req.Message, finalText, actions, toolErrors, modelID, providerName, req.SessionID, totalIn, totalOut, totalCachedIn, int(time.Since(start).Milliseconds()))
+	logID := h.saveLog(req.Message, finalText, actions, toolErrors, modelID, providerName, req.SessionID, totalIn, totalOut, int(time.Since(start).Milliseconds()))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(chatResponse{
@@ -361,14 +338,10 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 	var finalText string
 	var actions []map[string]any
 	var toolErrors []string
-	var totalIn, totalOut, totalCachedIn int
-	toolCache := map[string]string{}
+	var totalIn, totalOut int
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 6; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
-		if dp, ok := provider.(*deepseekProvider); ok {
-			totalCachedIn += dp.lastCacheHit
-		}
 		if err != nil {
 			if strings.Contains(err.Error(), "429") {
 				send(map[string]any{"error": "Model đang bị rate-limit. Thử lại sau vài giây."})
@@ -388,14 +361,6 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 
 		results := make([]string, len(calls))
 		for j, tc := range calls {
-			inputJSON, _ := json.Marshal(tc.Input)
-			cacheKey := tc.Name + "|" + string(inputJSON)
-
-			if cached, hit := toolCache[cacheKey]; hit {
-				results[j] = cached
-				continue
-			}
-
 			if s, ok := toolStatusVN[tc.Name]; ok {
 				send(map[string]any{"status": s})
 			}
@@ -430,18 +395,10 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			b, _ := json.Marshal(result)
-			r := mcp.TruncStr(string(b), 1500)
-			toolCache[cacheKey] = r
-			results[j] = r
+			results[j] = string(b)
 		}
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
-
-		if totalIn > 90_000 {
-			send(map[string]any{"status": "⚠️ Context quá lớn, dừng sớm"})
-			finalText = "Context quá lớn — dừng sớm. Thử yêu cầu cụ thể hơn."
-			break
-		}
 	}
 
 	if finalText == "" {
@@ -465,7 +422,7 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 
 	modelID := provider.ModelID()
 	providerName := provider.Provider()
-	logID := h.saveLog(req.Message, finalText, actions, toolErrors, modelID, providerName, req.SessionID, totalIn, totalOut, totalCachedIn, int(time.Since(start).Milliseconds()))
+	logID := h.saveLog(req.Message, finalText, actions, toolErrors, modelID, providerName, req.SessionID, totalIn, totalOut, int(time.Since(start).Milliseconds()))
 
 	send(map[string]any{
 		"text":       finalText,
@@ -485,13 +442,15 @@ func (h *AIHandlers) memoryList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := h.db.QueryContext(r.Context(),
-		`SELECT key, value, updated_at FROM agent_memory ORDER BY updated_at DESC`)
+		`SELECT scope, scope_id, key, value, updated_at FROM agent_state ORDER BY updated_at DESC`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 	type fact struct {
+		Scope     string `json:"scope"`
+		ScopeID   string `json:"scope_id"`
 		Key       string `json:"key"`
 		Value     string `json:"value"`
 		UpdatedAt string `json:"updated_at"`
@@ -499,7 +458,7 @@ func (h *AIHandlers) memoryList(w http.ResponseWriter, r *http.Request) {
 	var facts []fact
 	for rows.Next() {
 		var f fact
-		rows.Scan(&f.Key, &f.Value, &f.UpdatedAt)
+		rows.Scan(&f.Scope, &f.ScopeID, &f.Key, &f.Value, &f.UpdatedAt)
 		facts = append(facts, f)
 	}
 	if facts == nil {
@@ -509,7 +468,7 @@ func (h *AIHandlers) memoryList(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{"facts": facts})
 }
 
-// PUT /api/ai/memory — bulk import (replaces all)
+// PUT /api/ai/memory — bulk import (replaces all user-scoped state)
 func (h *AIHandlers) memoryImport(w http.ResponseWriter, r *http.Request) {
 	if h.db == nil {
 		http.Error(w, "no db", http.StatusServiceUnavailable)
@@ -531,13 +490,14 @@ func (h *AIHandlers) memoryImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	tx.Exec(`DELETE FROM agent_memory`)
+	tx.Exec(`DELETE FROM agent_state WHERE scope='user' AND scope_id='default'`)
+	now := time.Now().UTC().Add(7 * time.Hour).Format("2006-01-02 15:04:05")
 	for _, f := range body.Facts {
 		if strings.TrimSpace(f.Key) == "" {
 			continue
 		}
-		tx.Exec(`INSERT INTO agent_memory (key, value, updated_at) VALUES (?, ?, (NOW() + INTERVAL '7 hours')::TEXT) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`,
-			strings.TrimSpace(f.Key), f.Value)
+		tx.Exec(`INSERT INTO agent_state (scope, scope_id, key, value, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+			"user", "default", strings.TrimSpace(f.Key), f.Value, now)
 	}
 	if err := tx.Commit(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -558,7 +518,9 @@ func (h *AIHandlers) memoryDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "key required", http.StatusBadRequest)
 		return
 	}
-	h.db.ExecContext(r.Context(), `DELETE FROM agent_memory WHERE key = ?`, key)
+	// Delete from user scope (default); frontend only manages user-scoped state
+	h.db.ExecContext(r.Context(),
+		`DELETE FROM agent_state WHERE scope='user' AND scope_id='default' AND key=$1`, key)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"ok": true})
 }
@@ -579,13 +541,13 @@ func (h *AIHandlers) logs(w http.ResponseWriter, r *http.Request) {
 		offset = v
 	}
 
-	base := `SELECT id, created_at, model, provider, user_msg, ai_msg, actions, failed, fail_reason, tokens_in, tokens_out, COALESCE(tool_errors,'[]'), COALESCE(tokens_cached_in,0) FROM chat_logs`
+	base := `SELECT id, created_at, model, provider, user_msg, ai_msg, actions, failed, fail_reason, tokens_in, tokens_out, COALESCE(tool_errors,'[]') FROM chat_logs`
 	var rows *sql.Rows
 	var err error
 	if failedOnly {
-		rows, err = h.db.QueryContext(r.Context(), base+` WHERE failed=1 ORDER BY created_at DESC LIMIT ? OFFSET ?`, limit, offset)
+		rows, err = h.db.QueryContext(r.Context(), base+` WHERE failed=1 ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
 	} else {
-		rows, err = h.db.QueryContext(r.Context(), base+` ORDER BY created_at DESC LIMIT ? OFFSET ?`, limit, offset)
+		rows, err = h.db.QueryContext(r.Context(), base+` ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -594,24 +556,23 @@ func (h *AIHandlers) logs(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type logEntry struct {
-		ID             string `json:"id"`
-		CreatedAt      string `json:"created_at"`
-		Model          string `json:"model"`
-		Provider       string `json:"provider"`
-		UserMsg        string `json:"user_msg"`
-		AiMsg          string `json:"ai_msg"`
-		Actions        string `json:"actions"`
-		Failed         int    `json:"failed"`
-		FailReason     string `json:"fail_reason"`
-		TokensIn       int    `json:"tokens_in"`
-		TokensOut      int    `json:"tokens_out"`
-		ToolErrors     string `json:"tool_errors"`
-		TokensCachedIn int    `json:"tokens_cached_in"`
+		ID         string `json:"id"`
+		CreatedAt  string `json:"created_at"`
+		Model      string `json:"model"`
+		Provider   string `json:"provider"`
+		UserMsg    string `json:"user_msg"`
+		AiMsg      string `json:"ai_msg"`
+		Actions    string `json:"actions"`
+		Failed     int    `json:"failed"`
+		FailReason string `json:"fail_reason"`
+		TokensIn   int    `json:"tokens_in"`
+		TokensOut  int    `json:"tokens_out"`
+		ToolErrors string `json:"tool_errors"`
 	}
 	var entries []logEntry
 	for rows.Next() {
 		var e logEntry
-		rows.Scan(&e.ID, &e.CreatedAt, &e.Model, &e.Provider, &e.UserMsg, &e.AiMsg, &e.Actions, &e.Failed, &e.FailReason, &e.TokensIn, &e.TokensOut, &e.ToolErrors, &e.TokensCachedIn)
+		rows.Scan(&e.ID, &e.CreatedAt, &e.Model, &e.Provider, &e.UserMsg, &e.AiMsg, &e.Actions, &e.Failed, &e.FailReason, &e.TokensIn, &e.TokensOut, &e.ToolErrors)
 		entries = append(entries, e)
 	}
 	if entries == nil {
@@ -656,7 +617,7 @@ func (h *AIHandlers) stats(w http.ResponseWriter, r *http.Request) {
 	var daily []dayStat
 	rows, err := h.db.QueryContext(r.Context(),
 		`SELECT substr(created_at,1,10) d, COUNT(*) c, SUM(failed), SUM(tokens_in), SUM(tokens_out), AVG(NULLIF(response_ms,0))
-		 FROM chat_logs WHERE created_at >= to_char(CURRENT_DATE - INTERVAL '30 days', 'YYYY-MM-DD') GROUP BY d ORDER BY d`)
+		 FROM chat_logs WHERE created_at >= date('now','-30 days') GROUP BY d ORDER BY d`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -832,9 +793,11 @@ func (h *AIHandlers) extremes(w http.ResponseWriter, r *http.Request) {
 
 	where := "WHERE tokens_in > 0"
 	args  := []any{}
-	if modelF != "" { where += " AND model = ?"; args = append(args, modelF) }
-	if fromF  != "" { where += " AND created_at >= ?"; args = append(args, fromF) }
-	if toF    != "" { where += " AND created_at <= ?"; args = append(args, toF+" 23:59:59") }
+	n := 1
+	if modelF != "" { where += fmt.Sprintf(" AND model = $%d", n); args = append(args, modelF); n++ }
+	if fromF  != "" { where += fmt.Sprintf(" AND created_at >= $%d", n); args = append(args, fromF); n++ }
+	if toF    != "" { where += fmt.Sprintf(" AND created_at <= $%d", n); args = append(args, toF+" 23:59:59"); n++ }
+	_ = n
 
 	scanLog := func(log *extremeLog, extra string, extraArgs ...any) {
 		a := append(args, extraArgs...)
@@ -855,106 +818,72 @@ func (h *AIHandlers) extremes(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/ai/ocr-pricing — tesseract OCR → DeepSeek extracts model prices from a screenshot.
-// POST /api/ai/ocr-text — run tesseract only, return raw text
-func (h *AIHandlers) ocrText(w http.ResponseWriter, r *http.Request) {
+// POST /api/ai/ocr-pricing — vision model extracts model prices from a screenshot.
+func (h *AIHandlers) ocrPricing(w http.ResponseWriter, r *http.Request) {
+	if h.openRouterKey == "" {
+		http.Error(w, "no OpenRouter key", http.StatusServiceUnavailable)
+		return
+	}
 	var req struct {
 		ImageB64 string `json:"image_b64"`
 		Mime     string `json:"mime"`
+		Prompt   string `json:"prompt"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ImageB64 == "" {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	imgBytes, err := base64.StdEncoding.DecodeString(req.ImageB64)
+	mime := req.Mime
+	if mime == "" {
+		mime = "image/png"
+	}
+	prompt := req.Prompt
+	if prompt == "" {
+		prompt = `Extract model pricing from this image. Return ONLY a JSON array (no markdown, no explanation): [{"model":"<exact model id>","input_per_1m":<number>,"output_per_1m":<number>}]. Prices in USD per 1 million tokens. Only include rows you can clearly read.`
+	}
+	dataURL := "data:" + mime + ";base64," + req.ImageB64
+	bodyMap := map[string]any{
+		"model": "google/gemini-2.0-flash-001",
+		"messages": []map[string]any{{
+			"role": "user",
+			"content": []map[string]any{
+				{"type": "image_url", "image_url": map[string]string{"url": dataURL}},
+				{"type": "text", "text": prompt},
+			},
+		}},
+	}
+	ocrBody, _ := json.Marshal(bodyMap)
+	req2, err := http.NewRequestWithContext(r.Context(), http.MethodPost, "https://openrouter.ai/api/v1/chat/completions", strings.NewReader(string(ocrBody)))
 	if err != nil {
-		http.Error(w, "invalid base64", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmp, err := os.CreateTemp("", "ocr-*.png")
+	req2.Header.Set("Authorization", "Bearer "+h.openRouterKey)
+	req2.Header.Set("content-type", "application/json")
+	req2.Header.Set("HTTP-Referer", "https://cozyroom.app")
+	resp, err := aiHTTPClient.Do(req2)
 	if err != nil {
-		http.Error(w, "temp file error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	defer os.Remove(tmp.Name())
-	tmp.Write(imgBytes)
-	tmp.Close()
-	out, err := exec.CommandContext(r.Context(), "tesseract", tmp.Name(), "stdout", "--psm", "6").Output()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("tesseract error: %v", err), http.StatusInternalServerError)
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, fmt.Sprintf("openrouter %d: %s", resp.StatusCode, raw), http.StatusBadGateway)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"text": strings.TrimSpace(string(out))})
-}
-
-// POST /api/ai/ocr-pricing — tesseract OCR → DeepSeek extracts model prices.
-// If request has "text" field, skip tesseract and use that text directly.
-func (h *AIHandlers) ocrPricing(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		ImageB64 string `json:"image_b64"`
-		Mime     string `json:"mime"`
-		Text     string `json:"text"` // pre-extracted OCR text (skip tesseract if set)
+	var parsed struct {
+		Choices []struct {
+			Message struct{ Content string `json:"content"` } `json:"message"`
+		} `json:"choices"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
+	json.Unmarshal(raw, &parsed)
+	content := ""
+	if len(parsed.Choices) > 0 {
+		content = parsed.Choices[0].Message.Content
 	}
-
-	var ocrText string
-	if req.Text != "" {
-		ocrText = strings.TrimSpace(req.Text)
-	} else {
-		if req.ImageB64 == "" {
-			http.Error(w, "image_b64 or text required", http.StatusBadRequest)
-			return
-		}
-		imgBytes, err := base64.StdEncoding.DecodeString(req.ImageB64)
-		if err != nil {
-			http.Error(w, "invalid base64", http.StatusBadRequest)
-			return
-		}
-		tmp, err := os.CreateTemp("", "ocr-*.png")
-		if err != nil {
-			http.Error(w, "temp file error", http.StatusInternalServerError)
-			return
-		}
-		defer os.Remove(tmp.Name())
-		tmp.Write(imgBytes)
-		tmp.Close()
-		out, err := exec.CommandContext(r.Context(), "tesseract", tmp.Name(), "stdout", "--psm", "6").Output()
-		if err != nil {
-			http.Error(w, fmt.Sprintf("tesseract error: %v", err), http.StatusInternalServerError)
-			return
-		}
-		ocrText = strings.TrimSpace(string(out))
-	}
-
-	if ocrText == "" {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"prices": []any{}, "ocr_text": ""})
-		return
-	}
-
-	// Send OCR text to DeepSeek for structured extraction
-	prompt := `Extract model pricing from the following OCR text. Return ONLY a JSON array (no markdown, no explanation):
-[{"model":"<exact model id>","input_per_1m":<cache miss input price>,"output_per_1m":<output price>,"cached_input_per_1m":<cache hit input price or null>,"cached_output_per_1m":<cache hit output price or null>}]
-Rules:
-- input_per_1m = "CACHE MISS" input price (or regular input if no cache)
-- cached_input_per_1m = "CACHE HIT" input price (null if not present)
-- Prices in USD per 1M tokens as plain numbers (no $ sign)
-- Only include models you can clearly read
-
-OCR TEXT:
-` + ocrText
-
-	aiResp, _, err := h.ExecutePrompt("ocr-pricing", prompt, nil, "")
-	if err != nil {
-		http.Error(w, fmt.Sprintf("AI error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	content := strings.TrimSpace(aiResp)
+	// strip markdown code fences if present
+	content = strings.TrimSpace(content)
 	if idx := strings.Index(content, "["); idx >= 0 {
 		content = content[idx:]
 	}
@@ -966,7 +895,7 @@ OCR TEXT:
 		prices = []map[string]any{}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"prices": prices, "ocr_text": ocrText})
+	json.NewEncoder(w).Encode(map[string]any{"prices": prices})
 }
 
 // GET /api/ai/model-prices
@@ -976,13 +905,11 @@ func (h *AIHandlers) modelPricesList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type priceRow struct {
-		Model     string  `json:"model"`
-		PriceIn   float64 `json:"price_in"`
-		PriceOut  float64 `json:"price_out"`
-		CachedIn  float64 `json:"cached_in"`
-		CachedOut float64 `json:"cached_out"`
+		Model    string  `json:"model"`
+		PriceIn  float64 `json:"price_in"`
+		PriceOut float64 `json:"price_out"`
 	}
-	rows, err := h.db.QueryContext(r.Context(), `SELECT model, price_in, price_out, COALESCE(cached_in,0), COALESCE(cached_out,0) FROM ai_model_prices ORDER BY model`)
+	rows, err := h.db.QueryContext(r.Context(), `SELECT model, price_in, price_out FROM ai_model_prices ORDER BY model`)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode([]priceRow{})
@@ -992,7 +919,7 @@ func (h *AIHandlers) modelPricesList(w http.ResponseWriter, r *http.Request) {
 	list := []priceRow{}
 	for rows.Next() {
 		var p priceRow
-		rows.Scan(&p.Model, &p.PriceIn, &p.PriceOut, &p.CachedIn, &p.CachedOut)
+		rows.Scan(&p.Model, &p.PriceIn, &p.PriceOut)
 		list = append(list, p)
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1006,11 +933,9 @@ func (h *AIHandlers) modelPricesUpsert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var prices []struct {
-		Model     string  `json:"model"`
-		PriceIn   float64 `json:"price_in"`
-		PriceOut  float64 `json:"price_out"`
-		CachedIn  float64 `json:"cached_in"`
-		CachedOut float64 `json:"cached_out"`
+		Model    string  `json:"model"`
+		PriceIn  float64 `json:"price_in"`
+		PriceOut float64 `json:"price_out"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&prices); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -1022,9 +947,9 @@ func (h *AIHandlers) modelPricesUpsert(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		h.db.ExecContext(r.Context(),
-			`INSERT INTO ai_model_prices(model, price_in, price_out, cached_in, cached_out, updated_at) VALUES(?,?,?,?,?,?)
-			 ON CONFLICT(model) DO UPDATE SET price_in=excluded.price_in, price_out=excluded.price_out, cached_in=excluded.cached_in, cached_out=excluded.cached_out, updated_at=excluded.updated_at`,
-			p.Model, p.PriceIn, p.PriceOut, p.CachedIn, p.CachedOut, now)
+			`INSERT INTO ai_model_prices(model, price_in, price_out, updated_at) VALUES($1,$2,$3,$4)
+			 ON CONFLICT(model) DO UPDATE SET price_in=excluded.price_in, price_out=excluded.price_out, updated_at=excluded.updated_at`,
+			p.Model, p.PriceIn, p.PriceOut, now)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -1040,8 +965,10 @@ func (h *AIHandlers) statsDaily(w http.ResponseWriter, r *http.Request) {
 	to   := q.Get("to")
 	where := "WHERE 1=1"
 	args  := []any{}
-	if from != "" { where += " AND created_at >= ?"; args = append(args, from) }
-	if to   != "" { where += " AND created_at <= ?"; args = append(args, to+" 23:59:59") }
+	n2 := 1
+	if from != "" { where += fmt.Sprintf(" AND created_at >= $%d", n2); args = append(args, from); n2++ }
+	if to   != "" { where += fmt.Sprintf(" AND created_at <= $%d", n2); args = append(args, to+" 23:59:59"); n2++ }
+	_ = n2
 	rows, err := h.db.QueryContext(r.Context(),
 		`SELECT substr(created_at,1,10) d, COALESCE(NULLIF(model,''),'unknown'), SUM(tokens_in), SUM(tokens_out)
 		 FROM chat_logs `+where+` GROUP BY d, model ORDER BY d`, args...)
@@ -1067,7 +994,7 @@ func (h *AIHandlers) statsDaily(w http.ResponseWriter, r *http.Request) {
 }
 
 // saveLog persists a chat turn to chat_logs in UTC+7 and returns the log ID.
-func (h *AIHandlers) saveLog(userMsg, aiMsg string, actions []map[string]any, toolErrors []string, model, provider, sessionID string, tokIn, tokOut, tokCachedIn, responseMs int) string {
+func (h *AIHandlers) saveLog(userMsg, aiMsg string, actions []map[string]any, toolErrors []string, model, provider, sessionID string, tokIn, tokOut, responseMs int) string {
 	if h.db == nil {
 		return ""
 	}
@@ -1081,9 +1008,9 @@ func (h *AIHandlers) saveLog(userMsg, aiMsg string, actions []map[string]any, to
 	id := fmt.Sprintf("%d", now.UnixNano())
 	createdAt := now.Format("2006-01-02 15:04:05")
 	h.db.Exec(
-		`INSERT INTO chat_logs (id, created_at, model, provider, user_msg, ai_msg, actions, failed, fail_reason, tokens_in, tokens_out, tool_errors, response_ms, session_id, tokens_cached_in)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		id, createdAt, model, provider, userMsg, aiMsg, string(actionsJSON), btoi(failed), failReason, tokIn, tokOut, string(toolErrorsJSON), responseMs, sessionID, tokCachedIn,
+		`INSERT INTO chat_logs (id, created_at, model, provider, user_msg, ai_msg, actions, failed, fail_reason, tokens_in, tokens_out, tool_errors, response_ms, session_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+		id, createdAt, model, provider, userMsg, aiMsg, string(actionsJSON), btoi(failed), failReason, tokIn, tokOut, string(toolErrorsJSON), responseMs, sessionID,
 	)
 	return id
 }
@@ -1142,7 +1069,7 @@ func (h *AIHandlers) sessionMessages(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.db.QueryContext(r.Context(), `
 		SELECT id, created_at, model, provider, user_msg, ai_msg, actions,
 		       tokens_in, tokens_out
-		FROM chat_logs WHERE session_id = ? ORDER BY created_at ASC`, sid)
+		FROM chat_logs WHERE session_id = $1 ORDER BY created_at ASC`, sid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1184,7 +1111,7 @@ func (h *AIHandlers) dislike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err := h.db.ExecContext(r.Context(),
-		`UPDATE chat_logs SET failed=1, fail_reason='user_dislike' WHERE id=?`, id)
+		`UPDATE chat_logs SET failed=1, fail_reason='user_dislike' WHERE id=$1`, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1234,6 +1161,8 @@ func btoi(b bool) int {
 
 // selectProvider picks a provider based on model name prefix and available API keys.
 func (h *AIHandlers) selectProvider(model string) (aiProvider, error) {
+	log.Printf("[AI] selectProvider: model=%q deepseekKey=%v openRouterKey=%v geminiKey=%v anthropicKey=%v",
+		model, h.deepseekKey != "", h.openRouterKey != "", h.geminiKey != "", h.anthropicKey != "")
 	if model == "" {
 		switch {
 		case h.deepseekKey != "":
@@ -1303,13 +1232,10 @@ func (h *AIHandlers) ExecutePrompt(sessionID, message string, history []ChatMess
 	var finalText string
 	var actions []map[string]any
 	var toolErrors []string
-	var totalIn, totalOut, totalCachedIn int
+	var totalIn, totalOut int
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 6; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
-		if dp, ok := provider.(*deepseekProvider); ok {
-			totalCachedIn += dp.lastCacheHit
-		}
 		if err != nil {
 			return "", nil, err
 		}
@@ -1381,7 +1307,7 @@ func (h *AIHandlers) ExecutePrompt(sessionID, message string, history []ChatMess
 	modelID := provider.ModelID()
 	providerName := provider.Provider()
 
-	h.saveLog(message, finalText, actions, toolErrors, modelID, providerName, sessionID, totalIn, totalOut, totalCachedIn, int(time.Since(start).Milliseconds()))
+	h.saveLog(message, finalText, actions, toolErrors, modelID, providerName, sessionID, totalIn, totalOut, int(time.Since(start).Milliseconds()))
 
 	return finalText, actions, nil
 }

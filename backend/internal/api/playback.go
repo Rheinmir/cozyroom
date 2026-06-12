@@ -2,10 +2,31 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"cozyroom/internal/domain"
 )
+
+func (h *handlers) logPlaybackError(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		TrackID      string `json:"track_id"`
+		Src          string `json:"src"`
+		ErrorCode    int    `json:"error_code"`
+		ErrorMessage string `json:"error_message"`
+		UserAgent    string `json:"user_agent"`
+		Version      string `json:"version"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("[PLAYBACK_ERROR] Version: %s, Track: %s, Src: %s, Code: %d, Message: %q, UA: %q",
+		body.Version, body.TrackID, body.Src, body.ErrorCode, body.ErrorMessage, body.UserAgent)
+
+	w.WriteHeader(http.StatusOK)
+}
 
 func (h *handlers) getPlaybackProgress(w http.ResponseWriter, r *http.Request) {
 	itemType := r.PathValue("type")

@@ -1,16 +1,16 @@
 package cron
 
 import (
+	"database/sql"
 	"log"
 	"time"
 
 	"cozyroom/internal/api"
-	"cozyroom/internal/db"
 	"github.com/robfig/cron/v3"
 )
 
 type CronManager struct {
-	db         *db.RDB
+	db         *sql.DB
 	cron       *cron.Cron
 	aiHandlers *api.AIHandlers
 }
@@ -23,7 +23,7 @@ type ScheduledTask struct {
 	CreatedAt      string
 }
 
-func NewCronManager(db *db.RDB, aiHandlers *api.AIHandlers) *CronManager {
+func NewCronManager(db *sql.DB, aiHandlers *api.AIHandlers) *CronManager {
 	return &CronManager{
 		db:         db,
 		cron:       cron.New(),
@@ -76,7 +76,7 @@ func (m *CronManager) LoadAndScheduleAll() error {
 
 			// Update last run at
 			nowStr := time.Now().Format("2006-01-02 15:04:05")
-			_, err = m.db.Exec(`UPDATE scheduled_tasks SET last_run_at = ? WHERE id = ?`, nowStr, task.ID)
+			_, err = m.db.Exec(`UPDATE scheduled_tasks SET last_run_at = $1 WHERE id = $2`, nowStr, task.ID)
 			if err != nil {
 				log.Printf("[Cron] Error updating last_run_at for task %s: %v", task.ID, err)
 			}

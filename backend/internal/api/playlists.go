@@ -9,12 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"cozyroom/internal/db"
 	"cozyroom/internal/domain"
 )
 
 type PlaylistHandlers struct {
-	db *db.RDB
+	db *sql.DB
 }
 
 const OwnerPassword = "owner712002"
@@ -65,7 +64,7 @@ func (h *PlaylistHandlers) listPlaylists(w http.ResponseWriter, r *http.Request)
 
 	// Fetch track IDs for each playlist
 	for i, p := range playlists {
-		tRows, err := h.db.Query("SELECT track_id FROM playlist_tracks WHERE playlist_id = ? ORDER BY position ASC", p.ID)
+		tRows, err := h.db.Query("SELECT track_id FROM playlist_tracks WHERE playlist_id = $1 ORDER BY position ASC", p.ID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -82,7 +81,7 @@ func (h *PlaylistHandlers) listPlaylists(w http.ResponseWriter, r *http.Request)
 			`SELECT DISTINCT al.id FROM playlist_tracks pt
 			 JOIN tracks t ON t.id = pt.track_id
 			 JOIN albums al ON al.id = t.album_id
-			 WHERE pt.playlist_id = ? LIMIT 4`, p.ID)
+			 WHERE pt.playlist_id = $1 ORDER BY pt.position ASC LIMIT 4`, p.ID)
 		if err == nil {
 			for cRows.Next() {
 				var aid string
@@ -107,7 +106,7 @@ func (h *PlaylistHandlers) listPlaylistTracks(w http.ResponseWriter, r *http.Req
 
 	// Verify playlist exists
 	var name string
-	err := h.db.QueryRow("SELECT name FROM playlists WHERE id = ?", id).Scan(&name)
+	err := h.db.QueryRow("SELECT name FROM playlists WHERE id = $1", id).Scan(&name)
 	if err == sql.ErrNoRows {
 		http.Error(w, "playlist not found", http.StatusNotFound)
 		return
@@ -125,7 +124,7 @@ func (h *PlaylistHandlers) listPlaylistTracks(w http.ResponseWriter, r *http.Req
 		JOIN tracks t ON t.id = pt.track_id
 		JOIN albums al ON al.id = t.album_id
 		JOIN artists ar ON ar.id = al.artist_id
-		WHERE pt.playlist_id = ?
+		WHERE pt.playlist_id = $1
 		ORDER BY pt.position ASC
 	`, id)
 	if err != nil {
@@ -175,7 +174,7 @@ func (h *PlaylistHandlers) createPlaylist(w http.ResponseWriter, r *http.Request
 	id := genHexID()
 	createdAt := time.Now().Unix()
 
-	_, err := h.db.Exec("INSERT INTO playlists (id, name, created_at) VALUES (?, ?, ?)", id, name, createdAt)
+	_, err := h.db.Exec("INSERT INTO playlists (id, name, created_at) VALUES ($1, $2, $3)", id, name, createdAt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -196,9 +195,9 @@ func (h *PlaylistHandlers) deletePlaylist(w http.ResponseWriter, r *http.Request
 	id := r.PathValue("id")
 
 	// Delete track associations manually to be completely safe
-	_, _ = h.db.Exec("DELETE FROM playlist_tracks WHERE playlist_id = ?", id)
+	_, _ = h.db.Exec("DELETE FROM playlist_tracks WHERE playlist_id = $1", id)
 
-	res, err := h.db.Exec("DELETE FROM playlists WHERE id = ?", id)
+	res, err := h.db.Exec("DELETE FROM playlists WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -238,7 +237,7 @@ func (h *PlaylistHandlers) addTrackToPlaylist(w http.ResponseWriter, r *http.Req
 
 	// Verify track exists in DB
 	var exists int
-	err := h.db.QueryRow("SELECT 1 FROM tracks WHERE id = ?", trackID).Scan(&exists)
+	err := h.db.QueryRow("SELECT 1 FROM tracks WHERE id = $1", trackID).Scan(&exists)
 	if err == sql.ErrNoRows {
 		http.Error(w, "track not found", http.StatusBadRequest)
 		return
@@ -249,7 +248,7 @@ func (h *PlaylistHandlers) addTrackToPlaylist(w http.ResponseWriter, r *http.Req
 
 	// Check if already in playlist
 	var count int
-	_ = h.db.QueryRow("SELECT COUNT(*) FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?", id, trackID).Scan(&count)
+	_ = h.db.QueryRow("SELECT COUNT(*) FROM playlist_tracks WHERE playlist_id = $1 AND track_id = $2", id, trackID).Scan(&count)
 	if count > 0 {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -257,10 +256,10 @@ func (h *PlaylistHandlers) addTrackToPlaylist(w http.ResponseWriter, r *http.Req
 
 	// Find max position
 	var pos int
-	_ = h.db.QueryRow("SELECT COALESCE(MAX(position), 0) + 1 FROM playlist_tracks WHERE playlist_id = ?", id).Scan(&pos)
+	_ = h.db.QueryRow("SELECT COALESCE(MAX(position), 0) + 1 FROM playlist_tracks WHERE playlist_id = $1", id).Scan(&pos)
 
 	// Insert association
-	_, err = h.db.Exec("INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)", id, trackID, pos)
+	_, err = h.db.Exec("INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES ($1, $2, $3)", id, trackID, pos)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -279,7 +278,7 @@ func (h *PlaylistHandlers) removeTrackFromPlaylist(w http.ResponseWriter, r *htt
 	id := r.PathValue("id")
 	trackID := r.PathValue("track_id")
 
-	_, err := h.db.Exec("DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?", id, trackID)
+	_, err := h.db.Exec("DELETE FROM playlist_tracks WHERE playlist_id = $1 AND track_id = $2", id, trackID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

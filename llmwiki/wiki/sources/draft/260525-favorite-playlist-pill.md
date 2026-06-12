@@ -92,3 +92,6 @@ const OwnerPassword = "owner712002"
 - Tự động hiển thị và phân biệt giữa Playlist Cục bộ (Local) và Playlist Vĩnh viễn (Permanent).
 - Nhập đúng mật khẩu `owner712002` thì mới ghi nhận playlist vĩnh viễn lên cơ sở dữ liệu máy chủ thành công. Nhập sai sẽ hiển thị thông báo lỗi.
 - Xóa cache trình duyệt thì Playlist Cục bộ bị mất, nhưng Playlist Vĩnh viễn vẫn còn nguyên vẹn.
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

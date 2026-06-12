@@ -1,12 +1,14 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
+	"runtime"
 	"time"
 
-	"cozyroom/internal/db"
 	"cozyroom/internal/domain"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
@@ -58,6 +60,22 @@ func metricsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// panicRecovery catches any unhandled panic in a handler, logs a full stack
+// trace, and returns 500 instead of crashing the entire server process.
+func panicRecovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				buf := make([]byte, 64<<10) // 64 KB stack buffer
+				buf = buf[:runtime.Stack(buf, false)]
+				log.Printf("[PANIC] %s %s → %v\n%s", r.Method, r.URL.Path, rec, buf)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
 // RouterDeps groups everything the router needs.
 type RouterDeps struct {
 	Lib          *usecase.LibraryUsecase
@@ -65,8 +83,7 @@ type RouterDeps struct {
 	Settings     *usecase.SettingsUsecase
 	Playback     *usecase.PlaybackUsecase
 	UoW          domain.UnitOfWorkFactory
-	ScanDB       *db.RDB // for scanner/enricher (own internal TXs)
-	DBPath       string
+	ScanDB       *sql.DB // for scanner/enricher (own internal TXs)
 	MusicPath    string
 	FilmsPath    string
 	CoversDir    string
@@ -100,7 +117,6 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		settings:     d.Settings,
 		playback:     d.Playback,
 		scanDB:       d.ScanDB,
-		dbPath:       d.DBPath,
 		musicPath:    d.MusicPath,
 		filmsPath:    d.FilmsPath,
 		coversDir:    d.CoversDir,
@@ -112,6 +128,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		ebook:        d.Ebook,
 		ebooksPath:   d.EbooksPath,
 		ebookCoversDir: d.EbookCoversDir,
+		cloakProxyURL:  d.CloakProxyURL,
 	}
 	mux := http.NewServeMux()
 
@@ -120,8 +137,6 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/health", h.health)
 	mux.HandleFunc("GET /api/stats", h.stats)
 	mux.HandleFunc("POST /api/scan", h.scan)
-	mux.HandleFunc("POST /api/admin/reconcile", h.reconcile)
-	mux.HandleFunc("POST /api/admin/repair-yt-meta", h.repairYTMeta)
 	mux.HandleFunc("GET /api/artists", h.listArtists)
 	mux.HandleFunc("GET /api/artists/{id}", h.artistDetail)
 	mux.HandleFunc("GET /api/albums", h.listAlbums)
@@ -158,6 +173,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 
 	mux.HandleFunc("GET /api/playback/progress/{type}/{id}", h.getPlaybackProgress)
 	mux.HandleFunc("POST /api/playback/progress",           h.setPlaybackProgress)
+	mux.HandleFunc("POST /api/playback/error",              h.logPlaybackError)
 
 	mux.HandleFunc("GET /api/lastfm/status",        h.lastfmStatus)
 	mux.HandleFunc("POST /api/lastfm/login",        h.lastfmLogin)
@@ -184,7 +200,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		comicsGB = 50
 	}
 	dl := newComicsDownloader(
-		&pg.ComicsDownloadsRepo{DB: d.ScanDB.DB},
+		&pg.ComicsDownloadsRepo{DB: d.ScanDB},
 		d.ComicsDir,
 		comicsGB,
 		eh,
@@ -203,7 +219,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/trending/history",   th.repoHistory)
 	mux.HandleFunc("POST /api/trending/refresh",  th.refresh)
 
-	yh := &YouTubeHandlers{db: d.ScanDB, musicPath: d.MusicPath, coversDir: d.CoversDir}
+	yh := &YouTubeHandlers{db: d.ScanDB, musicPath: d.MusicPath, coversDir: d.CoversDir, cloakProxyURL: d.CloakProxyURL}
 	mux.HandleFunc("GET /api/youtube/search", yh.search)
 	mux.HandleFunc("GET /api/youtube/channel", yh.channel)
 	mux.HandleFunc("GET /api/youtube/stream/{id}", yh.stream)
@@ -222,7 +238,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		Lib: d.Lib,
 		DB:  d.ScanDB,
 		ScanFunc: func() (int, error) {
-			res, err := library.Scan(d.ScanDB.DB, d.MusicPath, d.CoversDir)
+			res, err := library.Scan(d.ScanDB, d.MusicPath, d.CoversDir)
 			return res.Tracks, err
 		},
 		CloakProxyURL: d.CloakProxyURL,
@@ -231,9 +247,6 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 				return GlobalReloadCron()
 			}
 			return nil
-		},
-		DownloadYTFunc: func(id, title, artist string) (string, error) {
-			return DownloadYT(d.ScanDB, d.MusicPath, d.CoversDir, id, title, artist)
 		},
 	})
 	mux.HandleFunc("/mcp", mcp.NewHTTPHandler(mcpTools))
@@ -253,7 +266,6 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/ai/sessions/{id}/messages", aiH.sessionMessages)
 	mux.HandleFunc("GET /api/ai/stats", aiH.stats)
 	mux.HandleFunc("GET /api/ai/extremes", aiH.extremes)
-	mux.HandleFunc("POST /api/ai/ocr-text", aiH.ocrText)
 	mux.HandleFunc("POST /api/ai/ocr-pricing", aiH.ocrPricing)
 	mux.HandleFunc("GET /api/ai/memory", aiH.memoryList)
 	mux.HandleFunc("PUT /api/ai/memory", aiH.memoryImport)
@@ -264,5 +276,5 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 
 	mux.Handle("/", spaHandler{root: "./dist"})
 
-	return metricsMiddleware(mux), dl, aiH
+	return metricsMiddleware(panicRecovery(mux)), dl, aiH
 }

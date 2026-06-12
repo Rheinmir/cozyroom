@@ -109,3 +109,6 @@ Thiếu 2 skill:
 | join-project Step 5 RTK check không liên quan orient | Xóa hoàn toàn |
 | new-project-setup Step 8 lint duplicate | Xóa (onboard-codebase đã lint) |
 | reset = không rõ scope | Clarified: giữ log.md + sources/ |
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

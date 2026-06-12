@@ -25,7 +25,10 @@ func ToMP3_320(ctx context.Context, path string, w io.Writer) error {
 	cmd := exec.CommandContext(ctx, "ffmpeg",
 		"-hide_banner", "-loglevel", "error",
 		"-i", path,
+		"-vn",                 // disable video/picture streams (embedded cover art)
+		"-map_metadata", "-1", // strip metadata to prevent corrupt tags crashing browser demuxers (like PTS not defined)
 		"-c:a", "libmp3lame", "-b:a", "320k",
+		"-ac", "2",            // force stereo — files with mixed mono/stereo frames break Chrome's pipeline
 		"-f", "mp3",
 		"pipe:1",
 	)
@@ -33,6 +36,25 @@ func ToMP3_320(ctx context.Context, path string, w io.Writer) error {
 	err := cmd.Run()
 	bw.Flush()
 	return err
+}
+
+// ToCleanFLAC re-encodes a lossless audio file to FLAC, stripping metadata and
+// normalising to stereo. Uses FLAC re-encode (not stream copy) so that files
+// with mixed mono/stereo frames — which cause Chrome PIPELINE_ERROR_DECODE —
+// are normalised to a consistent channel layout.
+func ToCleanFLAC(ctx context.Context, path string, w io.Writer) error {
+	cmd := exec.CommandContext(ctx, "ffmpeg",
+		"-hide_banner", "-loglevel", "error",
+		"-i", path,
+		"-vn",                 // disable video/picture streams (embedded cover art)
+		"-map_metadata", "-1", // strip metadata to prevent corrupt tags crashing browser demuxers (like PTS not defined)
+		"-c:a", "flac",
+		"-ac", "2",            // force stereo — files with mixed mono/stereo frames break Chrome's pipeline
+		"-f", "flac",
+		"pipe:1",
+	)
+	cmd.Stdout = w
+	return cmd.Run()
 }
 
 // ToFragmentedMP4 remuxes a video file to a fragmented MP4 stream suitable for

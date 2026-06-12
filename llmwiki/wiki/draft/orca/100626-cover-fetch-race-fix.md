@@ -55,3 +55,6 @@ Tương tự: hai requests `/api/covers/yt:ID` cùng thấy `yt_ID.jpg` chưa c�
 - Cache TTL / ETag headers (không liên quan trực tiếp đến ảnh biến mất)
 - Resized cache cleanup (disk leak nhưng không gây broken images)
 - PlaylistsPage useDominantColor (minor memory leak, không visible bug)
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 34d52b8 2026-06-10

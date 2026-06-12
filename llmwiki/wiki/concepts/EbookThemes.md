@@ -35,3 +35,6 @@ Implement selectable themes (Light, Dark, Sepia) and style normalization (CSS in
 - Interactivity: Themes and font size changes apply instantly without reload.
 - Persistence: Settings are remembered across different books and sessions.
 - Visuals: No white flashes when loading a book in Dark or Sepia mode.
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

@@ -799,7 +799,7 @@ func (h *handlers) translateLyricsHandler(w http.ResponseWriter, r *http.Request
 	// Check cache
 	var cachedJSON string
 	h.scanDB.QueryRowContext(r.Context(),
-		`SELECT lines_json FROM lyrics_translations WHERE track_id=? AND lang=?`, id, lang,
+		`SELECT lines_json FROM lyrics_translations WHERE track_id=$1 AND lang=$2`, id, lang,
 	).Scan(&cachedJSON)
 	if cachedJSON != "" {
 		w.Header().Set("Content-Type", "application/json")
@@ -856,7 +856,7 @@ func (h *handlers) translateLyricsHandler(w http.ResponseWriter, r *http.Request
 
 	// Cache in DB
 	h.scanDB.ExecContext(context.Background(),
-		`INSERT INTO lyrics_translations(track_id,lang,lines_json) VALUES(?,?,?) ON CONFLICT(track_id,lang) DO UPDATE SET lines_json=EXCLUDED.lines_json`,
+		`INSERT INTO lyrics_translations(track_id,lang,lines_json) VALUES($1,$2,$3) ON CONFLICT(track_id,lang) DO UPDATE SET lines_json=excluded.lines_json`,
 		id, lang, string(b),
 	)
 

@@ -12,6 +12,31 @@ import {
 import FavoritePill, { getLocalPlaylists, saveLocalPlaylists } from '../components/FavoritePill'
 import type { Track } from '../types'
 
+function useDominantColor(src: string | undefined): string {
+  const [rgb, setRgb] = useState('40, 40, 55')
+  useEffect(() => {
+    if (!src) return
+    const img = new Image()
+    img.onload = () => {
+      const c = document.createElement('canvas')
+      c.width = c.height = 50
+      const ctx = c.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(img, 0, 0, 50, 50)
+      const d = ctx.getImageData(0, 0, 50, 50).data
+      let r = 0, g = 0, b = 0, n = 0
+      for (let i = 0; i < d.length; i += 4) {
+        const br = (d[i] + d[i + 1] + d[i + 2]) / 3
+        if (br < 15 || br > 235) continue
+        r += d[i]; g += d[i + 1]; b += d[i + 2]; n++
+      }
+      if (n > 0) setRgb(`${Math.round(r / n)}, ${Math.round(g / n)}, ${Math.round(b / n)}`)
+    }
+    img.src = src
+  }, [src])
+  return rgb
+}
+
 function PlaylistCoverMosaic({ coverIds }: { coverIds?: string[] }) {
   if (!coverIds || coverIds.length === 0) {
     return <div className="playlist-cover-placeholder">★</div>
@@ -107,6 +132,8 @@ export default function PlaylistsPage() {
   })
 
   const currentPlaylist = allLists.find(l => l.id === selectedPlaylistId)
+  const coverSrc = currentPlaylist?.cover_ids?.[0] ? `/api/covers/${currentPlaylist.cover_ids[0]}` : undefined
+  const dominantRgb = useDominantColor(coverSrc)
 
   // Resolve tracks for local/permanent playlist
   const tracks = isLocalSelected
@@ -186,30 +213,37 @@ export default function PlaylistsPage() {
 
   if (selectedPlaylistId && currentPlaylist) {
     return (
-      <div className="page">
-        <button className="back-btn" onClick={() => setSelectedPlaylistId(null)}>
-          {t('library.back', { defaultValue: '← Quay lại' })}
-        </button>
+      <div className="page" style={{ paddingTop: 0 }}>
+        <div
+          className="playlist-hero-wrapper"
+          style={{ background: `linear-gradient(180deg, rgba(${dominantRgb}, 0.65) 0%, rgba(${dominantRgb}, 0.2) 70%, transparent 100%)` }}
+        >
+          <button className="back-btn" onClick={() => setSelectedPlaylistId(null)}>
+            {t('library.back', { defaultValue: '← Quay lại' })}
+          </button>
 
-        <div className="album-hero">
-          <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden' }}>
-            <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} />
-          </div>
-          <div className="album-hero-info">
-            <p className="hero-type">
-              {currentPlaylist.is_local 
-                ? t('playlist.local', { defaultValue: 'Local Playlist' }) 
-                : t('playlist.permanent', { defaultValue: 'Permanent Playlist' })}
-            </p>
-            <h1 className="hero-title">{currentPlaylist.name}</h1>
-            <p className="hero-meta">
-              {t('library.tracks_count', { n: tracks.length })}
-            </p>
-            {tracks.length > 0 && (
-              <button className="play-btn" onClick={handlePlayPlaylist} style={{ marginTop: 12 }}>
-                {t('playlist.play', { defaultValue: 'Phát' })}
-              </button>
-            )}
+          <div className="album-hero">
+            <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden', boxShadow: '0 20px 48px rgba(0,0,0,0.7)', flexShrink: 0 }}>
+              <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} />
+            </div>
+            <div className="album-hero-info">
+              <p className="hero-type">
+                {currentPlaylist.is_local
+                  ? t('playlist.local', { defaultValue: 'Local Playlist' })
+                  : t('playlist.permanent', { defaultValue: 'Permanent Playlist' })}
+              </p>
+              <h1 className="hero-title">{currentPlaylist.name}</h1>
+              <p className="hero-meta">
+                {t('library.tracks_count', { n: tracks.length })}
+              </p>
+              {tracks.length > 0 && (
+                <button className="hero-play-btn" onClick={handlePlayPlaylist} style={{ marginTop: 12 }} aria-label={t('playlist.play', { defaultValue: 'Phát' })}>
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -249,7 +283,10 @@ export default function PlaylistsPage() {
                       )}
                     </td>
                     <td className={'track-title' + (isCurrent ? ' track-title--active' : '')}>
-                      {tTrack.title}
+                      <div className="track-info">
+                        <span>{tTrack.title}</span>
+                        {tTrack.artist_name && <span className="track-artist">{tTrack.artist_name}</span>}
+                      </div>
                     </td>
                     <td className="col-fav" onClick={e => e.stopPropagation()}>
                       <FavoritePill trackId={tTrack.id} />

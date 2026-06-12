@@ -824,6 +824,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .album-title { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .album-year  { font-size: 12px; color: var(--text-muted); }
 
+/* ── Playlist hero gradient wrapper ─────────────────── */
+.playlist-hero-wrapper {
+  margin: 0 -32px;
+  padding: 32px 32px 32px;
+  margin-bottom: 8px;
+}
+
 /* ── Album hero ─────────────────────────────────────── */
 .album-hero {
   display: flex;
@@ -894,6 +901,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .track-title { font-size: 14px; font-weight: 400; }
 .track-title--active { color: var(--green); font-weight: 600; }
 .track-num-text { color: var(--text-muted); font-size: 14px; }
+.track-info { display: flex; flex-direction: column; gap: 2px; }
+.track-artist { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+.track-row--active .track-artist { color: var(--green); opacity: 0.7; }
 .col-dur { text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
 /* ── Player controls ────────────────────────────────── */
@@ -1217,6 +1227,23 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
 
+.hero-play-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #000;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform .1s, background .15s;
+}
+.hero-play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
+.hero-play-btn svg { margin-left: 3px; }
+
 .player-time {
   font-size: 11px;
   color: var(--text-muted);
@@ -1416,6 +1443,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   overflow-y: auto;
 }
 .npo-tabs { display: none; }
+.npo-tabs-mobile { display: none; }
 .npo-controls { display: none; }
 .npo-lyrics-wrap { display: contents; }
 /* height propagation into LyricsView on desktop */
@@ -1434,7 +1462,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   }
   .npo--open { transform: translateY(0); }
 
-  .npo-header { justify-content: flex-start; padding: 16px 24px 0; }
+  .npo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px 0;
+  }
   .npo-btn-back {
     display: flex;
     opacity: 0; pointer-events: none;
@@ -1443,6 +1476,38 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   .npo-btn-dots { display: none; }
   .npo:hover .npo-btn-back,
   .npo--ctrls-active .npo-btn-back { opacity: 1; pointer-events: auto; }
+
+  /* Mobile tabs inside overlay header */
+  .npo-tabs-mobile {
+    display: flex;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 3px;
+    border-radius: 20px;
+    gap: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .npo:hover .npo-tabs-mobile,
+  .npo--ctrls-active .npo-tabs-mobile {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .npo-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .npo-tab-btn--active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
 
   /* body fills remaining height; each tab panel fills it via flex */
   .npo-body {
@@ -1539,6 +1604,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   .npo--ctrls-active .npo-translate-btn { opacity: 1; pointer-events: auto; }
 
   .npo-btn-dots {
+    display: flex;
     opacity: 0; pointer-events: none;
     transition: opacity 0.3s;
   }
@@ -1643,10 +1709,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     height: 36px;
     background: var(--text);
     color: #000;
+    transform: translateY(-4px);
   }
   .player-mini-play-btn:hover {
     background: var(--green-hover);
-    transform: scale(1.06);
+    transform: translateY(-4px) scale(1.06);
   }
 
   /* progress bar at the very top of player bar (especially for mobile) */
@@ -1669,6 +1736,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
   /* tighter page padding */
   .page { padding: 16px 16px 40px; }
+  .playlist-hero-wrapper { margin: 0 -16px; padding: 24px 16px 24px; }
 
   /* artist grid: smaller cards */
   .artist-grid {
@@ -1680,6 +1748,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   /* album hero stacks vertically */
   .album-hero { flex-direction: column; align-items: center; text-align: center; }
   .album-hero-cover { width: 200px; height: 200px; }
+  .album-hero-info { align-items: center; }
 
   /* artist hero stacks vertically */
   .artist-hero { flex-direction: column; align-items: center; text-align: center; }
@@ -3841,4 +3910,77 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Playback Error Toast Banner */
+.playback-error-toast {
+  position: fixed;
+  bottom: 110px; /* Above the player bar */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 450px;
+  background: rgba(220, 38, 38, 0.95); /* Deep vibrant red */
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.playback-error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.playback-error-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.playback-error-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.playback-error-msg {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-word;
+}
+
+.playback-error-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.playback-error-close:hover {
+  color: #fff;
+}
+
 

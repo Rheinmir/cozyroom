@@ -1,4 +1,6 @@
 # credentials
+INFRA.md
+s.txt
 .env
 .env.cognee
 .env*.local
@@ -28,3 +30,7 @@ backend/*.exe
 # OS
 .DS_Store
 Thumbs.db
+
+# design snapshots
+cozyroom-ui-snapshot.html
+cozyroom-ui-snapshot.zip

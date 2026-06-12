@@ -35,3 +35,6 @@ Implement a password-protected NSFW tagging system for ebooks that persists to t
 - [ ] Users can toggle NSFW status after entering the correct password.
 - [ ] NSFW status is persistent across devices and sessions.
 - [ ] Covers of NSFW-tagged books are visually blurred in the bookshelf view.
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

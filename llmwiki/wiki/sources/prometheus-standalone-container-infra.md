@@ -48,3 +48,6 @@ Simpler for local WSL dev — no scrape config changes needed, all `localhost:XX
 - 214 MB historical data preserved
 - `systemctl is-active prometheus` → `inactive`
 - Adding new project = edit `~/observability/prometheus.yml` + `docker compose restart prometheus`
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

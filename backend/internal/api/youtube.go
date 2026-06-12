@@ -1,8 +1,12 @@
 package api
 
 import (
+	"context"
+	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -10,17 +14,49 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
-	"cozyroom/internal/db"
 	"cozyroom/internal/library"
 )
 
 var reYouTubeID = regexp.MustCompile(`^[a-zA-Z0-9_-]{11}$`)
 
+// streamURLCache caches yt-dlp signed stream URLs to avoid re-fetching on
+// every play request. YouTube signed URLs are valid ~6h; we use 4h TTL.
+type streamURLEntry struct {
+	url       string
+	expiresAt time.Time
+}
+
+var (
+	streamCacheMu sync.Mutex
+	streamCache   = make(map[string]streamURLEntry)
+)
+
+func getCachedStreamURL(id string) (string, bool) {
+	streamCacheMu.Lock()
+	defer streamCacheMu.Unlock()
+	e, ok := streamCache[id]
+	if !ok || time.Now().After(e.expiresAt) {
+		delete(streamCache, id)
+		return "", false
+	}
+	return e.url, true
+}
+
+func setCachedStreamURL(id, url string) {
+	streamCacheMu.Lock()
+	defer streamCacheMu.Unlock()
+	streamCache[id] = streamURLEntry{url: url, expiresAt: time.Now().Add(4 * time.Hour)}
+}
+
+
 type YouTubeHandlers struct {
-	db        *db.RDB
-	musicPath string
-	coversDir string
+	db            *sql.DB
+	musicPath     string
+	coversDir     string
+	cloakProxyURL string // for thumbnail fetching
 }
 
 type youtubeSearchResult struct {
@@ -99,6 +135,64 @@ func (h *YouTubeHandlers) search(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(results)
 }
 
+func (h *YouTubeHandlers) fetchStreamURL(ctx context.Context, id string) (string, error) {
+	cmd := exec.CommandContext(ctx, "yt-dlp", "-g", "-f", "bestaudio",
+		"https://www.youtube.com/watch?v="+id,
+	)
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	streamURL := strings.TrimSpace(string(out))
+	if streamURL == "" {
+		return "", fmt.Errorf("empty stream URL")
+	}
+	setCachedStreamURL(id, streamURL)
+	return streamURL, nil
+}
+
+func (h *YouTubeHandlers) proxyStream(w http.ResponseWriter, r *http.Request, id, streamURL string) error {
+	req, err := http.NewRequestWithContext(r.Context(), "GET", streamURL, nil)
+	if err != nil {
+		return err
+	}
+
+	// Forward Range header to support seeking
+	if rangeHeader := r.Header.Get("Range"); rangeHeader != "" {
+		req.Header.Set("Range", rangeHeader)
+	}
+	// User-Agent
+	if ua := r.Header.Get("User-Agent"); ua != "" {
+		req.Header.Set("User-Agent", ua)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("http status %d", resp.StatusCode)
+	}
+
+	// Copy headers
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	if cl := resp.Header.Get("Content-Length"); cl != "" {
+		w.Header().Set("Content-Length", cl)
+	}
+	if cr := resp.Header.Get("Content-Range"); cr != "" {
+		w.Header().Set("Content-Range", cr)
+	}
+	if ar := resp.Header.Get("Accept-Ranges"); ar != "" {
+		w.Header().Set("Accept-Ranges", ar)
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	_, err = io.Copy(w, resp.Body)
+	return err
+}
+
 func (h *YouTubeHandlers) stream(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if !reYouTubeID.MatchString(id) {
@@ -106,23 +200,45 @@ func (h *YouTubeHandlers) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.CommandContext(r.Context(), "yt-dlp", "-g", "-f", "bestaudio",
-		"https://www.youtube.com/watch?v="+id,
-	)
-	out, err := cmd.Output()
+	var streamURL string
+	fromCache := false
+	if cached, ok := getCachedStreamURL(id); ok {
+		streamURL = cached
+		fromCache = true
+	} else {
+		var err error
+		streamURL, err = h.fetchStreamURL(r.Context(), id)
+		if err != nil {
+			log.Printf("[yt-dlp] stream %s: %v", id, err)
+			http.Error(w, "stream unavailable", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err := h.proxyStream(w, r, id, streamURL)
 	if err != nil {
-		log.Printf("yt-dlp stream: %v", err)
-		http.Error(w, "stream unavailable", http.StatusInternalServerError)
-		return
-	}
+		if fromCache {
+			log.Printf("[proxy] cached stream URL expired or failed for %s (%v), retrying with fresh URL...", id, err)
+			streamCacheMu.Lock()
+			delete(streamCache, id)
+			streamCacheMu.Unlock()
 
-	streamURL := strings.TrimSpace(string(out))
-	if streamURL == "" {
-		http.NotFound(w, r)
-		return
+			freshURL, fetchErr := h.fetchStreamURL(r.Context(), id)
+			if fetchErr != nil {
+				log.Printf("[yt-dlp] stream retry %s: %v", id, fetchErr)
+				http.Error(w, "stream unavailable", http.StatusInternalServerError)
+				return
+			}
+			
+			err = h.proxyStream(w, r, id, freshURL)
+			if err != nil {
+				log.Printf("[proxy] stream retry %s failed: %v", id, err)
+			}
+		} else {
+			log.Printf("[proxy] stream %s failed: %v", id, err)
+			http.Error(w, "stream unavailable", http.StatusInternalServerError)
+		}
 	}
-
-	http.Redirect(w, r, streamURL, http.StatusFound)
 }
 
 func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
@@ -143,18 +259,21 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.CommandContext(r.Context(), "yt-dlp",
 		"-f", "bestaudio",
 		"-x", "--audio-format", "best",
+		"--embed-metadata",   // embed title, artist, album, date into file tags
+		"--write-thumbnail",  // save thumbnail as separate file (ytID.jpg or .webp)
+		"--convert-thumbnails", "jpg", // normalize to jpg
 		"--paths", h.musicPath,
 		"-o", "%(id)s.%(ext)s",
 		"https://www.youtube.com/watch?v="+body.ID,
 	)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("yt-dlp download: %v\n%s", err, string(output))
+		log.Printf("[yt-dlp] download %s: %v\n%s", body.ID, err, string(output))
 		http.Error(w, "download failed", http.StatusInternalServerError)
 		return
 	}
 
-	// Find the downloaded file
+	// Find the downloaded audio file
 	var filePath string
 	for _, ext := range []string{".opus", ".webm", ".m4a", ".mp3"} {
 		testPath := filepath.Join(h.musicPath, body.ID+ext)
@@ -164,24 +283,47 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if filePath != "" {
-		uploader := strings.TrimSpace(body.Artist)
-		if uploader == "" || (strings.HasPrefix(uploader, "UC") && len(uploader) == 24) {
-			cmdUploader := exec.CommandContext(r.Context(), "yt-dlp", "--print", "uploader", "https://www.youtube.com/watch?v="+body.ID)
-			outUploader, err := cmdUploader.Output()
-			if err == nil {
-				friendlyName := strings.TrimSpace(string(outUploader))
-				if friendlyName != "" {
-					uploader = friendlyName
+	if filePath == "" {
+		log.Printf("[yt-dlp] download %s: could not find audio file in %s", body.ID, h.musicPath)
+		http.Error(w, "download failed: file not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Resolve uploader — prefer body.Artist, skip second yt-dlp call if already clean
+	uploader := strings.TrimSpace(body.Artist)
+	if uploader == "" || (strings.HasPrefix(uploader, "UC") && len(uploader) == 24) {
+		// body.Artist is a channel ID, not a name — fetch friendly name
+		cmdU := exec.CommandContext(r.Context(), "yt-dlp", "--print", "uploader",
+			"https://www.youtube.com/watch?v="+body.ID)
+		if outU, err := cmdU.Output(); err == nil {
+			if name := strings.TrimSpace(string(outU)); name != "" {
+				uploader = name
+			}
+		}
+	}
+
+	// Copy yt-dlp-written thumbnail into covers dir so it shows up immediately
+	// yt-dlp writes it as <id>.jpg (after --convert-thumbnails jpg)
+	thumbSrc := filepath.Join(h.musicPath, body.ID+".jpg")
+	if _, err := os.Stat(thumbSrc); err == nil {
+		// Derive albumID the same way IndexFileWithMetadata does
+		artistID := id8hex(uploader)
+		albumID := id8hex(artistID + strings.TrimSpace(body.Title))
+		thumbDst := filepath.Join(h.coversDir, albumID+".jpg")
+		if _, statErr := os.Stat(thumbDst); os.IsNotExist(statErr) {
+			if data, err := os.ReadFile(thumbSrc); err == nil {
+				if err := os.MkdirAll(h.coversDir, 0755); err == nil {
+					_ = os.WriteFile(thumbDst, data, 0644)
+					log.Printf("[yt-dlp] cover saved: %s → %s", thumbSrc, thumbDst)
 				}
 			}
 		}
-		log.Printf("youtube download: indexing single file %s with metadata (Title: %q, Artist: %q, Album: %q)", filePath, body.Title, uploader, body.Title)
-		if err := library.IndexFileWithMetadata(h.db.DB, filePath, h.coversDir, body.Title, uploader, body.Title); err != nil {
-			log.Printf("error indexing single file: %v", err)
-		}
-	} else {
-		log.Printf("youtube download: could not find downloaded file in %s", h.musicPath)
+		os.Remove(thumbSrc) // clean up from music dir
+	}
+
+	log.Printf("[yt-dlp] indexing %s (title=%q artist=%q)", filePath, body.Title, uploader)
+	if err := library.IndexFileWithMetadata(h.db, filePath, h.coversDir, body.Title, uploader, body.Title); err != nil {
+		log.Printf("[yt-dlp] index error: %v", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -191,113 +333,13 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// RepairYouTubeMetadata fixes opus/webm files indexed as "Unknown Artist" by fetching
-// real title/uploader from YouTube and updating DB in-place.
-func RepairYouTubeMetadata(rdb *db.RDB, musicPath, coversDir string) {
-	rows, err := rdb.Query(
-		`SELECT t.id, t.file_path FROM tracks t
-		 JOIN albums al ON al.id = t.album_id
-		 JOIN artists ar ON ar.id = al.artist_id
-		 WHERE ar.name = 'Unknown Artist'
-		   AND (t.file_path LIKE '/music/%.opus'
-		     OR t.file_path LIKE '/music/%.webm'
-		     OR t.file_path LIKE '/music/%.m4a')`)
-	if err != nil {
-		log.Printf("repair-yt-meta: query: %v", err)
-		return
-	}
-	type entry struct{ id, path string }
-	var todo []entry
-	for rows.Next() {
-		var e entry
-		if rows.Scan(&e.id, &e.path) == nil {
-			todo = append(todo, e)
-		}
-	}
-	rows.Close()
-	if len(todo) == 0 {
-		return
-	}
-	log.Printf("repair-yt-meta: fetching metadata for %d files", len(todo))
-	fixed := 0
-	for _, e := range todo {
-		base := strings.TrimSuffix(filepath.Base(e.path), filepath.Ext(e.path))
-		if !reYouTubeID.MatchString(base) {
-			continue
-		}
-		out, err := exec.Command("yt-dlp",
-			"--print", "%(title)s\n%(uploader)s",
-			"--no-playlist",
-			"https://www.youtube.com/watch?v="+base,
-		).Output()
-		if err != nil {
-			log.Printf("repair-yt-meta: yt-dlp %s: %v", base, err)
-			continue
-		}
-		lines := strings.SplitN(strings.TrimSpace(string(out)), "\n", 2)
-		title := strings.TrimSpace(lines[0])
-		artist := "Unknown Artist"
-		if len(lines) > 1 && strings.TrimSpace(lines[1]) != "" {
-			artist = strings.TrimSpace(lines[1])
-		}
-		if title == "" {
-			continue
-		}
-		// Delete the track and re-index with correct metadata so all relations update cleanly.
-		rdb.Exec(`DELETE FROM tracks WHERE id = $1`, e.id)
-		diskPath := filepath.Join(musicPath, filepath.Base(e.path))
-		if err := library.IndexFileWithMetadata(rdb.DB, diskPath, coversDir, title, artist, title); err != nil {
-			log.Printf("repair-yt-meta: re-index %s: %v", base, err)
-		} else {
-			log.Printf("repair-yt-meta: fixed %s → \"%s\" / %s", base, title, artist)
-			fixed++
-		}
-	}
-	log.Printf("repair-yt-meta: done — fixed %d/%d", fixed, len(todo))
+// id8hex reproduces the same ID derivation as library.id8.
+// MUST stay in sync with scanner.go:id8() — SHA-256, lowercase, trim, 8 bytes.
+func id8hex(s string) string {
+	h := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(s))))
+	return fmt.Sprintf("%x", h[:8])
 }
 
-// DownloadYT downloads a YouTube video, indexes it into the library, and returns the track ID.
-// Used by the MCP download_youtube tool for synchronous server-side downloads.
-func DownloadYT(db *db.RDB, musicPath, coversDir, id, title, artist string) (string, error) {
-	if !reYouTubeID.MatchString(id) {
-		return "", fmt.Errorf("invalid video id")
-	}
-	cmd := exec.Command("yt-dlp",
-		"-f", "bestaudio",
-		"-x", "--audio-format", "best",
-		"--paths", musicPath,
-		"-o", "%(id)s.%(ext)s",
-		"https://www.youtube.com/watch?v="+id,
-	)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("yt-dlp: %w\n%s", err, string(out))
-	}
-	var filePath string
-	for _, ext := range []string{".opus", ".webm", ".m4a", ".mp3"} {
-		p := filepath.Join(musicPath, id+ext)
-		if _, err := os.Stat(p); err == nil {
-			filePath = p
-			break
-		}
-	}
-	if filePath == "" {
-		return "", fmt.Errorf("downloaded file not found in %s", musicPath)
-	}
-	uploader := strings.TrimSpace(artist)
-	if uploader == "" || (strings.HasPrefix(uploader, "UC") && len(uploader) == 24) {
-		uploader = "Unknown Artist"
-	}
-	if err := library.IndexFileWithMetadata(db.DB, filePath, coversDir, title, uploader, title); err != nil {
-		log.Printf("DownloadYT: index error: %v", err)
-	}
-	// Synchronously fetch YouTube thumbnail so cover is ready immediately.
-	albumID := library.AlbumID(uploader, title)
-	thumbnailDest := filepath.Join(coversDir, albumID+".jpg")
-	if _, err := os.Stat(thumbnailDest); os.IsNotExist(err) {
-		library.DownloadYTThumbnail(id, thumbnailDest)
-	}
-	return library.TrackIDFromPath(filePath), nil
-}
 
 // channel fetches latest videos from a YouTube channel URL, or searches within it.
 // Query params:

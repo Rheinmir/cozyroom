@@ -17,19 +17,14 @@
 | [concepts/GaplessPlayback.md](concepts/GaplessPlayback.md) | concept | Spotify-style gapless playback architecture via dual-audio preloading |
 | [concepts/NowPlayingUI.md](concepts/NowPlayingUI.md) | concept | Modernized Now Playing UI for desktop and mobile |
 | [concepts/LyricsUI.md](concepts/LyricsUI.md) | concept | Lyrics UI improvements (auto-scroll & fade-out) |
-| [concepts/VideoStreaming.md](concepts/VideoStreaming.md) | concept | Video domain: MPEG-TS→HLS on-the-fly transcoding via ffmpeg, hls.js frontend |
-| [concepts/AudioReliability.md](concepts/AudioReliability.md) | concept | Audio reliability: error handling, auto-retry, and backend process management |
+| [concepts/VideoStreaming.md](concepts/VideoStreaming.md) | concept | Video domain: MPEG-TS→HLS on-the-fly transcoding via ffmpeg, hls.js frontend || [concepts/AudioReliability.md](concepts/AudioReliability.md) | concept | Audio reliability: error handling, auto-retry, and backend process management |
 | [sources/skill-propose.md](sources/skill-propose.md) | source | Workflow skill: plan-before-code gate — steps, rules, draft creation |
 | [sources/skill-verify-before-commit.md](sources/skill-verify-before-commit.md) | source | Workflow skill: pre-commit quality gate — typecheck, lint, test, Docker rebuild |
 | [concepts/JellyfinFeatures.md](concepts/JellyfinFeatures.md) | concept | 4 Jellyfin-inspired features: MetadataProvider abstraction, Trickplay sprites, CanDirectPlay, Resume State |
 | [concepts/EbookEnhancements.md](concepts/EbookEnhancements.md) | concept | NSFW tagging (owner712002), cover blurring, and PDF cover extraction |
 | [concepts/EbookThemes.md](concepts/EbookThemes.md) | concept | Fix Ebook Blank Screen via Themes & Style Normalization |
-| [ebook_migration_task.md](ebook_migration_task.md) | task | Continuation notes for ebook migration from calibre.zip to F:\ebooks |
 | [concepts/ComicsDownloader.md](concepts/ComicsDownloader.md) | concept | Comics offline pre-fetch engine: 6h background download, local serving, retry/delete UI |
 | [concepts/LyricsReliability.md](concepts/LyricsReliability.md) | concept | Lyrics fixes: silent save reload, empty-cache poisoning, mobile panel overlay |
-| [sources/draft/170526-mini-player-redesign-mobile-fe.md](sources/draft/170526-mini-player-redesign-mobile-fe.md) | draft | Proposal: Mobile mini player redesign — vinyl as play button, fade text, marquee on hover |
-| [sources/draft/170526-lyrics-auto-translate-fe-be.md](sources/draft/170526-lyrics-auto-translate-fe-be.md) | draft | Proposal: Auto-translate foreign lyrics to Vietnamese with inline interleaved display |
-| [sources/draft/190526-architecture-docs-site.md](sources/draft/190526-architecture-docs-site.md) | draft | Proposal: Single HTML docs site visualising 2-container arch + parallel dev workflow |
 | [sources/190526-translate-shortcut-overlay.md](sources/190526-translate-shortcut-overlay.md) | source | Translate shortcut + touch-to-reveal overlay buttons — implementation record (commit ab52f60) |
 | [concepts/PlayerBugfixes190526.md](concepts/PlayerBugfixes190526.md) | concept | Player bugfixes 2026-05-19: lyrics stale-fetch race, gapless duration 0:00, progress bar fill |
 | [concepts/FavoritePlaylistPill.md](concepts/FavoritePlaylistPill.md) | concept | Playlists Management via FavoritePill - local storage (localStorage) and permanent storage (SQLite + owner712002 password verification) |
@@ -71,7 +66,6 @@
 | [draft/cave/050626-playlist-play-btn-fix-fe.md](draft/cave/050626-playlist-play-btn-fix-fe.md) | draft | 2026-06-05 |
 | [draft/orca/060626-ai-build-jenkins-deploy.md](draft/orca/060626-ai-build-jenkins-deploy.md) | draft | 2026-06-06 |
 | [draft/orca/060626-ansible-k8s-cozyroom-deploy.md](draft/orca/060626-ansible-k8s-cozyroom-deploy.md) | draft | 2026-06-06 |
-| [sources/060626-infra-best-practices.md](sources/060626-infra-best-practices.md) | source | 2026-06-06 |
 | [sources/draft/070626-k3s-cozyroom-master-control-plane.md](sources/draft/070626-k3s-cozyroom-master-control-plane.md) | draft | 2026-06-07 |
 | [sources/080626-wsl2-ssh-autostart.md](sources/080626-wsl2-ssh-autostart.md) | source | WSL2 SSH/Docker/Tailscale auto-start: root causes, boot script, Docker CE migration |
 | [sources/080626-k3s-install-best-practices.md](sources/080626-k3s-install-best-practices.md) | source | K3S cluster install: Tailscale networking, WSL2 quirks, cAdvisor, node-exporter, job naming |
@@ -81,3 +75,22 @@
 
 
 
+| [sources/draft/240526-i18n-en-vi-fe.md](sources/draft/240526-i18n-en-vi-fe.md) | draft | Proposal: Bilingual EN/VI i18n |
+| [sources/draft/propose-adk-cozyroom.md](sources/draft/propose-adk-cozyroom.md) | draft | Proposal: Áp dụng ADK Concepts vào Cozyroom |
+| [sources/draft/190526-lyrics-stale-fetch-race-fix-fe.md](sources/draft/190526-lyrics-stale-fetch-race-fix-fe.md) | draft | Proposal: Fix Rapid-Skip Bugs (Lyrics Race + Progress Bar) |
+| [sources/draft/adk-distill.md](sources/draft/adk-distill.md) | draft | ADK (Agent Development Kit) — Distilled |
+| [sources/draft/270526-ai-stats-cost-calculator.md](sources/draft/270526-ai-stats-cost-calculator.md) | draft | Proposal: AI Stats — Cost Calculator + Image OCR Pricing |
+| [sources/draft/270526-ai-chat-sessions-rooms.md](sources/draft/270526-ai-chat-sessions-rooms.md) | draft | Proposal: AI Chat Sessions (Rooms) |
+| [sources/draft/020626-reliability-fixes-streaming-be.md](sources/draft/020626-reliability-fixes-streaming-be.md) | draft | Proposal: Reliability fixes — streaming backend |
+| [sources/draft/280526-mcp-web-search-browse.md](sources/draft/280526-mcp-web-search-browse.md) | draft | Proposal: MCP Web Search + Browse Tools via Cloak Proxy |
+| [draft/orca/100626-player-progress-time-stale-fix.md](draft/orca/100626-player-progress-time-stale-fix.md) | draft | Fix player progress time stale display |
+| [sources/draft/230526-trending-impact-ui-fe.md](sources/draft/230526-trending-impact-ui-fe.md) | draft | Proposal: Trending — AI Industry Impact Score + Visual Tiers |
+| [sources/draft/050626-smart-queue-yt-injection-fe.md](sources/draft/050626-smart-queue-yt-injection-fe.md) | draft | Proposal: Smart queue + YouTube injection |
+| [sources/draft/230526-llmwiki-setup-join-skills.md](sources/draft/230526-llmwiki-setup-join-skills.md) | draft | Proposal: llmwiki Setup & Join Skills |
+| [sources/draft/240526-ecc-ua-repo-integration.md](sources/draft/240526-ecc-ua-repo-integration.md) | draft | Proposal: Research ECC Harness & Understand-Anything Integration |
+| [sources/draft/270526-ai-media-card-playlist-covers.md](sources/draft/270526-ai-media-card-playlist-covers.md) | draft | Proposal: AI Media Cards + Playlist Cover Gallery |
+| [sources/draft/050626-yt-discovery-trending-be-fe.md](sources/draft/050626-yt-discovery-trending-be-fe.md) | draft | Proposal: YouTube discovery + trending backend/frontend |
+| [sources/draft/240526-survey-downie-youtube-320kbps.md](sources/draft/240526-survey-downie-youtube-320kbps.md) | draft | Khảo sát: Tải nhạc 320kbps từ YouTube bằng Downie |
+| [sources/draft/240526-trending-chart-mode-fe.md](sources/draft/240526-trending-chart-mode-fe.md) | draft | Proposal: Trending Chart Mode |
+| [sources/draft/280526-sqlite-to-postgres.md](sources/draft/280526-sqlite-to-postgres.md) | draft | Proposal: Migrate SQLite → PostgreSQL (separate container) |
+| [sources/draft/250525-radial-nav-bubble.md](sources/draft/250525-radial-nav-bubble.md) | draft | Proposal: Radial Navigation Bubble |

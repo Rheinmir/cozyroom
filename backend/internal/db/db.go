@@ -193,6 +193,21 @@ func migrate(db *sql.DB) error {
 		value      TEXT NOT NULL,
 		updated_at TEXT NOT NULL
 	)`)
+	// ADK-style scoped state: one table, four scopes via (scope, scope_id) prefix.
+	// scope: 'user' | 'session' | 'app'
+	// scope_id: user/session identifier, or 'global' for app-wide.
+	db.Exec(`CREATE TABLE IF NOT EXISTS agent_state (
+		scope      TEXT    NOT NULL DEFAULT 'user',
+		scope_id   TEXT    NOT NULL DEFAULT 'default',
+		key        TEXT    NOT NULL,
+		value      TEXT    NOT NULL,
+		updated_at TEXT    NOT NULL,
+		PRIMARY KEY (scope, scope_id, key)
+	)`)
+	// One-time migration: copy existing agent_memory rows into agent_state as user-scoped.
+	db.Exec(`INSERT INTO agent_state (scope, scope_id, key, value, updated_at)
+		SELECT 'user', 'default', key, value, updated_at FROM agent_memory
+		ON CONFLICT (scope, scope_id, key) DO NOTHING`)
 	db.Exec(`CREATE TABLE IF NOT EXISTS ai_model_prices (
 		model      TEXT PRIMARY KEY,
 		price_in   REAL NOT NULL DEFAULT 0,

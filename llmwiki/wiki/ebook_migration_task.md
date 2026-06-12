@@ -30,3 +30,6 @@
 - **Xử lý trùng tên**: Nếu hai cuốn sách có nội dung khác nhau nhưng trùng tên file, script sẽ tự động thêm một đoạn mã băm ngắn vào tên file mới để tránh ghi đè.
 - Script tự động loại bỏ các file rác của Mac (`._*`) và `__MACOSX`.
 - Nếu sách không có tag trong `metadata.opf`, nó sẽ vào mục `Uncategorized`.
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

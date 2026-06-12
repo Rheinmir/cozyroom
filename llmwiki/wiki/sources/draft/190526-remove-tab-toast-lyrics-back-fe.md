@@ -86,3 +86,6 @@ Thêm CSS inline hoặc class (không sửa `index.css` nếu có thể):
 - [ ] Tab bar (Now Playing / [[concepts/Lyrics|Lyrics]]) vẫn hiển thị bình thường ở phía dưới nội dung
 - [ ] Mọi nút back, close, lyrics tools, controls vẫn hoạt động đúng
 - [ ] Không có TypeScript errors sau thay đổi
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

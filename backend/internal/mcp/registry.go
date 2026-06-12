@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"cozyroom/internal/db"
 	"cozyroom/internal/usecase"
 )
 
@@ -28,13 +28,10 @@ func randomHexID() string {
 // ToolDeps are the dependencies needed to handle MCP tool calls natively.
 type ToolDeps struct {
 	Lib           *usecase.LibraryUsecase
-	DB            *db.RDB
+	DB            *sql.DB
 	ScanFunc      func() (int, error) // triggers library.Scan; nil = no-op
 	CloakProxyURL string
 	ReloadCronFunc func() error // reloads cron tasks
-	// DownloadYTFunc downloads a YouTube video server-side and indexes it.
-	// Returns the indexed track ID on success.
-	DownloadYTFunc func(id, title, artist string) (trackID string, err error)
 }
 
 // NewRegistry returns all MCP tools wired to native backend services.
@@ -256,12 +253,11 @@ func browseURLTool(d ToolDeps) Tool {
 func searchMusicTool(d ToolDeps) Tool {
 	return Tool{
 		Name:        "search_music",
-		Description: "Search tracks by name/artist. Returns [{id,t,ar}]. Use id for play/playlist ops. limit: max results (default 10, max 20).",
+		Description: "Search music: artists+albums+tracks. Returns top 20.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"query": map[string]any{"type": "string"},
-				"limit": map[string]any{"type": "integer", "description": "max results, default 10"},
+				"query": map[string]any{"type": "string", "description": "search term"},
 			},
 			"required": []string{"query"},
 		},
@@ -270,22 +266,29 @@ func searchMusicTool(d ToolDeps) Tool {
 			if q == "" {
 				return nil, fmt.Errorf("query required")
 			}
-			limit := 10
-			if v, ok := input["limit"].(float64); ok && v > 0 && v <= 20 {
-				limit = int(v)
-			}
 			res, err := d.Lib.SearchAll(context.Background(), q)
 			if err != nil {
 				return nil, err
 			}
-			tracks, total := Paginate(res.Tracks, limit)
+			artists, _ := Paginate(res.Artists, 5)
+			albums, _ := Paginate(res.Albums, 8)
+			tracks, totalTracks := Paginate(res.Tracks, 20)
+
+			ta := make([]map[string]any, len(artists))
+			for i, a := range artists {
+				ta[i] = TrimArtist(a.ID, a.Name)
+			}
+			tal := make([]map[string]any, len(albums))
+			for i, al := range albums {
+				tal[i] = map[string]any{"id": al.ID, "t": al.Title, "ar": al.ArtistName, "y": al.Year}
+			}
 			ttr := make([]map[string]any, len(tracks))
 			for i, tr := range tracks {
-				ttr[i] = map[string]any{"id": tr.ID, "t": tr.Title, "ar": tr.ArtistName}
+				ttr[i] = TrimTrack(tr.ID, tr.Title, tr.ArtistName, tr.AlbumTitle, tr.DurationS)
 			}
-			out := map[string]any{"tracks": ttr}
-			if total > limit {
-				out["more"] = total - limit
+			out := map[string]any{"artists": ta, "albums": tal, "tracks": ttr}
+			if totalTracks > 20 {
+				out["tracks_total"] = totalTracks
 			}
 			return out, nil
 		},
@@ -429,7 +432,7 @@ func playTrackTool(d ToolDeps) Tool {
 					 FROM tracks t
 					 LEFT JOIN albums al ON al.id = t.album_id
 					 LEFT JOIN artists ar ON ar.id = al.artist_id
-					 WHERE t.id = ?`, id).Scan(&realID, &albumID, &realTitle, &realArtist, &durS)
+					 WHERE t.id = $1`, id).Scan(&realID, &albumID, &realTitle, &realArtist, &durS)
 				if err != nil && title != "" {
 					// model may have passed wrong id — search by title
 					tL, tU := strings.ToLower(title), strings.ToUpper(title)
@@ -438,7 +441,7 @@ func playTrackTool(d ToolDeps) Tool {
 						 FROM tracks t
 						 LEFT JOIN albums al ON al.id = t.album_id
 						 LEFT JOIN artists ar ON ar.id = al.artist_id
-						 WHERE t.title LIKE ? OR t.title LIKE ? OR t.title LIKE ?
+						 WHERE t.title LIKE $1 OR t.title LIKE $2 OR t.title LIKE $3
 						 LIMIT 1`, "%"+title+"%", "%"+tL+"%", "%"+tU+"%").
 						Scan(&realID, &albumID, &realTitle, &realArtist, &durS)
 				}
@@ -454,7 +457,7 @@ func playTrackTool(d ToolDeps) Tool {
 			}
 			if albumID != "" && d.DB != nil {
 				d.DB.QueryRowContext(context.Background(),
-					`SELECT COALESCE(title,''), COALESCE(year,0) FROM albums WHERE id = ?`, albumID).
+					`SELECT COALESCE(title,''), COALESCE(year,0) FROM albums WHERE id = $1`, albumID).
 					Scan(&albumTitle, &albumYear)
 			}
 			return map[string]any{
@@ -531,7 +534,7 @@ func searchYouTubeTool(d ToolDeps) Tool {
 func downloadYouTubeTool(d ToolDeps) Tool {
 	return Tool{
 		Name:        "download_youtube",
-		Description: "Download YouTube audio to library and index it. Returns track_id on success — use this id directly with add_to_playlist without calling search_music.",
+		Description: "Download YouTube audio to library (async, no immediate playback). Use play_youtube_stream to play immediately.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -542,27 +545,11 @@ func downloadYouTubeTool(d ToolDeps) Tool {
 			"required": []string{"id", "title"},
 		},
 		Handler: func(input map[string]any) (any, error) {
-			id := strInput(input, "id")
-			title := strInput(input, "title")
-			artist := strInput(input, "artist")
-			if d.DownloadYTFunc != nil {
-				trackID, err := d.DownloadYTFunc(id, title, artist)
-				if err != nil {
-					return nil, fmt.Errorf("download failed: %w", err)
-				}
-				return map[string]any{
-					"ok":       true,
-					"track_id": trackID,
-					"title":    title,
-					"artist":   artist,
-				}, nil
-			}
-			// fallback: frontend action
 			return map[string]any{
 				"_frontend_action": "download_youtube",
-				"id":               id,
-				"title":            title,
-				"artist":           artist,
+				"id":               strInput(input, "id"),
+				"title":            strInput(input, "title"),
+				"artist":           strInput(input, "artist"),
 			}, nil
 		},
 	}
@@ -723,7 +710,7 @@ func createPlaylistTool(d ToolDeps) Tool {
 			}
 			id := randomHexID()
 			_, err := d.DB.ExecContext(context.Background(),
-				`INSERT INTO playlists (id, name) VALUES (?, ?)`, id, name)
+				`INSERT INTO playlists (id, name) VALUES ($1, $2)`, id, name)
 			if err != nil {
 				return nil, err
 			}
@@ -754,7 +741,7 @@ func playPlaylistTool(d ToolDeps) Tool {
 				 JOIN tracks t ON t.id = pt.track_id
 				 LEFT JOIN albums al ON al.id = t.album_id
 				 LEFT JOIN artists ar ON ar.id = al.artist_id
-				 WHERE pt.playlist_id = ?
+				 WHERE pt.playlist_id = $1
 				 ORDER BY pt.position ASC`, pid)
 			if err != nil {
 				return nil, err
@@ -806,7 +793,7 @@ func removeFromPlaylistTool(d ToolDeps) Tool {
 				return nil, fmt.Errorf("playlist_id and track_id required")
 			}
 			_, err := d.DB.ExecContext(context.Background(),
-				`DELETE FROM playlist_tracks WHERE playlist_id=? AND track_id=?`, pid, tid)
+				`DELETE FROM playlist_tracks WHERE playlist_id=$1 AND track_id=$2`, pid, tid)
 			if err != nil {
 				return nil, err
 			}
@@ -831,10 +818,10 @@ func deletePlaylistTool(d ToolDeps) Tool {
 			if pid == "" {
 				return nil, fmt.Errorf("playlist_id required")
 			}
-			if _, err := d.DB.ExecContext(context.Background(), `DELETE FROM playlist_tracks WHERE playlist_id=?`, pid); err != nil {
+			if _, err := d.DB.ExecContext(context.Background(), `DELETE FROM playlist_tracks WHERE playlist_id=$1`, pid); err != nil {
 				return nil, err
 			}
-			_, err := d.DB.ExecContext(context.Background(), `DELETE FROM playlists WHERE id=?`, pid)
+			_, err := d.DB.ExecContext(context.Background(), `DELETE FROM playlists WHERE id=$1`, pid)
 			if err != nil {
 				return nil, err
 			}
@@ -863,9 +850,9 @@ func addToPlaylistTool(d ToolDeps) Tool {
 			}
 			var pos int
 			_ = d.DB.QueryRowContext(context.Background(),
-				`SELECT COALESCE(MAX(position),0)+1 FROM playlist_tracks WHERE playlist_id=?`, pid).Scan(&pos)
+				`SELECT COALESCE(MAX(position),0)+1 FROM playlist_tracks WHERE playlist_id=$1`, pid).Scan(&pos)
 			_, err := d.DB.ExecContext(context.Background(),
-				`INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?,?,?) ON CONFLICT DO NOTHING`,
+				`INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES ($1,$2,$3) ON CONFLICT(playlist_id,track_id) DO NOTHING`,
 				pid, tid, pos)
 			if err != nil {
 				return nil, err
@@ -903,7 +890,7 @@ func getTrendingTool(d ToolDeps) Tool {
 				       COALESCE(d.impact_score,0), COALESCE(d.impact_label,'')
 				FROM trending_daily d
 				JOIN trending_repos r ON r.id=d.repo_id
-				WHERE d.date=?
+				WHERE d.date=$1
 				ORDER BY d.impact_score DESC, star_delta DESC
 				LIMIT 15
 			`, date)
@@ -985,8 +972,10 @@ func getAIAnalyticsTool(d ToolDeps) Tool {
 			to   := strInput(input, "to")
 			where := "WHERE 1=1"
 			args  := []any{}
-			if from != "" { where += " AND created_at >= ?"; args = append(args, from) }
-			if to   != "" { where += " AND created_at <= ?"; args = append(args, to+" 23:59:59") }
+			n := 1
+			if from != "" { where += fmt.Sprintf(" AND created_at >= $%d", n); args = append(args, from); n++ }
+			if to   != "" { where += fmt.Sprintf(" AND created_at <= $%d", n); args = append(args, to+" 23:59:59"); n++ }
+			_ = n
 
 			var total, failed, tokIn, tokOut int
 			var avgMs float64
@@ -1037,12 +1026,13 @@ func getAILogsTool(d ToolDeps) Tool {
 			}
 			where := "WHERE 1=1"
 			args  := []any{}
-			if model != "" { where += " AND model LIKE ?"; args = append(args, "%"+model+"%") }
+			n3 := 1
+			if model != "" { where += fmt.Sprintf(" AND model LIKE $%d", n3); args = append(args, "%"+model+"%"); n3++ }
 			if v, ok := input["failed_only"].(bool); ok && v { where += " AND failed=1" }
 			args = append(args, limit)
 			rows, err := d.DB.QueryContext(context.Background(),
 				`SELECT id, created_at, model, user_msg, ai_msg, failed, fail_reason, tokens_in, tokens_out
-				 FROM chat_logs `+where+` ORDER BY created_at DESC LIMIT ?`, args...)
+				 FROM chat_logs `+where+fmt.Sprintf(` ORDER BY created_at DESC LIMIT $%d`, n3), args...)
 			if err != nil {
 				return nil, err
 			}
@@ -1090,9 +1080,11 @@ func getAIExtremesTool(d ToolDeps) Tool {
 			to    := strInput(input, "to")
 			where := "WHERE tokens_in > 0"
 			args  := []any{}
-			if model != "" { where += " AND model = ?"; args = append(args, model) }
-			if from  != "" { where += " AND created_at >= ?"; args = append(args, from) }
-			if to    != "" { where += " AND created_at <= ?"; args = append(args, to+" 23:59:59") }
+			n2 := 1
+			if model != "" { where += fmt.Sprintf(" AND model = $%d", n2); args = append(args, model); n2++ }
+			if from  != "" { where += fmt.Sprintf(" AND created_at >= $%d", n2); args = append(args, from); n2++ }
+			if to    != "" { where += fmt.Sprintf(" AND created_at <= $%d", n2); args = append(args, to+" 23:59:59"); n2++ }
+			_ = n2
 
 			type ex struct {
 				ID        string `json:"id"`
@@ -1120,17 +1112,26 @@ func getAIExtremesTool(d ToolDeps) Tool {
 	}
 }
 
-// ── Agent Memory Tools ────────────────────────────────────────────────────────
+// ── Agent State Tools (ADK-style scoped state) ────────────────────────────────
+// Scopes: 'user' (default) persists across sessions, 'session' for current
+// conversation, 'app' for global settings shared across all users.
 
 func rememberTool(d ToolDeps) Tool {
 	return Tool{
-		Name:        "remember",
-		Description: "Save fact about user. key=snake_case label, value=fact.",
+		Name: "remember",
+		Description: "Save a fact. key=snake_case label, value=fact. " +
+			"scope: 'user' (default, persists across sessions), " +
+			"'session' (current conversation only), 'app' (global for all users).",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"key":   map[string]any{"type": "string"},
 				"value": map[string]any{"type": "string"},
+				"scope": map[string]any{
+					"type":        "string",
+					"enum":        []string{"user", "session", "app"},
+					"description": "State scope. Default: user.",
+				},
 			},
 			"required": []string{"key", "value"},
 		},
@@ -1140,13 +1141,25 @@ func rememberTool(d ToolDeps) Tool {
 			if key == "" || value == "" {
 				return nil, fmt.Errorf("key and value required")
 			}
+			scope := strInput(input, "scope")
+			if scope != "session" && scope != "app" {
+				scope = "user"
+			}
+			scopeID := "default"
+			if scope == "app" {
+				scopeID = "global"
+			}
+			now := time.Now().UTC().Add(7 * time.Hour).Format("2006-01-02 15:04:05")
 			_, err := d.DB.ExecContext(context.Background(),
-				`INSERT INTO agent_memory (key, value, updated_at) VALUES (?, ?, (NOW() + INTERVAL '7 hours')::TEXT) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`,
-				key, value)
+				`INSERT INTO agent_state (scope, scope_id, key, value, updated_at)
+				 VALUES ($1, $2, $3, $4, $5)
+				 ON CONFLICT (scope, scope_id, key)
+				 DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at`,
+				scope, scopeID, key, value, now)
 			if err != nil {
 				return nil, err
 			}
-			return map[string]any{"ok": true, "key": key}, nil
+			return map[string]any{"ok": true, "key": key, "scope": scope}, nil
 		},
 	}
 }
@@ -1154,7 +1167,7 @@ func rememberTool(d ToolDeps) Tool {
 func recallTool(d ToolDeps) Tool {
 	return Tool{
 		Name:        "recall",
-		Description: "Search persistent memory. Returns matching key-value facts.",
+		Description: "Search persistent memory. Returns matching key-value facts across user and app scopes.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -1164,24 +1177,22 @@ func recallTool(d ToolDeps) Tool {
 		},
 		Handler: func(input map[string]any) (any, error) {
 			q := strInput(input, "query")
-			qL := strings.ToLower(q)
-			qU := strings.ToUpper(q)
-			lk := func(s string) string { return "%" + s + "%" }
+			lk := "%" + q + "%"
 			rows, err := d.DB.QueryContext(context.Background(),
-				`SELECT key, value, updated_at FROM agent_memory
-				 WHERE key LIKE ? OR key LIKE ? OR key LIKE ?
-				    OR value LIKE ? OR value LIKE ? OR value LIKE ?
+				`SELECT scope, key, value FROM agent_state
+				 WHERE scope IN ('user','app')
+				   AND (key ILIKE $1 OR value ILIKE $1)
 				 ORDER BY updated_at DESC LIMIT 10`,
-				lk(q), lk(qL), lk(qU), lk(q), lk(qL), lk(qU))
+				lk)
 			if err != nil {
 				return nil, err
 			}
 			defer rows.Close()
 			var facts []map[string]any
 			for rows.Next() {
-				var k, v, u string
-				rows.Scan(&k, &v, &u)
-				facts = append(facts, map[string]any{"k": k, "v": v})
+				var scope, k, v string
+				rows.Scan(&scope, &k, &v)
+				facts = append(facts, map[string]any{"k": k, "v": v, "scope": scope})
 			}
 			if facts == nil {
 				facts = []map[string]any{}
@@ -1194,11 +1205,14 @@ func recallTool(d ToolDeps) Tool {
 func forgetTool(d ToolDeps) Tool {
 	return Tool{
 		Name:        "forget",
-		Description: "Delete a fact from persistent memory by key.",
+		Description: "Delete a fact from state by key. Removes from user scope by default.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"key": map[string]any{"type": "string"},
+				"scope": map[string]any{
+					"type": "string", "enum": []string{"user", "session", "app"},
+				},
 			},
 			"required": []string{"key"},
 		},
@@ -1207,8 +1221,17 @@ func forgetTool(d ToolDeps) Tool {
 			if key == "" {
 				return nil, fmt.Errorf("key required")
 			}
+			scope := strInput(input, "scope")
+			if scope != "session" && scope != "app" {
+				scope = "user"
+			}
+			scopeID := "default"
+			if scope == "app" {
+				scopeID = "global"
+			}
 			res, err := d.DB.ExecContext(context.Background(),
-				`DELETE FROM agent_memory WHERE key = ?`, key)
+				`DELETE FROM agent_state WHERE scope=$1 AND scope_id=$2 AND key=$3`,
+				scope, scopeID, key)
 			if err != nil {
 				return nil, err
 			}
@@ -1397,11 +1420,11 @@ func scheduleAgentTaskTool(d ToolDeps) Tool {
 			}
 
 			id := randomHexID()
-			nowStr := time.Now().Format("2006-05-02 15:04:05")
+			nowStr := time.Now().Format("2006-01-02 15:04:05")
 
 			_, err := d.DB.ExecContext(context.Background(),
 				`INSERT INTO scheduled_tasks (id, cron_expression, prompt, last_run_at, created_at)
-				 VALUES (?, ?, ?, '', ?)`,
+				 VALUES ($1, $2, $3, '', $4)`,
 				id, cronExpr, prompt, nowStr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save task: %w", err)
@@ -1475,7 +1498,7 @@ func deleteScheduledTaskTool(d ToolDeps) Tool {
 			}
 
 			res, err := d.DB.ExecContext(context.Background(),
-				`DELETE FROM scheduled_tasks WHERE id = ?`, id)
+				`DELETE FROM scheduled_tasks WHERE id = $1`, id)
 			if err != nil {
 				return nil, err
 			}

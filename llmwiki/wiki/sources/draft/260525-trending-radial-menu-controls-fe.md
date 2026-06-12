@@ -122,3 +122,6 @@ Cập nhật kích thước container và tâm quay đồng thời thêm các st
 - Các cánh hoa Layer 3 có nền mờ hơn, tạo điểm nhấn phụ so với các cánh hoa chính ở Layer 1 & 2.
 - Nhấp chọn "Grid" hay "Chart" trên cánh hoa lập tức chuyển chế độ hiển thị dữ liệu của trang Trending. Menu không bị đóng lại.
 - Nhấp chọn "Refresh" bắt đầu xoay icon refresh liên tục trong menu, đồng thời thực hiện tải lại dữ liệu từ server. Sau khi hoàn tất (hoặc hết thời gian chờ 8s), icon dừng xoay.
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

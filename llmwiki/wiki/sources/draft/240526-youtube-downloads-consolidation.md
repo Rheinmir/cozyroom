@@ -34,3 +34,6 @@ Maintain each downloaded YouTube track as its own separate/individual album (usi
 - Newly downloaded YouTube tracks immediately show up in their own separate album under their respective uploader.
 - Subsequent library scans (`/api/scan`) do not overwrite or reset these tracks' metadata.
 
+
+## Origin
+- legacy backfill (harness-update) — commit gần nhất: 7c8f2f4 2026-05-28

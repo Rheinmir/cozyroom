@@ -7,7 +7,7 @@ spec:
     storage: 5Gi
   accessModes: [ReadWriteOnce]
   hostPath:
-    path: /tmp/k8s-cozyroom-data
+    path: /mnt/c/Users/olive/orca/k8s-data
   nodeAffinity:
     required:
       nodeSelectorTerms:

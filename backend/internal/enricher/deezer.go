@@ -162,6 +162,7 @@ func compositeImages(images []image.Image, destPath string) error {
 
 // FetchArtistImages queries provider for each artist missing a local image,
 // downloads the photo to imagesDir, and updates artists.image_path.
+// Also re-fetches artists whose DB path is set but the file no longer exists on disk.
 // Rate-limited to ~3 req/sec to stay polite.
 func FetchArtistImages(provider ArtistImageProvider, repo domain.ArtistRepository, imagesDir string) {
 	if err := os.MkdirAll(imagesDir, 0755); err != nil {
@@ -174,6 +175,22 @@ func FetchArtistImages(provider ArtistImageProvider, repo domain.ArtistRepositor
 	if err != nil {
 		log.Printf("enricher: query: %v", err)
 		return
+	}
+
+	// Also collect artists whose DB path is set but the file is missing (e.g. after volume wipe).
+	allArtists, err := repo.List(ctx)
+	if err == nil {
+		for _, a := range allArtists {
+			if a.ImageURL == "" {
+				continue
+			}
+			dest := filepath.Join(imagesDir, a.ID+".jpg")
+			if _, statErr := os.Stat(dest); os.IsNotExist(statErr) {
+				// File gone — reset DB so enricher will re-fetch.
+				_ = repo.SetImagePath(ctx, a.ID, "")
+				artists = append(artists, domain.Artist{ID: a.ID, Name: a.Name})
+			}
+		}
 	}
 
 	log.Printf("enricher: fetching images for %d artists", len(artists))

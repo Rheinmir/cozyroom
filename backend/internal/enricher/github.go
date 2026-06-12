@@ -195,7 +195,8 @@ func BackfillStarHistory(db *sql.DB, repos []TrendingRepo, githubToken string) {
 			}
 			db.Exec(`
 				INSERT INTO trending_star_history (repo_id, sampled_at, stars)
-				VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
+				VALUES ($1, $2, $3)
+				ON CONFLICT(repo_id, sampled_at) DO NOTHING
 			`, r.ID, dayStart.Format("2006-01-02")+"T12:00:00Z", estimated)
 		}
 	}
@@ -293,7 +294,8 @@ func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
 
 		if _, err := tx.Exec(`
 			INSERT INTO trending_star_history (repo_id, sampled_at, stars)
-			VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
+			VALUES ($1, $2, $3)
+			ON CONFLICT(repo_id, sampled_at) DO NOTHING
 		`, r.ID, now, r.Stars); err != nil {
 			return err
 		}

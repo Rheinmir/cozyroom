@@ -3,6 +3,7 @@ package hls
 import (
 	"bufio"
 	"context"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,8 +17,10 @@ import (
 var ValidFile = regexp.MustCompile(`^(index\.m3u8|\d{5}\.ts)$`)
 
 type job struct {
-	ready chan struct{} // closed when index.m3u8 first appears on disk
-	dir   string
+	ready     chan struct{} // closed when index.m3u8 first appears on disk
+	dir       string
+	startedAt time.Time
+	cmd       *exec.Cmd // kept for watcher to check liveness
 }
 
 // Manager starts and tracks per-video ffmpeg HLS jobs.
@@ -36,6 +39,39 @@ func (m *Manager) Dir(id string) string {
 	return filepath.Join(m.baseDir, id)
 }
 
+// Watch runs a background goroutine that logs and cleans up stuck ffmpeg jobs.
+// Call once after New(). A job is considered stuck if it has been running for
+// over 3 hours without completing (covers even the longest films).
+func (m *Manager) Watch(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				m.mu.Lock()
+				for id, j := range m.running {
+					age := time.Since(j.startedAt)
+					if age > 3*time.Hour {
+						log.Printf("[hls] watcher: job %s stuck for %v — killing ffmpeg", id, age.Round(time.Second))
+						if j.cmd != nil && j.cmd.Process != nil {
+							j.cmd.Process.Kill()
+						}
+						delete(m.running, id)
+					}
+				}
+				activeJobs := len(m.running)
+				m.mu.Unlock()
+				if activeJobs > 0 {
+					log.Printf("[hls] watcher: %d active transcode job(s)", activeJobs)
+				}
+			}
+		}
+	}()
+}
+
 // EnsureReady starts HLS generation if needed, then blocks until index.m3u8
 // is available (i.e. the first 4-second segment has been written).
 func (m *Manager) EnsureReady(ctx context.Context, id, filePath string) error {
@@ -49,7 +85,7 @@ func (m *Manager) EnsureReady(ctx context.Context, id, filePath string) error {
 	m.mu.Lock()
 	j, ok := m.running[id]
 	if !ok {
-		j = &job{ready: make(chan struct{}), dir: dir}
+		j = &job{ready: make(chan struct{}), dir: dir, startedAt: time.Now()}
 		m.running[id] = j
 		go m.run(id, filePath, m3u8, j)
 	}
@@ -64,6 +100,11 @@ func (m *Manager) EnsureReady(ctx context.Context, id, filePath string) error {
 }
 
 func (m *Manager) run(id, filePath, m3u8 string, j *job) {
+	// 2-hour hard timeout — covers even very long films. Prevents goroutine
+	// leaks when ffmpeg hangs on a corrupt/unreadable file.
+	ffmpegCtx, cancelFFmpeg := context.WithTimeout(context.Background(), 2*time.Hour)
+	defer cancelFFmpeg()
+
 	pollCtx, stopPoll := context.WithCancel(context.Background())
 	defer stopPoll()
 	defer func() {
@@ -79,10 +120,12 @@ func (m *Manager) run(id, filePath, m3u8 string, j *job) {
 	}()
 
 	if err := os.MkdirAll(j.dir, 0755); err != nil {
+		log.Printf("[hls] mkdir %s: %v", j.dir, err)
 		return
 	}
 
-	cmd := exec.Command("ffmpeg",
+	cmd := exec.CommandContext(ffmpegCtx,
+		"ffmpeg",
 		"-hide_banner", "-loglevel", "error",
 		"-i", filePath,
 		"-c:v", "copy",
@@ -94,10 +137,13 @@ func (m *Manager) run(id, filePath, m3u8 string, j *job) {
 		"-hls_segment_filename", filepath.Join(j.dir, "%05d.ts"),
 		m3u8,
 	)
+	j.cmd = cmd // expose to watcher
 
 	if err := cmd.Start(); err != nil {
+		log.Printf("[hls] ffmpeg start %s: %v", id, err)
 		return
 	}
+	log.Printf("[hls] transcode started: %s", id)
 
 	// Signal ready as soon as index.m3u8 first appears (first segment written).
 	go func() {
@@ -118,7 +164,11 @@ func (m *Manager) run(id, filePath, m3u8 string, j *job) {
 		}
 	}()
 
-	cmd.Wait()
+	if err := cmd.Wait(); err != nil {
+		log.Printf("[hls] ffmpeg done %s: %v", id, err)
+	} else {
+		log.Printf("[hls] transcode complete: %s", id)
+	}
 }
 
 // WaitSegment blocks until path exists on disk or ctx is cancelled.

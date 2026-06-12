@@ -1,7 +1,14 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchArtists, fetchStats, imgSrc } from '../api'
+
+function ArtistAvatar({ imageUrl, name }: { imageUrl: string; name: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!imageUrl || failed) return <>{name.charAt(0).toUpperCase()}</>
+  return <img src={imgSrc(imageUrl, 200)} alt={name} loading="lazy" onError={() => setFailed(true)} />
+}
 
 export default function ArtistsPage() {
   const { t } = useTranslation()
@@ -24,10 +31,7 @@ export default function ArtistsPage() {
         {artists.map(a => (
           <Link key={a.id} to={`/artist/${a.id}`} className="artist-card">
             <div className="artist-avatar">
-              {a.image_url
-                ? <img src={imgSrc(a.image_url, 200)} alt={a.name} loading="lazy" />
-                : a.name.charAt(0).toUpperCase()
-              }
+              <ArtistAvatar imageUrl={a.image_url} name={a.name} />
             </div>
             <span className="artist-name">{a.name}</span>
             <span className="artist-sub">{t('library.artist')}</span>

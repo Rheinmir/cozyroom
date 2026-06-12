@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
+import type { Playlist } from '../api'
+import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../api'
+import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
 
 const BUBBLE_R = 28   // half of 56px bubble
 const PETAL_R  = 22   // half of 44px petal
@@ -22,8 +25,13 @@ const IcPlaylist = () => I('M4 10h12v2H4zm0-4h12v2H4zm0 8h8v2H4zm10 0v6l5-3z')
 const IcAI       = () => I('M12 2L13.09 9.26L20 12L13.09 14.74L12 22L10.91 14.74L4 12L10.91 9.26Z M19 3L19.5 5.5L22 6L19.5 6.5L19 9L18.5 6.5L16 6L18.5 5.5Z')
 const IcChart    = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
 const IcGrid     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M4 4h7v7H4zm10 0h7v7h-7zM4 14h7v7H4zm10 0h7v7h-7z"/></svg>
-const IcRefresh  = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+const IcRefresh     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+const IcStar        = () => I('M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z')
+const IcStarBorder  = () => I('M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zm-10 6.73l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 7.1l1.71 3.61 4.38.38-3.32 2.88 1 4.28L12 15.97z')
+const IcPlaylistAdd = () => I('M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z')
 
+
+type RadialItem = { route: string; label: string; icon: JSX.Element; r: number; onAction?: () => void }
 
 // ── Arc math ─────────────────────────────────────────────────────────────────
 function calcArc(bx: number, by: number) {
@@ -150,11 +158,19 @@ export default function RadialNav() {
     }
   }, [trendingData.selectedDate])
 
-  // Reset calendar mode when menu is closed
+  const [playlistPickerMode, setPlaylistPickerMode] = useState(false)
+  const [localLists, setLocalLists] = useState<Playlist[]>(() => getLocalPlaylists())
+  const [permLists,  setPermLists]  = useState<Playlist[]>([])
+
+  // Reset contextual modes when menu is closed; fetch fresh data when it opens
   useEffect(() => {
     if (!open) {
       setCalendarMode(false)
       setIsEditingYear(false)
+      setPlaylistPickerMode(false)
+    } else {
+      setLocalLists(getLocalPlaylists())
+      fetchPlaylists().then(setPermLists).catch(() => {})
     }
   }, [open])
 
@@ -166,15 +182,52 @@ export default function RadialNav() {
     return { x: window.innerWidth - BUBBLE_R - 20, y: window.innerHeight - BUBBLE_R - 100 }
   })
 
+  const [snappedSelector, setSnappedSelector] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('radial-nav-snapped-selector')
+    } catch {}
+    return null
+  })
+
   const dragStart = useRef<{ px: number; py: number; bx: number; by: number } | null>(null)
   const moved     = useRef(false)
   const bubbleRef = useRef<HTMLButtonElement>(null)
 
   const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
-  // Handle window resizing and ensure the bubble stays within viewport bounds (Chrome/Edge offscreen bugfix)
+  // Find nearby magnet elements to snap to
+  const getSnappedPos = (rawX: number, rawY: number) => {
+    const selectors = ['.player-mini-play-btn', '.npo-play-btn']
+    const SNAP_THRESHOLD = 50 // px
+    
+    const npo = document.querySelector('.npo')
+    const isNpoOpen = npo && npo.classList.contains('npo--open')
+    
+    for (const selector of selectors) {
+      if (selector === '.npo-play-btn' && !isNpoOpen) continue
+      if (selector === '.player-mini-play-btn' && isNpoOpen) continue
+
+      const magnet = document.querySelector(selector)
+      if (!magnet) continue
+      const rect = magnet.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) continue
+      
+      const mx = rect.left + rect.width / 2
+      const my = rect.top + rect.height / 2
+      
+      const dist = Math.hypot(rawX - mx, rawY - my)
+      if (dist < SNAP_THRESHOLD) {
+        return { x: mx, y: my, snapped: true, selector }
+      }
+    }
+    
+    return { x: rawX, y: rawY, snapped: false, selector: null }
+  }
+
+  // Handle window resizing and ensure the bubble stays within viewport bounds
   useEffect(() => {
     const handleResize = () => {
+      if (snappedSelector) return // Position is handled by tracking effect
       setPos(prev => ({
         x: clamp(prev.x, 0, window.innerWidth),
         y: clamp(prev.y, 0, window.innerHeight)
@@ -183,7 +236,58 @@ export default function RadialNav() {
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [snappedSelector])
+
+  // Actively track snapped element position to keep centered
+  useEffect(() => {
+    if (!snappedSelector) return
+
+    const updateSnappedPos = () => {
+      let activeSelector = snappedSelector
+      
+      // Auto-snap between mini play button and NPO play button depending on which one is active/visible
+      const npo = document.querySelector('.npo')
+      const isNpoOpen = npo && npo.classList.contains('npo--open')
+      
+      if (isNpoOpen) {
+        activeSelector = '.npo-play-btn'
+      } else {
+        activeSelector = '.player-mini-play-btn'
+      }
+
+      if (activeSelector !== snappedSelector) {
+        setSnappedSelector(activeSelector)
+        localStorage.setItem('radial-nav-snapped-selector', activeSelector)
+      }
+
+      const magnet = document.querySelector(activeSelector)
+      if (!magnet) return
+      const rect = magnet.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) return
+      const mx = rect.left + rect.width / 2
+      const my = rect.top + rect.height / 2
+      
+      setPos({ x: mx, y: my })
+    }
+
+    updateSnappedPos()
+    
+    window.addEventListener('resize', updateSnappedPos)
+    window.addEventListener('scroll', updateSnappedPos, { capture: true })
+    
+    let frameId: number
+    const tick = () => {
+      updateSnappedPos()
+      frameId = requestAnimationFrame(tick)
+    }
+    frameId = requestAnimationFrame(tick)
+    
+    return () => {
+      window.removeEventListener('resize', updateSnappedPos)
+      window.removeEventListener('scroll', updateSnappedPos, { capture: true })
+      cancelAnimationFrame(frameId)
+    }
+  }, [snappedSelector])
 
   const onPointerDown = (e: React.PointerEvent) => {
     e.preventDefault()
@@ -198,9 +302,21 @@ export default function RadialNav() {
     const dy = e.clientY - dragStart.current.py
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved.current = true
     if (!moved.current) return
+    
+    const rawX = dragStart.current.bx + dx
+    const rawY = dragStart.current.by + dy
+    
+    const snapped = getSnappedPos(rawX, rawY)
+    
+    if (snapped.snapped && snapped.selector) {
+      setSnappedSelector(snapped.selector)
+    } else {
+      setSnappedSelector(null)
+    }
+    
     setPos({
-      x: clamp(dragStart.current.bx + dx, 0, window.innerWidth),
-      y: clamp(dragStart.current.by + dy, 0, window.innerHeight),
+      x: clamp(snapped.x, 0, window.innerWidth),
+      y: clamp(snapped.y, 0, window.innerHeight),
     })
   }
 
@@ -209,10 +325,10 @@ export default function RadialNav() {
     dragStart.current = null
     if (!moved.current) {
       if (calendarMode) {
-        // Tap bubble while in calendar mode → edit year directly (mobile friendly!)
         setIsEditingYear(true)
+      } else if (playlistPickerMode) {
+        setPlaylistPickerMode(false)
       } else if (open) {
-        // Tap disc while open → play/pause
         if (track) toggle()
         else setOpen(false)
       } else {
@@ -220,13 +336,87 @@ export default function RadialNav() {
       }
     } else {
       localStorage.setItem('radial-nav-pos', JSON.stringify(pos))
+      if (snappedSelector) {
+        localStorage.setItem('radial-nav-snapped-selector', snappedSelector)
+      } else {
+        localStorage.removeItem('radial-nav-snapped-selector')
+      }
     }
   }
 
-  const innerItems = [
+  const allLists: (Playlist & { is_local: boolean })[] = [
+    ...localLists.map(l => ({ ...l, is_local: true  as const })),
+    ...permLists.map( l => ({ ...l, is_local: false as const })),
+  ]
+  const isStarred = track
+    ? allLists.some(l => l.name === 'Favorites' && l.track_ids.includes(track.id))
+    : false
+
+  const handleStarToggle = () => {
+    if (!track) return
+    const favList = allLists.find(l => l.name === 'Favorites')
+    if (favList) {
+      if (!favList.is_local) return // perm favorites require password — use FavoritePill instead
+      const inFav = favList.track_ids.includes(track.id)
+      const updated = localLists.map(l =>
+        l.id !== favList.id ? l : {
+          ...l,
+          track_ids: inFav
+            ? l.track_ids.filter(id => id !== track.id)
+            : [...l.track_ids, track.id],
+        }
+      )
+      setLocalLists(updated)
+      saveLocalPlaylists(updated)
+    } else {
+      const newList: Playlist = { id: 'local_favs_' + Date.now(), name: 'Favorites', track_ids: [track.id] }
+      const updated = [...localLists, newList]
+      setLocalLists(updated)
+      saveLocalPlaylists(updated)
+    }
+  }
+
+  const handlePlaylistToggle = (list: Playlist & { is_local: boolean }) => {
+    if (!track) return
+    const inList = list.track_ids.includes(track.id)
+    if (list.is_local) {
+      const updated = localLists.map(l =>
+        l.id !== list.id ? l : {
+          ...l,
+          track_ids: inList
+            ? l.track_ids.filter(id => id !== track.id)
+            : [...l.track_ids, track.id],
+        }
+      )
+      setLocalLists(updated)
+      saveLocalPlaylists(updated)
+    } else {
+      const pw = sessionStorage.getItem('cozyroom_owner_password') || ''
+      const optimistic = () =>
+        setPermLists(prev => prev.map(l =>
+          l.id !== list.id ? l : {
+            ...l,
+            track_ids: inList
+              ? l.track_ids.filter(id => id !== track.id)
+              : [...l.track_ids, track.id],
+          }
+        ))
+      if (inList) {
+        removeTrackFromPlaylist(list.id, track.id, pw).then(optimistic).catch(() => {})
+      } else {
+        addTrackToPlaylist(list.id, track.id, pw).then(optimistic).catch(() => {})
+      }
+    }
+  }
+
+  const innerItems: RadialItem[] = [
     { route: '/',          label: t('nav.artists'),                     icon: <IcHome />,     r: 86 },
     { route: '/ai',        label: 'AI',                                 icon: <IcAI />,       r: 80 },
     { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist />, r: 92 },
+    ...(track ? [
+      { route: 'star-track',   label: isStarred ? t('nav.unstar', { defaultValue: 'Bỏ sao' }) : t('nav.star', { defaultValue: 'Yêu thích' }), icon: isStarred ? <IcStar /> : <IcStarBorder />, r: 84, onAction: handleStarToggle },
+      { route: 'playlist-add', label: t('nav.add_to_playlist', { defaultValue: 'Thêm vào' }), icon: <IcPlaylistAdd />, r: 88, onAction: () => setPlaylistPickerMode(true) },
+    ] as RadialItem[] : []),
   ]
 
   const outerItems = [
@@ -421,6 +611,11 @@ export default function RadialNav() {
     { route: 'cal-status', label: '', icon: `${String(pickerMonth).padStart(2, '0')}/${pickerYear}`, r: 242, disabled: true, onClick: undefined }
   ]
 
+  const playlistPickerItems: (Playlist & { is_local: boolean; isBack?: boolean })[] = [
+    { id: '__back__', name: '↩ Quay lại', track_ids: [], is_local: true, isBack: true },
+    ...allLists,
+  ]
+
   const MENU_R = 260
   const isDragging = dragStart.current !== null
 
@@ -454,11 +649,11 @@ export default function RadialNav() {
           top: activeY,
           width: 0,
           height: 0,
-          zIndex: 998,
+          zIndex: 99999,
           pointerEvents: 'none',
           transform: `scale(${scale})`,
           transformOrigin: '0 0',
-          transition: isDragging
+          transition: (isDragging || snappedSelector)
             ? 'none'
             : 'left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), top 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
         }}
@@ -761,6 +956,59 @@ export default function RadialNav() {
               )
             })}
           </>
+        ) : playlistPickerMode ? (
+          <>
+            {/* Playlist Picker Ring */}
+            {playlistPickerItems.map((item, i) => {
+              const n = playlistPickerItems.length
+              const sectorSpan = span / n
+              const startDeg = start + i * sectorSpan + 1.5
+              const endDeg = start + (i + 1) * sectorSpan - 1.5
+              const midDeg = start + (i + 0.5) * sectorSpan
+              const midRad = (midDeg * Math.PI) / 180
+              const rInner = 34
+              const rOuter = 140
+              const rMid = (rInner + rOuter) / 2
+              const mx = CX + rMid * Math.cos(midRad)
+              const my = CY + rMid * Math.sin(midRad)
+              const inList = !item.isBack && track ? item.track_ids.includes(track.id) : false
+              return (
+                <g
+                  key={item.id}
+                  className={`radial-petal-group radial-petal-group--optional${inList ? ' radial-petal-group--active' : ''}`}
+                  onClick={() => {
+                    if (item.isBack) {
+                      setPlaylistPickerMode(false)
+                    } else if (track) {
+                      handlePlaylistToggle(item)
+                    }
+                  }}
+                  style={{
+                    transform: open ? 'scale(1)' : 'scale(0)',
+                    opacity: open ? 1 : 0,
+                    transitionDelay: open ? `${i * 28}ms` : `${(n - 1 - i) * 18}ms`,
+                  }}
+                >
+                  <path
+                    className="radial-sector radial-sector--optional"
+                    d={getSectorPath(CX, CY, rInner, rOuter, startDeg, endDeg)}
+                    style={{ stroke: inList ? 'rgba(168,85,247,0.44)' : undefined }}
+                  />
+                  <foreignObject x={mx - 25} y={my - 20} width={50} height={40} className="radial-petal-fo">
+                    <div className="radial-petal-content">
+                      {!item.isBack && (
+                        <span className="radial-petal-fo-dot" style={{ background: inList ? 'var(--purple)' : 'rgba(255,255,255,0.3)' }} />
+                      )}
+                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {item.isBack ? '↩' : inList ? '✓' : '+'}
+                      </span>
+                      <span className="radial-petal-label" style={{ fontSize: '9px' }}>{item.name}</span>
+                    </div>
+                  </foreignObject>
+                </g>
+              )
+            })}
+          </>
         ) : (
           <>
             {/* Layer 1: Inner Concentric Ring */}
@@ -776,16 +1024,17 @@ export default function RadialNav() {
               const mx = CX + rMid * Math.cos(midRad)
               const my = CY + rMid * Math.sin(midRad)
 
-              const isActive =
-                location.pathname === item.route ||
-                (item.route !== '/' && location.pathname.startsWith(item.route))
+              const isActive = item.route === 'star-track' ? isStarred
+                : location.pathname === item.route ||
+                  (item.route !== '/' && location.pathname.startsWith(item.route))
 
               return (
                 <g
                   key={item.route}
                   className={`radial-petal-group${isActive ? ' radial-petal-group--active' : ''}`}
                   onClick={() => {
-                    navigate(item.route)
+                    if (item.onAction) item.onAction()
+                    else navigate(item.route)
                   }}
                   style={{
                     transform: open ? 'scale(1)' : 'scale(0)',
@@ -1063,7 +1312,7 @@ export default function RadialNav() {
         {/* Bubble */}
         <button
           ref={bubbleRef}
-          className={`radial-bubble${isPlaying && track && !calendarMode ? ' radial-bubble--spinning' : ''}${open ? ' radial-bubble--open' : ''}${calendarMode ? ' radial-bubble--calendar' : ''}${track && !calendarMode ? ' radial-bubble--vinyl' : ''}`}
+          className={`radial-bubble${isPlaying && track && !calendarMode ? ' radial-bubble--spinning' : ''}${open ? ' radial-bubble--open' : ''}${calendarMode ? ' radial-bubble--calendar' : ''}${track && !calendarMode ? ' radial-bubble--vinyl' : ''}${snappedSelector ? ' radial-bubble--snapped' : ''}`}
           style={{
             position: 'absolute',
             left: -BUBBLE_R,
@@ -1085,7 +1334,18 @@ export default function RadialNav() {
               <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{pickerYear}</span>
             </div>
           ) : track && track.album_id ? (
-            <img src={`/api/covers/${track.album_id}?w=80`} alt={track.title} draggable={false} />
+            <img
+              src={track.album_id.startsWith('yt:')
+                ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
+                : `/api/covers/${track.album_id}?w=80`}
+              alt={track.title}
+              draggable={false}
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            />
+          ) : track ? (
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style={{ opacity: 0.7 }}>
+              <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
+            </svg>
           ) : (
             <img src="/favicon.png" alt="Cozyroom" draggable={false} />
           )}

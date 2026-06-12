@@ -89,7 +89,10 @@
     "smart_on": "Smart Radio đang bật",
     "smart_off": "Bật Smart Radio",
     "show_translation": "Hiện bản dịch",
-    "hide_translation": "Ẩn bản dịch"
+    "hide_translation": "Ẩn bản dịch",
+    "lyrics": "Lời bài hát",
+    "playback_failed": "Không thể phát bài hát",
+    "playback_error": "Lỗi: {{message}} (Mã: {{code}})"
   },
   "lyrics": {
     "finding": "Đang tìm lời bài hát…",

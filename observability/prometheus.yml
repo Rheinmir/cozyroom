@@ -17,6 +17,12 @@ scrape_configs:
           instance: 'cozyroom'
           environment: 'production'
 
+  - job_name: 'cloudflared'
+    static_configs:
+      - targets: ['localhost:2000']
+        labels:
+          instance: 'homelab-tunnel'
+
   - job_name: 'pushgateway'
     honor_labels: true
     static_configs:
