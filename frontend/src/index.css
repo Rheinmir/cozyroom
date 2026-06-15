@@ -115,8 +115,8 @@
   box-sizing: border-box;
 }
 .ai-bubble--user {
-  background: var(--green);
-  color: #000;
+  background: #a855f7;
+  color: #fff;
   border-bottom-right-radius: 4px;
 }
 .ai-bubble--assistant {
@@ -740,13 +740,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #404040, #1a1a1a);
+  background: linear-gradient(135deg, #3b1d6e, #0e1a2e);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 40px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: rgba(168,85,247,.7);
   box-shadow: 0 8px 24px rgba(0,0,0,.5);
   overflow: hidden;
   flex-shrink: 0;
@@ -779,13 +779,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #404040, #1a1a1a);
+  background: linear-gradient(135deg, #3b1d6e, #0e1a2e);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 56px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: rgba(168,85,247,.7);
   box-shadow: 0 16px 40px rgba(0,0,0,.6);
   flex-shrink: 0;
   overflow: hidden;
@@ -1086,13 +1086,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #404040, #1a1a1a);
+  background: linear-gradient(135deg, #3b1d6e, #0e1a2e);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: rgba(168,85,247,.7);
   flex-shrink: 0;
 }
 
@@ -1263,22 +1263,22 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--text);
-  color: #000;
+  background: #fff;
+  color: #070708;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: transform .1s, background .15s;
 }
-.play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
+.play-btn:hover { background: #f0f0f0; transform: scale(1.06); }
 
 .hero-play-btn {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--green);
-  color: #000;
+  background: #fff;
+  color: #070708;
   border: none;
   display: flex;
   align-items: center;
@@ -1286,8 +1286,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex-shrink: 0;
   cursor: pointer;
   transition: transform .1s, background .15s;
+  box-shadow: 0 14px 30px -12px rgba(168,85,247,.5);
 }
-.hero-play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
+.hero-play-btn:hover { background: #f0f0f0; transform: scale(1.06); }
 .hero-play-btn svg { margin-left: 3px; }
 
 .player-time {
@@ -1753,12 +1754,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   .player-mini-play-btn {
     width: 36px;
     height: 36px;
-    background: var(--text);
-    color: #000;
+    background: #fff;
+    color: #070708;
     transform: translateY(-4px);
   }
   .player-mini-play-btn:hover {
-    background: var(--green-hover);
+    background: #f0f0f0;
     transform: translateY(-4px) scale(1.06);
   }
 
