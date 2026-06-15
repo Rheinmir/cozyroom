@@ -750,6 +750,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   box-shadow: 0 8px 24px rgba(0,0,0,.5);
   overflow: hidden;
   flex-shrink: 0;
+  -webkit-box-reflect: below 3px linear-gradient(transparent, rgba(0,0,0,.75) 28%);
 }
 .artist-avatar img {
   width: 100%;
