@@ -38,15 +38,40 @@ spec:
       labels:
         app: cloudflared
     spec:
-      # Spread 2 replicas across different nodes (VNPT + Viettel)
+      # Spread 2 replicas across healthy nodes only (rhein-e2144g has broken networking)
       affinity:
-        podAntiAffinity:
+        nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: cloudflared
-              topologyKey: kubernetes.io/hostname
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - rhein-e2144g-p630-16-256
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: cloudflared
+                topologyKey: kubernetes.io/hostname
       containers:
+        - name: proxy
+          image: nginx:alpine
+          command:
+            - sh
+            - -c
+            - |
+              printf 'server {\n  listen 18080;\n  location / {\n    proxy_pass http://frontend.cozyroom-k8s.svc.cluster.local:80;\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_read_timeout 60s;\n  }\n}\n' > /etc/nginx/conf.d/proxy.conf
+              nginx -g 'daemon off;'
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
         - name: cloudflared
           image: cloudflare/cloudflared:latest
           args:

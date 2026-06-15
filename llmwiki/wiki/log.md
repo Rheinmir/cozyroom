@@ -1,5 +1,31 @@
 # Operation Log
 
+## 2026-06-14 — theme-deploy + cloudflared-debug — apply purple theme vào live site
+
+### Việc đã làm
+- **frontend/src/index.css**: Đổi theme từ Spotify green (`#1DB954`) sang purple/teal glassmorphism (`--green: #a855f7`, `--bg: #050505`), thêm animated orbs, Geist font, glassmorphism sidebar/player/header/cards
+- **Standalone HTML** (`Cozyroom (standalone).html`): Inject CSS override via JS sau Babel transform, theme mới hiển thị đúng
+- **Docker build**: Build với `--no-cache` (bắt buộc vì cache layer cũ dùng CSS hash cũ `BbawKbmY`) → CSS hash mới `f3k7y1Ve`
+- **k8s rollout**: `kubectl rollout restart deployment/frontend` → 3 replicas chạy image mới
+- **cloudflared.yaml**: Đổi podAntiAffinity từ `required` → `preferred` + thêm nodeAffinity NotIn `rhein-e2144g` (node có networking broken)
+
+### Root cause phát hiện
+**Cloudflare tunnel `homelab` có remote-managed ingress routing** (version 6) với `music.giatbh.io.vn → http://localhost:18080`. Config này push từ Cloudflare API xuống, **override hoàn toàn** `ingress:` trong config.yml local. Frontend k8s pods (`frontend.cozyroom-k8s.svc.cluster.local:80`) không bao giờ được reach.
+
+### Bài học
+
+1. **Docker build cache không thay đổi hash nếu dùng lại layers** — `docker build` (không có `--no-cache`) giữ nguyên CSS hash dù source đã thay đổi. Luôn dùng `--no-cache` khi build frontend để đảm bảo CSS hash được regenerate
+2. **imagePullPolicy: Always + same tag = node cache hit** — rollout restart với `imagePullPolicy: Always` vẫn dùng image cũ nếu node đã cache manifest digest đó. Cần đảm bảo push xong TRƯỚC KHI restart, hoặc dùng unique tag per deploy
+3. **subPath ConfigMap mount không auto-update** — ConfigMap thay đổi không propagate vào pod dùng `subPath:`. Phải restart pod để nhận config mới
+4. **Cloudflare remote tunnel config override local config.yml** — Named tunnel với ingress được set qua Cloudflare dashboard sẽ push config xuống và override local `ingress:` section. Phải update qua Cloudflare dashboard, KHÔNG chỉ sửa ConfigMap trong k8s
+5. **podAntiAffinity: required tạo scheduling deadlock** — Với 3 nodes (1 broken), `required` anti-affinity buộc pod vào node broken. Rollout stuck khi node broken không accept workload
+6. **Xóa pods để phá deadlock có thể break service** — Nếu cả 3 cloudflared pods đang serve (kể cả từ CF cache), xóa chúng để reschedule sẽ làm 502 trong khi chờ
+
+### Trạng thái hiện tại
+- Site **502** — cần update Cloudflare dashboard: tunnel `homelab` → `music.giatbh.io.vn` đổi từ `http://localhost:18080` thành `http://frontend.cozyroom-k8s.svc.cluster.local:80`
+- Frontend pods đang serve đúng CSS mới `f3k7y1Ve` (verified qua port-forward)
+- 2 cloudflared pods đang Ready (f575784f9) nhưng route sai origin
+
 ## 2026-06-11 — harness-update — migrate/update xong, nợ đã backfill: 0 file
 
 ## 2026-06-10 — orca-workflow — cover-fetch-race-fix + K8s deploy
@@ -921,3 +947,8 @@
 
 ## 2026-06-11 — install-harness — mode=migrate
 - Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+
+## 2026-06-12 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+
+## 2026-06-12 — harness-update — migrate xong, nợ đã backfill: 0 file (wiki sạch)
