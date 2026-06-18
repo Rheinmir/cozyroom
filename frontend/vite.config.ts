@@ -6,9 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
+      filename: 'sw2.js',
       devOptions: { enabled: true },
       workbox: {
+        skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
           {
