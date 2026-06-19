@@ -335,8 +335,11 @@ func (h *handlers) stream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Default: serve file with Range support (lossless passthrough)
+	// Cache-Control: public lets CF edge cache the file after first play —
+	// subsequent plays are served from CF datacenter near the user, not tunneled home.
 	metrics.StreamsTotal.WithLabelValues("lossless").Inc()
 	w.Header().Set("X-Quality", "lossless")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
 	http.ServeFile(w, r, filePath)
 }
 
