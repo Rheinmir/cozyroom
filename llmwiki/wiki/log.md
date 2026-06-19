@@ -1,5 +1,44 @@
 # Operation Log
 
+## 2026-06-18 — orca-workflow — distributed-db-citus implemented: Citus 12.1 trên 3 nodes, 2655 tracks migrated, app live trên Citus
+
+## 2026-06-18 — harness-update — migrate xong, nợ đã backfill: 0 file (wiki sạch)
+
+## 2026-06-18 — propose — distributed-db-citus
+
+### Việc đã làm
+- Propose kiến trúc Distributed DB dùng Citus trên 3 physical nodes
+- Liệt kê 6 tiếp cận sai cần loại trừ
+- Tạo `sources/draft/180626-distributed-db-citus.md` + sequence diagram HTML
+- Cập nhật index.md
+
+---
+
+## 2026-06-18 — postmortem — sw-blank-page-cf-cache + k8s-media-images-not-served
+
+### Việc đã làm
+- Ghi lại 2 bugs đã xảy ra và cách fix:
+  1. `sources/180626-sw-blank-page-cf-cache.md` — CF override nginx no-store → sw.js cached 4h → stale SW → blank page; fix: rename sw2.js
+  2. `sources/180626-k8s-media-images-not-served.md` — /data/covers missing sau migrate + CoreDNS không resolve Deezer
+- Cập nhật index.md
+
+## 2026-06-17 — propose — 170626-ui-theme-consistency-all-pages
+
+### Việc đã làm
+- Audit 9 page components còn lại chưa áp purple dark theme
+- Tạo `wiki/sources/draft/170626-ui-theme-consistency-all-pages.md`
+- Tạo `llmwiki/html/170626-ui-theme-consistency-seq.html` (6 task diagrams)
+- Chờ user duyệt trước khi implement
+
+## 2026-06-16 — orca-workflow — 160626-db-architecture-review (implement)
+
+### Việc đã làm
+- **Task 1**: `k8s/postgres.yaml` + `k8s/postgres-standby.yaml` — đổi hostPath `/tmp/` → `/var/lib/` (fix data mất khi reboot)
+- **Task 2**: `k8s/postgres-monitor.yaml` — CronJob mỗi 2 phút: check primary, auto-promote standby nếu primary down, Telegram alert
+- **Task 3**: `k8s/db-adapter.yaml` — HAProxy Deployment ×2 (stateless, scalable) làm adapter giữa Backend và Postgres; backend đổi `@postgres:` → `@db-adapter:`
+- **Docs**: cập nhật `wiki/draft/orca/160626-db-architecture-review.md` — sửa vị trí adapter (giữa BE và DB, không phải trước Client), diagram mũi tên, adapter là scalable k8s pod
+- **Pending**: HA verification (chaos test — kill primary, verify service còn sống)
+
 ## 2026-06-14 — theme-deploy + cloudflared-debug — apply purple theme vào live site
 
 ### Việc đã làm
@@ -952,3 +991,10 @@
 - Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
 
 ## 2026-06-12 — harness-update — migrate xong, nợ đã backfill: 0 file (wiki sạch)
+- 2026-06-18 20:24 — session `50a0eb63` — 12 tool calls — files: 180626-distributed-db-citus-seq.html, 180626-distributed-db-citus.md, 180626-k8s-media-images-not-served.md, 180626-sw-blank-page-cf-cache.md, MEMORY.md, index.md, log.md, nginx.conf …
+
+## 2026-06-18 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, evals)
+## 2026-06-19 — orca-onboard — wiki-generation — CozyArchitecture, OnboardingTour, ProjectStructure created
+## 2026-06-19 — orca-onboard — phase4-html — 190626-onboard-cozyroom.html created
+## 2026-06-19 — orca-onboard — all-phases-done — knowledge-graph.json, ONBOARDING.md, domain-graph.json, wiki (3 files), html created

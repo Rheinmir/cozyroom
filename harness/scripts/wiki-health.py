@@ -70,7 +70,8 @@ def main() -> None:
         text = src.read_text(encoding="utf-8", errors="replace")
         for name in WIKILINK_RE.findall(text):
             name = name.strip()
-            target = stems.get(name)
+            # Resolve: bare stem "Scanner" OR path-prefixed "concepts/Scanner"
+            target = stems.get(name) or stems.get(Path(name).stem)
             if target is None:
                 broken.append({"from": src.relative_to(wiki).as_posix(), "wikilink": name})
             elif target != src:

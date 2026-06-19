@@ -1,6 +1,19 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchAlbums, imgSrc } from '../api'
+
+function AlbumCoverImg({ url, title }: { url: string; title: string }) {
+  const [err, setErr] = useState(false)
+  if (!url || err) return <span className="no-cover">♪</span>
+  return <img src={imgSrc(url, 300)} alt={title} loading="lazy" onError={() => setErr(true)} />
+}
+
+function ArtistHeroImg({ url, name }: { url: string; name: string }) {
+  const [err, setErr] = useState(false)
+  if (!url || err) return <>{name.charAt(0).toUpperCase()}</>
+  return <img src={imgSrc(url, 400)} alt={name} onError={() => setErr(true)} />
+}
 
 export default function ArtistPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,10 +32,7 @@ export default function ArtistPage() {
       <Link to="/" className="back-btn">← Artists</Link>
       <div className="artist-hero">
         <div className="artist-hero-avatar">
-          {artistImageUrl
-            ? <img src={imgSrc(artistImageUrl, 400)} alt={artistName} />
-            : artistName.charAt(0).toUpperCase()
-          }
+          <ArtistHeroImg url={artistImageUrl} name={artistName} />
         </div>
         <div>
           <p className="hero-type">Artist</p>
@@ -36,10 +46,7 @@ export default function ArtistPage() {
         {albums.map(al => (
           <Link key={al.id} to={`/album/${al.id}`} className="album-card">
             <div className="album-cover">
-              {al.cover_url
-                ? <img src={imgSrc(al.cover_url, 300)} alt={al.title} loading="lazy" />
-                : <span className="no-cover">♪</span>
-              }
+              <AlbumCoverImg url={al.cover_url} title={al.title} />
               <div className="album-play-overlay">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
               </div>

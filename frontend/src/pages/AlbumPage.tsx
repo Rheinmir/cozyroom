@@ -1,9 +1,16 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { fetchTracks, fetchAlbums, imgSrc } from '../api'
 import { usePlayer } from '../PlayerContext'
 import FavoritePill from '../components/FavoritePill'
+
+function HeroCoverImg({ url, title }: { url: string; title: string }) {
+  const [err, setErr] = useState(false)
+  if (!url || err) return <span className="no-cover-lg">♪</span>
+  return <img src={imgSrc(url, 400)} alt={title} onError={() => setErr(true)} />
+}
 
 const fmt = (s: number) => {
   if (!s) return '--:--'
@@ -34,10 +41,7 @@ export default function AlbumPage() {
 
       <div className="album-hero">
         <div className="album-hero-cover">
-          {album?.cover_url
-            ? <img src={imgSrc(album.cover_url, 400)} alt={album.title} />
-            : <span className="no-cover-lg">♪</span>
-          }
+          <HeroCoverImg url={album?.cover_url ?? ''} title={album?.title ?? ''} />
         </div>
         <div className="album-hero-info">
           <p className="hero-type">{t('library.album')}</p>

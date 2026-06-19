@@ -290,6 +290,7 @@ export default function PlayerBar() {
                       ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg`
                       : `/api/covers/${track.album_id}?w=512`}
                     alt={track.title}
+                    style={{ opacity: 0 }}
                     onLoad={e => { (e.target as HTMLImageElement).style.opacity = '1' }}
                     onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }}
                   />

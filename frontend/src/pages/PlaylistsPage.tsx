@@ -362,7 +362,7 @@ export default function PlaylistsPage() {
               autoFocus
             />
             {passwordError && (
-              <span style={{ color: '#ef4444', fontSize: 12 }}>{passwordError}</span>
+              <span className="error-text">{passwordError}</span>
             )}
             <div className="password-modal-actions">
               <button

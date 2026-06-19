@@ -155,6 +155,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (audioCtxRef.current) { audioCtxRef.current.resume(); return }
     try {
       const ctx = new AudioContext()
+      ctx.resume().catch(() => {})  // iOS: context may start suspended
       const an  = ctx.createAnalyser()
       an.fftSize = 256
       an.smoothingTimeConstant = 0.8
@@ -547,7 +548,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const toggle = () => {
     const active = getActive()
     if (isPlaying) { active.pause(); setPlaying(false) }
-    else           { active.play().catch(console.error); setPlaying(true) }
+    else           { initAudioCtx(); active.play().catch(console.error); setPlaying(true) }
   }
 
   const seek = (s: number) => { getActive().currentTime = s; setProgress(s) }

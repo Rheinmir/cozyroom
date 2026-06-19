@@ -72,9 +72,13 @@
 | [sources/080626-grafana-dashboard-best-practices.md](sources/080626-grafana-dashboard-best-practices.md) | source | Grafana 11 dashboard: variable gotchas, ds_prometheus, API patterns, no-data root causes |
 | [sources/draft/080626-k8s-dashboard-headlamp.md](sources/draft/080626-k8s-dashboard-headlamp.md) | draft | 2026-06-08 |
 | [draft/orca/100626-cover-fetch-race-fix.md](draft/orca/100626-cover-fetch-race-fix.md) | draft | Fix cover art race conditions (singleflight), K8s deploy — 10/06/2026 |
+| [draft/orca/160626-db-architecture-review.md](draft/orca/160626-db-architecture-review.md) | draft | Phân tích DB architecture: SPOF pattern, adapter layer, 3 pattern options (Patroni / Federated / Docker Compose per node) |
+| [sources/draft/170626-ui-theme-consistency-all-pages.md](sources/draft/170626-ui-theme-consistency-all-pages.md) | draft | UI audit 9 màn hình chưa áp theme mới — Videos, Ebooks, Comics, Trending charts, AIStats, Playlists |
 
 
 
+| [sources/180626-sw-blank-page-cf-cache.md](sources/180626-sw-blank-page-cf-cache.md) | source | Bug: CF cache override nginx no-store cho sw.js → stale SW precache → blank page; fix: rename sw2.js |
+| [sources/180626-k8s-media-images-not-served.md](sources/180626-k8s-media-images-not-served.md) | source | Bug: /data/covers missing sau K8s migrate → covers 404; CoreDNS không resolve external → artist images 0/868 |
 | [sources/draft/240526-i18n-en-vi-fe.md](sources/draft/240526-i18n-en-vi-fe.md) | draft | Proposal: Bilingual EN/VI i18n |
 | [sources/draft/propose-adk-cozyroom.md](sources/draft/propose-adk-cozyroom.md) | draft | Proposal: Áp dụng ADK Concepts vào Cozyroom |
 | [sources/draft/190526-lyrics-stale-fetch-race-fix-fe.md](sources/draft/190526-lyrics-stale-fetch-race-fix-fe.md) | draft | Proposal: Fix Rapid-Skip Bugs (Lyrics Race + Progress Bar) |
@@ -94,3 +98,8 @@
 | [sources/draft/240526-trending-chart-mode-fe.md](sources/draft/240526-trending-chart-mode-fe.md) | draft | Proposal: Trending Chart Mode |
 | [sources/draft/280526-sqlite-to-postgres.md](sources/draft/280526-sqlite-to-postgres.md) | draft | Proposal: Migrate SQLite → PostgreSQL (separate container) |
 | [sources/draft/250525-radial-nav-bubble.md](sources/draft/250525-radial-nav-bubble.md) | draft | Proposal: Radial Navigation Bubble |
+| [sources/draft/180626-distributed-db-citus.md](sources/draft/180626-distributed-db-citus.md) | draft | Proposal: Distributed DB — Citus trên 3 physical nodes, sharded tables + reference tables, không dùng replica |
+| [draft/orca/190626-onboard-cozyroom.md](draft/orca/190626-onboard-cozyroom.md) | draft | Onboard cozyroom — knowledge graph, domain enrichment, wiki, HTML docs |
+| [concepts/CozyArchitecture.md](concepts/CozyArchitecture.md) | concept | K3s + Citus + Cloudflare Tunnel architecture — replaces legacy Docker/SQLite layout |
+| [concepts/OnboardingTour.md](concepts/OnboardingTour.md) | concept | 11-step guided tour: server entry → HTTP routing → DB → scanner → stream → YT → AI → PlayerContext → pages → K8s |
+| [entities/ProjectStructure.md](entities/ProjectStructure.md) | entity | Repository layout, backend packages, frontend structure, K8s manifests, hot files, layer summary |

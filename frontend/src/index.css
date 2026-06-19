@@ -750,7 +750,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   box-shadow: 0 8px 24px rgba(0,0,0,.5);
   overflow: hidden;
   flex-shrink: 0;
-  -webkit-box-reflect: below 3px linear-gradient(transparent, rgba(0,0,0,.75) 28%);
 }
 .artist-avatar img {
   width: 100%;
@@ -827,7 +826,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   overflow: hidden;
   margin-bottom: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,.5);
-  -webkit-box-reflect: below 3px linear-gradient(transparent, rgba(0,0,0,.75) 28%);
 }
 .album-cover img {
   width: 100%;
@@ -1226,14 +1224,22 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 /* ── Player bar ─────────────────────────────────────── */
 .player-bar {
   grid-area: player;
-  background: rgba(5,5,5,.88);
-  backdrop-filter: blur(24px);
   border-top: 1px solid rgba(255,255,255,.06);
   display: flex;
   align-items: center;
   padding: 0 24px;
   gap: 16px;
   position: relative;
+}
+/* backdrop-filter on ::before — keeps blur without creating a containing block
+   for position:fixed children (e.g. .npo overlay) */
+.player-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(5,5,5,.88);
+  backdrop-filter: blur(24px);
+  z-index: -1;
 }
 .player-mini-progress {
   display: none;
@@ -1519,28 +1525,17 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   }
   .npo-btn-back {
     display: flex;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s;
+    opacity: 1; pointer-events: auto;
   }
   .npo-btn-dots { display: none; }
-  .npo:hover .npo-btn-back,
-  .npo--ctrls-active .npo-btn-back { opacity: 1; pointer-events: auto; }
 
-  /* Mobile tabs inside overlay header */
+  /* Mobile tabs inside overlay header — always visible */
   .npo-tabs-mobile {
     display: flex;
     background: rgba(255, 255, 255, 0.08);
     padding: 3px;
     border-radius: 20px;
     gap: 4px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .npo:hover .npo-tabs-mobile,
-  .npo--ctrls-active .npo-tabs-mobile {
-    opacity: 1;
-    pointer-events: auto;
   }
   .npo-tab-btn {
     background: transparent;
@@ -1654,11 +1649,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
   .npo-btn-dots {
     display: flex;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s;
+    opacity: 1; pointer-events: auto;
   }
-  .npo:hover .npo-btn-dots,
-  .npo--ctrls-active .npo-btn-dots { opacity: 1; pointer-events: auto; }
 
   /* lyrics wrap fills the npo-content column and scrolls */
   .npo-lyrics-wrap {
@@ -3499,9 +3491,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .password-modal {
-  background: rgba(24, 24, 24, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  background: rgba(14, 14, 19, 0.85);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   width: 320px;
   padding: 24px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
@@ -4030,6 +4023,46 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .playback-error-close:hover {
   color: #fff;
+}
+
+/* ── Video Player Page ──────────────────────────────── */
+.video-player-page {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.video-player-back-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 20px;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: color .15s;
+}
+.video-player-back-btn:hover { color: var(--text); }
+.video-player-wrap {
+  flex: 1;
+  background: #000;
+  border-radius: 22px;
+  overflow: hidden;
+  position: relative;
+}
+.video-player-wrap video {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/* ── Error text (shared) ────────────────────────────── */
+.error-text {
+  color: #f87171;
+  font-size: 12px;
 }
 
 

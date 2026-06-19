@@ -48,7 +48,7 @@ function fmtK(n: number) {
   return String(n)
 }
 
-const TT = { background: '#1a1a1a', border: '1px solid #333', fontSize: 12, borderRadius: 6 }
+const TT = { background: '#1e1e2e', border: '1px solid rgba(255,255,255,.1)', fontSize: 12, borderRadius: 8 }
 const GR = { strokeDasharray: '3 3', stroke: 'rgba(255,255,255,.07)' }
 
 const isMobile = () => window.innerWidth <= 767
