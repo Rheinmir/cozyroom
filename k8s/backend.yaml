@@ -36,6 +36,11 @@ metadata:
   namespace: cozyroom-k8s
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: backend
@@ -58,9 +63,11 @@ spec:
                   name: cozyroom-secret
                   key: POSTGRES_PASSWORD
             - name: DATABASE_URL
-              value: "postgres://cozyroom:$(POSTGRES_PASSWORD)@postgres:5432/cozyroom?sslmode=disable"
+              value: "postgres://cozyroom:$(POSTGRES_PASSWORD)@db-adapter:5432/cozyroom?sslmode=disable"
             - name: MUSIC_PATH
               value: /music
+            - name: YT_DOWNLOAD_PATH
+              value: /youtube
             - name: FILMS_PATH
               value: /films
             - name: EBOOKS_PATH
@@ -89,6 +96,13 @@ spec:
                 secretKeyRef:
                   name: cozyroom-secret
                   key: GITHUB_TOKEN
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - name: music
               mountPath: /music
@@ -101,6 +115,8 @@ spec:
               readOnly: true
             - name: data
               mountPath: /data
+            - name: yt-downloads
+              mountPath: /youtube
       volumes:
         - name: music
           hostPath:
@@ -114,6 +130,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: cozyroom-data
+        - name: yt-downloads
+          persistentVolumeClaim:
+            claimName: yt-downloads
 ---
 apiVersion: v1
 kind: Service
