@@ -7,11 +7,15 @@ export default function Header() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const inputRef = useRef<HTMLInputElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value
-    if (q.trim()) navigate(`/search?q=${encodeURIComponent(q)}`, { replace: true })
-    else navigate(-1)
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      if (q.trim()) navigate(`/search?q=${encodeURIComponent(q)}`, { replace: true })
+      else navigate(-1)
+    }, 300)
   }
 
   return (

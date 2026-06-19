@@ -12,8 +12,8 @@ function ArtistAvatar({ imageUrl, name }: { imageUrl: string; name: string }) {
 
 export default function ArtistsPage() {
   const { t } = useTranslation()
-  const { data: artists = [], isLoading } = useQuery({ queryKey: ['artists'], queryFn: fetchArtists })
-  const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: fetchStats })
+  const { data: artists = [], isLoading } = useQuery({ queryKey: ['artists'], queryFn: fetchArtists, staleTime: 5 * 60_000 })
+  const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: fetchStats, staleTime: 5 * 60_000 })
 
   if (isLoading) return <div className="loading">{t('library.loading')}</div>
 
@@ -31,7 +31,7 @@ export default function ArtistsPage() {
         {artists.map(a => (
           <Link key={a.id} to={`/artist/${a.id}`} className="artist-card">
             <div className="artist-avatar">
-              <ArtistAvatar imageUrl={a.image_url} name={a.name} />
+              <ArtistAvatar imageUrl={a.image_url ?? ''} name={a.name} />
             </div>
             <span className="artist-name">{a.name}</span>
             <span className="artist-sub">{t('library.artist')}</span>

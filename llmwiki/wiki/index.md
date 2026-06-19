@@ -97,6 +97,7 @@
 | [sources/draft/240526-survey-downie-youtube-320kbps.md](sources/draft/240526-survey-downie-youtube-320kbps.md) | draft | Khảo sát: Tải nhạc 320kbps từ YouTube bằng Downie |
 | [sources/draft/240526-trending-chart-mode-fe.md](sources/draft/240526-trending-chart-mode-fe.md) | draft | Proposal: Trending Chart Mode |
 | [sources/draft/280526-sqlite-to-postgres.md](sources/draft/280526-sqlite-to-postgres.md) | draft | Proposal: Migrate SQLite → PostgreSQL (separate container) |
+| [sources/draft/190626-search-perf-artists-load.md](sources/draft/190626-search-perf-artists-load.md) | draft | Fix: search debounce + yt-dlp cache + artists page StaleWhileRevalidate — 2026-06-19 |
 | [sources/draft/250525-radial-nav-bubble.md](sources/draft/250525-radial-nav-bubble.md) | draft | Proposal: Radial Navigation Bubble |
 | [sources/draft/180626-distributed-db-citus.md](sources/draft/180626-distributed-db-citus.md) | draft | Proposal: Distributed DB — Citus trên 3 physical nodes, sharded tables + reference tables, không dùng replica |
 | [draft/orca/190626-onboard-cozyroom.md](draft/orca/190626-onboard-cozyroom.md) | draft | Onboard cozyroom — knowledge graph, domain enrichment, wiki, HTML docs |

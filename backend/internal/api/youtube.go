@@ -34,6 +34,16 @@ var (
 	streamCache   = make(map[string]streamURLEntry)
 )
 
+type searchCacheEntry struct {
+	results   []youtubeSearchResult
+	expiresAt time.Time
+}
+
+var (
+	searchCacheMu sync.Mutex
+	searchCache   = make(map[string]searchCacheEntry)
+)
+
 func getCachedStreamURL(id string) (string, bool) {
 	streamCacheMu.Lock()
 	defer streamCacheMu.Unlock()
@@ -53,10 +63,11 @@ func setCachedStreamURL(id, url string) {
 
 
 type YouTubeHandlers struct {
-	db            *sql.DB
-	musicPath     string
-	coversDir     string
-	cloakProxyURL string // for thumbnail fetching
+	db              *sql.DB
+	musicPath       string
+	ytDownloadPath  string // writable dir for yt-dlp downloads (separate from read-only musicPath)
+	coversDir       string
+	cloakProxyURL   string // for thumbnail fetching
 }
 
 type youtubeSearchResult struct {
@@ -88,6 +99,18 @@ func (h *YouTubeHandlers) search(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing query", http.StatusBadRequest)
 		return
 	}
+
+	// Return cached results if still fresh (5 min TTL)
+	cacheKey := strings.ToLower(q)
+	searchCacheMu.Lock()
+	if e, ok := searchCache[cacheKey]; ok && time.Now().Before(e.expiresAt) {
+		results := e.results
+		searchCacheMu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(results)
+		return
+	}
+	searchCacheMu.Unlock()
 
 	cmd := exec.CommandContext(r.Context(), "yt-dlp",
 		"--flat-playlist", "--dump-single-json",
@@ -130,6 +153,10 @@ func (h *YouTubeHandlers) search(w http.ResponseWriter, r *http.Request) {
 	if results == nil {
 		results = []youtubeSearchResult{}
 	}
+
+	searchCacheMu.Lock()
+	searchCache[cacheKey] = searchCacheEntry{results: results, expiresAt: time.Now().Add(5 * time.Minute)}
+	searchCacheMu.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
@@ -256,13 +283,17 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	dlPath := h.ytDownloadPath
+	if dlPath == "" {
+		dlPath = h.musicPath
+	}
 	cmd := exec.CommandContext(r.Context(), "yt-dlp",
 		"-f", "bestaudio",
 		"-x", "--audio-format", "best",
 		"--embed-metadata",   // embed title, artist, album, date into file tags
 		"--write-thumbnail",  // save thumbnail as separate file (ytID.jpg or .webp)
 		"--convert-thumbnails", "jpg", // normalize to jpg
-		"--paths", h.musicPath,
+		"--paths", dlPath,
 		"-o", "%(id)s.%(ext)s",
 		"https://www.youtube.com/watch?v="+body.ID,
 	)
@@ -276,7 +307,7 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 	// Find the downloaded audio file
 	var filePath string
 	for _, ext := range []string{".opus", ".webm", ".m4a", ".mp3"} {
-		testPath := filepath.Join(h.musicPath, body.ID+ext)
+		testPath := filepath.Join(dlPath, body.ID+ext)
 		if _, err := os.Stat(testPath); err == nil {
 			filePath = testPath
 			break
@@ -284,7 +315,7 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if filePath == "" {
-		log.Printf("[yt-dlp] download %s: could not find audio file in %s", body.ID, h.musicPath)
+		log.Printf("[yt-dlp] download %s: could not find audio file in %s", body.ID, dlPath)
 		http.Error(w, "download failed: file not found", http.StatusInternalServerError)
 		return
 	}
@@ -304,7 +335,7 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 
 	// Copy yt-dlp-written thumbnail into covers dir so it shows up immediately
 	// yt-dlp writes it as <id>.jpg (after --convert-thumbnails jpg)
-	thumbSrc := filepath.Join(h.musicPath, body.ID+".jpg")
+	thumbSrc := filepath.Join(dlPath, body.ID+".jpg")
 	if _, err := os.Stat(thumbSrc); err == nil {
 		// Derive albumID the same way IndexFileWithMetadata does
 		artistID := id8hex(uploader)
