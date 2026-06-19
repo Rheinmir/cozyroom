@@ -29,6 +29,10 @@ func (u *LibraryUsecase) ListAlbums(ctx context.Context, artistID string) ([]dom
 	return u.Albums.List(ctx, artistID)
 }
 
+func (u *LibraryUsecase) GetAlbum(ctx context.Context, id string) (*domain.Album, error) {
+	return u.Albums.GetByID(ctx, id)
+}
+
 func (u *LibraryUsecase) ListTracks(ctx context.Context, albumID string) ([]domain.Track, error) {
 	return u.Tracks.List(ctx, albumID)
 }

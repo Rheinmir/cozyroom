@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { fetchTracks, fetchAlbums, imgSrc } from '../api'
+import { fetchTracks, fetchAlbum, imgSrc } from '../api'
 import { usePlayer } from '../PlayerContext'
 import FavoritePill from '../components/FavoritePill'
 
@@ -26,11 +26,13 @@ export default function AlbumPage() {
   const { data: tracks = [], isLoading } = useQuery({
     queryKey: ['tracks', id],
     queryFn: () => fetchTracks(id!),
+    staleTime: 5 * 60_000,
   })
 
   const { data: album } = useQuery({
-    queryKey: ['album-detail', id],
-    queryFn: () => fetchAlbums().then(list => list.find(a => a.id === id)),
+    queryKey: ['album', id],
+    queryFn: () => fetchAlbum(id!),
+    staleTime: 5 * 60_000,
   })
 
   if (isLoading) return <div className="loading">{t('library.loading')}</div>

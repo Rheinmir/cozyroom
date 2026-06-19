@@ -38,6 +38,18 @@ func (r *AlbumRepo) List(ctx context.Context, artistID string) ([]domain.Album, 
 	return out, rows.Err()
 }
 
+func (r *AlbumRepo) GetByID(ctx context.Context, id string) (*domain.Album, error) {
+	var a domain.Album
+	err := r.q.QueryRowContext(ctx,
+		`SELECT al.id, al.artist_id, ar.name, al.title, COALESCE(al.year,0), COALESCE(al.cover_path,''), COALESCE(ar.image_path,'')
+		 FROM albums al JOIN artists ar ON ar.id = al.artist_id WHERE al.id = $1`, id).
+		Scan(&a.ID, &a.ArtistID, &a.ArtistName, &a.Title, &a.Year, &a.CoverURL, &a.ArtistImageURL)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &a, err
+}
+
 func (r *AlbumRepo) Upsert(ctx context.Context, a domain.Album) error {
 	_, err := r.q.ExecContext(ctx,
 		`INSERT INTO albums(id, artist_id, title, year, cover_path) VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,

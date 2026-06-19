@@ -17,6 +17,7 @@ type ArtistRepository interface {
 // AlbumRepository reads and writes albums.
 type AlbumRepository interface {
 	List(ctx context.Context, artistID string) ([]Album, error)
+	GetByID(ctx context.Context, id string) (*Album, error)
 	Upsert(ctx context.Context, a Album) error
 }
 

@@ -20,6 +20,7 @@ export default function ArtistPage() {
   const { data: albums = [], isLoading } = useQuery({
     queryKey: ['albums', id],
     queryFn: () => fetchAlbums(id),
+    staleTime: 5 * 60_000,
   })
 
   const artistName     = albums[0]?.artist_name ?? ''

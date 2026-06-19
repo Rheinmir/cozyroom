@@ -83,9 +83,10 @@ type RouterDeps struct {
 	Settings     *usecase.SettingsUsecase
 	Playback     *usecase.PlaybackUsecase
 	UoW          domain.UnitOfWorkFactory
-	ScanDB       *sql.DB // for scanner/enricher (own internal TXs)
-	MusicPath    string
-	FilmsPath    string
+	ScanDB          *sql.DB // for scanner/enricher (own internal TXs)
+	MusicPath       string
+	YtDownloadPath  string // writable dir for yt-dlp; falls back to MusicPath if empty
+	FilmsPath       string
 	CoversDir    string
 	ArtistImgDir string
 	LyricsDir    string
@@ -140,6 +141,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/artists", h.listArtists)
 	mux.HandleFunc("GET /api/artists/{id}", h.artistDetail)
 	mux.HandleFunc("GET /api/albums", h.listAlbums)
+	mux.HandleFunc("GET /api/albums/{id}", h.getAlbum)
 	mux.HandleFunc("GET /api/tracks", h.listTracks)
 	mux.HandleFunc("GET /api/covers/{id}", h.cover)
 	mux.HandleFunc("GET /api/artist-images/{id}", h.artistImage)
@@ -219,7 +221,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/trending/history",   th.repoHistory)
 	mux.HandleFunc("POST /api/trending/refresh",  th.refresh)
 
-	yh := &YouTubeHandlers{db: d.ScanDB, musicPath: d.MusicPath, coversDir: d.CoversDir, cloakProxyURL: d.CloakProxyURL}
+	yh := &YouTubeHandlers{db: d.ScanDB, musicPath: d.MusicPath, ytDownloadPath: d.YtDownloadPath, coversDir: d.CoversDir, cloakProxyURL: d.CloakProxyURL}
 	mux.HandleFunc("GET /api/youtube/search", yh.search)
 	mux.HandleFunc("GET /api/youtube/channel", yh.channel)
 	mux.HandleFunc("GET /api/youtube/stream/{id}", yh.stream)

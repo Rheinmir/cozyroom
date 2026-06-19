@@ -268,6 +268,21 @@ func (h *handlers) listAlbums(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(albums)
 }
 
+func (h *handlers) getAlbum(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	album, err := h.lib.GetAlbum(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if album == nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(album)
+}
+
 func (h *handlers) listTracks(w http.ResponseWriter, r *http.Request) {
 	albumID := r.URL.Query().Get("album_id")
 	tracks, err := h.lib.ListTracks(r.Context(), albumID)

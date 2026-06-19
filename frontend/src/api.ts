@@ -19,6 +19,7 @@ export const fetchArtistDetail = (id: string)     => get<ArtistDetail>(`/api/art
 export const fetchArtists = ()              => get<Artist[]>('/api/artists')
 export const fetchAlbums  = (artistId?: string) =>
   get<Album[]>(`/api/albums${artistId ? `?artist_id=${artistId}` : ''}`)
+export const fetchAlbum   = (albumId: string)   => get<Album>(`/api/albums/${albumId}`)
 export const fetchTracks  = (albumId: string)   =>
   get<Track[]>(`/api/tracks?album_id=${albumId}`)
 export const streamUrl        = (trackId: string)   => `/stream/${trackId}`
