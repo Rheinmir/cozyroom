@@ -1,0 +1,107 @@
+# DB Adapter — HAProxy TCP proxy between Backend and Postgres nodes
+# Sits between backend and DB: backend → db-adapter:5432 → postgres primary/standby
+# Stateless pod: scale horizontal freely, no SPOF introduced
+# Failover: if primary down → routes to standby (standby must be promoted first by postgres-monitor CronJob)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-adapter-config
+  namespace: cozyroom-k8s
+data:
+  haproxy.cfg: |
+    global
+      maxconn 200
+      log stdout format raw local0
+
+    defaults
+      mode tcp
+      log global
+      timeout connect 5s
+      timeout client 60s
+      timeout server 60s
+      option tcp-check
+      option log-health-checks
+
+    frontend postgres_front
+      bind *:5432
+      default_backend postgres_primary
+
+    backend postgres_primary
+      server primary   postgres:5432 check inter 5s fall 2 rise 2
+
+    # Stats page on port 8404 for health monitoring
+    frontend stats
+      bind *:8404
+      mode http
+      stats enable
+      stats uri /stats
+      stats refresh 5s
+      stats show-legends
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-adapter
+  namespace: cozyroom-k8s
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: db-adapter
+  template:
+    metadata:
+      labels:
+        app: db-adapter
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: db-adapter
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: haproxy
+          image: haproxy:2.9-alpine
+          ports:
+            - containerPort: 5432
+            - containerPort: 8404
+          volumeMounts:
+            - name: config
+              mountPath: /usr/local/etc/haproxy/haproxy.cfg
+              subPath: haproxy.cfg
+          readinessProbe:
+            httpGet:
+              path: /stats
+              port: 8404
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: config
+          configMap:
+            name: db-adapter-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-adapter
+  namespace: cozyroom-k8s
+spec:
+  selector:
+    app: db-adapter
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+    - name: stats
+      port: 8404
+      targetPort: 8404

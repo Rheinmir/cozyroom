@@ -44,19 +44,23 @@ func (r *ArtistRepo) GetByID(ctx context.Context, id string) (*domain.Artist, er
 }
 
 func (r *ArtistRepo) GetDetail(ctx context.Context, id string) (*domain.ArtistDetail, error) {
-	var name string
-	if err := r.q.QueryRowContext(ctx, `SELECT name FROM artists WHERE id = $1`, id).Scan(&name); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
+	d := &domain.ArtistDetail{ID: id, Genres: []string{}}
+	err := r.q.QueryRowContext(ctx,
+		`SELECT a.name,
+		        COUNT(DISTINCT al.id),
+		        COUNT(DISTINCT t.id)
+		 FROM artists a
+		 LEFT JOIN albums al ON al.artist_id = a.id
+		 LEFT JOIN tracks t  ON t.album_id   = al.id
+		 WHERE a.id = $1
+		 GROUP BY a.name`, id).
+		Scan(&d.Name, &d.AlbumCount, &d.TrackCount)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
-
-	d := &domain.ArtistDetail{ID: id, Name: name, Genres: []string{}}
-
-	r.q.QueryRowContext(ctx, `SELECT COUNT(*) FROM albums WHERE artist_id = $1`, id).Scan(&d.AlbumCount)
-	r.q.QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM tracks t JOIN albums al ON al.id = t.album_id WHERE al.artist_id = $1`, id).Scan(&d.TrackCount)
 
 	rows, _ := r.q.QueryContext(ctx,
 		`SELECT DISTINCT t.genre FROM tracks t JOIN albums al ON al.id = t.album_id
