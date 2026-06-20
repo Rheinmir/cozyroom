@@ -1,5 +1,41 @@
 # Operation Log
 
+## 2026-06-20 — implement — cdn-enable-api-headers
+
+- Implement: `backend/internal/api/handler.go` — added Cache-Control headers to 7 endpoints
+  - listArtists, artistDetail, listAlbums, getAlbum, listTracks → `public, max-age=300`
+  - stats → `public, max-age=60`
+  - search → `public, max-age=30`
+- Draft status updated: proposed → implemented
+
+## 2026-06-19 — orca-workflow — cdn-enable-api-headers
+
+- Propose: `wiki/draft/orca/190626-cdn-enable-api-headers.md`
+- Diagram: `html/190626-cdn-enable-api-headers-seq.html`
+- Plan: add Cache-Control: public to 7 GET handlers in handler.go
+
+## 2026-06-19 — docs-site-macos — system-design-dashboard
+
+- Source: YouTube https://www.youtube.com/watch?v=KIrbA-wEURg (Học Từ Thiện — Thắng, System Design Phần 000)
+- Transcript: 45,307 chars Vietnamese, extracted via yt-dlp vi-orig subtitle
+- Created `llmwiki/html/190626-system-design-dashboard.html` — 14 sections: Tổng quan, Performance & Scalability, CAP Theorem, Availability Patterns, DNS & CDN, Load Balancer, Monolith vs Microservice, SQL vs NoSQL, Caching, Background Jobs, Message Queue, Protocols & API, Common Mistakes, Monitoring
+- SVG diagrams: CAP triangle, Monolith vs Microservice arch, RabbitMQ flow
+- Artifact: https://claude.ai/code/artifact/4c39ba8b-9aa2-4096-86f8-f11e1d4e0f01
+
+## 2026-06-19 — orca-workflow — latency-throughput-dashboard
+
+- Created `llmwiki/html/190626-latency-throughput-dashboard.html` — macOS glass dashboard: 5 sections, KPI cards, SVG bar chart, gauges, 6 fix cards
+- Estimated P50 latency per endpoint before/after session fixes
+- Identified bottleneck: home upload bandwidth (71 FLAC concurrent max)
+- Draft: `wiki/sources/draft/190626-latency-throughput-dashboard.md`
+- Served at: http://localhost:8765/190626-latency-throughput-dashboard.html
+
+## 2026-06-19 — docs-site-macos — cdn-explainer
+
+- Created `llmwiki/html/190626-cdn-explainer.html` — 4-section macOS docs explaining CDN, CF Tunnel edge caching, before/after Cache-Control fix
+- Draft: `wiki/sources/draft/190626-cdn-explainer-docs.md`
+- Served at: http://localhost:8765/190626-cdn-explainer.html
+
 ## 2026-06-19 — verify-before-commit — search-perf-artists-load
 
 ## 2026-06-18 — orca-workflow — distributed-db-citus implemented: Citus 12.1 trên 3 nodes, 2655 tracks migrated, app live trên Citus
@@ -1000,3 +1036,5 @@
 ## 2026-06-19 — orca-onboard — wiki-generation — CozyArchitecture, OnboardingTour, ProjectStructure created
 ## 2026-06-19 — orca-onboard — phase4-html — 190626-onboard-cozyroom.html created
 ## 2026-06-19 — orca-onboard — all-phases-done — knowledge-graph.json, ONBOARDING.md, domain-graph.json, wiki (3 files), html created
+- 2026-06-19 23:56 — session `aa4a4836` — 4 tool calls — files: 190626-cdn-enable-api-headers-seq.html, 190626-cdn-enable-api-headers.md, index.md, log.md
+- 2026-06-19 23:56 — session `7c2c3cdd` — 60 tool calls — files: .pre-commit-config.yaml, 190626-cdn-explainer-docs.md, 190626-cdn-explainer.html, 190626-latency-throughput-dashboard.html, 190626-latency-throughput-dashboard.md, 190626-onboard-cozyroom.html, 190626-onboard-cozyroom.md, 190626-search-perf-artists-load.md …

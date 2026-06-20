@@ -136,6 +136,7 @@ func (h *handlers) stats(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=60")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(s)
 }
@@ -243,6 +244,7 @@ func (h *handlers) artistDetail(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(detail)
 }
@@ -253,6 +255,7 @@ func (h *handlers) listArtists(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(artists)
 }
@@ -264,6 +267,7 @@ func (h *handlers) listAlbums(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(albums)
 }
@@ -279,6 +283,7 @@ func (h *handlers) getAlbum(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(album)
 }
@@ -290,6 +295,7 @@ func (h *handlers) listTracks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tracks)
 }
@@ -374,6 +380,7 @@ func (h *handlers) search(w http.ResponseWriter, r *http.Request) {
 		metrics.SearchesTotal.Inc()
 	}
 	if len(q) < 2 {
+		w.Header().Set("Cache-Control", "public, max-age=30")
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"artists": []any{}, "albums": []any{}, "tracks": []any{},
@@ -386,6 +393,7 @@ func (h *handlers) search(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=30")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }

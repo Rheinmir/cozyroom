@@ -86,6 +86,8 @@
 | [sources/draft/270526-ai-stats-cost-calculator.md](sources/draft/270526-ai-stats-cost-calculator.md) | draft | Proposal: AI Stats — Cost Calculator + Image OCR Pricing |
 | [sources/draft/270526-ai-chat-sessions-rooms.md](sources/draft/270526-ai-chat-sessions-rooms.md) | draft | Proposal: AI Chat Sessions (Rooms) |
 | [sources/draft/020626-reliability-fixes-streaming-be.md](sources/draft/020626-reliability-fixes-streaming-be.md) | draft | Proposal: Reliability fixes — streaming backend |
+| [sources/draft/190626-cdn-explainer-docs.md](sources/draft/190626-cdn-explainer-docs.md) | draft | CDN là gì? — docs-site-macos page, CF Tunnel edge cache, Cache-Control fix |
+| [sources/draft/190626-latency-throughput-dashboard.md](sources/draft/190626-latency-throughput-dashboard.md) | draft | Performance dashboard: latency/throughput estimates before/after session fixes |
 | [sources/draft/280526-mcp-web-search-browse.md](sources/draft/280526-mcp-web-search-browse.md) | draft | Proposal: MCP Web Search + Browse Tools via Cloak Proxy |
 | [draft/orca/100626-player-progress-time-stale-fix.md](draft/orca/100626-player-progress-time-stale-fix.md) | draft | Fix player progress time stale display |
 | [sources/draft/230526-trending-impact-ui-fe.md](sources/draft/230526-trending-impact-ui-fe.md) | draft | Proposal: Trending — AI Industry Impact Score + Visual Tiers |
@@ -102,5 +104,7 @@
 | [sources/draft/180626-distributed-db-citus.md](sources/draft/180626-distributed-db-citus.md) | draft | Proposal: Distributed DB — Citus trên 3 physical nodes, sharded tables + reference tables, không dùng replica |
 | [draft/orca/190626-onboard-cozyroom.md](draft/orca/190626-onboard-cozyroom.md) | draft | Onboard cozyroom — knowledge graph, domain enrichment, wiki, HTML docs |
 | [concepts/CozyArchitecture.md](concepts/CozyArchitecture.md) | concept | K3s + Citus + Cloudflare Tunnel architecture — replaces legacy Docker/SQLite layout |
+| [sources/draft/190626-cdn-explainer-docs.md](sources/draft/190626-cdn-explainer-docs.md) | draft | docs-site-macos: "CDN là gì?" — 4 sections, SVG diagrams, CF Tunnel cache explanation |
 | [concepts/OnboardingTour.md](concepts/OnboardingTour.md) | concept | 11-step guided tour: server entry → HTTP routing → DB → scanner → stream → YT → AI → PlayerContext → pages → K8s |
 | [entities/ProjectStructure.md](entities/ProjectStructure.md) | entity | Repository layout, backend packages, frontend structure, K8s manifests, hot files, layer summary |
+| [draft/orca/190626-cdn-enable-api-headers.md](draft/orca/190626-cdn-enable-api-headers.md) | draft | Propose: add Cache-Control public to 7 GET API handlers — bật CF edge CDN cho music.giatbh.io.vn |
