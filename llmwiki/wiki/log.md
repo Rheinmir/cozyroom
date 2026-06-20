@@ -1,5 +1,18 @@
 # Operation Log
 
+## 2026-06-20 — docs-site-macos — db-antipattern
+
+- HTML: `llmwiki/html/200626-db-antipattern.html`
+- Draft: `wiki/sources/draft/200626-db-antipattern.md`
+- Nội dung: 5 sections — biên niên kiến trúc (6 giai đoạn timeline), tại sao Tailscale IP tồn tại (SVG broken path), DB trong K8s là antipattern (6 cards + table), master-slave overkill, kiến trúc đúng
+- ADR: User philosophy "DB không bao giờ vào K8s pod" + master-slave không cần cho homelab 1 user
+
+## 2026-06-20 — docs-site-macos — db-latency-postmortem
+
+- HTML: `llmwiki/html/200626-db-latency-postmortem.html`
+- Draft: `wiki/sources/draft/200626-db-latency-postmortem.md`
+- Nội dung: 5 sections — triệu chứng, root cause (HAProxy Tailscale IP), chuỗi sự kiện, 4 bản vá, kết quả
+
 ## 2026-06-20 — implement — cdn-enable-api-headers
 
 - Implement: `backend/internal/api/handler.go` — added Cache-Control headers to 7 endpoints

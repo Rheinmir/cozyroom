@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DB trong K8s Pod là Antipattern — Kiến trúc DB Cozyroom</title>
+<style>
+:root{
+  --glass-1:rgba(255,255,255,.55);
+  --glass-2:rgba(255,255,255,.70);
+  --glass-3:rgba(255,255,255,.88);
+  --blur-1:24px;--blur-2:8px;--blur-3:4px;
+  --edge-hi:inset 0 1px 0 rgba(255,255,255,.85);
+  --border:rgba(30,90,170,.14);
+  --text-1:#0f0f12;--text-2:#4a4a55;
+  --font-text:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue','Roboto','Segoe UI',sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Roboto','Segoe UI',sans-serif;
+  --font-mono:'SF Mono',ui-monospace,'SFMono-Regular',Menlo,'Roboto Mono',Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:thin;scrollbar-color:transparent transparent;background:#e9f0fb}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+::-webkit-scrollbar{width:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box;transition:background-color .25s ease}
+html.scrolling::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb:hover{background-color:rgba(10,132,255,.32)}
+::-webkit-scrollbar-thumb:active{background-color:rgba(10,132,255,.6)}
+body{
+  font-family:var(--font-text);color:var(--text-1);padding-left:200px;min-height:100vh;
+  background:radial-gradient(900px 500px at 12% -10%,rgba(10,132,255,.10),transparent 60%),
+    radial-gradient(700px 420px at 95% 15%,rgba(90,162,232,.08),transparent 55%),
+    linear-gradient(180deg,#eef4fd 0%,#e6eefb 100%);
+  transition:padding-left .28s cubic-bezier(.4,0,.2,1);
+}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),
+    radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),
+    radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),
+    radial-gradient(480px 380px at 42% 50%,rgba(10,132,255,.09),transparent 60%),
+    radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.12),transparent 65%),
+    radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.11),transparent 60%);
+  animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);
+  background-size:22px 22px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+@media(prefers-reduced-motion:reduce){body::before{animation:none}}
+
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:18px 12px;
+  background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);
+  transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),
+    linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav>*{position:relative}
+.logo{margin:0 0 16px;padding:6px 10px;font-size:15px;font-weight:700;font-family:var(--font-display);
+  background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav a{padding:8px 12px;border-radius:10px;font-size:13px;color:var(--text-2);text-decoration:none;
+  display:block;position:relative;overflow:hidden;transition:background .15s,color .15s}
+nav a:hover{color:var(--text-1);background:rgba(10,132,255,.06)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.08);font-weight:600}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;
+  background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border:1px solid transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);
+  transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;
+  background:rgba(0,0,0,.04);border:none;overflow:hidden;position:relative}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+
+.hero{padding:72px 24px 56px;max-width:1100px;margin:0 auto;text-align:center}
+.eyebrow{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
+  color:#5856d6;background:rgba(88,86,214,.10);padding:4px 14px;border-radius:20px;margin-bottom:18px}
+.hero h1{font-family:var(--font-display);font-size:clamp(28px,4.5vw,52px);font-weight:700;letter-spacing:-.025em;
+  background:linear-gradient(135deg,#5856d6,#0a84ff,#30b0c7);-webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:16px;line-height:1.15}
+.hero p{font-size:17px;color:var(--text-2);max-width:640px;margin:0 auto;line-height:1.6}
+
+.section-bg{position:relative;overflow:visible}
+.section-bg::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);pointer-events:none}
+section{padding:64px 24px 72px;max-width:1100px;margin:0 auto}
+.section-header{margin-bottom:32px}
+.tag{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:3px 12px;border-radius:20px;margin-bottom:12px}
+.section-header h2{font-family:var(--font-display);font-size:clamp(22px,3vw,34px);font-weight:700;color:#1d1d1f;letter-spacing:-.02em;margin-bottom:8px}
+.section-header p{font-size:15px;color:var(--text-2);max-width:700px;line-height:1.6}
+
+#sec-0 .tag{background:rgba(10,132,255,.10);color:#0a84ff}
+#sec-0 .card h4{color:#0a84ff} #sec-0 .card li::before{color:#0a84ff}
+.s-bg0::before{background:linear-gradient(180deg,rgba(10,132,255,.05) 0%,transparent 60%)}
+#sec-1 .tag{background:rgba(48,176,199,.12);color:#30b0c7}
+#sec-1 .card h4{color:#30b0c7} #sec-1 .card li::before{color:#30b0c7}
+.s-bg1::before{background:linear-gradient(180deg,rgba(48,176,199,.05) 0%,transparent 60%)}
+#sec-2 .tag{background:rgba(88,86,214,.10);color:#5856d6}
+#sec-2 .card h4{color:#5856d6} #sec-2 .card li::before{color:#5856d6}
+.s-bg2::before{background:linear-gradient(180deg,rgba(88,86,214,.05) 0%,transparent 60%)}
+#sec-3 .tag{background:rgba(52,199,89,.10);color:#28a745}
+#sec-3 .card h4{color:#28a745} #sec-3 .card li::before{color:#28a745}
+.s-bg3::before{background:linear-gradient(180deg,rgba(52,199,89,.05) 0%,transparent 60%)}
+#sec-4 .tag{background:rgba(255,149,0,.10);color:#f08c00}
+#sec-4 .card h4{color:#f08c00} #sec-4 .card li::before{color:#f08c00}
+.s-bg4::before{background:linear-gradient(180deg,rgba(255,149,0,.06) 0%,transparent 60%)}
+
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+@media(max-width:700px){.content-grid{grid-template-columns:1fr}}
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:20px}
+.card h4{font-size:14px;font-weight:600;margin-bottom:10px}
+.card ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.card li{font-size:13px;color:var(--text-2);display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.card li::before{content:'›';font-weight:700;flex-shrink:0;margin-top:1px}
+.card p{font-size:13px;color:var(--text-2);line-height:1.6;margin-top:6px}
+.card code{font-family:var(--font-mono);font-size:11px;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px}
+
+.diagram-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);
+  padding:24px;margin:24px 0;position:relative;overflow:hidden;display:flex;flex-direction:column;
+  resize:vertical;min-height:160px;transition:box-shadow .2s ease}
+.diagram-box:hover{box-shadow:0 6px 28px rgba(0,0,0,.1)}
+.diagram-viewport{position:relative;flex:1 1 auto;width:100%;overflow:hidden;cursor:grab;touch-action:none}
+.diagram-viewport.grabbing{cursor:grabbing}
+.diagram-viewport svg{width:100%;height:auto;display:block;overflow:visible;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-select:none}
+.dnode{cursor:move}.dnode>rect{transition:filter .15s ease}.dnode:hover>rect:first-of-type{filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.diagram-hint{position:absolute;top:8px;right:12px;z-index:5;font-size:10px;color:#4a4a55;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.05);border-radius:20px;padding:3px 10px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.diagram-box:hover .diagram-hint{opacity:.9}
+.diagram-reset{position:absolute;bottom:8px;right:10px;z-index:5;font-size:11px;background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:3px 9px;cursor:pointer;color:#4a4a55;opacity:0;transition:opacity .2s}
+.diagram-box:hover .diagram-reset{opacity:1}.diagram-reset:hover{background:#fff;color:#0f0f12}
+.diagram-box::after{content:'';position:absolute;right:5px;bottom:5px;width:16px;height:16px;pointer-events:none;opacity:0;transition:opacity .25s ease;clip-path:polygon(100% 0,100% 100%,0 100%);background:repeating-linear-gradient(135deg,transparent 0 3.5px,rgba(10,132,255,.45) 3.5px 5px)}
+.diagram-box:hover::after{opacity:.85}.diagram-box::-webkit-resizer{display:none}
+
+/* Timeline with connectors */
+.arch-timeline{display:flex;flex-direction:column;gap:0;margin-top:24px}
+.arch-step{display:flex;gap:0;position:relative}
+.arch-step:not(:last-child)::after{content:'';position:absolute;left:19px;top:44px;bottom:0;width:2px;background:linear-gradient(180deg,var(--border),transparent)}
+.step-left{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;padding-top:4px}
+.step-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;
+  background:var(--glass-2);backdrop-filter:blur(var(--blur-2));border:1px solid var(--border);
+  box-shadow:var(--edge-hi),0 2px 8px rgba(0,0,0,.06);flex-shrink:0;z-index:1}
+.step-body{background:var(--glass-2);backdrop-filter:blur(var(--blur-2));border:1px solid var(--border);
+  border-radius:14px;box-shadow:var(--edge-hi),0 2px 8px rgba(0,0,0,.05);padding:16px 20px;flex:1;margin:0 0 16px 14px}
+.step-body .step-title{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.step-date{font-size:10px;font-weight:600;background:rgba(0,0,0,.06);padding:2px 8px;border-radius:10px;color:var(--text-2)}
+.step-body p{font-size:13px;color:var(--text-2);line-height:1.6}
+.step-body code{font-family:var(--font-mono);font-size:11px;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px}
+.step-body .ghost-label{font-size:11px;background:rgba(255,45,85,.08);color:#e0264b;border:1px solid rgba(255,45,85,.2);padding:3px 10px;border-radius:8px;display:inline-block;margin-top:6px}
+.step-body .ok-label{font-size:11px;background:rgba(52,199,89,.08);color:#28a745;border:1px solid rgba(52,199,89,.2);padding:3px 10px;border-radius:8px;display:inline-block;margin-top:6px}
+
+/* Anti-pattern cards */
+.ap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+@media(max-width:800px){.ap-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.ap-grid{grid-template-columns:1fr}}
+.ap-card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2));border:1px solid var(--border);border-radius:14px;box-shadow:var(--edge-hi),0 4px 16px rgba(0,0,0,.05);padding:18px}
+.ap-icon{font-size:24px;margin-bottom:10px}
+.ap-card h4{font-size:13px;font-weight:700;color:#1d1d1f;margin-bottom:8px}
+.ap-card p{font-size:12px;color:var(--text-2);line-height:1.6}
+.ap-card .verdict{font-size:11px;font-weight:600;margin-top:10px;padding:3px 10px;border-radius:8px;display:inline-block}
+.verdict-bad{background:rgba(255,45,85,.08);color:#e0264b;border:1px solid rgba(255,45,85,.2)}
+.verdict-ok{background:rgba(52,199,89,.08);color:#28a745;border:1px solid rgba(52,199,89,.2)}
+
+/* Comparison table */
+.table-wrap{background:var(--glass-3);backdrop-filter:blur(var(--blur-3));border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 16px rgba(0,0,0,.05);overflow:hidden;margin-top:24px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 16px;text-align:left;font-size:13px;border-bottom:1px solid var(--border)}
+th{font-weight:600;color:var(--text-2);background:rgba(255,255,255,.4)}
+td code{font-family:var(--font-mono);font-size:11px;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px}
+.check{color:#28a745;font-weight:700}
+.cross{color:#e0264b;font-weight:700}
+
+/* Quote */
+.quote-box{background:linear-gradient(135deg,rgba(88,86,214,.08),rgba(10,132,255,.06));
+  border:1px solid rgba(88,86,214,.2);border-left:4px solid #5856d6;border-radius:12px;
+  padding:20px 24px;margin-top:24px}
+.quote-box p{font-size:14px;color:var(--text-1);font-style:italic;line-height:1.7;margin-bottom:8px}
+.quote-box .quote-attr{font-size:12px;color:var(--text-2);font-style:normal}
+
+/* Rec box */
+.rec-box{background:rgba(52,199,89,.06);border:1px solid rgba(52,199,89,.25);border-radius:14px;padding:20px 24px;margin-top:24px}
+.rec-box h4{font-size:14px;font-weight:700;color:#28a745;margin-bottom:12px}
+.rec-box ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.rec-box li{font-size:13px;color:var(--text-2);display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+.rec-box li::before{content:'→';color:#28a745;font-weight:700;flex-shrink:0}
+.rec-box code{font-family:var(--font-mono);font-size:11px;background:rgba(52,199,89,.12);padding:1px 6px;border-radius:4px;color:#1d6e2d}
+
+/* SVG keyframes */
+@keyframes flowArrow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.flow{stroke-dasharray:6 4;animation:flowArrow .8s linear infinite}
+.ghost{animation:pulse 1.8s ease-in-out infinite}
+
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.9;
+  background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(10,132,255,.22) 35%,transparent 70%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.45);animation:rippleWave .65s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes rippleWave{to{transform:scale(2.8);opacity:0}}
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 14px rgba(10,132,255,.10);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+
+footer{padding:40px 24px;max-width:1100px;margin:0 auto;text-align:center;font-size:12px;color:var(--text-2);border-top:1px solid var(--border)}
+@media(max-width:640px){body{padding-left:0}nav{box-shadow:0 8px 30px rgba(0,0,0,.14)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🏗️ DB Architecture</div>
+  <a href="#sec-0" class="nav-link active">Biên niên kiến trúc</a>
+  <a href="#sec-1" class="nav-link">Tại sao lại có Tailscale IP</a>
+  <a href="#sec-2" class="nav-link">DB trong K8s: antipattern</a>
+  <a href="#sec-3" class="nav-link">Master-slave: overkill</a>
+  <a href="#sec-4" class="nav-link">Kiến trúc đúng</a>
+</nav>
+
+<div class="hero">
+  <span class="eyebrow">Architectural Decision Record · 2026-06-20</span>
+  <h1>DB trong K8s Pod là Antipattern</h1>
+  <p>Tại sao HAProxy lại có Tailscale IP? Tại sao master-slave làm phức tạp thêm không lợi? Và kiến trúc DB nào đúng cho homelab một người dùng?</p>
+</div>
+
+<!-- SEC 0: Biên niên -->
+<div class="section-bg s-bg0">
+<section id="sec-0">
+  <div class="section-header">
+    <span class="tag">01 · Biên Niên</span>
+    <h2>Kiến trúc DB đã thay đổi 5 lần</h2>
+    <p>Từ SQLite đơn giản đến Citus 3 node rồi lại về Postgres đơn — mỗi bước để lại "di vật" trong config.</p>
+  </div>
+
+  <div class="arch-timeline">
+    <div class="arch-step">
+      <div class="step-left"><div class="step-dot">📦</div></div>
+      <div class="step-body">
+        <div class="step-title">SQLite — file duy nhất trong Docker volume <span class="step-date">2025–early 2026</span></div>
+        <p>Toàn bộ data trong 1 file <code>/m/data/metadata.db</code>. Simple, zero config, zero network latency. Hoạt động tốt cho homelab 1 người dùng. Không có replication, không có HA.</p>
+        <span class="ok-label">✓ Phù hợp với usecase</span>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="step-left"><div class="step-dot">🐘</div></div>
+      <div class="step-body">
+        <div class="step-title">Migrate → Postgres — chạy native trên host <span class="step-date">May 2026</span></div>
+        <p>Nâng cấp lên Postgres để hỗ trợ concurrency tốt hơn, full-text search, JSONB. Postgres chạy <em>ngoài K8s</em> — Docker on host hoặc bare metal. Backend kết nối trực tiếp qua host IP.</p>
+        <span class="ok-label">✓ Kiến trúc đúng — DB ngoài K8s</span>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="step-left"><div class="step-dot">🗺️</div></div>
+      <div class="step-body">
+        <div class="step-title">Plan: db-adapter + 2 Postgres nodes <span class="step-date">16/06/2026</span></div>
+        <p>Thiết kế HAProxy db-adapter nằm giữa Backend và các Postgres node. Postgres vẫn chạy <em>ngoài K8s</em> — mỗi node vật lý có Postgres riêng tại Tailscale IP. HAProxy config: <code>server primary 100.88.197.64:5432</code> — node 1 Tailscale IP.</p>
+        <span class="ok-label">✓ Design đúng — HAProxy biết Tailscale IP vì DB ở ngoài K8s</span>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="step-left"><div class="step-dot">🌀</div></div>
+      <div class="step-body">
+        <div class="step-title">Plan: Citus distributed — coordinator bare metal <span class="step-date">18/06/2026</span></div>
+        <p>Nâng cấp lên Citus với coordinator trên Node-1 <code>100.88.197.64:5432</code> (Docker on host). db-adapter trỏ vào coordinator qua Tailscale. Plan này <strong>explicitly loại bỏ</strong> "DB trong K8s pod" (❌3 trong danh sách).</p>
+        <span class="ghost-label">⚠ Quá phức tạp cho homelab — bị abandon</span>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="step-left"><div class="step-dot" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.3)">💥</div></div>
+      <div class="step-body" style="border-color:rgba(255,45,85,.25);background:rgba(255,45,85,.04)">
+        <div class="step-title">Fallback: postgres:16-alpine <em>vào K8s pod</em> — config không đổi <span class="step-date">2026-06-19</span></div>
+        <p>Citus bị abandon → deploy Postgres <em>trong K8s StatefulSet</em>. Nhưng HAProxy config <strong>không được cập nhật</strong> — vẫn trỏ <code>100.88.197.64:5432</code> (Tailscale). Postgres trong K8s pod không expose port đó. <strong>Đây là mầm mống của outage.</strong></p>
+        <span class="ghost-label">❌ DB vào K8s pod — mâu thuẫn với thiết kế ban đầu</span>
+        <br><span class="ghost-label" style="margin-top:4px">❌ HAProxy config legacy — không ai cập nhật</span>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="step-left"><div class="step-dot" style="background:rgba(52,199,89,.12);border-color:rgba(52,199,89,.3)">✅</div></div>
+      <div class="step-body" style="border-color:rgba(52,199,89,.25);background:rgba(52,199,89,.04)">
+        <div class="step-title">Fix: HAProxy → postgres:5432 (K8s service DNS) <span class="step-date">20/06/2026</span></div>
+        <p>Cập nhật db-adapter config để dùng K8s service DNS thay vì Tailscale IP. Đây là fix <em>tình thế</em> — DB vẫn trong K8s pod, không phải kiến trúc lý tưởng.</p>
+        <span class="ok-label">✓ Site up — nhưng kiến trúc vẫn chưa ideal</span>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SEC 1: Tại sao Tailscale IP -->
+<div class="section-bg s-bg1">
+<section id="sec-1">
+  <div class="section-header">
+    <span class="tag">02 · Giải Phẫu Config</span>
+    <h2>Tại sao HAProxy lại có Tailscale IP?</h2>
+    <p>Di vật từ thiết kế đúng — khi Citus coordinator chạy bare metal, Tailscale IP là cách đúng để reach nó. Vấn đề là postgres sau đó vào K8s mà config không theo.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220">
+      <defs>
+        <marker id="b1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#30b0c7"/>
+        </marker>
+        <marker id="b1r" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#ef4444"/>
+        </marker>
+        <marker id="b1g" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#22c55e"/>
+        </marker>
+      </defs>
+
+      <!-- INTENDED (top row): DB on bare metal -->
+      <text x="16" y="18" font-size="10" font-weight="700" fill="#30b0c7" font-family="-apple-system,sans-serif">✅ Thiết kế ban đầu — DB ngoài K8s (Tailscale IP đúng)</text>
+      <rect x="16" y="28" width="90" height="38" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.25)" stroke-width="1.5"/>
+      <text x="61" y="46" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend pod</text>
+      <text x="61" y="59" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">K8s</text>
+      <line x1="106" y1="47" x2="152" y2="47" stroke="#30b0c7" stroke-width="1.5" marker-end="url(#b1)"/>
+      <rect x="152" y="28" width="110" height="38" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(48,176,199,.35)" stroke-width="1.5"/>
+      <text x="207" y="46" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">HAProxy</text>
+      <text x="207" y="59" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">db-adapter pod</text>
+      <line x1="262" y1="47" x2="308" y2="47" stroke="#30b0c7" stroke-width="1.5" marker-end="url(#b1)" class="flow"/>
+      <!-- Tailscale cloud -->
+      <rect x="308" y="22" width="130" height="50" rx="10" fill="rgba(88,86,214,.08)" stroke="rgba(88,86,214,.3)" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text x="373" y="43" text-anchor="middle" font-size="9" font-weight="600" fill="#5856d6" font-family="-apple-system,sans-serif">Tailscale</text>
+      <text x="373" y="56" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">100.88.197.64</text>
+      <line x1="438" y1="47" x2="484" y2="47" stroke="#30b0c7" stroke-width="1.5" marker-end="url(#b1)"/>
+      <!-- Postgres bare metal -->
+      <rect x="484" y="22" width="130" height="50" rx="7" fill="rgba(48,176,199,.10)" stroke="rgba(48,176,199,.4)" stroke-width="1.5"/>
+      <text x="549" y="43" text-anchor="middle" font-size="10" font-weight="600" fill="#30b0c7" font-family="-apple-system,sans-serif">Postgres bare metal</text>
+      <text x="549" y="57" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">Docker on host · port 5432</text>
+      <text x="549" y="69" text-anchor="middle" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">✓ Lắng nghe 100.88.197.64:5432</text>
+
+      <!-- ACTUAL (bottom): DB in K8s pod -->
+      <text x="16" y="118" font-size="10" font-weight="700" fill="#e0264b" font-family="-apple-system,sans-serif">❌ Thực tế — DB vào K8s pod, config HAProxy không đổi</text>
+      <rect x="16" y="128" width="90" height="38" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.25)" stroke-width="1.5"/>
+      <text x="61" y="146" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend pod</text>
+      <text x="61" y="159" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">K8s</text>
+      <line x1="106" y1="147" x2="152" y2="147" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#b1r)"/>
+      <rect x="152" y="128" width="110" height="38" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.25)" stroke-width="1.5"/>
+      <text x="207" y="146" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">HAProxy</text>
+      <text x="207" y="159" text-anchor="middle" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">vẫn → 100.88.197.64</text>
+      <line x1="262" y1="147" x2="308" y2="147" stroke="#ef4444" stroke-width="1.5" marker-end="url(#b1r)" class="flow"/>
+      <rect x="308" y="122" width="130" height="50" rx="10" fill="rgba(88,86,214,.05)" stroke="rgba(88,86,214,.2)" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text x="373" y="143" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">Tailscale</text>
+      <text x="373" y="157" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">100.88.197.64</text>
+      <line x1="438" y1="147" x2="484" y2="147" stroke="#ef4444" stroke-width="2" marker-end="url(#b1r)" class="ghost"/>
+      <!-- K8s postgres pod -->
+      <rect x="484" y="122" width="130" height="50" rx="7" fill="rgba(255,255,255,.5)" stroke="rgba(255,45,85,.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="549" y="143" text-anchor="middle" font-size="10" font-weight="600" fill="#e0264b" font-family="-apple-system,sans-serif">postgres-0 pod</text>
+      <text x="549" y="157" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">K8s ClusterIP only</text>
+      <text x="549" y="169" text-anchor="middle" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">✗ Không expose Tailscale</text>
+      <!-- TIMEOUT label -->
+      <rect x="650" y="132" width="100" height="32" rx="8" fill="rgba(255,45,85,.1)" stroke="rgba(255,45,85,.4)" stroke-width="1.5"/>
+      <text x="700" y="152" text-anchor="middle" font-size="11" font-weight="700" fill="#e0264b" font-family="-apple-system,sans-serif">TIMEOUT ❌</text>
+      <line x1="614" y1="147" x2="646" y2="147" stroke="#ef4444" stroke-width="1.5" marker-end="url(#b1r)" class="ghost"/>
+      <!-- "ghost listener" note -->
+      <text x="549" y="192" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic" font-family="-apple-system,sans-serif">Không có gì lắng nghe ở Tailscale IP</text>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Thiết kế ban đầu — HAProxy đúng</h4>
+      <ul>
+        <li>db-adapter trỏ <code>100.88.197.64:5432</code> vì đó là Tailscale IP của node chạy Postgres <em>bare metal</em></li>
+        <li>Citus coordinator exposed <code>port 5432</code> trực tiếp trên host — không qua K8s service</li>
+        <li>Tailscale routing giữa K8s pod và bare metal host — hoạt động bình thường</li>
+        <li>Kiến trúc này nhất quán: DB ngoài K8s, HAProxy biết IP trực tiếp</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Điều gì gãy — khi DB vào K8s</h4>
+      <ul>
+        <li>Postgres StatefulSet trong K8s chỉ expose qua <code>ClusterIP</code> service nội bộ</li>
+        <li>Port 5432 của pod KHÔNG bind lên host interface hay Tailscale — không có <code>hostPort</code></li>
+        <li>HAProxy gọi <code>100.88.197.64:5432</code> → Tailscale routing đến host → không có gì lắng nghe</li>
+        <li>TCP timeout sau 60s → mọi DB query bị block</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SEC 2: DB trong K8s antipattern -->
+<div class="section-bg s-bg2">
+<section id="sec-2">
+  <div class="section-header">
+    <span class="tag">03 · Antipattern</span>
+    <h2>Tại sao DB trong K8s pod là sai</h2>
+    <p>K8s được thiết kế cho stateless workloads. Đưa stateful DB vào K8s pod thêm complexity mà không thêm lợi ích thực sự cho homelab.</p>
+  </div>
+
+  <div class="quote-box">
+    <p>"Tôi chưa bao giờ muốn cho DB vào pod K8s để scale. Tệ nhất là mô hình master-slave."</p>
+    <div class="quote-attr">— User, 2026-06-20</div>
+  </div>
+
+  <div class="ap-grid" style="margin-top:24px">
+    <div class="ap-card">
+      <div class="ap-icon">💾</div>
+      <h4>Data persistence fragile</h4>
+      <p>hostPath volumes bind data vào 1 node vật lý. Node bị reschedule → data access lỗi. StorageClass, PV, PVC — overhead lớn cho dữ liệu cá nhân.</p>
+      <span class="verdict verdict-bad">Nguy hiểm</span>
+    </div>
+    <div class="ap-card">
+      <div class="ap-icon">🔄</div>
+      <h4>Pod restart = cold start</h4>
+      <p>K8s có thể kill pod bất cứ lúc nào (OOMKill, node drain). Postgres khởi động lại → recovery time, WAL replay → downtime không cần thiết.</p>
+      <span class="verdict verdict-bad">Unreliable</span>
+    </div>
+    <div class="ap-card">
+      <div class="ap-icon">🌐</div>
+      <h4>Network hop thêm</h4>
+      <p>App → K8s Service → iptables → Pod. Mỗi query thêm 1 network hop. Với DB là high-frequency calls, latency cộng dồn rõ ràng.</p>
+      <span class="verdict verdict-bad">Slow</span>
+    </div>
+    <div class="ap-card">
+      <div class="ap-icon">⚙️</div>
+      <h4>StatefulSet phức tạp</h4>
+      <p>StatefulSet, PV, PVC, StorageClass, headless service — chỉ để chạy 1 Postgres instance. Docker on host + volume mount đơn giản hơn 10x.</p>
+      <span class="verdict verdict-bad">Overengineered</span>
+    </div>
+    <div class="ap-card">
+      <div class="ap-icon">🔍</div>
+      <h4>Debug khó hơn</h4>
+      <p>Khi DB có vấn đề: phải <code>kubectl exec</code> vào pod, logs phân tán. Bare metal: <code>psql</code> trực tiếp, <code>tail -f /var/log/postgresql/</code> ngay trên host.</p>
+      <span class="verdict verdict-bad">Hard to debug</span>
+    </div>
+    <div class="ap-card">
+      <div class="ap-icon">📏</div>
+      <h4>Scale DB ≠ thêm pod</h4>
+      <p>DB scale bằng read replica, sharding, connection pooling — không phải chạy thêm pod stateless. K8s scaling model không áp dụng cho DB.</p>
+      <span class="verdict verdict-bad">Wrong model</span>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Tiêu chí</th><th>DB trong K8s pod</th><th>DB trên bare metal</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Data durability</td><td><span class="cross">✗</span> hostPath fragile, node-bound</td><td><span class="check">✓</span> Disk trực tiếp, persistent</td></tr>
+        <tr><td>Restart safety</td><td><span class="cross">✗</span> K8s kill bất cứ lúc</td><td><span class="check">✓</span> systemd, manual control</td></tr>
+        <tr><td>Network latency</td><td><span class="cross">✗</span> +1 hop qua iptables/kube-proxy</td><td><span class="check">✓</span> local socket hoặc 1 hop</td></tr>
+        <tr><td>Debug</td><td><span class="cross">✗</span> kubectl exec, log aggregation</td><td><span class="check">✓</span> psql, log files direct</td></tr>
+        <tr><td>Config complexity</td><td><span class="cross">✗</span> StatefulSet + PV + PVC + Service</td><td><span class="check">✓</span> docker-compose 10 dòng</td></tr>
+        <tr><td>Backup</td><td><span class="cross">✗</span> cần logic đặc biệt trong pod</td><td><span class="check">✓</span> pg_dump, file copy đơn giản</td></tr>
+        <tr><td>Phù hợp homelab</td><td><span class="cross">✗</span> Overhead không xứng</td><td><span class="check">✓</span> Đơn giản, đáng tin</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<!-- SEC 3: Master-slave overkill -->
+<div class="section-bg s-bg3">
+<section id="sec-3">
+  <div class="section-header">
+    <span class="tag">04 · Over-engineering</span>
+    <h2>Master-slave: phức tạp hơn lợi ích</h2>
+    <p>Streaming replication giải quyết vấn đề production scale — cho team dev, traffic cao, SLA nghiêm ngặt. Homelab 1 người dùng không có vấn đề đó.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Những gì master-slave thêm vào</h4>
+      <ul>
+        <li>2 Postgres instances cần maintain (primary + standby)</li>
+        <li>WAL streaming config (<code>wal_level=replica</code>, <code>max_wal_senders</code>)</li>
+        <li>pg_basebackup init, replication slot, <code>primary_conninfo</code></li>
+        <li>Failover logic — tự động (Patroni) hoặc thủ công (<code>pg_promote()</code>)</li>
+        <li>postgres-monitor CronJob chạy mỗi 2 phút kiểm tra health</li>
+        <li>Telegram alert integration cho promote event</li>
+        <li>db-adapter HAProxy để route giữa primary/standby</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Lợi ích thực sự với homelab</h4>
+      <ul>
+        <li><strong>HA</strong> — Khi primary down, standby promote sau ~30s. Nhưng primary down bao giờ? Homelab reboot thì down cả cluster luôn.</li>
+        <li><strong>Read scaling</strong> — Route read queries tới standby. Nhưng 1 người dùng không có read scaling problem.</li>
+        <li><strong>Zero downtime backup</strong> — Backup từ standby. Nhưng <code>pg_dump</code> từ primary chạy &lt;10s.</li>
+        <li>Tổng kết: Lợi ích tồn tại nhưng không đủ bù đắp complexity đã thêm vào.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="diagram-box" style="margin-top:24px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 180">
+      <defs>
+        <marker id="c1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#e0264b"/>
+        </marker>
+        <marker id="c1g" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#28a745"/>
+        </marker>
+      </defs>
+      <!-- Master-slave complexity -->
+      <text x="16" y="18" font-size="10" font-weight="700" fill="#e0264b" font-family="-apple-system,sans-serif">Kiến trúc hiện tại — nhiều moving parts</text>
+      <!-- Backend -->
+      <rect x="16" y="28" width="80" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="56" y="49" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend</text>
+      <!-- db-adapter -->
+      <rect x="136" y="28" width="90" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="181" y="46" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">HAProxy</text>
+      <text x="181" y="58" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">db-adapter</text>
+      <line x1="96" y1="46" x2="132" y2="46" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#c1)"/>
+      <!-- Primary -->
+      <rect x="276" y="20" width="110" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(255,45,85,.3)" stroke-width="1.5"/>
+      <text x="331" y="38" text-anchor="middle" font-size="10" font-weight="600" fill="#e0264b" font-family="-apple-system,sans-serif">Primary</text>
+      <text x="331" y="50" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">postgres-0</text>
+      <line x1="226" y1="40" x2="272" y2="35" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#c1)"/>
+      <!-- Standby -->
+      <rect x="276" y="66" width="110" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(88,86,214,.3)" stroke-width="1.5"/>
+      <text x="331" y="84" text-anchor="middle" font-size="10" font-weight="600" fill="#5856d6" font-family="-apple-system,sans-serif">Standby</text>
+      <text x="331" y="96" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">postgres-standby-0</text>
+      <line x1="226" y1="52" x2="272" y2="79" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#c1)"/>
+      <!-- WAL streaming -->
+      <line x1="386" y1="38" x2="386" y2="66" stroke="#5856d6" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#c1)"/>
+      <text x="398" y="56" font-size="9" fill="#5856d6" font-family="-apple-system,sans-serif">WAL streaming</text>
+      <!-- postgres-monitor -->
+      <rect x="440" y="40" width="120" height="36" rx="7" fill="rgba(88,86,214,.08)" stroke="rgba(88,86,214,.25)" stroke-width="1.5"/>
+      <text x="500" y="55" text-anchor="middle" font-size="9" font-weight="600" fill="#5856d6" font-family="-apple-system,sans-serif">postgres-monitor</text>
+      <text x="500" y="67" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">CronJob mỗi 2 phút</text>
+      <line x1="386" y1="46" x2="436" y2="50" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+      <!-- Telegram -->
+      <rect x="594" y="40" width="90" height="36" rx="7" fill="rgba(48,176,199,.08)" stroke="rgba(48,176,199,.3)" stroke-width="1.5"/>
+      <text x="639" y="55" text-anchor="middle" font-size="9" font-weight="600" fill="#30b0c7" font-family="-apple-system,sans-serif">Telegram alert</text>
+      <text x="639" y="67" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">on failover</text>
+      <line x1="560" y1="58" x2="590" y2="58" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+      <!-- "all for 1 user" -->
+      <text x="700" y="50" font-size="10" fill="#e0264b" font-family="-apple-system,sans-serif" font-weight="600">← tất cả để phục vụ</text>
+      <text x="700" y="64" font-size="10" fill="#e0264b" font-family="-apple-system,sans-serif" font-weight="600">1 người dùng 😅</text>
+
+      <!-- Simple alternative -->
+      <text x="16" y="128" font-size="10" font-weight="700" fill="#28a745" font-family="-apple-system,sans-serif">Thay thế — simple single postgres</text>
+      <rect x="16" y="140" width="80" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(52,199,89,.3)" stroke-width="1.5"/>
+      <text x="56" y="161" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend</text>
+      <line x1="96" y1="158" x2="152" y2="158" stroke="#28a745" stroke-width="2" marker-end="url(#c1g)"/>
+      <rect x="152" y="140" width="120" height="36" rx="7" fill="rgba(52,199,89,.10)" stroke="rgba(52,199,89,.35)" stroke-width="1.5"/>
+      <text x="212" y="158" text-anchor="middle" font-size="10" font-weight="600" fill="#28a745" font-family="-apple-system,sans-serif">Postgres bare metal</text>
+      <text x="212" y="169" text-anchor="middle" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">1 instance, ngoài K8s</text>
+      <text x="310" y="162" font-size="10" fill="#28a745" font-family="-apple-system,sans-serif">Đủ dùng ✓  Dễ debug ✓  Dễ backup ✓</text>
+    </svg>
+  </div>
+</section>
+</div>
+
+<!-- SEC 4: Kiến trúc đúng -->
+<div class="section-bg s-bg4">
+<section id="sec-4">
+  <div class="section-header">
+    <span class="tag">05 · Recommendation</span>
+    <h2>Kiến trúc DB đúng cho Cozyroom homelab</h2>
+    <p>Stateful thì không vào K8s. Đơn giản hóa stack DB xuống mức tối thiểu phục vụ được 1–5 người dùng đồng thời.</p>
+  </div>
+
+  <div class="rec-box">
+    <h4>Kiến trúc mục tiêu</h4>
+    <ul>
+      <li>Postgres chạy <strong>ngoài K8s</strong> — Docker on host hoặc systemd service trên node chính</li>
+      <li>Expose qua host interface (hoặc Tailscale IP) — K8s backend kết nối trực tiếp hoặc qua HAProxy với IP thật</li>
+      <li>Nếu dùng HAProxy db-adapter — dùng Tailscale IP của <em>host</em> running Postgres, không phải K8s pod</li>
+      <li>Backup: <code>pg_dump</code> hàng ngày via cron, lưu ra local disk hoặc NAS</li>
+      <li>Không cần replication cho 1–5 người dùng — MTTR &lt;5 phút nếu restore từ dump là chấp nhận được</li>
+      <li>Nếu thực sự cần HA sau này: PostgreSQL native streaming replication <em>ngoài K8s</em>, không trong pod</li>
+    </ul>
+  </div>
+
+  <div class="diagram-box" style="margin-top:24px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 160">
+      <defs>
+        <marker id="d1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#f08c00"/>
+        </marker>
+      </defs>
+      <!-- Target arch -->
+      <text x="16" y="18" font-size="10" font-weight="700" fill="#f08c00" font-family="-apple-system,sans-serif">Target — Postgres bare metal, Backend trong K8s</text>
+      <!-- User -->
+      <rect x="16" y="28" width="90" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="61" y="46" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Browser</text>
+      <text x="61" y="58" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">client</text>
+      <line x1="106" y1="46" x2="152" y2="46" stroke="#f08c00" stroke-width="1.5" marker-end="url(#d1)"/>
+      <!-- CF Tunnel -->
+      <rect x="152" y="28" width="90" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="197" y="46" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">CF Tunnel</text>
+      <text x="197" y="58" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">CDN edge</text>
+      <line x1="242" y1="46" x2="288" y2="46" stroke="#f08c00" stroke-width="1.5" marker-end="url(#d1)"/>
+      <!-- nginx -->
+      <rect x="288" y="28" width="80" height="36" rx="7" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="328" y="49" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">nginx</text>
+      <line x1="368" y1="46" x2="408" y2="46" stroke="#f08c00" stroke-width="1.5" marker-end="url(#d1)"/>
+      <!-- Backend K8s -->
+      <rect x="408" y="20" width="100" height="52" rx="7" fill="rgba(255,149,0,.08)" stroke="rgba(255,149,0,.35)" stroke-width="1.5"/>
+      <text x="458" y="40" text-anchor="middle" font-size="10" font-weight="600" fill="#f08c00" font-family="-apple-system,sans-serif">Backend K8s</text>
+      <text x="458" y="54" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">Go server ×N</text>
+      <text x="458" y="65" text-anchor="middle" font-size="9" fill="#f08c00" font-family="-apple-system,sans-serif">stateless ✓</text>
+      <line x1="508" y1="46" x2="554" y2="46" stroke="#f08c00" stroke-width="2" marker-end="url(#d1)" class="flow"/>
+      <!-- DB bare metal - highlighted -->
+      <rect x="554" y="16" width="160" height="60" rx="10" fill="rgba(255,149,0,.10)" stroke="rgba(255,149,0,.45)" stroke-width="2"/>
+      <text x="634" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#f08c00" font-family="-apple-system,sans-serif">Postgres</text>
+      <text x="634" y="52" text-anchor="middle" font-size="10" fill="#0f0f12" font-family="-apple-system,sans-serif">Docker on host</text>
+      <text x="634" y="65" text-anchor="middle" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">bare metal · ngoài K8s ✓</text>
+      <!-- Backup cron -->
+      <rect x="554" y="95" width="160" height="36" rx="7" fill="rgba(255,255,255,.7)" stroke="rgba(30,90,170,.15)" stroke-width="1.5"/>
+      <text x="634" y="111" text-anchor="middle" font-size="9" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">pg_dump cron daily</text>
+      <text x="634" y="123" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">→ /backup/cozyroom-YYYYMMDD.sql</text>
+      <line x1="634" y1="76" x2="634" y2="91" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+      <!-- No replication needed -->
+      <rect x="738" y="28" width="140" height="52" rx="7" fill="rgba(94,94,94,.05)" stroke="rgba(94,94,94,.15)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="808" y="48" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="-apple-system,sans-serif">Replication?</text>
+      <text x="808" y="62" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">Add sau nếu cần</text>
+      <text x="808" y="73" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">(ngoài K8s)</text>
+      <line x1="714" y1="46" x2="734" y2="46" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"/>
+    </svg>
+  </div>
+
+  <div class="content-grid" style="margin-top:24px">
+    <div class="card">
+      <h4>Bước migrate DB ra khỏi K8s</h4>
+      <ul>
+        <li><code>pg_dump cozyroom &gt; cozyroom.sql</code> từ pod hiện tại</li>
+        <li>Chạy Postgres trên host: <code>docker run -d -p 5432:5432 postgres:16</code></li>
+        <li><code>psql &lt; cozyroom.sql</code> restore vào host postgres</li>
+        <li>Cập nhật <code>DATABASE_URL</code> trong backend.yaml → host IP hoặc Tailscale IP thật</li>
+        <li>Xóa StatefulSet + PV + PVC trong K8s — dọn sạch</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Trade-offs khi không dùng replication</h4>
+      <ul>
+        <li><strong>MTTR nếu DB die</strong>: Restore từ pg_dump gần nhất (~&lt;5 phút nếu backup hourly)</li>
+        <li><strong>Data loss window</strong>: Tối đa 1 giờ nếu backup hourly — chấp nhận được với music app</li>
+        <li><strong>Maintenance window</strong>: Postgres restart ~5s — không đủ để justify full HA stack</li>
+        <li><strong>Lợi ích bù lại</strong>: Không cần HAProxy, không cần monitor CronJob, không cần Telegram alert, stack đơn giản hơn 10x</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<footer>
+  <p>Architectural Decision Record · Cozyroom · 2026-06-20 · <a href="../wiki/sources/draft/200626-db-antipattern.md" style="color:#0a84ff">Chi tiết draft</a></p>
+</footer>
+
+<script>
+(function(){
+  const nav=document.querySelector('nav'); if(!nav) return;
+  const btn=document.createElement('button'); btn.className='nav-toggle'; btn.textContent='☰';
+  document.body.appendChild(btn);
+  const close=document.createElement('button'); close.className='nav-close'; close.textContent='✕';
+  nav.appendChild(close);
+  const apply=c=>{document.body.classList.toggle('nav-collapsed',c);try{localStorage.setItem('navCollapsed',c?'1':'0')}catch(e){}};
+  btn.addEventListener('click',()=>apply(false));
+  close.addEventListener('click',()=>apply(true));
+  try{const s=localStorage.getItem('navCollapsed');if(s==='1'||(s!=='0'&&matchMedia('(max-width:640px)').matches))apply(true);}catch(e){}
+  function attachRipple(el){el.addEventListener('pointerdown',function(e){const r=el.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;const rad=Math.hypot(Math.max(x,r.width-x),Math.max(y,r.height-y));const ink=document.createElement('span');ink.className='ripple-ink';ink.style.width=ink.style.height=rad*2+'px';ink.style.left=(x-rad)+'px';ink.style.top=(y-rad)+'px';el.appendChild(ink);ink.addEventListener('animationend',()=>ink.remove());});}
+  document.querySelectorAll('nav a,.nav-toggle,.nav-close').forEach(attachRipple);
+})();
+(function(){const flash=el=>{let t;return()=>{el.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>el.classList.remove('scrolling'),900);};};window.addEventListener('scroll',flash(document.documentElement),{passive:true});const nav=document.querySelector('nav');if(nav)nav.addEventListener('scroll',flash(nav),{passive:true});})();
+(function(){const links=[...document.querySelectorAll('nav a')];const sections=[...document.querySelectorAll('section[id]')];const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));});},{rootMargin:'-40% 0px -55% 0px'});sections.forEach(s=>obs.observe(s));})();
+function initDraggableDiagrams(){const NS='http://www.w3.org/2000/svg';const nearest=(nodes,x,y)=>{let best=null,bd=1e9;nodes.forEach(n=>{const cx=Math.max(n.x,Math.min(x,n.x+n.w)),cy=Math.max(n.y,Math.min(y,n.y+n.h));const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=n;}});return bd<=42?best:null;};document.querySelectorAll('.diagram-box').forEach(box=>{const svg=box.querySelector('svg');if(!svg||box.dataset.draggable)return;box.dataset.draggable='1';const vp=document.createElement('div');vp.className='diagram-viewport';box.insertBefore(vp,svg);vp.appendChild(svg);const hint=document.createElement('div');hint.className='diagram-hint';hint.textContent='✥ kéo từng ô · kéo nền để pan · cuộn để zoom';box.appendChild(hint);const reset=document.createElement('button');reset.className='diagram-reset';reset.textContent='⟲ reset';box.appendChild(reset);const allRects=[...svg.querySelectorAll('rect')];const nodes=allRects.filter(r=>(+r.getAttribute('width'))>=70&&(+r.getAttribute('height'))>=30).map(r=>({rect:r,x:+r.getAttribute('x'),y:+r.getAttribute('y'),w:+r.getAttribute('width'),h:+r.getAttribute('height'),els:[r],tx:0,ty:0}));const inNode=(px,py)=>nodes.find(n=>px>=n.x-1&&px<=n.x+n.w+1&&py>=n.y-1&&py<=n.y+n.h+1);[...svg.querySelectorAll('text')].forEach(t=>{const x=parseFloat(t.getAttribute('x')),y=parseFloat(t.getAttribute('y'));if(isNaN(x)||isNaN(y))return;const n=inNode(x,y);if(n)n.els.push(t);});allRects.forEach(r=>{if(nodes.some(n=>n.rect===r))return;const x=+r.getAttribute('x'),y=+r.getAttribute('y'),w=+r.getAttribute('width')||0,h=+r.getAttribute('height')||0;const n=inNode(x+w/2,y+h/2);if(n)n.els.push(r);});nodes.forEach(n=>{const g=document.createElementNS(NS,'g');g.setAttribute('class','dnode');n.rect.parentNode.insertBefore(g,n.rect);n.els.forEach(el=>g.appendChild(el));n.g=g;});const links=[...svg.querySelectorAll('line')].filter(l=>l.hasAttribute('x1')&&l.hasAttribute('x2'));links.forEach(l=>{l._x1=+l.getAttribute('x1');l._y1=+l.getAttribute('y1');l._x2=+l.getAttribute('x2');l._y2=+l.getAttribute('y2');l._n1=nearest(nodes,l._x1,l._y1);l._n2=nearest(nodes,l._x2,l._y2);});const reroute=()=>links.forEach(l=>{if(l._n1){l.setAttribute('x1',l._x1+l._n1.tx);l.setAttribute('y1',l._y1+l._n1.ty);}if(l._n2){l.setAttribute('x2',l._x2+l._n2.tx);l.setAttribute('y2',l._y2+l._n2.ty);}});const vbBase=(svg.getAttribute('viewBox')||'0 0 900 160').split(/\s+/).map(Number);const fitViewBox=()=>{const pad=16;let minX=vbBase[0],minY=vbBase[1],maxX=vbBase[0]+vbBase[2],maxY=vbBase[1]+vbBase[3];nodes.forEach(n=>{minX=Math.min(minX,n.x+n.tx-pad);minY=Math.min(minY,n.y+n.ty-pad);maxX=Math.max(maxX,n.x+n.w+n.tx+pad);maxY=Math.max(maxY,n.y+n.h+n.ty+pad);});svg.setAttribute('viewBox',`${minX} ${minY} ${maxX-minX} ${maxY-minY}`);};let ptx=0,pty=0,scale=1;const applyCanvas=()=>{svg.style.transform=`translate(${ptx}px,${pty}px) scale(${scale})`;};const toSvg=(cx,cy)=>{const p=svg.createSVGPoint();p.x=cx;p.y=cy;return p.matrixTransform(svg.getScreenCTM().inverse());};let mode=null,node=null,start=null,t0=null,p0=null;vp.addEventListener('pointerdown',e=>{vp.setPointerCapture(e.pointerId);const g=e.target.closest&&e.target.closest('g.dnode');if(g){mode='node';node=nodes.find(n=>n.g===g);start=toSvg(e.clientX,e.clientY);t0={x:node.tx,y:node.ty};}else{mode='pan';p0={x:e.clientX-ptx,y:e.clientY-pty};vp.classList.add('grabbing');}});vp.addEventListener('pointermove',e=>{if(mode==='node'){const c=toSvg(e.clientX,e.clientY);node.tx=t0.x+(c.x-start.x);node.ty=t0.y+(c.y-start.y);node.g.setAttribute('transform',`translate(${node.tx},${node.ty})`);reroute();}else if(mode==='pan'){ptx=e.clientX-p0.x;pty=e.clientY-p0.y;applyCanvas();}});const end=()=>{if(mode==='node')fitViewBox();mode=null;node=null;vp.classList.remove('grabbing');};vp.addEventListener('pointerup',end);vp.addEventListener('pointercancel',end);vp.addEventListener('wheel',e=>{e.preventDefault();const r=vp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;const ns=Math.min(4,Math.max(0.5,scale*(e.deltaY<0?1.1:0.9)));ptx=mx-(mx-ptx)*(ns/scale);pty=my-(my-pty)*(ns/scale);scale=ns;applyCanvas();},{passive:false});const doReset=()=>{ptx=0;pty=0;scale=1;svg.style.transition='transform .3s cubic-bezier(.4,0,.2,1)';applyCanvas();setTimeout(()=>{svg.style.transition='';},320);nodes.forEach(n=>{n.tx=0;n.ty=0;n.g.setAttribute('transform','translate(0,0)');});reroute();fitViewBox();};reset.addEventListener('click',doReset);vp.addEventListener('dblclick',doReset);});}
+initDraggableDiagrams();
+document.addEventListener('pointerdown',e=>{const el=e.target.closest('button,.nav-link');if(!el||el.dataset.noRipple)return;const r=el.getBoundingClientRect(),d=Math.max(r.width,r.height)*1.2;const s=document.createElement('span');s.className='ripple';s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;if(getComputedStyle(el).position==='static')el.style.position='relative';el.style.overflow='hidden';el.appendChild(s);s.addEventListener('animationend',()=>s.remove());});
+</script>
+</body>
+</html>

@@ -108,3 +108,5 @@
 | [concepts/OnboardingTour.md](concepts/OnboardingTour.md) | concept | 11-step guided tour: server entry → HTTP routing → DB → scanner → stream → YT → AI → PlayerContext → pages → K8s |
 | [entities/ProjectStructure.md](entities/ProjectStructure.md) | entity | Repository layout, backend packages, frontend structure, K8s manifests, hot files, layer summary |
 | [draft/orca/190626-cdn-enable-api-headers.md](draft/orca/190626-cdn-enable-api-headers.md) | draft | Propose: add Cache-Control public to 7 GET API handlers — bật CF edge CDN cho music.giatbh.io.vn |
+| [sources/draft/200626-db-latency-postmortem.md](sources/draft/200626-db-latency-postmortem.md) | draft | Postmortem: HAProxy Tailscale IP broken → site down; fixed bằng K8s DNS + node affinity + merged queries |
+| [sources/draft/200626-db-antipattern.md](sources/draft/200626-db-antipattern.md) | draft | ADR: DB trong K8s pod là antipattern — lịch sử Tailscale IP, lý do master-slave overkill, kiến trúc đúng cho homelab |

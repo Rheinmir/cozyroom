@@ -1,43 +1,7 @@
-# DB Adapter — HAProxy TCP proxy between Backend and Postgres nodes
-# Sits between backend and DB: backend → db-adapter:5432 → postgres primary/standby
-# Stateless pod: scale horizontal freely, no SPOF introduced
-# Failover: if primary down → routes to standby (standby must be promoted first by postgres-monitor CronJob)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: db-adapter-config
-  namespace: cozyroom-k8s
-data:
-  haproxy.cfg: |
-    global
-      maxconn 200
-      log stdout format raw local0
-
-    defaults
-      mode tcp
-      log global
-      timeout connect 5s
-      timeout client 60s
-      timeout server 60s
-      option tcp-check
-      option log-health-checks
-
-    frontend postgres_front
-      bind *:5432
-      default_backend postgres_primary
-
-    backend postgres_primary
-      server primary   postgres:5432 check inter 5s fall 2 rise 2
-
-    # Stats page on port 8404 for health monitoring
-    frontend stats
-      bind *:8404
-      mode http
-      stats enable
-      stats uri /stats
-      stats refresh 5s
-      stats show-legends
----
+# DB Adapter — PgBouncer connection pooler between Backend and Postgres
+# pool_mode=transaction: connection returned to pool after each txn
+# Backend sees 5000 client slots; Postgres sees at most 50 server connections
+# Backend DATABASE_URL unchanged: postgres://cozyroom:...@db-adapter:5432/cozyroom
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,21 +35,58 @@ spec:
                     app: db-adapter
                 topologyKey: kubernetes.io/hostname
       containers:
-        - name: haproxy
-          image: haproxy:2.9-alpine
+        - name: pgbouncer
+          image: pgbouncer/pgbouncer:latest
           ports:
             - containerPort: 5432
-            - containerPort: 8404
-          volumeMounts:
-            - name: config
-              mountPath: /usr/local/etc/haproxy/haproxy.cfg
-              subPath: haproxy.cfg
+          env:
+            - name: DATABASES_HOST
+              value: "postgres"
+            - name: DATABASES_PORT
+              value: "5432"
+            - name: DATABASES_DBNAME
+              value: "cozyroom"
+            - name: DATABASES_USER
+              value: "cozyroom"
+            - name: DATABASES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGBOUNCER_POOL_MODE
+              value: "transaction"
+            - name: PGBOUNCER_MAX_CLIENT_CONN
+              value: "5000"
+            - name: PGBOUNCER_DEFAULT_POOL_SIZE
+              value: "50"
+            - name: PGBOUNCER_MIN_POOL_SIZE
+              value: "5"
+            - name: PGBOUNCER_RESERVE_POOL_SIZE
+              value: "10"
+            - name: PGBOUNCER_RESERVE_POOL_TIMEOUT
+              value: "3"
+            - name: PGBOUNCER_SERVER_IDLE_TIMEOUT
+              value: "600"
+            - name: PGBOUNCER_SERVER_CONNECT_TIMEOUT
+              value: "5"
+            - name: PGBOUNCER_IGNORE_STARTUP_PARAMETERS
+              value: "extra_float_digits"
+            - name: PGBOUNCER_LOG_CONNECTIONS
+              value: "0"
+            - name: PGBOUNCER_LOG_DISCONNECTIONS
+              value: "0"
+            - name: PGBOUNCER_LISTEN_PORT
+              value: "5432"
           readinessProbe:
-            httpGet:
-              path: /stats
-              port: 8404
+            tcpSocket:
+              port: 5432
             initialDelaySeconds: 5
             periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 10
+            periodSeconds: 15
           resources:
             requests:
               cpu: 5m
@@ -93,10 +94,6 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
-      volumes:
-        - name: config
-          configMap:
-            name: db-adapter-config
 ---
 apiVersion: v1
 kind: Service
@@ -110,6 +107,3 @@ spec:
     - name: postgres
       port: 5432
       targetPort: 5432
-    - name: stats
-      port: 8404
-      targetPort: 8404
