@@ -48,5 +48,5 @@ Tailscale IP `100.88.197.64:5432` trong HAProxy config là DI VẬT từ thiết
 
 ## Origin
 - **Source:** user conversation 2026-06-20, session 7c2c3cdd-af35-4627-a589-93f3e25da939
-- **Commit:** _(filled by verify-before-commit)_
-- **Date promoted:** _(filled by verify-before-commit)_
+- **Commit:** 7d2a80c — perf: swap db-adapter HAProxy → PgBouncer, pool_mode=transaction
+- **Date promoted:** 2026-06-20

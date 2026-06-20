@@ -1,5 +1,12 @@
 # Operation Log
 
+## 2026-06-20 — verify-before-commit — pgbouncer-swap
+
+- Commit: `7d2a80c` — perf: swap db-adapter HAProxy → PgBouncer, pool_mode=transaction
+- Files staged: `k8s/db-adapter.yaml`, `llmwiki/html/200626-db-antipattern.html`, `llmwiki/wiki/sources/draft/200626-db-antipattern.md`, `llmwiki/wiki/index.md`, `llmwiki/wiki/log.md`
+- Pre-existing vet error `backup_test.go` — không liên quan, không block commit
+- Output report: `wiki/sources/draft/200626-pgbouncer-swap.md`
+
 ## 2026-06-20 — docs-site-macos — db-antipattern
 
 - HTML: `llmwiki/html/200626-db-antipattern.html`
