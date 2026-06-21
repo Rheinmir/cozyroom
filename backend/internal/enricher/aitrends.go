@@ -37,10 +37,13 @@ type aiSlot struct {
 }
 
 // buildSlots returns the ordered list of (provider, model) to try.
-// Gemini models are tried first, then OpenRouter models.
-func buildSlots(geminiKey, openRouterKey string) []aiSlot {
+// Each Gemini key gets all 3 models; keys are interleaved before OpenRouter fallback.
+func buildSlots(geminiKeys []string, openRouterKey string) []aiSlot {
 	var slots []aiSlot
-	if geminiKey != "" {
+	for _, key := range geminiKeys {
+		if key == "" {
+			continue
+		}
 		for _, m := range []string{
 			"gemini-2.5-flash",
 			"gemini-2.0-flash-lite",
@@ -48,7 +51,7 @@ func buildSlots(geminiKey, openRouterKey string) []aiSlot {
 		} {
 			slots = append(slots, aiSlot{
 				baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-				apiKey:  geminiKey,
+				apiKey:  key,
 				model:   m,
 			})
 		}
@@ -69,8 +72,8 @@ func buildSlots(geminiKey, openRouterKey string) []aiSlot {
 	return slots
 }
 
-func EnrichWithAI(db *sql.DB, geminiKey, openRouterKey string) {
-	slots := buildSlots(geminiKey, openRouterKey)
+func EnrichWithAI(db *sql.DB, geminiKeys []string, openRouterKey string) {
+	slots := buildSlots(geminiKeys, openRouterKey)
 	if len(slots) == 0 {
 		log.Printf("aitrends: no API keys configured")
 		return

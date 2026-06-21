@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"cozyroom/internal/api"
@@ -26,11 +27,23 @@ func main() {
 
 	geminiKey       := envOr("GEMINI_API_KEY", "")
 	openRouterKey   := envOr("OPENROUTER_API_KEY", "")
+
+	var geminiKeys []string
+	if raw := envOr("GEMINI_API_KEYS", ""); raw != "" {
+		for _, k := range strings.Split(raw, ",") {
+			if k = strings.TrimSpace(k); k != "" {
+				geminiKeys = append(geminiKeys, k)
+			}
+		}
+	} else if geminiKey != "" {
+		geminiKeys = []string{geminiKey}
+	}
 	anthropicKey    := envOr("ANTHROPIC_API_KEY", "")
 	deepseekKey     := envOr("DEEPSEEK_API_KEY", "")
 	githubToken     := envOr("GITHUB_TOKEN", "")
 	databaseURL     := envOr("DATABASE_URL", "postgres://cozyroom:cozyroom@localhost:5432/cozyroom?sslmode=disable")
 	musicPath       := envOr("MUSIC_PATH", "/music")
+	ytDownloadPath  := envOr("YT_DOWNLOAD_PATH", "")
 	coversDir       := envOr("COVERS_DIR", "/data/covers")
 	artistImgDir    := envOr("ARTIST_IMG_DIR", "/data/artist-images")
 	lyricsDir       := envOr("LYRICS_DIR", "/data/lyrics")
@@ -107,9 +120,10 @@ func main() {
 		Settings:     settingsUC,
 		Playback:     playbackUC,
 		UoW:          uowFactory,
-		ScanDB:       rawDB,
-		MusicPath:    musicPath,
-		FilmsPath:    filmsPath,
+		ScanDB:          rawDB,
+		MusicPath:       musicPath,
+		YtDownloadPath:  ytDownloadPath,
+		FilmsPath:       filmsPath,
 		CoversDir:    coversDir,
 		ArtistImgDir: artistImgDir,
 		LyricsDir:    lyricsDir,
@@ -124,6 +138,7 @@ func main() {
 		TrickplayDir: trickplayDir,
 		PosterDir:    videoPosterDir,
 		GeminiKey:     geminiKey,
+		GeminiKeys:    geminiKeys,
 		OpenRouterKey: openRouterKey,
 		GithubToken:   githubToken,
 		ComicsDir:     comicsDir,
@@ -203,8 +218,8 @@ func main() {
 			}
 			log.Printf("trending: saved %d repos", len(repos))
 			go enricher.BackfillStarHistory(rawDB, repos, githubToken)
-			if geminiKey != "" || openRouterKey != "" {
-				enricher.EnrichWithAI(rawDB, geminiKey, openRouterKey)
+			if len(geminiKeys) > 0 || openRouterKey != "" {
+				enricher.EnrichWithAI(rawDB, geminiKeys, openRouterKey)
 			}
 		}
 		run()

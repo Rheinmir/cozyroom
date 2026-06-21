@@ -12,7 +12,7 @@ import (
 
 type TrendingHandlers struct {
 	db            *sql.DB
-	geminiKey     string
+	geminiKeys    []string
 	openRouterKey string
 	githubToken   string
 	running       atomic.Bool
@@ -126,8 +126,8 @@ func (h *TrendingHandlers) refresh(w http.ResponseWriter, r *http.Request) {
 		}
 		enricher.SaveTrendingSnapshot(h.db, repos)
 		enricher.BackfillStarHistory(h.db, repos, h.githubToken)
-		if h.geminiKey != "" || h.openRouterKey != "" {
-			enricher.EnrichWithAI(h.db, h.geminiKey, h.openRouterKey)
+		if len(h.geminiKeys) > 0 || h.openRouterKey != "" {
+			enricher.EnrichWithAI(h.db, h.geminiKeys, h.openRouterKey)
 		}
 	}()
 	w.Header().Set("Content-Type", "application/json")

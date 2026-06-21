@@ -101,6 +101,7 @@ type RouterDeps struct {
 	TrickplayDir  string
 	PosterDir     string
 	GeminiKey     string
+	GeminiKeys    []string
 	OpenRouterKey string
 	GithubToken   string
 	ComicsDir     string
@@ -215,7 +216,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/scraper/local/{id}/chapters",          dl.listChapters)
 	mux.HandleFunc("GET /api/scraper/local/{id}/{file...}",         dl.serveLocalFile)
 
-	th := &TrendingHandlers{db: d.ScanDB, geminiKey: d.GeminiKey, openRouterKey: d.OpenRouterKey, githubToken: d.GithubToken}
+	th := &TrendingHandlers{db: d.ScanDB, geminiKeys: d.GeminiKeys, openRouterKey: d.OpenRouterKey, githubToken: d.GithubToken}
 	mux.HandleFunc("GET /api/trending",           th.listTrending)
 	mux.HandleFunc("GET /api/trending/dates",     th.listDates)
 	mux.HandleFunc("GET /api/trending/history",   th.repoHistory)

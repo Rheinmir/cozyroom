@@ -63,7 +63,7 @@ spec:
                   name: cozyroom-secret
                   key: POSTGRES_PASSWORD
             - name: DATABASE_URL
-              value: "postgres://cozyroom:$(POSTGRES_PASSWORD)@db-adapter:5432/cozyroom?sslmode=disable"
+              value: "postgres://cozyroom:$(POSTGRES_PASSWORD)@db-adapter:5432/cozyroom?sslmode=disable&default_query_exec_mode=simple_protocol"
             - name: MUSIC_PATH
               value: /music
             - name: YT_DOWNLOAD_PATH
@@ -91,6 +91,11 @@ spec:
                 secretKeyRef:
                   name: cozyroom-secret
                   key: GEMINI_API_KEY
+            - name: GEMINI_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: GEMINI_API_KEYS
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
