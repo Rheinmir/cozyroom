@@ -196,7 +196,7 @@ export default function EbooksPage() {
       <header className="ebooks-header">
         <div className="header-top">
           <div className="header-titles">
-            <div className="library-tag">Thư viện</div>
+            <div className="library-tag">Kệ sách</div>
             <h1>Your Bookshelf</h1>
             <span className="ebook-count-badge">{filteredEbooks.length} items</span>
           </div>

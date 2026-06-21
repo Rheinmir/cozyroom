@@ -388,7 +388,7 @@ export default function ComicsPage() {
       <div style={{ width: searchActive ? '60%' : '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: searchActive ? '1px solid var(--border)' : 'none' }}>
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
-          <div className="library-tag" style={{ alignSelf: 'flex-start' }}>Thư viện</div>
+          <div className="library-tag" style={{ alignSelf: 'flex-start' }}>Tủ truyện</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {(['md', 'eh'] as Source[]).map(s => (
               <button

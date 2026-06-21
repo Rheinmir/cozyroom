@@ -304,7 +304,7 @@ export default function PlaylistsPage() {
 
   return (
     <div className="page">
-      <div className="library-tag">Thư viện</div>
+      <div className="library-tag">Bộ sưu tập</div>
       <h1 className="page-title">{t('nav.playlists', { defaultValue: 'Playlists' })}</h1>
       
       {allLists.length === 0 ? (
