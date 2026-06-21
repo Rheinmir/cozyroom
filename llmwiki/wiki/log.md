@@ -1,5 +1,9 @@
 # Operation Log
 
+## 2026-06-21 — orca-workflow — player-duration-persist
+
+- Fix: `PlayerContext.tsx:94` seed duration từ `track.duration_s` — progress bar không còn hiện 0:00 sau F5
+
 ## 2026-06-20 — verify-before-commit — pgbouncer-swap
 
 - Commit: `7d2a80c` — perf: swap db-adapter HAProxy → PgBouncer, pool_mode=transaction

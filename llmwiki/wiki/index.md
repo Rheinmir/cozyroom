@@ -29,6 +29,7 @@
 | [concepts/PlayerBugfixes190526.md](concepts/PlayerBugfixes190526.md) | concept | Player bugfixes 2026-05-19: lyrics stale-fetch race, gapless duration 0:00, progress bar fill |
 | [concepts/FavoritePlaylistPill.md](concepts/FavoritePlaylistPill.md) | concept | Playlists Management via FavoritePill - local storage (localStorage) and permanent storage (SQLite + owner712002 password verification) |
 | [sources/draft/190526-remove-tab-toast-lyrics-back-fe.md](sources/draft/190526-remove-tab-toast-lyrics-back-fe.md) | draft | Proposal: remove tab toast on mobile NPO, replace with left-zone tap to return to Now Playing |
+| [draft/orca/210626-player-duration-persist.md](draft/orca/210626-player-duration-persist.md) | draft | Propose: seed duration từ track.duration_s khi restore session — fix progress bar 0:00 sau F5 |
 | [sources/draft/230526-4-issues-wiki-search-lyrics-cover-fe.md](sources/draft/230526-4-issues-wiki-search-lyrics-cover-fe.md) | draft | Proposal: wiki migration to llmwiki, restore broken search bar (AppRoutes.tsx missing), lyrics scroll lag, cover image race |
 | [concepts/TrendingInsights.md](concepts/TrendingInsights.md) | concept | GitHub Trending tab: AI industry-impact scoring (1-10), visual tiers (transformative/significant/incremental/niche), hero card |
 | [concepts/RTK.md](concepts/RTK.md) | concept | RTK (Rust Token Killer): CLI proxy 60-90% token reduction, hook system, 100+ commands, multi-agent support |

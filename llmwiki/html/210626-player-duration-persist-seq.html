@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>210626 — Player Duration Persist Fix</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#d0e8f7 0%,#e8f4fd 40%,#c8dff0 100%);
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+/* dot grid */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle,rgba(100,160,220,.18) 1px,transparent 1px);
+  background-size:28px 28px;pointer-events:none;z-index:0;
+}
+
+/* ── LEFT SIDEBAR ── */
+nav{
+  position:fixed;left:0;top:0;width:210px;height:100vh;z-index:100;
+  background:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(220,238,255,.45) 100%);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-right:1px solid rgba(255,255,255,.55);
+  display:flex;flex-direction:column;gap:0;
+  box-shadow:2px 0 20px rgba(80,140,220,.12);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+nav::before{
+  content:'';position:absolute;top:0;bottom:0;left:0;width:4px;
+  background:linear-gradient(180deg,#60a5fa,#3b82f6,#6366f1);
+  border-radius:0 2px 2px 0;
+}
+nav::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);
+}
+.nav-header{
+  padding:20px 16px 12px 20px;
+  border-bottom:1px solid rgba(100,160,220,.2);
+  font-size:11px;font-weight:700;letter-spacing:.12em;
+  color:rgba(60,100,160,.65);text-transform:uppercase;
+}
+.nav-brand{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.nav-brand-icon{font-size:18px}
+.nav-brand-text{font-size:13px;font-weight:700;color:#1e40af;letter-spacing:.02em}
+nav a{
+  display:block;padding:10px 16px 10px 20px;
+  font-size:12.5px;font-weight:500;color:rgba(30,64,175,.7);
+  text-decoration:none;
+  border-left:2px solid transparent;
+  transition:all .2s ease;
+  position:relative;
+}
+nav a:hover{
+  color:#1e40af;
+  background:rgba(96,165,250,.12);
+  border-left-color:rgba(96,165,250,.5);
+}
+nav a.active{
+  color:#1d4ed8;font-weight:700;
+  background:rgba(96,165,250,.18);
+  border-left-color:#3b82f6;
+}
+nav a .task-badge{
+  display:inline-block;float:right;
+  font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;
+  background:rgba(59,130,246,.15);color:#1d4ed8;
+}
+.nav-toggle{
+  position:fixed;top:14px;left:14px;z-index:200;
+  width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(255,255,255,.7);backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(80,140,220,.25);
+  font-size:16px;display:none;align-items:center;justify-content:center;
+  transition:all .2s;color:#1e40af;
+}
+.nav-toggle:hover{background:rgba(255,255,255,.9);}
+nav.collapsed{transform:translateX(-210px);}
+
+/* ── MAIN CONTENT ── */
+main{margin-left:210px;padding:36px 40px 60px;position:relative;z-index:1;}
+.page-title{
+  font-size:26px;font-weight:800;color:#1e3a5f;
+  margin-bottom:6px;letter-spacing:-.02em;
+}
+.page-subtitle{
+  font-size:13px;color:rgba(30,58,95,.55);margin-bottom:36px;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;
+  backdrop-filter:blur(8px);
+}
+.badge-blue{background:rgba(59,130,246,.15);color:#1d4ed8;border:1px solid rgba(59,130,246,.25);}
+.badge-green{background:rgba(16,185,129,.15);color:#065f46;border:1px solid rgba(16,185,129,.25);}
+.badge-orange{background:rgba(245,158,11,.15);color:#92400e;border:1px solid rgba(245,158,11,.25);}
+
+/* ── GLASS SECTIONS ── */
+section{
+  background:rgba(255,255,255,.48);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.65);
+  border-radius:18px;
+  box-shadow:0 4px 24px rgba(80,140,220,.1),inset 0 1px 0 rgba(255,255,255,.8);
+  padding:28px 32px;margin-bottom:28px;
+  position:relative;overflow:hidden;
+}
+section::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);
+}
+.section-label{
+  font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(30,64,175,.5);margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.section-label::before{
+  content:'';display:inline-block;width:3px;height:12px;
+  border-radius:2px;background:linear-gradient(180deg,#60a5fa,#3b82f6);
+}
+h2{font-size:17px;font-weight:700;color:#1e3a5f;margin-bottom:10px;}
+p.desc{font-size:13.5px;line-height:1.7;color:rgba(20,40,80,.72);margin-bottom:0;}
+
+/* ── DIAGRAM ── */
+.diagram-wrap{overflow-x:auto;margin:20px 0 8px;}
+svg.seq{font-family:inherit;overflow:visible;}
+.lifeline-label{font-size:12px;font-weight:700;}
+.lifeline-line{stroke-dasharray:5,4;}
+.msg{
+  font-size:11.5px;font-weight:600;
+  opacity:.82;transition:opacity .25s,filter .25s;
+}
+.msg.active{opacity:1;filter:drop-shadow(0 0 5px rgba(59,130,246,.55));}
+.msg.dim{opacity:.28;}
+.arrow{stroke-width:1.8;marker-end:url(#arr);}
+.arrow-ret{stroke-width:1.4;stroke-dasharray:5,3;marker-end:url(#arr);}
+.note-box{
+  rx:6;filter:drop-shadow(0 2px 6px rgba(80,140,220,.15));
+}
+
+/* ── STEP HIGHLIGHT ── */
+.step-indicator{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;
+}
+.step-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(100,160,220,.3);cursor:pointer;
+  transition:all .25s;border:2px solid transparent;
+}
+.step-dot.active{
+  background:#3b82f6;border-color:#1d4ed8;
+  box-shadow:0 0 8px rgba(59,130,246,.5);
+}
+.step-dot.done{background:rgba(16,185,129,.5);}
+
+/* ── CODE BLOCK ── */
+.code-block{
+  background:rgba(15,30,60,.06);border:1px solid rgba(100,160,220,.2);
+  border-radius:10px;padding:14px 18px;margin:14px 0;
+  font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;
+  line-height:1.65;color:#1e3a5f;overflow-x:auto;
+}
+.code-del{color:#dc2626;text-decoration:line-through;}
+.code-add{color:#16a34a;font-weight:700;}
+
+/* responsive */
+@media(max-width:700px){
+  main{margin-left:0;padding:20px 16px 40px;}
+  nav{transform:translateX(-210px);}
+  nav.open{transform:translateX(0);}
+  .nav-toggle{display:flex;}
+}
+</style>
+</head>
+<body>
+
+<button class="nav-toggle" id="navToggle" title="Toggle menu">☰</button>
+
+<nav id="sidebar">
+  <div class="nav-header">
+    <div class="nav-brand">
+      <span class="nav-brand-icon">🎵</span>
+      <span class="nav-brand-text">Cozyroom</span>
+    </div>
+    210626 Fix
+  </div>
+  <a href="#t1" class="active">Task 1 — Seed Duration <span class="task-badge">Claude</span></a>
+  <a href="#rootcause">Root Cause</a>
+  <a href="#diff">Code Diff</a>
+</nav>
+
+<main>
+  <div class="page-title">Player Duration Persist — Bug Fix</div>
+  <div class="page-subtitle">
+    <span class="badge badge-orange">bug</span>
+    <span class="badge badge-blue">PlayerContext.tsx</span>
+    <span class="badge badge-green">1-line fix</span>
+    <span style="color:rgba(30,58,95,.45)">2026-06-21</span>
+  </div>
+
+  <!-- TASK 1 -->
+  <section id="t1">
+    <div class="section-label">Task 1 — Agent: Claude main</div>
+    <h2>Seed <code>duration</code> từ <code>track.duration_s</code> khi restore session</h2>
+    <p class="desc">
+      Sau F5, <code>PlayerContext</code> restore <code>track</code> và <code>progress</code> từ localStorage,
+      nhưng <code>duration</code> khởi tạo cứng bằng <code>0</code> cho đến khi <code>loadedmetadata</code> fire.
+      Fix: khởi tạo <code>duration</code> từ <code>init.current?.track?.duration_s</code> — giá trị này
+      đã có sẵn trong <code>SavedState</code> (được persist cùng <code>track</code>). Audio element sẽ
+      override bằng giá trị chính xác khi load xong — không có drift.
+    </p>
+
+    <div class="step-indicator" id="steps1"></div>
+    <div class="diagram-wrap">
+      <svg class="seq" id="svg1" width="660" height="320" viewBox="0 0 660 320">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/>
+          </marker>
+          <marker id="arr-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#dc2626"/>
+          </marker>
+          <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#16a34a"/>
+          </marker>
+        </defs>
+
+        <!-- Lifeline headers -->
+        <!-- localStorage -->
+        <rect x="10" y="14" width="120" height="30" rx="8" fill="rgba(99,102,241,.15)" stroke="rgba(99,102,241,.4)" stroke-width="1.2"/>
+        <text x="70" y="33" text-anchor="middle" class="lifeline-label" fill="#4338ca">localStorage</text>
+        <!-- PlayerContext -->
+        <rect x="220" y="14" width="130" height="30" rx="8" fill="rgba(16,185,129,.15)" stroke="rgba(16,185,129,.4)" stroke-width="1.2"/>
+        <text x="285" y="33" text-anchor="middle" class="lifeline-label" fill="#065f46">PlayerContext</text>
+        <!-- AudioElement -->
+        <rect x="430" y="14" width="120" height="30" rx="8" fill="rgba(245,158,11,.15)" stroke="rgba(245,158,11,.4)" stroke-width="1.2"/>
+        <text x="490" y="33" text-anchor="middle" class="lifeline-label" fill="#92400e">AudioElement</text>
+
+        <!-- Lifeline vertical lines -->
+        <line x1="70" y1="44" x2="70" y2="310" class="lifeline-line" stroke="rgba(99,102,241,.3)" stroke-width="1.2"/>
+        <line x1="285" y1="44" x2="285" y2="310" class="lifeline-line" stroke="rgba(16,185,129,.3)" stroke-width="1.2"/>
+        <line x1="490" y1="44" x2="490" y2="310" class="lifeline-line" stroke="rgba(245,158,11,.3)" stroke-width="1.2"/>
+
+        <!-- Step 1: F5 / App load -->
+        <g id="s1-1">
+          <rect x="220" y="60" width="130" height="22" rx="4" fill="rgba(16,185,129,.12)" stroke="rgba(16,185,129,.3)" stroke-width="1"/>
+          <text x="285" y="75" text-anchor="middle" class="msg" fill="#065f46">App mount / F5</text>
+        </g>
+
+        <!-- Step 2: loadSaved() -->
+        <g id="s1-2">
+          <line x1="285" y1="92" x2="82" y2="92" class="arrow" stroke="#6366f1" marker-end="url(#arr)"/>
+          <text x="183" y="88" text-anchor="middle" class="msg" fill="#4338ca">loadSaved()</text>
+        </g>
+
+        <!-- Step 3: returns { track, progress, queue, ... } -->
+        <g id="s1-3">
+          <line x1="70" y1="108" x2="274" y2="108" class="arrow-ret" stroke="#6366f1" marker-end="url(#arr)"/>
+          <text x="172" y="104" text-anchor="middle" class="msg" fill="#4338ca">{ track, progress, queue, … }</text>
+        </g>
+
+        <!-- Step 4: BEFORE fix — duration = 0 (bad) -->
+        <g id="s1-4">
+          <rect x="180" y="122" width="205" height="22" rx="4" fill="rgba(220,38,38,.1)" stroke="rgba(220,38,38,.3)" stroke-width="1"/>
+          <text x="282" y="137" text-anchor="middle" class="msg" fill="#dc2626">❌ duration = useState(0)  [BUG]</text>
+        </g>
+
+        <!-- Step 5: AFTER fix — duration seeded from track.duration_s -->
+        <g id="s1-5">
+          <rect x="180" y="152" width="210" height="22" rx="4" fill="rgba(16,185,129,.12)" stroke="rgba(16,185,129,.4)" stroke-width="1"/>
+          <text x="285" y="167" text-anchor="middle" class="msg" fill="#065f46">✅ duration = track.duration_s</text>
+        </g>
+
+        <!-- Step 6: progress bar renders correctly immediately -->
+        <g id="s1-6">
+          <rect x="180" y="182" width="210" height="22" rx="4" fill="rgba(59,130,246,.1)" stroke="rgba(59,130,246,.3)" stroke-width="1"/>
+          <text x="285" y="197" text-anchor="middle" class="msg" fill="#1d4ed8">progress bar shows correct duration</text>
+        </g>
+
+        <!-- Step 7: audio element loads → loadedmetadata fires -->
+        <g id="s1-7">
+          <line x1="490" y1="218" x2="296" y2="218" class="arrow-ret" stroke="#d97706" marker-end="url(#arr)"/>
+          <text x="393" y="214" text-anchor="middle" class="msg" fill="#92400e">loadedmetadata → setDuration(el.duration)</text>
+        </g>
+
+        <!-- Step 8: duration confirmed / overridden with exact value -->
+        <g id="s1-8">
+          <rect x="180" y="232" width="210" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="rgba(16,185,129,.4)" stroke-width="1"/>
+          <text x="285" y="247" text-anchor="middle" class="msg" fill="#065f46">duration confirmed (exact from audio)</text>
+        </g>
+
+        <!-- Note -->
+        <rect x="10" y="268" width="640" height="36" rx="8" class="note-box" fill="rgba(59,130,246,.08)" stroke="rgba(59,130,246,.25)" stroke-width="1"/>
+        <text x="330" y="283" text-anchor="middle" class="msg" fill="#1e40af" font-size="11">track.duration_s đã có trong SavedState → không cần thêm field mới vào localStorage schema</text>
+        <text x="330" y="297" text-anchor="middle" class="msg" fill="#1e40af" font-size="10.5">loadedmetadata override an toàn — nếu audio load fail, duration_s từ DB vẫn đúng</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ROOT CAUSE -->
+  <section id="rootcause">
+    <div class="section-label">Root Cause</div>
+    <h2>Tại sao progress bar hiện <code>0:00</code> sau F5?</h2>
+    <p class="desc">
+      <code>PlayerContext.tsx:94</code> — <code>duration</code> khởi tạo bằng <code>0</code> bất kể
+      <code>init.current?.track?.duration_s</code>.<br><br>
+      Progress bar style được tính: <code>pct = (progress / duration) * 100</code>.
+      Khi <code>duration = 0</code> → <code>NaN</code> → CSS renders 0% → thanh trống, hiển thị <code>0:00</code>.<br><br>
+      <code>track</code>, <code>queue</code>, <code>progress</code> đều được restore đúng từ <code>'hs-player'</code> key.
+      Chỉ có <code>duration</code> bị bỏ sót vì nó không nằm trong <code>SavedState</code> và không được seed.
+    </p>
+  </section>
+
+  <!-- CODE DIFF -->
+  <section id="diff">
+    <div class="section-label">Code Diff</div>
+    <h2>PlayerContext.tsx — line 94</h2>
+    <div class="code-block">
+<span class="code-del">- const [duration, setDuration] = useState(0)</span>
+<span class="code-add">+ const [duration, setDuration] = useState(init.current?.track?.duration_s ?? 0)</span>
+    </div>
+    <p class="desc">
+      Không cần thêm <code>duration</code> vào <code>SavedState</code> — <code>track.duration_s</code>
+      đã được persist cùng <code>track</code> object (line 128).
+      Khi <code>loadedmetadata</code> fire (line 312), <code>setDuration</code> sẽ override với giá trị
+      chính xác từ audio element. Nếu là transcoded stream (duration = Infinity), guard
+      <code>isFinite(el.duration)</code> giữ nguyên giá trị từ DB.
+    </p>
+  </section>
+</main>
+
+<script>
+// Scroll-spy
+const sections = document.querySelectorAll('section[id]')
+const navLinks = document.querySelectorAll('nav a[href^="#"]')
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id))
+    }
+  })
+}, {threshold: 0.35})
+sections.forEach(s => obs.observe(s))
+
+// Nav toggle
+const toggle = document.getElementById('navToggle')
+const sidebar = document.getElementById('sidebar')
+toggle.addEventListener('click', () => {
+  sidebar.classList.toggle('open')
+  sidebar.classList.toggle('collapsed')
+  toggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰'
+})
+
+// Diagram animation — highlight steps cyclically
+function animateDiagram(svgId, stepIds) {
+  const steps = stepIds.map(id => document.getElementById(id))
+  const msgs = steps.map(s => s ? s.querySelectorAll('.msg, rect, line') : [])
+  let cur = 0
+  let paused = false
+  // Build dot indicators
+  const container = document.getElementById('steps1')
+  if (container) {
+    stepIds.forEach((_, i) => {
+      const dot = document.createElement('div')
+      dot.className = 'step-dot' + (i === 0 ? ' active' : '')
+      dot.addEventListener('click', () => { cur = i; highlight(); paused = true; setTimeout(() => paused = false, 3000) })
+      container.appendChild(dot)
+    })
+  }
+  function highlight() {
+    steps.forEach((s, i) => {
+      if (!s) return
+      s.querySelectorAll('.msg').forEach(el => {
+        el.classList.toggle('active', i === cur)
+        el.classList.toggle('dim', i !== cur)
+      })
+    })
+    if (container) {
+      container.querySelectorAll('.step-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === cur)
+        d.classList.toggle('done', i < cur)
+      })
+    }
+  }
+  highlight()
+  setInterval(() => {
+    if (paused) return
+    cur = (cur + 1) % stepIds.length
+    highlight()
+  }, 1400)
+  document.getElementById(svgId)?.addEventListener('click', () => { paused = !paused })
+}
+
+animateDiagram('svg1', ['s1-1','s1-2','s1-3','s1-4','s1-5','s1-6','s1-7','s1-8'])
+</script>
+</body>
+</html>

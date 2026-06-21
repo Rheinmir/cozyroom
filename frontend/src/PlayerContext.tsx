@@ -91,7 +91,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [queueIdx,    setQueueIdx]   = useState<number>        (init.current?.queueIdx   ?? -1)
   const [isPlaying,   setPlaying]    = useState(false)
   const [progress,    setProgress]   = useState(init.current?.progress ?? 0)
-  const [duration,    setDuration]   = useState(0)
+  const [duration,    setDuration]   = useState(init.current?.track?.duration_s ?? 0)
   const [repeat,      setRepeat]     = useState<RepeatMode>    (init.current?.repeat      ?? 'off')
   const [shuffleMode, setShuffleMode]= useState<ShuffleMode>   (init.current?.shuffleMode ?? 'off')
   const [quality,     setQuality]    = useState<Quality>       (init.current?.quality     ?? 'lossless')
@@ -282,7 +282,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setQueueIdx(idx)
     setPlaying(true)
     setProgress(0)
-    setDuration(0)
+    // Seed duration from DB immediately so the progress bar shows a real value even before
+    // loadedmetadata fires — critical for live-transcoded streams where el.duration === Infinity
+    setDuration(t.duration_s > 0 ? t.duration_s : 0)
     // Preloaded track: metadata already loaded on standby — loadedmetadata won't fire again
     const d = getActive().duration
     if (isFinite(d) && d > 0) setDuration(d)
@@ -305,7 +307,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const onMeta = (e: Event) => {
       const el = e.target as HTMLAudioElement
       if (el !== getActive()) return
-      setDuration(isFinite(el.duration) ? el.duration : 0)
+      // Only override if audio element reports a valid finite duration.
+      // For live-transcoded streams el.duration === Infinity — don't clobber the DB value.
+      if (isFinite(el.duration) && el.duration > 0) setDuration(el.duration)
     }
 
     const onEnd = (e: Event) => {
@@ -411,6 +415,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         } else {
           console.error('Max retries reached for network error.')
         }
+      }
+
+      // Code 4 in 320K mode: the original file has an unsupported/corrupt format that ffmpeg
+      // couldn't transcode cleanly. Try direct passthrough as a last resort.
+      if (errCode === 4 && qualityRef.current === '320' && !tId.startsWith('yt:') && !el.src.includes('q=')) {
+        console.warn('320K transcode failed (format error). Trying direct passthrough...')
+        const currentPos = el.currentTime
+        const fallbackSrc = streamUrl(tId, 'lossless')
+        el.src = ''
+        el.load()
+        el.src = fallbackSrc
+        const onReady = () => {
+          el.currentTime = currentPos
+          el.play().catch(console.error)
+        }
+        el.addEventListener('canplay', onReady, { once: true })
+        el.load()
+        return
       }
 
       // If we encounter a source/decode error (Code 3 or 4) on lossless,
