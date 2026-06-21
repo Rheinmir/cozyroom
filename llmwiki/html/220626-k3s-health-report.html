@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K3s Health Report — 2026-06-22</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e1e4e8; line-height: 1.5; }
+
+  .header { background: linear-gradient(135deg, #1a1f2e 0%, #0f1117 100%); padding: 32px 40px 24px; border-bottom: 1px solid #21262d; }
+  .header h1 { font-size: 22px; font-weight: 600; color: #f0f6fc; }
+  .header .meta { font-size: 13px; color: #8b949e; margin-top: 4px; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 40px 60px; }
+
+  .summary { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+  .stat { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 16px 20px; flex: 1; min-width: 160px; }
+  .stat .label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+  .stat .value { font-size: 26px; font-weight: 700; }
+  .stat.ok .value { color: #3fb950; }
+  .stat.warn .value { color: #d29922; }
+  .stat.crit .value { color: #f85149; }
+  .stat.resolved .value { color: #8b949e; text-decoration: line-through; font-size: 18px; }
+  .stat .sub { font-size: 12px; color: #8b949e; margin-top: 3px; }
+
+  section { margin-bottom: 36px; }
+  h2 { font-size: 15px; font-weight: 600; color: #c9d1d9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; border-bottom: 1px solid #21262d; padding-bottom: 8px; }
+
+  .alert { border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; }
+  .alert.crit { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); }
+  .alert.warn { background: rgba(210,153,34,0.1); border: 1px solid rgba(210,153,34,0.3); }
+  .alert.info { background: rgba(56,139,253,0.08); border: 1px solid rgba(56,139,253,0.2); }
+  .alert.fixed { background: rgba(63,185,80,0.06); border: 1px solid rgba(63,185,80,0.2); opacity: 0.8; }
+  .alert .icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .alert .body strong { font-size: 14px; display: block; margin-bottom: 3px; }
+  .alert.crit .body strong { color: #f85149; }
+  .alert.warn .body strong { color: #d29922; }
+  .alert.info .body strong { color: #388bfd; }
+  .alert.fixed .body strong { color: #3fb950; }
+  .alert .body p { font-size: 13px; color: #8b949e; }
+  .alert code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Consolas', monospace; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; color: #8b949e; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #21262d; }
+  td { padding: 9px 12px; border-bottom: 1px solid #161b22; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge.running { background: rgba(63,185,80,0.12); color: #3fb950; border: 1px solid rgba(63,185,80,0.25); }
+  .badge.crash { background: rgba(248,81,73,0.12); color: #f85149; border: 1px solid rgba(248,81,73,0.25); }
+  .badge.completed { background: rgba(139,148,158,0.12); color: #8b949e; border: 1px solid rgba(139,148,158,0.25); }
+  .badge.warn { background: rgba(210,153,34,0.12); color: #d29922; border: 1px solid rgba(210,153,34,0.25); }
+  .restarts-high { color: #f85149; font-weight: 600; }
+  .restarts-mid { color: #d29922; font-weight: 600; }
+  .restarts-ok { color: #3fb950; }
+  .node-tag { font-size: 11px; color: #6e7681; background: #161b22; border: 1px solid #21262d; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+  .project-group { margin-bottom: 16px; }
+  .project-header { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .container-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+  .cbox { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 10px 14px; }
+  .cbox.removed { opacity: 0.4; border-style: dashed; }
+  .cbox.infra { border-color: rgba(56,139,253,0.2); background: rgba(56,139,253,0.03); }
+  .cbox .cname { font-size: 13px; font-weight: 600; color: #c9d1d9; font-family: monospace; }
+  .cbox.removed .cname { text-decoration: line-through; color: #6e7681; }
+  .cbox .cimage { font-size: 11px; color: #6e7681; margin-top: 2px; }
+  .cbox .cport { font-size: 11px; color: #388bfd; margin-top: 4px; }
+  .cbox .ctag { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 5px; }
+  .ctag.dup { background: rgba(248,81,73,0.15); color: #f85149; }
+  .ctag.ok { background: rgba(63,185,80,0.12); color: #3fb950; }
+  .ctag.removed { background: rgba(139,148,158,0.12); color: #6e7681; }
+  .ctag.infra { background: rgba(56,139,253,0.12); color: #388bfd; }
+
+  .nodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .node-card { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 16px; }
+  .node-card.problem { border-color: rgba(210,153,34,0.35); }
+  .node-name { font-size: 14px; font-weight: 600; color: #c9d1d9; font-family: monospace; }
+  .node-role { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .node-detail { font-size: 12px; color: #6e7681; margin-top: 8px; }
+  .node-detail span { color: #8b949e; }
+
+  .action-list { list-style: none; }
+  .action-list li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #161b22; align-items: flex-start; }
+  .action-list li:last-child { border-bottom: none; }
+  .action-num { width: 24px; height: 24px; background: #21262d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .action-num.done { background: rgba(63,185,80,0.2); color: #3fb950; }
+  .action-num.warn { background: rgba(210,153,34,0.2); color: #d29922; }
+  .action-num.info { background: rgba(56,139,253,0.15); color: #388bfd; }
+  .action-body strong { font-size: 13px; color: #c9d1d9; display: block; margin-bottom: 4px; }
+  .action-body p { font-size: 12px; color: #8b949e; }
+  pre.cmd { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #79c0ff; font-family: 'Consolas', monospace; margin-top: 8px; overflow-x: auto; }
+
+  /* Command log */
+  .cmd-entry { margin-bottom: 18px; }
+  .cmd-entry .cmd-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .cmd-seq { font-size: 11px; color: #6e7681; min-width: 22px; }
+  .cmd-title { font-size: 13px; color: #c9d1d9; font-weight: 500; }
+  .cmd-status { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+  .cmd-status.ok { background: rgba(63,185,80,0.15); color: #3fb950; }
+  .cmd-status.fail { background: rgba(248,81,73,0.15); color: #f85149; }
+  .cmd-purpose { font-size: 11px; color: #6e7681; }
+  pre.ci { background: #0d1117; border: 1px solid #21262d; border-radius: 6px 6px 0 0; padding: 9px 14px; font-size: 12px; color: #e6edf3; font-family: 'Consolas', monospace; overflow-x: auto; margin: 0; }
+  pre.co { background: #0a0d13; border: 1px solid #21262d; border-top: 1px dashed #21262d; border-radius: 0 0 6px 6px; padding: 9px 14px; font-size: 12px; color: #8b949e; font-family: 'Consolas', monospace; overflow-x: auto; max-height: 180px; overflow-y: auto; margin: 0 0 0 0; }
+  pre.co.err { color: #f85149; }
+  .prompt { color: #3fb950; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>K3s Infrastructure Health Report</h1>
+  <div class="meta">2026-06-22 &nbsp;·&nbsp; Cluster: Rhein k3s v1.35.5+k3s1 &nbsp;·&nbsp; 3 nodes &nbsp;·&nbsp; <strong style="color:#3fb950">Resolved: backend CrashLoop + Docker duplicates</strong></div>
+</div>
+
+<div class="container">
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="stat ok">
+      <div class="label">Nodes</div>
+      <div class="value">3/3</div>
+      <div class="sub">All Ready</div>
+    </div>
+    <div class="stat ok">
+      <div class="label">Backend</div>
+      <div class="value">✓ Up</div>
+      <div class="sub">Running, 0 restarts</div>
+    </div>
+    <div class="stat warn">
+      <div class="label">High Restarts</div>
+      <div class="value">4</div>
+      <div class="sub">Node-1 cascade (WSL2)</div>
+    </div>
+    <div class="stat ok">
+      <div class="label">Docker Containers</div>
+      <div class="value">14</div>
+      <div class="sub">↓ từ 17 (3 dup removed)</div>
+    </div>
+  </div>
+
+  <!-- Issues -->
+  <section>
+    <h2>Issues</h2>
+
+    <div class="alert fixed">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>FIXED — backend CrashLoopBackOff</strong>
+        <p>Root cause: PgBouncer <code>c-ares</code> library cache DNS failure cho short hostname <code>postgres</code> sau WSL2 restart. Fix: đổi <code>DATABASES_HOST=postgres.cozyroom-k8s.svc.cluster.local</code> (FQDN). Backend lên ngay, 0 restarts.</p>
+      </div>
+    </div>
+
+    <div class="alert fixed">
+      <div class="icon">✅</div>
+      <div class="body">
+        <strong>FIXED — cozyroom Docker Compose duplicates (3 containers removed)</strong>
+        <p><code>cozyroom-backend-1</code>, <code>cozyroom-postgres-1</code>, <code>cozyroom-cloak-proxy-1</code> đã dừng. Volume <code>cozyroom_pgdata</code> được giữ nguyên (không xóa). 17 → 14 containers.</p>
+      </div>
+    </div>
+
+    <div class="alert warn">
+      <div class="icon">🟡</div>
+      <div class="body">
+        <strong>OPEN — Node-1 restart cascade (WSL2 control-plane)</strong>
+        <p>Pods trên <code>rhein-13700hxes-4070-64-4t</code> restart định kỳ 6–12 lần. Worker nodes ổn định. Nguyên nhân: WSL2 suspend khi Windows sleep. Cần cấu hình WSL2 không auto-suspend khi có k8s workload.</p>
+      </div>
+    </div>
+
+    <div class="alert info">
+      <div class="icon">🔵</div>
+      <div class="body">
+        <strong>TODO — Project "m" chưa migrate lên k8s</strong>
+        <p>4 containers (<code>m-backend-1</code>, <code>m-frontend-1</code>, <code>m-postgres-1</code>, <code>m-cloak-proxy-1</code>) vẫn chạy Docker Compose thuần. Không urgent nhưng nếu muốn quản lý tập trung cần tạo namespace + manifests.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pod table -->
+  <section>
+    <h2>Pods — cozyroom-k8s (sau fix)</h2>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr><th>Workload</th><th>Status</th><th>Restarts</th><th>Node</th><th>Ghi chú</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">backend (1)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-ok">0</span></td>
+          <td><span class="node-tag">node-1</span></td>
+          <td style="font-size:12px;color:#3fb950">Fixed ✓ — rollout restart sau FQDN fix</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">db-adapter / PgBouncer (2)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-ok">0</span></td>
+          <td><span class="node-tag">node-1</span> / <span class="node-tag">node-2</span></td>
+          <td style="font-size:12px;color:#3fb950">Fixed ✓ — FQDN: postgres.cozyroom-k8s.svc.cluster.local</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">cloudflared (2)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-high">12</span> / <span class="restarts-ok">0</span></td>
+          <td><span class="node-tag">node-1</span> / <span class="node-tag">node-2</span></td>
+          <td style="font-size:12px;color:#8b949e">Node-1 cascade</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">frontend (3)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-mid">6</span> / <span class="restarts-ok">0</span> / <span class="restarts-mid">6</span></td>
+          <td><span class="node-tag">node-1</span> ×2 / <span class="node-tag">node-2</span></td>
+          <td style="font-size:12px;color:#8b949e">Node-1 cascade</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">postgres-0 (StatefulSet)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-mid">7</span></td>
+          <td><span class="node-tag">node-1</span></td>
+          <td style="font-size:12px;color:#8b949e">Node-1 cascade</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">postgres-standby-0 (StatefulSet)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-ok">0</span></td>
+          <td><span class="node-tag">node-2</span></td>
+          <td style="font-size:12px;color:#3fb950">Stable ✓</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">cloak-proxy (1)</td>
+          <td><span class="badge running">● Running</span></td>
+          <td><span class="restarts-ok">0</span></td>
+          <td><span class="node-tag">node-2</span></td>
+          <td style="font-size:12px;color:#3fb950">Stable ✓</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:12px">postgres-monitor (CronJob)</td>
+          <td><span class="badge completed">● Completed</span></td>
+          <td>—</td>
+          <td><span class="node-tag">node-1</span></td>
+          <td style="font-size:12px;color:#8b949e">Mỗi 2 phút ✓</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- Nodes -->
+  <section>
+    <h2>K3s Nodes</h2>
+    <div class="nodes-grid">
+      <div class="node-card problem">
+        <div class="node-name">rhein-13700hxes-4070-64-4t</div>
+        <div class="node-role">control-plane · 100.88.197.64 · k3s-registry host</div>
+        <div class="node-detail">Ubuntu 22.04 (WSL2) · kernel 6.6.87.2-microsoft · k3s v1.35.5+k3s1</div>
+        <div class="node-detail" style="margin-top:6px;color:#d29922">⚠ Pods restart định kỳ — WSL2 sleep/hibernate cycle</div>
+      </div>
+      <div class="node-card">
+        <div class="node-name">rhein-e2144g-p630-16-256</div>
+        <div class="node-role">worker · 100.97.8.41</div>
+        <div class="node-detail">Ubuntu 24.04 (WSL2) · kernel 6.6.114.1-microsoft · k3s v1.35.5+k3s1</div>
+        <div class="node-detail" style="margin-top:6px;color:#3fb950">✓ Stable</div>
+      </div>
+      <div class="node-card">
+        <div class="node-name">rhein-k8s-s2-2698bv3-k620-8-128</div>
+        <div class="node-role">worker · 100.114.107.68</div>
+        <div class="node-detail">Ubuntu 26.04 (native Linux) · kernel 7.0.0-15 · k3s v1.35.5+k3s1</div>
+        <div class="node-detail" style="margin-top:6px;color:#3fb950">✓ Stable</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Docker containers -->
+  <section>
+    <h2>Docker Containers (14 còn lại)</h2>
+
+    <div class="project-group">
+      <div class="project-header">✅ Cozyroom — đã dừng Docker Compose (k8s đang chạy)</div>
+      <div class="container-grid">
+        <div class="cbox removed">
+          <div class="cname">cozyroom-backend-1</div>
+          <div class="cimage">cozyroom-backend</div>
+          <span class="ctag removed">REMOVED</span>
+        </div>
+        <div class="cbox removed">
+          <div class="cname">cozyroom-postgres-1</div>
+          <div class="cimage">postgres:16-alpine · volume giữ nguyên</div>
+          <span class="ctag removed">REMOVED</span>
+        </div>
+        <div class="cbox removed">
+          <div class="cname">cozyroom-cloak-proxy-1</div>
+          <div class="cimage">cozyroom-cloak-proxy</div>
+          <span class="ctag removed">REMOVED</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-group">
+      <div class="project-header">🟡 Project "m" — Docker Compose (chưa migrate)</div>
+      <div class="container-grid">
+        <div class="cbox"><div class="cname">m-backend-1</div><div class="cimage">m-backend</div><span class="ctag ok">RUNNING</span></div>
+        <div class="cbox"><div class="cname">m-frontend-1</div><div class="cimage">m-frontend</div><div class="cport">:18080→:80</div><span class="ctag ok">RUNNING</span></div>
+        <div class="cbox"><div class="cname">m-postgres-1</div><div class="cimage">postgres:16-alpine</div><span class="ctag ok">RUNNING</span></div>
+        <div class="cbox"><div class="cname">m-cloak-proxy-1</div><div class="cimage">m-cloak-proxy</div><span class="ctag ok">RUNNING</span></div>
+        <div class="cbox"><div class="cname">home-spotify-cloak-proxy-1</div><div class="cimage">home-spotify-cloak-proxy</div><span class="ctag ok">RUNNING</span></div>
+      </div>
+    </div>
+
+    <div class="project-group">
+      <div class="project-header">🔵 Infrastructure / Shared</div>
+      <div class="container-grid">
+        <div class="cbox infra"><div class="cname">k3s-registry</div><div class="cimage">registry:2</div><div class="cport">:5000 — image registry cho k8s</div><span class="ctag infra">INFRA</span></div>
+        <div class="cbox infra"><div class="cname">citus-coordinator</div><div class="cimage">citusdata/citus:12.1</div><div class="cport">:5432</div><span class="ctag infra">INFRA</span></div>
+        <div class="cbox infra"><div class="cname">citus-worker-1</div><div class="cimage">citusdata/citus:12.1</div><div class="cport">:5433</div><span class="ctag infra">INFRA</span></div>
+        <div class="cbox infra"><div class="cname">cadvisor</div><div class="cimage">gcr.io/cadvisor/cadvisor</div><div class="cport">:8888 — metrics</div><span class="ctag infra">MONITORING</span></div>
+        <div class="cbox infra"><div class="cname">pushgateway</div><div class="cimage">prom/pushgateway</div><span class="ctag infra">MONITORING</span></div>
+        <div class="cbox infra"><div class="cname">semaphore</div><div class="cimage">semaphoreui/semaphore</div><span class="ctag infra">CI/CD</span></div>
+        <div class="cbox infra"><div class="cname">jenkins</div><div class="cimage">jenkins/jenkins:lts</div><div class="cport">:3456→:8080</div><span class="ctag infra">CI/CD</span></div>
+        <div class="cbox infra"><div class="cname">bonbon-db</div><div class="cimage">postgres:16-alpine</div><div class="cport">:54321</div><span class="ctag infra">OTHER</span></div>
+        <div class="cbox infra"><div class="cname">wiki-crawler-1</div><div class="cimage">wiki-crawler</div><div class="cport">:3000</div><span class="ctag infra">OTHER</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open actions -->
+  <section>
+    <h2>Remaining Actions</h2>
+    <ul class="action-list">
+      <li>
+        <div class="action-num warn">!</div>
+        <div class="action-body">
+          <strong>Fix WSL2 auto-suspend → Node-1 restart cascade</strong>
+          <p>Tất cả pods trên control-plane WSL2 restart mỗi khi Windows suspend. Giữ WSL2 active bằng cách tắt sleep khi có server workload, hoặc dùng <code>systemd-inhibit</code> trong WSL2.</p>
+          <pre class="cmd">kubectl get pods -n cozyroom-k8s --sort-by='.status.startTime'</pre>
+        </div>
+      </li>
+      <li>
+        <div class="action-num info">?</div>
+        <div class="action-body">
+          <strong>Migrate project "m" lên k8s (nếu cần)</strong>
+          <p>5 containers Docker Compose thuần. Tạo namespace <code>m-k8s</code> với manifests tương tự cozyroom-k8s nếu muốn quản lý tập trung.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Full command log -->
+  <section>
+    <h2>Command Log — Toàn bộ lệnh đã chạy (kể cả fail)</h2>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">01</span><span class="cmd-title">docker ps -a (Windows PowerShell)</span><span class="cmd-status fail">FAIL</span><span class="cmd-purpose">— kubectl/docker không accessible từ Windows shell</span></div>
+      <pre class="ci"><span class="prompt">PS&gt; </span>docker ps -a --format "table ..."</pre>
+      <pre class="co err">Docker not accessible from here</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">02</span><span class="cmd-title">kubectl get pods -A (Windows PowerShell)</span><span class="cmd-status fail">FAIL</span><span class="cmd-purpose">— kubectl không có trên Windows PATH</span></div>
+      <pre class="ci"><span class="prompt">PS&gt; </span>kubectl get pods -A</pre>
+      <pre class="co err">kubectl : The term 'kubectl' is not recognized as the name of a cmdlet...
+CommandNotFoundException</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">03</span><span class="cmd-title">kubectl get pods -A (Bash)</span><span class="cmd-status fail">FAIL</span><span class="cmd-purpose">— kubectl không có trong Bash PATH của Windows</span></div>
+      <pre class="ci"><span class="prompt">$ </span>kubectl get pods -A</pre>
+      <pre class="co err">/usr/bin/bash: line 1: kubectl: command not found
+Exit code 127</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">04</span><span class="cmd-title">wsl -e kubectl get pods -A</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— xem toàn bộ cluster, phát hiện backend CrashLoopBackOff</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl get pods -A</pre>
+      <pre class="co">NAMESPACE    NAME                               READY   STATUS             RESTARTS
+cozyroom-k8s backend-7cdc876bf5-kt2rf           0/1     CrashLoopBackOff   15 (3m2s)  ← CRITICAL
+cozyroom-k8s cloak-proxy-ff796795-mt9ps         1/1     Running            0
+cozyroom-k8s cloudflared-f448745b5-kmnrv        2/2     Running            12 (21m)
+cozyroom-k8s db-adapter-69d44874cd-bx8gr        1/1     Running            6 (21m)
+cozyroom-k8s frontend-65db84dfd4-66stp          1/1     Running            6 (21m)
+cozyroom-k8s postgres-0                         1/1     Running            7 (21m)
+cozyroom-k8s postgres-standby-0                 1/1     Running            0
+kube-system  coredns-8cc4c77f7-p4bvx            1/1     Running            0
+...</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">05</span><span class="cmd-title">kubectl get nodes -o wide</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— xác nhận 3 nodes, tất cả Ready</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl get nodes -o wide</pre>
+      <pre class="co">NAME                              STATUS   ROLES           AGE   VERSION        INTERNAL-IP
+rhein-13700hxes-4070-64-4t        Ready    control-plane   14d   v1.35.5+k3s1   100.88.197.64  (WSL2)
+rhein-e2144g-p630-16-256          Ready    &lt;none&gt;          12d   v1.35.5+k3s1   100.97.8.41    (WSL2)
+rhein-k8s-s2-2698bv3-k620-8-128   Ready    &lt;none&gt;          14d   v1.35.5+k3s1   100.114.107.68 (native)</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">06</span><span class="cmd-title">docker ps (từ WSL2)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— liệt kê 17 containers, phát hiện cozyroom duplicates</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e docker ps --format "{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"</pre>
+      <pre class="co">citus-coordinator   citusdata/citus:12.1   Up (healthy)   :5432
+k3s-registry        registry:2             Up             :5000
+cozyroom-backend-1  cozyroom-backend       Up             8080/tcp     ← DUPLICATE
+cozyroom-postgres-1 postgres:16-alpine     Up (healthy)   5432/tcp     ← DUPLICATE
+cozyroom-cloak-proxy-1 cozyroom-cloak-proxy Up            8765/tcp     ← DUPLICATE
+m-backend-1         m-backend              Up             8080/tcp
+... (17 total)</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">07</span><span class="cmd-title">kubectl describe pod backend (tail -30)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— tìm root cause CrashLoop</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl describe pod backend-7cdc876bf5-kt2rf -n cozyroom-k8s | tail -30</pre>
+      <pre class="co">Warning  FailedCreatePodSandBox  22m  kubelet  failed to setup network: plugin type="flannel"
+         failed: open /run/flannel/subnet.env: no such file or directory
+Warning  Unhealthy  19m (x12)  kubelet  Readiness probe failed: connection refused
+Warning  BackOff    4m42s (x24)  kubelet  Back-off restarting failed container</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">08</span><span class="cmd-title">kubectl logs backend (--tail=20)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— xác nhận lỗi application là pgbouncer</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl logs backend-7cdc876bf5-kt2rf -n cozyroom-k8s --tail=20</pre>
+      <pre class="co">2026/06/21 17:25:14 [db] pg_trgm extension: failed to connect to `user=cozyroom database=cozyroom`:
+  10.43.187.77:5432 (db-adapter): server error: ERROR: pgbouncer cannot connect to server (SQLSTATE 08P01)
+2026/06/21 17:25:14 open db: failed to connect to `user=cozyroom database=cozyroom`:
+  10.43.187.77:5432 (db-adapter): server error: ERROR: pgbouncer cannot connect to server (SQLSTATE 08P01)</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">09</span><span class="cmd-title">kubectl logs -l app=db-adapter --tail=15</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— xác nhận pgbouncer không resolve DNS</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl logs -n cozyroom-k8s -l app=db-adapter --tail=15</pre>
+      <pre class="co">2026-06-21 17:25:14 WARNING pooler error: pgbouncer cannot connect to server
+2026-06-21 17:25:14 WARNING DNS lookup failed: postgres: result=0   ← c-ares DNS fail
+2026-06-21 17:25:17 WARNING DNS lookup failed: postgres: result=0
+2026-06-21 17:25:32 WARNING DNS lookup failed: postgres: result=0
+... (lặp liên tục)</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">10</span><span class="cmd-title">kubectl get services -n cozyroom-k8s</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— verify postgres service tồn tại (ClusterIP: 10.43.92.179)</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl get services -n cozyroom-k8s</pre>
+      <pre class="co">NAME               TYPE        CLUSTER-IP      PORT(S)
+backend            ClusterIP   10.43.236.219   8080/TCP
+db-adapter         ClusterIP   10.43.187.77    5432/TCP
+frontend           NodePort    10.43.206.253   80:30080/TCP
+postgres           ClusterIP   10.43.92.179    5432/TCP     ← service tồn tại
+postgres-standby   ClusterIP   10.43.18.143    5432/TCP</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">11</span><span class="cmd-title">kubectl get deployment db-adapter -o yaml | grep containers</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— xem DATABASES_HOST config, phát hiện dùng short hostname</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl get deployment db-adapter -n cozyroom-k8s -o yaml | grep -A30 "containers:"</pre>
+      <pre class="co">- name: DATABASES_HOST
+  value: postgres           ← short hostname → c-ares không resolve được sau restart
+- name: PGBOUNCER_POOL_MODE
+  value: transaction</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">12</span><span class="cmd-title">kubectl rollout restart deployment/backend (lần 1)</span><span class="cmd-status fail">FAIL — vẫn crash</span><span class="cmd-purpose">— thử restart backend trước khi fix pgbouncer</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl rollout restart deployment/backend -n cozyroom-k8s</pre>
+      <pre class="co err">deployment.apps/backend restarted
+
+# Pod mới vẫn crash:
+NAME                       READY   STATUS             RESTARTS
+backend-d5c9d5d7-jr9w5     0/1     CrashLoopBackOff   4 (60s ago)
+# Lý do: db-adapter vẫn bị DNS fail → vô ích khi chưa fix PgBouncer</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">13</span><span class="cmd-title">kubectl exec db-adapter -- nslookup postgres</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— confirm system DNS trong pod hoạt động, chỉ c-ares fail</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl exec -n cozyroom-k8s deployment/db-adapter -- nslookup postgres</pre>
+      <pre class="co">Name:      postgres
+Address 1: 10.43.92.179 postgres.cozyroom-k8s.svc.cluster.local
+# System resolver OK → vấn đề chỉ là PgBouncer c-ares library</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">14</span><span class="cmd-title">kubectl set env deployment/db-adapter DATABASES_HOST=FQDN</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— fix root cause: đổi sang FQDN để bypass c-ares search domain issue</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl set env deployment/db-adapter \
+    DATABASES_HOST=postgres.cozyroom-k8s.svc.cluster.local \
+    -n cozyroom-k8s</pre>
+      <pre class="co">deployment.apps/db-adapter env updated
+
+# db-adapter pods mới sau 12s:
+NAME                          READY   STATUS    RESTARTS
+db-adapter-67f968dcdb-5vhkp   1/1     Running   0         ← clean startup
+db-adapter-67f968dcdb-mxbq4   1/1     Running   0</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">15</span><span class="cmd-title">kubectl rollout restart deployment/backend (lần 2)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— sau khi db-adapter fixed, backend lên ngay</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e kubectl rollout restart deployment/backend -n cozyroom-k8s
+&amp;&amp; sleep 15 &amp;&amp; kubectl get pods -n cozyroom-k8s -l app=backend</pre>
+      <pre class="co">deployment.apps/backend restarted
+
+NAME                       READY   STATUS    RESTARTS
+backend-68976c4975-g85pq   1/1     Running   0         ← UP ✓</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">16</span><span class="cmd-title">docker inspect cozyroom-postgres-1 (volume check)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— đảm bảo không mount production DB trước khi dừng</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e docker inspect cozyroom-postgres-1 --format '{{json .Mounts}}'</pre>
+      <pre class="co">volume /var/lib/docker/volumes/cozyroom_pgdata/_data -> /var/lib/postgresql/data
+# SAFE: Docker named volume, không phải /mnt/c/Users/olive/.../metadata.db</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">17</span><span class="cmd-title">docker compose down (cozyroom)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— dừng 3 containers duplicate, giải phóng tài nguyên</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e bash -c "cd /mnt/c/Users/olive/orca/cozyroom &amp;&amp; docker compose down"</pre>
+      <pre class="co">Container cozyroom-frontend-1   Stopped → Removed
+Container cozyroom-backend-1    Stopped → Removed
+Container cozyroom-postgres-1   Stopped → Removed
+Container cozyroom-cloak-proxy-1 Stopped → Removed
+Network cozyroom_default        Removed
+# Volume cozyroom_pgdata: KEPT (không xóa)</pre>
+    </div>
+
+    <div class="cmd-entry">
+      <div class="cmd-header"><span class="cmd-seq">18</span><span class="cmd-title">docker ps verify (sau cleanup)</span><span class="cmd-status ok">OK</span><span class="cmd-purpose">— xác nhận 17 → 14 containers</span></div>
+      <pre class="ci"><span class="prompt">$ </span>wsl -e docker ps --format "table {{.Names}}\t{{.Status}}"</pre>
+      <pre class="co">NAMES                              STATUS
+citus-coordinator                  Up (healthy)
+citus-worker-1                     Up (healthy)
+k3s-registry                       Up
+cadvisor                           Up (healthy)
+semaphore                          Up
+m-backend-1                        Up
+m-frontend-1                       Up
+m-cloak-proxy-1                    Up
+m-postgres-1                       Up (healthy)
+home-spotify-cloak-proxy-1         Up
+pushgateway                        Up
+wiki-crawler-wiki-wiki-crawler-1   Up
+bonbon-db                          Up
+jenkins                            Up
+# Total: 14 containers (↓ từ 17)</pre>
+    </div>
+
+  </section>
+
+</div>
+</body>
+</html>
