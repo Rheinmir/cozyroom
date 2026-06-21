@@ -13,7 +13,7 @@
   },
   "ai": {
     "greeting": "Xin chào! Tôi có thể tìm nhạc, phát bài, tải từ YouTube, quản lý playlist, và xem repo trending. Bạn cần gì?",
-    "placeholder": "Hỏi tôi bất cứ điều gì… (Enter để gửi, Shift+Enter để xuống dòng)",
+    "placeholder": "Hỏi trợ lý bất cứ điều gì… (Enter để gửi, Shift+Enter để xuống dòng)",
     "send": "Gửi",
     "model_placeholder": "model (vd: claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — để trống = tự động"
   },

@@ -537,13 +537,17 @@ export default function AIAssistantPage() {
 
   return (
     <div className="ai-page">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '4px 8px 0' }}>
+      <div className="library-tag">TRỢ LÝ</div>
+      <h1 className="page-title" style={{ marginBottom: 8 }}>Trợ lý AI</h1>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '0 8px 4px' }}>
         <Link to="/tools" style={{ fontSize: 11, opacity: 0.45, color: 'inherit', textDecoration: 'none' }}>🛠 Tools</Link>
         <Link to="/ai/stats" style={{ fontSize: 11, opacity: 0.45, color: 'inherit', textDecoration: 'none' }}>📊 Analytics</Link>
       </div>
       <div className="ai-messages">
         {messages.map(msg => (
           <div key={msg.id} className={`ai-bubble-group ai-bubble-group--${msg.role}`}>
+            {msg.role === 'assistant' && <div className="ai-avatar">✦</div>}
+            <div className="ai-bubble-inner">
             <div className={`ai-bubble ai-bubble--${msg.role}`}>
               {msg.role === 'assistant' && msg.model && (
                 <div className="ai-bubble-meta">
@@ -585,6 +589,7 @@ export default function AIAssistantPage() {
             {msg.role === 'assistant' && msg.logId && (
               <ReactionBar logId={msg.logId} />
             )}
+            </div>
           </div>
         ))}
         {loading && (
