@@ -96,7 +96,7 @@
   height: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 16px 16px;
+  padding: 20px 16px 16px;
 }
 .ai-messages {
   flex: 1;
