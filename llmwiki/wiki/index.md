@@ -114,3 +114,4 @@
 | [sources/draft/200626-pgbouncer-swap.md](sources/draft/200626-pgbouncer-swap.md) | draft | Swap db-adapter HAProxy → PgBouncer: pool_mode=transaction, 5000 client / 50 server conns, commit 7d2a80c |
 | [draft/orca/210626-design-softness-polish.md](draft/orca/210626-design-softness-polish.md) | draft | Propose: 5 CSS fixes — ambient orb, avatar soften, grid spacing, glassmorphism, library tag — align live app với standalone reference |
 | [draft/orca/210626-phim-poster-grid-redesign.md](draft/orca/210626-phim-poster-grid-redesign.md) | draft | Propose: fix chip labels 5 tabs + redesign Phim từ Netflix layout → poster grid portrait (align với standalone reference) |
+| [draft/orca/210626-standalone-to-app-workflow.md](draft/orca/210626-standalone-to-app-workflow.md) | draft | Workflow 5 bước tái sử dụng: Extract spec → Screenshot → Diff → Apply → Verify (standalone.html → live app) |

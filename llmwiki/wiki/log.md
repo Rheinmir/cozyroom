@@ -1,5 +1,10 @@
 # Operation Log
 
+## 2026-06-21 — orca-workflow — standalone-to-app-workflow (proposed)
+
+- Proposal: 5-bước reusable workflow Extract→Screenshot→Diff→Apply→Verify
+- Files: `draft/orca/210626-standalone-to-app-workflow.md` + `html/210626-standalone-to-app-seq.html`
+
 ## 2026-06-21 — orca-workflow — player-duration-persist
 
 - Fix: `PlayerContext.tsx:94` seed duration từ `track.duration_s` — progress bar không còn hiện 0:00 sau F5
