@@ -1,5 +1,11 @@
 # Operation Log
 
+## 2026-06-22 — orca-workflow — ai-chat-design-fix (proposed)
+
+- Propose: fix 8 CSS regressions AI chat page vs standalone mockup
+- Root cause: standalone-align skill T3 chỉ diff string label, không diff CSS values
+- Files: draft/orca/220626-ai-chat-design-fix.md + html/220626-ai-chat-design-fix-seq.html
+
 ## 2026-06-21 — orca-workflow — standalone-to-app-workflow (proposed)
 
 - Proposal: 5-bước reusable workflow Extract→Screenshot→Diff→Apply→Verify

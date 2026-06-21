@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>220626 — AI Chat Design Fix</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.1);--teal-border:rgba(45,212,191,0.25);
+  --blue:#38bdf8;--indigo:#6366f1;--emerald:#10b981;--amber:#f59e0b;
+  --text:#0f172a;--muted:#475569;--faint:#94a3b8;
+  --glass:rgba(255,255,255,0.68);--glass-border:rgba(148,163,184,0.22);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#dbeafe 0%,#f0f9ff 45%,#ecfdf5 100%);
+  min-height:100vh;color:var(--text);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle,rgba(148,163,184,0.18) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.orb{
+  position:fixed;left:-80px;top:20%;width:280px;height:500px;
+  background:radial-gradient(ellipse,rgba(56,189,248,0.28) 0%,rgba(45,212,191,0.16) 55%,transparent 75%);
+  filter:blur(50px);pointer-events:none;z-index:1;
+}
+nav{
+  position:fixed;left:0;top:0;bottom:0;width:200px;z-index:10;
+  background:rgba(255,255,255,0.52);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-right:1px solid rgba(148,163,184,0.18);
+  display:flex;flex-direction:column;overflow-y:auto;padding:20px 0 20px;
+}
+nav::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(56,189,248,0.06) 0%,rgba(45,212,191,0.04) 100%);
+}
+.nav-title{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint);padding:0 18px 14px;}
+nav a{
+  display:block;padding:7px 18px;font-size:12px;color:var(--muted);
+  text-decoration:none;transition:color .15s,background .15s;position:relative;
+}
+nav a:hover{color:var(--text);background:rgba(56,189,248,0.07);}
+nav a.active{color:#0284c7;background:rgba(56,189,248,0.11);font-weight:600;}
+nav a.active::before{
+  content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;
+  background:linear-gradient(180deg,#38bdf8,#2dd4bf);border-radius:0 2px 2px 0;
+}
+.nav-sep{height:1px;background:rgba(148,163,184,0.15);margin:8px 0;}
+#toggleNav{
+  display:none;position:fixed;top:10px;left:10px;z-index:20;
+  background:var(--glass);border:1px solid var(--glass-border);border-radius:8px;
+  padding:6px 10px;font-size:14px;cursor:pointer;backdrop-filter:blur(10px);
+}
+@media(max-width:680px){
+  nav{transform:translateX(-100%);transition:transform .25s;}
+  nav.open{transform:translateX(0);}
+  #toggleNav{display:flex;}
+  main{margin-left:0!important;padding:48px 16px 60px!important;}
+}
+main{margin-left:220px;padding:44px 40px 80px;position:relative;z-index:1;max-width:860px;}
+.hero{margin-bottom:52px;}
+.chip{
+  display:inline-block;font-family:'SF Mono','Fira Code',monospace;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(45,212,191,.9);background:var(--teal-dim);
+  box-shadow:inset 0 0 0 1px var(--teal-border);
+  border-radius:999px;padding:5px 14px;margin-bottom:16px;
+}
+.hero h1{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:12px;}
+.hero p{font-size:14px;color:var(--muted);max-width:560px;line-height:1.65;}
+section{margin-bottom:52px;scroll-margin-top:20px;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.tbadge{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 10px;border-radius:999px;background:rgba(56,189,248,0.12);color:#0284c7;flex-shrink:0;
+}
+.tbadge.fix{background:rgba(16,185,129,0.1);color:#059669;}
+.tbadge.skill{background:rgba(245,158,11,0.1);color:#b45309;}
+.tbadge.deploy{background:rgba(99,102,241,0.1);color:#4338ca;}
+.sec-head h2{font-size:17px;font-weight:700;color:#0f172a;}
+p.desc{font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:18px;max-width:640px;}
+.diagram-box{
+  background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);border-radius:14px;padding:22px 22px 16px;
+  overflow-x:auto;box-shadow:0 4px 24px rgba(56,189,248,0.07),0 1px 4px rgba(0,0,0,.05);
+}
+.diagram-box svg{display:block;min-width:420px;}
+.diff-tbl{width:100%;border-collapse:collapse;font-size:11.5px;font-family:'SF Mono','Fira Code',monospace;margin-top:14px;}
+.diff-tbl th{background:rgba(56,189,248,0.08);color:#0284c7;font-weight:600;padding:5px 10px;text-align:left;border-bottom:1px solid rgba(148,163,184,.18);}
+.diff-tbl td{padding:5px 10px;border-bottom:1px solid rgba(148,163,184,.08);}
+.diff-tbl .bef{color:#b91c1c;background:rgba(239,68,68,.04);}
+.diff-tbl .aft{color:#059669;background:rgba(16,185,129,.04);}
+.agent-badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:11px;
+  color:#7c3aed;background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.16);
+  border-radius:999px;padding:3px 10px;margin-top:12px;
+}
+/* SVG animation classes - labels always visible at .82, active step gets full opacity + glow */
+.msg{opacity:.82;transition:opacity .3s;}
+.msg.active{opacity:1;}
+.msg-hl{opacity:0;transition:opacity .3s;}
+.msg-hl.active{opacity:1;}
+</style>
+</head>
+<body>
+<div class="orb"></div>
+<button id="toggleNav" onclick="var n=document.querySelector('nav');n.classList.toggle('open');this.textContent=n.classList.contains('open')?'✕':'☰'">☰</button>
+<nav id="sidebar">
+  <div class="nav-title">AI Chat Fix</div>
+  <a href="#t1" class="active">T1 · Eyebrow Chip</a>
+  <a href="#t2">T2 · Page Title</a>
+  <a href="#t3">T3 · Avatar</a>
+  <a href="#t4">T4 · Asst Bubble</a>
+  <a href="#t5">T5 · User Bubble</a>
+  <a href="#t6">T6 · Input Pill</a>
+  <div class="nav-sep"></div>
+  <a href="#t7">T7 · Skill Fix</a>
+  <a href="#t8">T8 · Deploy</a>
+</nav>
+
+<main>
+<div class="hero">
+  <span class="chip">220626 · Design Fix</span>
+  <h1>AI Chat — Align to Standalone</h1>
+  <p>8 visual regressions giữa standalone mockup và live app. Root cause: <code>standalone-align</code> T3 chỉ diff chip label / page title string — không so sánh CSS values (màu, radius, padding, gradient vs solid). Propose này vá cả 8 regression và cập nhật skill để prevent tái phát.</p>
+</div>
+
+<!-- T1 -->
+<section id="t1">
+  <div class="sec-head"><span class="tbadge fix">T1</span><h2>Eyebrow Chip — Teal Override</h2></div>
+  <p class="desc"><code>.library-tag</code> là class dùng chung — màu purple toàn cục. AI page cần teal theo standalone. Fix: thêm selector scoped <code>.ai-page .library-tag</code> vào index.css, không đụng vào rule global để không ảnh hưởng các page khác.</p>
+  <div class="diagram-box" id="diag-t1">
+    <svg width="620" height="190" viewBox="0 0 620 190">
+      <defs>
+        <marker id="a1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a1r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <!-- lifelines -->
+      <line x1="80" y1="48" x2="80" y2="182" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="290" y1="48" x2="290" y2="182" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="510" y1="48" x2="510" y2="182" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <!-- headers -->
+      <rect x="30" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="80" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="220" y="10" width="140" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="290" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">index.css</text>
+      <rect x="450" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="510" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <!-- msg1 -->
+      <rect class="msg-hl" x="82" y="60" width="206" height="30" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="82" y1="75" x2="282" y2="75" stroke="#64748b" stroke-width="1.5" marker-end="url(#a1)"/>
+      <text class="msg" x="182" y="68" text-anchor="middle" font-size="10" fill="#475569">.ai-page .library-tag { }</text>
+      <text class="msg" x="182" y="82" text-anchor="middle" font-size="9" fill="#b91c1c">color: teal / bg: teal / ls: .22em</text>
+      <!-- msg2 -->
+      <rect class="msg-hl" x="292" y="100" width="216" height="30" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="292" y1="115" x2="502" y2="115" stroke="#64748b" stroke-width="1.5" marker-end="url(#a1)"/>
+      <text class="msg" x="397" y="108" text-anchor="middle" font-size="10" fill="#475569">re-render chip</text>
+      <text class="msg" x="397" y="122" text-anchor="middle" font-size="9" fill="#059669">rgba(45,212,191,.9)</text>
+      <!-- msg3 return -->
+      <rect class="msg-hl" x="82" y="142" width="426" height="24" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="502" y1="154" x2="90" y2="154" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a1r)"/>
+      <text class="msg" x="296" y="149" text-anchor="middle" font-size="10" fill="#475569">✓ teal chip · other pages unaffected</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Property</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>color</td><td class="bef">var(--purple)</td><td class="aft">rgba(45,212,191,0.9)</td></tr>
+      <tr><td>background</td><td class="bef">rgba(168,85,247,.12)</td><td class="aft">rgba(45,212,191,0.1)</td></tr>
+      <tr><td>border-color</td><td class="bef">rgba(168,85,247,.28)</td><td class="aft">rgba(45,212,191,0.25)</td></tr>
+      <tr><td>letter-spacing</td><td class="bef">.1em</td><td class="aft">0.22em</td></tr>
+      <tr><td>font-family</td><td class="bef">(inherited)</td><td class="aft">'Geist Mono', monospace</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T2 -->
+<section id="t2">
+  <div class="sec-head"><span class="tbadge fix">T2</span><h2>Page Title — 42px Scoped</h2></div>
+  <p class="desc">Global <code>.page-title</code> là 28px — đúng cho các trang khác. AI page standalone dùng 42px với letter-spacing âm. Fix: thêm <code>.ai-page .page-title</code> override, không phá layout trang khác.</p>
+  <div class="diagram-box" id="diag-t2">
+    <svg width="620" height="170" viewBox="0 0 620 170">
+      <defs>
+        <marker id="a2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a2r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <line x1="80" y1="48" x2="80" y2="162" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="290" y1="48" x2="290" y2="162" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="510" y1="48" x2="510" y2="162" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="30" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="80" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="220" y="10" width="140" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="290" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">index.css</text>
+      <rect x="450" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="510" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <rect class="msg-hl" x="82" y="58" width="206" height="26" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="82" y1="70" x2="282" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text class="msg" x="182" y="64" text-anchor="middle" font-size="10" fill="#475569">.ai-page .page-title</text>
+      <text class="msg" x="182" y="78" text-anchor="middle" font-size="9" fill="#b91c1c">font-size:42px  ls:-0.03em  fw:700</text>
+      <rect class="msg-hl" x="292" y="96" width="216" height="26" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="292" y1="108" x2="502" y2="108" stroke="#64748b" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text class="msg" x="397" y="104" text-anchor="middle" font-size="10" fill="#475569">render title</text>
+      <text class="msg" x="397" y="116" text-anchor="middle" font-size="9" fill="#059669">42px bold</text>
+      <rect class="msg-hl" x="82" y="136" width="426" height="20" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="502" y1="146" x2="90" y2="146" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a2r)"/>
+      <text class="msg" x="296" y="141" text-anchor="middle" font-size="10" fill="#475569">✓ larger bold heading</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Property</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>font-size</td><td class="bef">28px</td><td class="aft">42px</td></tr>
+      <tr><td>font-weight</td><td class="bef">800</td><td class="aft">700</td></tr>
+      <tr><td>letter-spacing</td><td class="bef">(none)</td><td class="aft">-0.03em</td></tr>
+      <tr><td>line-height</td><td class="bef">(inherited)</td><td class="aft">1</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T3 -->
+<section id="t3">
+  <div class="sec-head"><span class="tbadge fix">T3</span><h2>Avatar — Gradient Rounded-Square + SVG Icon</h2></div>
+  <p class="desc">Avatar hiện là hình tròn xanh blue với ký tự ✦. Standalone dùng rounded-square 11px, gradient tím→teal, SVG sparkle icon với glow shadow. Cần sửa cả CSS (shape, bg, shadow) lẫn JSX (icon).</p>
+  <div class="diagram-box" id="diag-t3">
+    <svg width="620" height="200" viewBox="0 0 620 200">
+      <defs>
+        <marker id="a3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a3r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <line x1="70" y1="48" x2="70" y2="192" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="240" y1="48" x2="240" y2="192" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="420" y1="48" x2="420" y2="192" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="560" y1="48" x2="560" y2="192" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="20" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="70" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="175" y="10" width="130" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="240" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">index.css</text>
+      <rect x="355" y="10" width="130" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="420" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">AIAssistant.tsx</text>
+      <rect x="500" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="560" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <!-- msg1 CSS -->
+      <rect class="msg-hl" x="72" y="56" width="166" height="28" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="72" y1="70" x2="232" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#a3)"/>
+      <text class="msg" x="152" y="64" text-anchor="middle" font-size="10" fill="#475569">.ai-avatar CSS fix</text>
+      <text class="msg" x="152" y="78" text-anchor="middle" font-size="9" fill="#b91c1c">50%→11px / blue→gradient / border→glow</text>
+      <!-- msg2 JSX -->
+      <rect class="msg-hl" x="72" y="98" width="346" height="28" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="72" y1="112" x2="412" y2="112" stroke="#64748b" stroke-width="1.5" marker-end="url(#a3)"/>
+      <text class="msg" x="242" y="106" text-anchor="middle" font-size="10" fill="#475569">replace ✦ with SVG sparkle</text>
+      <text class="msg" x="242" y="120" text-anchor="middle" font-size="9" fill="#b91c1c">stroke:#070708 viewBox 0 0 24 24</text>
+      <!-- msg3 render -->
+      <rect class="msg-hl" x="422" y="140" width="136" height="24" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="422" y1="152" x2="552" y2="152" stroke="#64748b" stroke-width="1.5" marker-end="url(#a3)"/>
+      <text class="msg" x="487" y="148" text-anchor="middle" font-size="10" fill="#475569">render avatar</text>
+      <!-- msg4 return -->
+      <rect class="msg-hl" x="72" y="172" width="486" height="18" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="552" y1="181" x2="80" y2="181" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a3r)"/>
+      <text class="msg" x="316" y="176" text-anchor="middle" font-size="10" fill="#475569">✓ rounded-square gradient avatar + glow</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Property</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>size</td><td class="bef">30×30px</td><td class="aft">34×34px</td></tr>
+      <tr><td>border-radius</td><td class="bef">50% (circle)</td><td class="aft">11px (rounded-square)</td></tr>
+      <tr><td>background</td><td class="bef">rgba(59,130,246,.18)</td><td class="aft">linear-gradient(140deg,#a855f7,#2dd4bf)</td></tr>
+      <tr><td>border</td><td class="bef">1px solid rgba(59,130,246,.35)</td><td class="aft">none</td></tr>
+      <tr><td>box-shadow</td><td class="bef">(none)</td><td class="aft">0 8px 20px -8px rgba(168,85,247,0.6)</td></tr>
+      <tr><td>icon (JSX)</td><td class="bef">✦ text</td><td class="aft">SVG sparkle path, stroke:#070708</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T4 -->
+<section id="t4">
+  <div class="sec-head"><span class="tbadge fix">T4</span><h2>Assistant Bubble — Glass BG + Correct Radius</h2></div>
+  <p class="desc">Assistant bubble hiện dùng <code>var(--surface)</code> (#0e0e13) — solid tối. Standalone dùng glass mờ <code>rgba(255,255,255,0.04)</code> với inset border. Border-radius cũng sai: cần nhọn ở góc trên trái (4px) chứ không phải góc dưới trái.</p>
+  <div class="diagram-box" id="diag-t4">
+    <svg width="560" height="160" viewBox="0 0 560 160">
+      <defs>
+        <marker id="a4" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a4r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <line x1="70" y1="48" x2="70" y2="152" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="270" y1="48" x2="270" y2="152" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="480" y1="48" x2="480" y2="152" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="20" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="70" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="200" y="10" width="140" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="270" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">index.css</text>
+      <rect x="420" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="480" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <rect class="msg-hl" x="72" y="56" width="196" height="28" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="72" y1="70" x2="262" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#a4)"/>
+      <text class="msg" x="167" y="64" text-anchor="middle" font-size="10" fill="#475569">.ai-bubble--assistant</text>
+      <text class="msg" x="167" y="78" text-anchor="middle" font-size="9" fill="#b91c1c">bg glass / radius 4px 18px 18px 18px / inset</text>
+      <rect class="msg-hl" x="272" y="96" width="206" height="22" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="272" y1="107" x2="472" y2="107" stroke="#64748b" stroke-width="1.5" marker-end="url(#a4)"/>
+      <text class="msg" x="372" y="103" text-anchor="middle" font-size="10" fill="#475569">render glass bubble</text>
+      <rect class="msg-hl" x="72" y="132" width="406" height="18" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="472" y1="141" x2="80" y2="141" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a4r)"/>
+      <text class="msg" x="276" y="136" text-anchor="middle" font-size="10" fill="#475569">✓ translucent glass bubble, sharp top-left corner</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Property</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>background</td><td class="bef">var(--surface) = #0e0e13</td><td class="aft">rgba(255,255,255,0.04)</td></tr>
+      <tr><td>border-radius</td><td class="bef">16px (bottom-left 4px)</td><td class="aft">4px 18px 18px 18px</td></tr>
+      <tr><td>box-shadow</td><td class="bef">(none)</td><td class="aft">inset 0 0 0 1px rgba(255,255,255,0.07)</td></tr>
+      <tr><td>padding</td><td class="bef">10px 14px</td><td class="aft">14px 18px</td></tr>
+      <tr><td>font-size / line-height</td><td class="bef">0.9rem / 1.5</td><td class="aft">14px / 1.6</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T5 -->
+<section id="t5">
+  <div class="sec-head"><span class="tbadge fix">T5</span><h2>User Bubble — Semi-transparent + Correct Radius</h2></div>
+  <p class="desc">User bubble hiện là solid purple (#a855f7). Standalone dùng semi-transparent <code>rgba(168,85,247,0.16)</code> với inset border — trông nhẹ nhàng hơn, không che nền. Radius cũng cần góc trên phải nhọn (4px).</p>
+  <div class="diagram-box" id="diag-t5">
+    <svg width="560" height="155" viewBox="0 0 560 155">
+      <defs>
+        <marker id="a5" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a5r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <line x1="70" y1="48" x2="70" y2="148" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="270" y1="48" x2="270" y2="148" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="480" y1="48" x2="480" y2="148" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="20" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="70" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="200" y="10" width="140" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="270" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">index.css</text>
+      <rect x="420" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="480" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <rect class="msg-hl" x="72" y="58" width="196" height="26" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="72" y1="70" x2="262" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#a5)"/>
+      <text class="msg" x="167" y="64" text-anchor="middle" font-size="10" fill="#475569">.ai-bubble--user</text>
+      <text class="msg" x="167" y="78" text-anchor="middle" font-size="9" fill="#b91c1c">bg semi-trans / radius 18px 4px 18px 18px</text>
+      <rect class="msg-hl" x="272" y="98" width="206" height="20" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="272" y1="108" x2="472" y2="108" stroke="#64748b" stroke-width="1.5" marker-end="url(#a5)"/>
+      <text class="msg" x="372" y="104" text-anchor="middle" font-size="10" fill="#475569">render bubble</text>
+      <rect class="msg-hl" x="72" y="130" width="406" height="16" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="472" y1="138" x2="80" y2="138" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a5r)"/>
+      <text class="msg" x="276" y="133" text-anchor="middle" font-size="10" fill="#475569">✓ translucent user bubble, sharp top-right</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Property</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>background</td><td class="bef">#a855f7 (solid)</td><td class="aft">rgba(168,85,247,0.16)</td></tr>
+      <tr><td>border-radius</td><td class="bef">16px (bottom-right 4px)</td><td class="aft">18px 4px 18px 18px</td></tr>
+      <tr><td>box-shadow</td><td class="bef">(none)</td><td class="aft">inset 0 0 0 1px rgba(168,85,247,0.3)</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T6 -->
+<section id="t6">
+  <div class="sec-head"><span class="tbadge fix">T6</span><h2>Input Area — Pill Container + Gradient Send</h2></div>
+  <p class="desc">Input hiện là hình chữ nhật (12px radius) tách biệt với nút gửi. Standalone dùng pill container bọc cả hai (999px radius), textarea transparent bên trong, send button là gradient tím→teal với glow shadow. Cần thay đổi cả CSS lẫn cấu trúc JSX.</p>
+  <div class="diagram-box" id="diag-t6">
+    <svg width="620" height="200" viewBox="0 0 620 200">
+      <defs>
+        <marker id="a6" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a6r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <line x1="70" y1="48" x2="70" y2="192" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="240" y1="48" x2="240" y2="192" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="420" y1="48" x2="420" y2="192" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="560" y1="48" x2="560" y2="192" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="20" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="70" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="170" y="10" width="140" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="240" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">index.css</text>
+      <rect x="350" y="10" width="140" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="420" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">AIAssistant.tsx</text>
+      <rect x="500" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="560" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <rect class="msg-hl" x="72" y="58" width="166" height="28" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="72" y1="72" x2="232" y2="72" stroke="#64748b" stroke-width="1.5" marker-end="url(#a6)"/>
+      <text class="msg" x="152" y="66" text-anchor="middle" font-size="10" fill="#475569">pill CSS for .ai-input-row</text>
+      <text class="msg" x="152" y="80" text-anchor="middle" font-size="9" fill="#b91c1c">999px / glass bg / transparent textarea</text>
+      <rect class="msg-hl" x="72" y="98" width="346" height="28" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="72" y1="112" x2="412" y2="112" stroke="#64748b" stroke-width="1.5" marker-end="url(#a6)"/>
+      <text class="msg" x="242" y="106" text-anchor="middle" font-size="10" fill="#475569">move send-btn inside .ai-input-wrap</text>
+      <text class="msg" x="242" y="120" text-anchor="middle" font-size="9" fill="#b91c1c">gradient bg + glow shadow on btn</text>
+      <rect class="msg-hl" x="422" y="140" width="136" height="22" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="422" y1="151" x2="552" y2="151" stroke="#64748b" stroke-width="1.5" marker-end="url(#a6)"/>
+      <text class="msg" x="487" y="147" text-anchor="middle" font-size="10" fill="#475569">render pill input</text>
+      <rect class="msg-hl" x="72" y="174" width="486" height="16" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="552" y1="182" x2="80" y2="182" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a6r)"/>
+      <text class="msg" x="316" y="177" text-anchor="middle" font-size="10" fill="#475569">✓ pill input with gradient send button</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Element</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>input container shape</td><td class="bef">border-radius: 12px</td><td class="aft">border-radius: 999px (pill)</td></tr>
+      <tr><td>input bg</td><td class="bef">var(--surface) + border</td><td class="aft">transparent (pill provides bg)</td></tr>
+      <tr><td>send btn bg</td><td class="bef">var(--green) solid</td><td class="aft">linear-gradient(140deg,#a855f7,#2dd4bf)</td></tr>
+      <tr><td>send btn shadow</td><td class="bef">(none)</td><td class="aft">0 10px 24px -8px rgba(168,85,247,0.6)</td></tr>
+      <tr><td>send btn icon</td><td class="bef">➤ text</td><td class="aft">SVG arrow-right path</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T7 -->
+<section id="t7">
+  <div class="sec-head"><span class="tbadge skill">T7</span><h2>Skill Fix — T3 Value-Level Diff + Spec Correction</h2></div>
+  <p class="desc">Skill SKILL.md có 2 lỗi: (1) spec ghi "blue avatar (✦)" — sai, phải là gradient; (2) T3 diff chỉ check label/title string. Cần thêm bảng CSS value checklist cho AI page và sửa spec entry, để run tiếp theo bắt được regression ngay từ T3.</p>
+  <div class="diagram-box" id="diag-t7">
+    <svg width="580" height="190" viewBox="0 0 580 190">
+      <defs>
+        <marker id="a7" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a7r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+        <marker id="a7f" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
+      </defs>
+      <line x1="70" y1="48" x2="70" y2="182" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="270" y1="48" x2="270" y2="182" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="490" y1="48" x2="490" y2="182" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="20" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="70" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="190" y="10" width="160" height="28" rx="7" fill="#f59e0b" opacity=".12"/>
+      <text x="270" y="28" text-anchor="middle" font-size="11" fill="#b45309" font-weight="600">SKILL.md</text>
+      <rect x="420" y="10" width="140" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="490" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Future run</text>
+      <rect class="msg-hl" x="72" y="58" width="196" height="26" rx="4" fill="rgba(245,158,11,0.1)"/>
+      <line class="msg" x1="72" y1="70" x2="262" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#a7)"/>
+      <text class="msg" x="167" y="64" text-anchor="middle" font-size="10" fill="#475569">fix spec: "blue avatar"</text>
+      <text class="msg" x="167" y="78" text-anchor="middle" font-size="9" fill="#b91c1c">→ "gradient #a855f7→#2dd4bf, 11px"</text>
+      <rect class="msg-hl" x="72" y="96" width="196" height="26" rx="4" fill="rgba(245,158,11,0.1)"/>
+      <line class="msg" x1="72" y1="108" x2="262" y2="108" stroke="#64748b" stroke-width="1.5" marker-end="url(#a7)"/>
+      <text class="msg" x="167" y="102" text-anchor="middle" font-size="10" fill="#475569">add T3 CSS value checklist</text>
+      <text class="msg" x="167" y="116" text-anchor="middle" font-size="9" fill="#b91c1c">AI Chat: check 8 CSS props in table</text>
+      <rect class="msg-hl" x="272" y="138" width="216" height="24" rx="4" fill="rgba(245,158,11,0.1)"/>
+      <line class="msg" x1="272" y1="150" x2="482" y2="150" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#a7f)"/>
+      <text class="msg" x="377" y="144" text-anchor="middle" font-size="10" fill="#b45309">T3 diff: check CSS values</text>
+      <text class="msg" x="377" y="158" text-anchor="middle" font-size="9" fill="#059669">catches regression at diff stage</text>
+      <rect class="msg-hl" x="72" y="172" width="406" height="14" rx="4" fill="rgba(56,189,248,0.07)"/>
+      <line class="msg" x1="482" y1="179" x2="80" y2="179" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a7r)"/>
+      <text class="msg" x="276" y="174" text-anchor="middle" font-size="10" fill="#475569">✓ skill prevents same regression next run</text>
+    </svg>
+    <table class="diff-tbl"><thead><tr><th>Section in SKILL.md</th><th>Current</th><th>Target</th></tr></thead><tbody>
+      <tr><td>Spec line 33 (AIAssistantPage)</td><td class="bef">blue avatar (✦)</td><td class="aft">gradient avatar #a855f7→#2dd4bf, border-radius 11px</td></tr>
+      <tr><td>T3 diff step</td><td class="bef">check chip label + title string only</td><td class="aft">add CSS value table: colors, radius, bg type, padding, gradient vs solid</td></tr>
+    </tbody></table>
+    <span class="agent-badge">🤖 Claude main · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+<!-- T8 -->
+<section id="t8">
+  <div class="sec-head"><span class="tbadge deploy">T8</span><h2>Deploy + Verify</h2></div>
+  <p class="desc">Sau khi áp xong T1–T7: build Docker image, push lên registry nội bộ, kubectl rollout frontend pod. Re-screenshot trang /ai và so sánh với standalone. Nếu pass → commit. Nếu fail → loop lại T1–T6 (tối đa 3 lần).</p>
+  <div class="diagram-box" id="diag-t8">
+    <svg width="640" height="210" viewBox="0 0 640 210">
+      <defs>
+        <marker id="a8" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+        <marker id="a8r" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0,0 3,8 6" fill="#94a3b8"/></marker>
+      </defs>
+      <line x1="60" y1="48" x2="60" y2="202" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="210" y1="48" x2="210" y2="202" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="390" y1="48" x2="390" y2="202" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <line x1="550" y1="48" x2="550" y2="202" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+      <rect x="10" y="10" width="100" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="60" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Claude</text>
+      <rect x="145" y="10" width="130" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="210" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">Docker</text>
+      <rect x="325" y="10" width="130" height="28" rx="7" fill="#10b981" opacity=".12"/>
+      <text x="390" y="28" text-anchor="middle" font-size="11" fill="#10b981" font-weight="600">k8s / pod</text>
+      <rect x="490" y="10" width="120" height="28" rx="7" fill="#6366f1" opacity=".12"/>
+      <text x="550" y="28" text-anchor="middle" font-size="11" fill="#6366f1" font-weight="600">Browser</text>
+      <rect class="msg-hl" x="62" y="58" width="146" height="26" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="62" y1="70" x2="202" y2="70" stroke="#64748b" stroke-width="1.5" marker-end="url(#a8)"/>
+      <text class="msg" x="132" y="64" text-anchor="middle" font-size="10" fill="#475569">docker build + push</text>
+      <text class="msg" x="132" y="78" text-anchor="middle" font-size="9" fill="#475569">cozyroom-frontend:k8s</text>
+      <rect class="msg-hl" x="212" y="98" width="176" height="22" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="212" y1="109" x2="382" y2="109" stroke="#64748b" stroke-width="1.5" marker-end="url(#a8)"/>
+      <text class="msg" x="297" y="105" text-anchor="middle" font-size="10" fill="#475569">kubectl rollout restart</text>
+      <rect class="msg-hl" x="392" y="132" width="156" height="22" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="392" y1="143" x2="542" y2="143" stroke="#64748b" stroke-width="1.5" marker-end="url(#a8)"/>
+      <text class="msg" x="467" y="139" text-anchor="middle" font-size="10" fill="#475569">new pod live</text>
+      <rect class="msg-hl" x="62" y="166" width="486" height="20" rx="4" fill="rgba(56,189,248,0.12)"/>
+      <line class="msg" x1="542" y1="176" x2="70" y2="176" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a8r)"/>
+      <text class="msg" x="306" y="170" text-anchor="middle" font-size="10" fill="#475569">screenshot /ai → compare vs standalone</text>
+      <text class="msg" x="306" y="194" text-anchor="middle" font-size="9" fill="#059669">✓ pass → commit  |  fail → loop T4 max 3×</text>
+    </svg>
+    <span class="agent-badge">🤖 Claude main via deploy-k8s-frontend · claude-sonnet-4-6</span>
+  </div>
+</section>
+
+</main>
+
+<script>
+// Scroll-spy
+const secs = document.querySelectorAll('section[id]')
+const links = document.querySelectorAll('nav a[href^="#"]')
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'))
+      const a = document.querySelector('nav a[href="#'+e.target.id+'"]')
+      if (a) a.classList.add('active')
+    }
+  })
+}, { rootMargin: '-25% 0px -65% 0px' })
+secs.forEach(s => obs.observe(s))
+
+// Animation: auto-loop through .msg elements in each diagram-box
+// Labels always visible (.msg opacity:.82), active step gets full opacity + msg-hl glow
+document.querySelectorAll('.diagram-box').forEach(box => {
+  const msgs = box.querySelectorAll('.msg')
+  const hls = box.querySelectorAll('.msg-hl')
+  let idx = 0; let paused = false; let timer
+  const step = () => {
+    msgs.forEach((m, i) => { m.classList.toggle('active', i === idx) })
+    hls.forEach((h, i) => { h.classList.toggle('active', i === idx) })
+    idx = (idx + 1) % (msgs.length || 1)
+    timer = setTimeout(step, 1400)
+  }
+  step()
+  box.addEventListener('click', () => {
+    paused = !paused
+    if (paused) clearTimeout(timer)
+    else step()
+  })
+})
+</script>
+</body>
+</html>

@@ -546,7 +546,13 @@ export default function AIAssistantPage() {
       <div className="ai-messages">
         {messages.map(msg => (
           <div key={msg.id} className={`ai-bubble-group ai-bubble-group--${msg.role}`}>
-            {msg.role === 'assistant' && <div className="ai-avatar">✦</div>}
+            {msg.role === 'assistant' && (
+              <div className="ai-avatar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                </svg>
+              </div>
+            )}
             <div className="ai-bubble-inner">
             <div className={`ai-bubble ai-bubble--${msg.role}`}>
               {msg.role === 'assistant' && msg.model && (
@@ -746,15 +752,17 @@ export default function AIAssistantPage() {
           }}
           disabled={loading}
         />
-        </div>
         <button
           className="ai-send-btn"
           onClick={send}
           disabled={loading || !input.trim()}
           title={t('ai.send')}
         >
-          ➤
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#070708" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
         </button>
+        </div>
       </div>
     </div>
   )

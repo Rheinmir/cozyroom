@@ -1,4 +1,4 @@
-# Skill: standalone-align
+﻿# Skill: standalone-align
 
 Align live app UI với `Cozyroom (standalone).html` reference design.
 
@@ -30,7 +30,7 @@ Live: `https://music.giatbh.io.vn`
 - `frontend/src/pages/ComicsPage.tsx:391`
 - `frontend/src/pages/TrendingPage.tsx:129`
 - `frontend/src/pages/PlaylistsPage.tsx:307`
-- AIAssistantPage: `<div className="ai-page">` → chip "TRỢ LÝ" + h1 "Trợ lý AI" + blue avatar (✦) per assistant bubble
+- AIAssistantPage: `<div className="ai-page">` → chip "TRỢ LÝ" (teal `rgba(45,212,191,0.9)`, Geist Mono, ls:0.22em) + h1 "Trợ lý AI" (42px, fw:700, ls:-0.03em) + gradient avatar (`#a855f7→#2dd4bf`, border-radius:11px rounded-square) per assistant bubble
 
 ## 5-bước workflow (khi có trang bị sai)
 
@@ -90,6 +90,20 @@ So sánh screenshot với spec. Format report:
 - Page title sai → đổi string trong `<h1 className="page-title">...</h1>`
 - AIAssistantPage có chip → XÓA (spec: no chip, no h1)
 - Layout sai (Netflix rows vs poster grid) → xem VideosPage.tsx như mẫu
+
+**AI Chat page — BẮT BUỘC check thêm CSS values (không chỉ string):**
+
+| Element | CSS class | Properties cần verify |
+|---------|-----------|----------------------|
+| Eyebrow chip | `.ai-page .library-tag` | color teal `rgba(45,212,191,0.9)`, bg `rgba(45,212,191,0.1)`, border teal, ls `0.22em` |
+| Page title | `.ai-page .page-title` | font-size `42px`, fw `700`, ls `-0.03em` |
+| Avatar | `.ai-avatar` | size `34×34px`, border-radius `11px`, bg gradient `#a855f7→#2dd4bf`, no border |
+| Asst bubble | `.ai-bubble--assistant` | bg `rgba(255,255,255,0.04)` (glass), radius `4px 18px 18px 18px`, inset shadow |
+| User bubble | `.ai-bubble--user` | bg `rgba(168,85,247,0.16)` (semi-trans, NOT solid), radius `18px 4px 18px 18px` |
+| Input area | `.ai-input-wrap` | border-radius `999px` (pill), NOT `12px` |
+| Send button | `.ai-send-btn` | bg gradient (NOT solid color), glow box-shadow |
+
+Khi tìm regression: **đọc giá trị CSS thực tế**, không chỉ nhìn class name tồn tại hay không.
 
 ### T4 — Apply
 
@@ -152,11 +166,14 @@ Re-screenshot với `waitForSelector` → compare vs spec → ✓ hoặc loop T4
 | 2026-06-21 | AI chat — xác nhận không cần chip (spec: custom layout) | — |
 | 2026-06-21 | Workflow distilled thành skill này | cb47934 |
 | 2026-06-21 | AI chat — chip + h1 + avatar applied | a3c1af2 |
+| 2026-06-22 | AI chat — fix 8 CSS regressions (chip teal, title 42px, avatar gradient, bubbles glass, input pill) | 220626-ai-chat-design-fix |
 
 ## Bài học từ run đầu tiên
 
 1. **waitForSelector vs networkidle**: `networkidle` timeout trước khi ebooks/videos load. Phải dùng `waitForSelector('.ebook-card')`.
 
 2. **CSS không parse được từ minified HTML bằng grep đơn giản** — phải đọc trực tiếp bằng Read tool và tìm bằng pattern matching.
+
+3. **T3 phải diff CSS values, không chỉ string** (bài học 220626): run a3c1af2 tạo ra 8 visual regressions vì chỉ check chip label/title string mà không check background-color, border-radius, gradient vs solid, input shape. BẮT BUỘC đọc giá trị CSS thực tế và so sánh với bảng spec.
 
 3. **AI chat page CÓ chip+heading** — đã implement 2026-06-21 (commit a3c1af2). Chip "TRỢ LÝ", h1 "Trợ lý AI", avatar ✦ mỗi assistant bubble.

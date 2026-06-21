@@ -5,9 +5,13 @@
 .ai-input-wrap {
   flex: 1;
   position: relative;
-  background: var(--surface);
-  border: 1px solid var(--surface-hover);
-  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: none;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.09);
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
 }
 .ai-input-wrap .ai-input {
   background: transparent;
@@ -15,14 +19,16 @@
   width: 100%;
   box-sizing: border-box;
   z-index: 1;
+  flex: 1;
+  padding: 10px 14px 10px 20px;
 }
-.ai-input-wrap .ai-input:focus { border-color: transparent; outline: none; }
+.ai-input-wrap .ai-input:focus { outline: none; }
 .ai-ghost-text {
   font-family: -apple-system, BlinkMacSystemFont, Circular, "Segoe UI", sans-serif;
   font-size: 0.9rem;
   left: 0;
   line-height: 1.4;
-  padding: 10px 14px;
+  padding: 10px 14px 10px 20px;
   pointer-events: none;
   position: absolute;
   top: 0;
@@ -105,26 +111,29 @@
 .ai-bubble-group--user { align-self: flex-end; align-items: flex-end; }
 .ai-bubble-group--assistant { align-self: flex-start; align-items: flex-start; width: min(100%, 600px); max-width: 100%; flex-direction: row; gap: 8px; }
 .ai-bubble-inner { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; flex: 1; }
-.ai-avatar { width: 30px; height: 30px; border-radius: 50%; background: rgba(59,130,246,.18); border: 1px solid rgba(59,130,246,.35); display: flex; align-items: center; justify-content: center; color: #60a5fa; font-size: 14px; flex-shrink: 0; margin-top: 8px; }
+.ai-avatar { width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(140deg,#a855f7,#2dd4bf); box-shadow: 0 8px 20px -8px rgba(168,85,247,0.6); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; margin-top: 8px; }
 
 .ai-bubble {
-  padding: 10px 14px;
+  padding: 14px 18px;
   border-radius: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 14px;
   white-space: pre-wrap;
   word-break: break-word;
   width: 100%;
   box-sizing: border-box;
 }
 .ai-bubble--user {
-  background: #a855f7;
+  background: rgba(168,85,247,0.16);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border-radius: 18px 4px 18px 18px;
+  box-shadow: inset 0 0 0 1px rgba(168,85,247,0.3);
 }
 .ai-bubble--assistant {
-  background: var(--surface);
+  background: rgba(255,255,255,0.04);
   color: var(--text);
-  border-bottom-left-radius: 4px;
+  border-radius: 4px 18px 18px 18px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07);
   position: relative;
 }
 .ai-typing {
@@ -147,10 +156,8 @@
 .ai-action-btn:hover { background: var(--green); color: #000; }
 .ai-input-row {
   display: flex;
-  gap: 8px;
   align-items: flex-end;
   padding-top: 8px;
-  border-top: 1px solid var(--surface-hover);
 }
 .ai-input {
   flex: 1;
@@ -165,14 +172,15 @@
   line-height: 1.4;
 }
 .ai-input:focus { outline: none; border-color: transparent; }
-.ai-input-wrap:focus-within { border-color: var(--green); }
+.ai-input-wrap:focus-within { box-shadow: inset 0 0 0 1.5px rgba(168,85,247,0.5); }
 .ai-input:disabled { opacity: 0.5; }
 .ai-send-btn {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: var(--green);
-  color: #000;
+  background: linear-gradient(140deg,#a855f7,#2dd4bf);
+  box-shadow: 0 8px 20px -8px rgba(168,85,247,0.6);
+  color: #070708;
   font-size: 1rem;
   border: none;
   cursor: pointer;
@@ -180,9 +188,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: opacity 0.15s;
 }
-.ai-send-btn:hover { background: var(--green-hover); }
-.ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ai-send-btn:hover { opacity: 0.85; }
+.ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 .ai-controls-row { display: flex; align-items: center; gap: 4px; padding: 4px 0 2px; }
 .ai-ctrl-btn { flex-shrink: 0; background: none; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.45); cursor: pointer; font-size: 11px; padding: 3px 8px; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
 .ai-ctrl-btn:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.25); }
@@ -716,6 +725,15 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 /* ── Page titles ────────────────────────────────────── */
 .page-title  { font-size: 28px; font-weight: 800; margin-bottom: 24px; }
+.ai-page .library-tag {
+  background: rgba(45,212,191,0.1);
+  border-color: rgba(45,212,191,0.25);
+  color: rgba(45,212,191,0.9);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+}
+.ai-page .page-title { font-size: 42px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
 .section-title { font-size: 20px; font-weight: 700; margin: 28px 0 16px; }
 
 .back-btn {
