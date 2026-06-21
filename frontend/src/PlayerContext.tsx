@@ -107,14 +107,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Restore last session — set src + seek on audioA, but don't autoplay
+  // Restore last session — set src, seek, and resume playback
   useEffect(() => {
     const s = init.current
     if (!s?.track) return
     const q = s.quality ?? 'lossless'
     audioA.current.src = streamUrl(s.track.id, q)
-    audioA.current.preload = 'metadata'
-    const seek = () => { audioA.current.currentTime = s.progress ?? 0 }
+    audioA.current.preload = 'auto'
+    const seek = () => {
+      audioA.current.currentTime = s.progress ?? 0
+      audioA.current.play().then(() => setPlaying(true)).catch(() => {})
+    }
     audioA.current.addEventListener('loadedmetadata', seek, { once: true })
     audioA.current.load()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
