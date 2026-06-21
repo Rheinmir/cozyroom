@@ -21,7 +21,7 @@ Live: `https://music.giatbh.io.vn`
 | Truyện tranh | `/comics` | `Tủ truyện` | (multi-tab) | download-card tabs |
 | Xu hướng | `/trending` | `Bảng xếp hạng` | `Xu hướng trên GitHub` | chart + grid toggle |
 | Playlists | `/playlists` | `Bộ sưu tập` | (i18n: nav.playlists) | playlist grid |
-| Trợ lý AI | `/ai` | ❌ không có chip/heading | (custom layout) | ai-page |
+| Trợ lý AI | `/ai` | `TRỢ LÝ` | `Trợ lý AI` | ai-page (row avatar layout) |
 
 **Chip files:**
 - `frontend/src/pages/ArtistsPage.tsx:29`
@@ -30,7 +30,7 @@ Live: `https://music.giatbh.io.vn`
 - `frontend/src/pages/ComicsPage.tsx:391`
 - `frontend/src/pages/TrendingPage.tsx:129`
 - `frontend/src/pages/PlaylistsPage.tsx:307`
-- AIAssistantPage: `<div className="ai-page">` → NO chip, NO h1
+- AIAssistantPage: `<div className="ai-page">` → chip "TRỢ LÝ" + h1 "Trợ lý AI" + blue avatar (✦) per assistant bubble
 
 ## 5-bước workflow (khi có trang bị sai)
 
@@ -151,13 +151,12 @@ Re-screenshot với `waitForSelector` → compare vs spec → ✓ hoặc loop T4
 | 2026-06-21 | Chip labels 5 pages + Phim poster grid | e21e5a4 |
 | 2026-06-21 | AI chat — xác nhận không cần chip (spec: custom layout) | — |
 | 2026-06-21 | Workflow distilled thành skill này | cb47934 |
+| 2026-06-21 | AI chat — chip + h1 + avatar applied | a3c1af2 |
 
 ## Bài học từ run đầu tiên
 
-1. **Image #3 vs current**: User chụp screenshot từ old deploy có chip+heading — sau khi rebuild frontend thì đã match. Luôn verify bằng fresh screenshot sau deploy, đừng trust old screenshots.
+1. **waitForSelector vs networkidle**: `networkidle` timeout trước khi ebooks/videos load. Phải dùng `waitForSelector('.ebook-card')`.
 
-2. **waitForSelector vs networkidle**: `networkidle` timeout trước khi ebooks/videos load. Phải dùng `waitForSelector('.ebook-card')`.
+2. **CSS không parse được từ minified HTML bằng grep đơn giản** — phải đọc trực tiếp bằng Read tool và tìm bằng pattern matching.
 
-3. **CSS không parse được từ minified HTML bằng grep đơn giản** — phải đọc trực tiếp bằng Read tool và tìm bằng pattern matching.
-
-4. **AI chat page KHÔNG có chip** — chưa bao giờ có trong codebase hiện tại. Nếu thấy chip trong screenshot → là old deployment, rebuild là fix.
+3. **AI chat page CÓ chip+heading** — đã implement 2026-06-21 (commit a3c1af2). Chip "TRỢ LÝ", h1 "Trợ lý AI", avatar ✦ mỗi assistant bubble.
