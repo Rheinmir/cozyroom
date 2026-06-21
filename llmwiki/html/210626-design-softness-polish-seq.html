@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design Softness Polish — 210626</title>
+<style>
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*{scrollbar-width:thin;scrollbar-color:rgba(168,85,247,.3) transparent}
+
+/* ── Tokens ── */
+:root{
+  --bg:#050a14;
+  --surface:rgba(255,255,255,.04);
+  --surface2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.09);
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.52);
+  --faint:rgba(255,255,255,.28);
+  --purple:#a855f7;
+  --teal:#2dd4bf;
+  --emerald:#34d399;
+  --amber:#fbbf24;
+  --nav-w:200px;
+  --radius:14px;
+}
+
+/* ── Body + orbs ── */
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:14px;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;top:-180px;left:-120px;
+  width:560px;height:560px;border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,.5),rgba(168,85,247,0) 65%);
+  filter:blur(60px);opacity:.45;z-index:0;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;bottom:-200px;right:-140px;
+  width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle,rgba(45,212,191,.4),rgba(45,212,191,0) 65%);
+  filter:blur(70px);opacity:.38;z-index:0;pointer-events:none;
+}
+
+/* ── Sidebar nav ── */
+nav{
+  position:fixed;left:0;top:0;width:var(--nav-w);height:100vh;
+  background:rgba(5,8,18,.82);backdrop-filter:blur(18px);
+  border-right:1px solid var(--border);
+  padding:28px 12px 20px;
+  display:flex;flex-direction:column;gap:4px;
+  z-index:100;overflow-y:auto;
+}
+nav::before{
+  content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+  background:linear-gradient(180deg,rgba(168,85,247,.6),rgba(45,212,191,.4));
+  border-radius:0 4px 4px 0;
+}
+.nav-logo{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:0 8px 16px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+nav a{
+  display:block;padding:7px 10px;border-radius:8px;
+  font-size:13px;color:var(--muted);text-decoration:none;
+  transition:background .15s,color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+nav a:hover{background:var(--surface2);color:var(--text);}
+nav a.active{background:rgba(168,85,247,.15);color:var(--purple);box-shadow:inset 0 0 0 1px rgba(168,85,247,.3);}
+.nav-collapse{margin-top:auto;padding:10px 8px 0;border-top:1px solid var(--border);font-size:11px;color:var(--faint);}
+
+/* ── Main content ── */
+main{
+  margin-left:var(--nav-w);
+  padding:36px 40px 80px;
+  position:relative;z-index:1;
+  min-height:100vh;
+}
+.page-title{font-size:26px;font-weight:800;margin-bottom:8px;}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:36px;line-height:1.6;}
+
+/* ── Section ── */
+section{margin-bottom:72px;scroll-margin-top:24px;}
+.task-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.25);
+  border-radius:20px;padding:4px 12px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--purple);margin-bottom:16px;
+}
+.agent-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);
+  border-radius:20px;padding:3px 10px;
+  font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--emerald);margin-left:8px;
+}
+.desc{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 18px;margin-bottom:24px;
+  font-size:13px;line-height:1.7;color:var(--muted);
+}
+.desc strong{color:var(--text);}
+
+/* ── Diagram box ── */
+.diagram-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;margin-bottom:16px;
+}
+.diagram-header{
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--faint);display:flex;align-items:center;gap:8px;
+}
+.diagram-header span{color:var(--purple);}
+.diagram-svg-wrap{padding:24px;overflow-x:auto;}
+
+/* ── SVG diagram shared styles ── */
+svg{font-family:-apple-system,BlinkMacSystemFont,sans-serif;}
+.lifeline-indigo{fill:rgba(99,102,241,.18);stroke:rgba(99,102,241,.5);stroke-width:1.5;}
+.lifeline-emerald{fill:rgba(52,211,153,.14);stroke:rgba(52,211,153,.45);stroke-width:1.5;}
+.lifeline-amber{fill:rgba(251,191,36,.12);stroke:rgba(251,191,36,.4);stroke-width:1.5;}
+.lifeline-label{fill:#fff;font-size:11px;font-weight:600;text-anchor:middle;}
+.dashed{stroke:rgba(255,255,255,.18);stroke-width:1;stroke-dasharray:4 4;}
+.msg{fill:rgba(255,255,255,.82);font-size:10px;}
+.msg-line{stroke-width:1.5;stroke:rgba(168,85,247,.7);marker-end:url(#arr);}
+.msg-line-em{stroke:rgba(52,211,153,.7);}
+.msg-line-am{stroke:rgba(251,191,36,.6);}
+.step-hi{fill:rgba(168,85,247,.15);stroke:rgba(168,85,247,.4);stroke-width:1;rx:4;}
+.step-hi-em{fill:rgba(52,211,153,.12);stroke:rgba(52,211,153,.35);}
+
+/* ── Diff preview blocks ── */
+.diff-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+@media(max-width:700px){.diff-wrap{grid-template-columns:1fr;}}
+.diff-box{border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.diff-label{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;}
+.diff-label--before{background:rgba(239,68,68,.12);color:#f87171;border-bottom:1px solid rgba(239,68,68,.2);}
+.diff-label--after{background:rgba(52,211,153,.1);color:var(--emerald);border-bottom:1px solid rgba(52,211,153,.2);}
+.diff-code{background:rgba(0,0,0,.3);padding:12px 14px;font-family:'SFMono-Regular',monospace;font-size:11px;color:var(--muted);line-height:1.7;overflow-x:auto;}
+.diff-code mark{background:rgba(52,211,153,.2);color:var(--emerald);border-radius:2px;}
+
+/* ── Visual compare card ── */
+.compare-row{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.compare-card{flex:1;min-width:200px;border-radius:12px;border:1px solid var(--border);overflow:hidden;}
+.compare-card-label{padding:8px 14px;font-size:11px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);}
+.compare-card-body{padding:16px;display:flex;flex-direction:column;gap:10px;}
+.mock-card{
+  background:rgba(255,255,255,.035);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  border-radius:22px;padding:16px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  transition:all .3s;
+}
+.mock-card--after{
+  background:rgba(255,255,255,.05);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+}
+.mock-avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,#3b1d6e,#0e1a2e);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;color:rgba(168,85,247,.8);
+  box-shadow:0 6px 18px rgba(0,0,0,.5);overflow:hidden;
+}
+.mock-avatar--photo{background:linear-gradient(135deg,#1a1a2e,#16213e);}
+.mock-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.mock-name{font-size:11px;font-weight:700;color:rgba(255,255,255,.85);}
+.mock-sub{font-size:10px;color:rgba(255,255,255,.4);}
+
+/* ── Orb demo ── */
+.orb-demo{position:relative;height:120px;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#050a14;}
+.orb-demo-before,.orb-demo-after{position:absolute;border-radius:50%;filter:blur(40px);}
+.orb-demo .orb-label{position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--faint);}
+
+/* ── Step highlight ── */
+.step-note{
+  background:rgba(168,85,247,.08);border-left:3px solid var(--purple);
+  border-radius:0 8px 8px 0;padding:10px 14px;
+  font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;
+}
+.step-note strong{color:var(--text);}
+
+/* ── Scrollspy active ── */
+nav a.active{background:rgba(168,85,247,.18);color:var(--purple);}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="nav-logo">Design Polish</div>
+  <a href="#t1" class="active">T1 Ambient Orbs</a>
+  <a href="#t2">T2 Avatar Softness</a>
+  <a href="#t3">T3 Grid Spacing</a>
+  <a href="#t4">T4 Glassmorphism</a>
+  <a href="#t5">T5 Library Tag</a>
+  <div class="nav-collapse">210626 · Claude main</div>
+</nav>
+
+<main>
+  <div class="page-title">Design Softness Polish</div>
+  <p class="page-sub">5 CSS-only tasks (+ 1 React chip) để live app <strong>mềm hơn</strong> và <strong>1:1 với standalone reference</strong>.<br>
+  Lifeline <span style="color:#6366f1">■ indigo</span> = component có sẵn · <span style="color:#34d399">■ emerald</span> = thêm/sửa · <span style="color:#fbbf24">■ amber</span> = nhánh fail</p>
+
+  <!-- ── T1 ── -->
+  <section id="t1">
+    <div class="task-badge">Task 1 — Ambient Orb Visibility <span class="agent-badge">Claude main</span></div>
+    <p class="desc">
+      <strong>Vấn đề:</strong> <code>body::before</code> (purple orb) opacity <code>.42</code> bị che sau <code>.sidebar</code> (<code>rgba(5,5,5,.85)</code>). Standalone trông có purple haze nhìn thấy được phía trên trái.<br>
+      <strong>Fix:</strong> Tăng opacity <code>.42 → .52</code>, size <code>620px → 680px</code>; teal orb <code>.34 → .44</code>. Không thay đổi vị trí — chỉ tăng độ sáng của orb.
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-header">Sequence — <span>Orb rendering pipeline</span></div>
+      <div class="diagram-svg-wrap">
+        <svg width="620" height="220" viewBox="0 0 620 220">
+          <defs>
+            <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(168,85,247,.8)"/>
+            </marker>
+            <marker id="arr-em" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.8)"/>
+            </marker>
+          </defs>
+          <!-- Lifelines header -->
+          <rect x="40" y="10" width="120" height="30" rx="6" class="lifeline-indigo"/>
+          <text x="100" y="30" class="lifeline-label" style="font-size:10px">index.css</text>
+          <rect x="220" y="10" width="120" height="30" rx="6" class="lifeline-indigo"/>
+          <text x="280" y="30" class="lifeline-label" style="font-size:10px">body::before (orb)</text>
+          <rect x="400" y="10" width="120" height="30" rx="6" class="lifeline-emerald"/>
+          <text x="460" y="30" class="lifeline-label" style="font-size:10px">Visual output</text>
+          <!-- Vertical dashed lines -->
+          <line x1="100" y1="40" x2="100" y2="210" class="dashed"/>
+          <line x1="280" y1="40" x2="280" y2="210" class="dashed"/>
+          <line x1="460" y1="40" x2="460" y2="210" class="dashed"/>
+          <!-- Messages -->
+          <rect x="100" y="55" width="170" height="16" rx="3" class="step-hi"/>
+          <line x1="100" y1="63" x2="270" y2="63" class="msg-line" marker-end="url(#arr)"/>
+          <text x="185" y="60" class="msg" text-anchor="middle">opacity: .52 (tăng từ .42)</text>
+          <rect x="100" y="83" width="170" height="16" rx="3" class="step-hi"/>
+          <line x1="100" y1="91" x2="270" y2="91" class="msg-line" marker-end="url(#arr)"/>
+          <text x="185" y="88" class="msg" text-anchor="middle">width/height: 680px (+10%)</text>
+          <rect x="280" y="111" width="170" height="16" rx="3" class="step-hi-em"/>
+          <line x1="280" y1="119" x2="450" y2="119" class="msg-line msg-line-em" marker-end="url(#arr-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="365" y="116" class="msg" text-anchor="middle" style="fill:var(--emerald)">Purple haze visible behind sidebar</text>
+          <rect x="100" y="145" width="170" height="16" rx="3" class="step-hi"/>
+          <line x1="100" y1="153" x2="270" y2="153" class="msg-line" marker-end="url(#arr)"/>
+          <text x="185" y="150" class="msg" text-anchor="middle">teal orb: opacity .44 (+.10)</text>
+          <rect x="280" y="173" width="170" height="16" rx="3" class="step-hi-em"/>
+          <line x1="280" y1="181" x2="450" y2="181" class="msg-line msg-line-em" marker-end="url(#arr-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="365" y="178" class="msg" text-anchor="middle" style="fill:var(--emerald)">Atmospheric depth ≈ standalone</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="diff-wrap">
+      <div class="diff-box">
+        <div class="diff-label diff-label--before">Before</div>
+        <div class="diff-code">body::before {<br>  width: 620px;<br>  height: 620px;<br>  opacity: .42;<br>}</div>
+      </div>
+      <div class="diff-box">
+        <div class="diff-label diff-label--after">After</div>
+        <div class="diff-code">body::before {<br>  width: <mark>680px</mark>;<br>  height: <mark>680px</mark>;<br>  opacity: <mark>.52</mark>;<br>}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── T2 ── -->
+  <section id="t2">
+    <div class="task-badge">Task 2 — Artist Avatar Softness <span class="agent-badge">Claude main</span></div>
+    <p class="desc">
+      <strong>Vấn đề:</strong> Album art photos (sharp, high-contrast) trong <code>.artist-avatar img</code> trông "harsh" — ngược lại standalone chỉ có letter gradient avatars mềm mại.<br>
+      <strong>Fix:</strong> Thêm <code>filter: brightness(0.92) saturate(0.88)</code> trên img, plus vignette shadow trên container để blend ảnh vào dark background.
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-header">Sequence — <span>Avatar photo treatment</span></div>
+      <div class="diagram-svg-wrap">
+        <svg width="620" height="200" viewBox="0 0 620 200">
+          <defs>
+            <marker id="arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(168,85,247,.8)"/>
+            </marker>
+            <marker id="arr2-em" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.8)"/>
+            </marker>
+          </defs>
+          <rect x="30" y="10" width="110" height="28" rx="6" class="lifeline-indigo"/>
+          <text x="85" y="28" class="lifeline-label" style="font-size:10px">.artist-avatar</text>
+          <rect x="200" y="10" width="110" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="255" y="28" class="lifeline-label" style="font-size:10px">.artist-avatar img</text>
+          <rect x="380" y="10" width="110" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="435" y="28" class="lifeline-label" style="font-size:10px">Rendered photo</text>
+          <line x1="85" y1="38" x2="85" y2="190" class="dashed"/>
+          <line x1="255" y1="38" x2="255" y2="190" class="dashed"/>
+          <line x1="435" y1="38" x2="435" y2="190" class="dashed"/>
+          <rect x="85" y="50" width="160" height="16" rx="3" class="step-hi"/>
+          <line x1="85" y1="58" x2="245" y2="58" class="msg-line" marker-end="url(#arr2)"/>
+          <text x="165" y="55" class="msg" text-anchor="middle">filter: brightness(.92) saturate(.88)</text>
+          <rect x="85" y="78" width="160" height="16" rx="3" class="step-hi"/>
+          <line x1="85" y1="86" x2="245" y2="86" class="msg-line" marker-end="url(#arr2)"/>
+          <text x="165" y="83" class="msg" text-anchor="middle">box-shadow: inset 0 0 0 2px rgba(purple,.15)</text>
+          <rect x="85" y="106" width="160" height="16" rx="3" class="step-hi"/>
+          <line x1="85" y1="114" x2="245" y2="114" class="msg-line" marker-end="url(#arr2)"/>
+          <text x="165" y="111" class="msg" text-anchor="middle">transition: filter .3s ease</text>
+          <rect x="255" y="134" width="170" height="16" rx="3" class="step-hi-em"/>
+          <line x1="255" y1="142" x2="425" y2="142" class="msg-line msg-line-em" marker-end="url(#arr2-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="340" y="139" class="msg" text-anchor="middle" style="fill:var(--emerald)">Softer, harmonized with dark bg</text>
+          <rect x="255" y="162" width="170" height="16" rx="3" class="step-hi-em"/>
+          <line x1="255" y1="170" x2="425" y2="170" class="msg-line msg-line-em" marker-end="url(#arr2-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="340" y="167" class="msg" text-anchor="middle" style="fill:var(--emerald)">Purple ring border = "designed" look</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Live compare -->
+    <div class="compare-row">
+      <div class="compare-card">
+        <div class="compare-card-label">Before — raw photo, harsh</div>
+        <div class="compare-card-body">
+          <div class="mock-card">
+            <div class="mock-avatar mock-avatar--photo" style="background:linear-gradient(135deg,#1a0a0a,#2a0505)">
+              <div style="width:100%;height:100%;background:linear-gradient(135deg,#8b4513,#dc143c,#800000);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px">LIÊU<br>THUỐC</div>
+            </div>
+            <span class="mock-name">1967</span>
+            <span class="mock-sub">Nghệ sĩ</span>
+          </div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-label">After — softened, purple ring</div>
+        <div class="compare-card-body">
+          <div class="mock-card mock-card--after">
+            <div class="mock-avatar mock-avatar--photo" style="box-shadow:inset 0 0 0 2px rgba(168,85,247,.18),0 8px 24px rgba(0,0,0,.6)">
+              <div style="width:100%;height:100%;background:linear-gradient(135deg,#8b4513,#dc143c,#800000);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:rgba(255,255,255,.82);letter-spacing:-1px;filter:brightness(.92) saturate(.88)">LIÊU<br>THUỐC</div>
+            </div>
+            <span class="mock-name">1967</span>
+            <span class="mock-sub">Nghệ sĩ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── T3 ── -->
+  <section id="t3">
+    <div class="task-badge">Task 3 — Artist Grid Spacing <span class="agent-badge">Claude main</span></div>
+    <p class="desc">
+      <strong>Vấn đề:</strong> Với 868 nghệ sĩ, <code>minmax(160px, 1fr)</code> tạo ra grid cực kỳ dày (8-9 cột ở 1440px viewport). Standalone trông thoáng vì chỉ có 5 items.<br>
+      <strong>Fix:</strong> Tăng minmax <code>160px → 180px</code>, gap <code>20px → 24px</code>. Tổng số cột ít hơn 1, nhưng từng card rộng hơn và breathing room tốt hơn.
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-header">Sequence — <span>Grid layout change</span></div>
+      <div class="diagram-svg-wrap">
+        <svg width="580" height="160" viewBox="0 0 580 160">
+          <defs>
+            <marker id="arr3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(168,85,247,.8)"/>
+            </marker>
+            <marker id="arr3-em" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.8)"/>
+            </marker>
+          </defs>
+          <rect x="30" y="10" width="110" height="28" rx="6" class="lifeline-indigo"/>
+          <text x="85" y="28" class="lifeline-label" style="font-size:10px">.artist-grid</text>
+          <rect x="210" y="10" width="140" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="280" y="28" class="lifeline-label" style="font-size:10px">Browser layout engine</text>
+          <rect x="420" y="10" width="110" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="475" y="28" class="lifeline-label" style="font-size:10px">Visual result</text>
+          <line x1="85" y1="38" x2="85" y2="150" class="dashed"/>
+          <line x1="280" y1="38" x2="280" y2="150" class="dashed"/>
+          <line x1="475" y1="38" x2="475" y2="150" class="dashed"/>
+          <rect x="85" y="50" width="185" height="16" rx="3" class="step-hi"/>
+          <line x1="85" y1="58" x2="270" y2="58" class="msg-line" marker-end="url(#arr3)"/>
+          <text x="177" y="55" class="msg" text-anchor="middle">minmax(180px,1fr), gap:24px</text>
+          <rect x="280" y="78" width="185" height="16" rx="3" class="step-hi-em"/>
+          <line x1="280" y1="86" x2="465" y2="86" class="msg-line msg-line-em" marker-end="url(#arr3-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="372" y="83" class="msg" text-anchor="middle" style="fill:var(--emerald)">~7 cols at 1440px (was 8-9)</text>
+          <rect x="280" y="108" width="185" height="16" rx="3" class="step-hi-em"/>
+          <line x1="280" y1="116" x2="465" y2="116" class="msg-line msg-line-em" marker-end="url(#arr3-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="372" y="113" class="msg" text-anchor="middle" style="fill:var(--emerald)">More breathing room per card</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="diff-wrap">
+      <div class="diff-box">
+        <div class="diff-label diff-label--before">Before</div>
+        <div class="diff-code">.artist-grid {<br>  grid-template-columns:<br>    repeat(auto-fill, minmax(160px, 1fr));<br>  gap: 20px;<br>}</div>
+      </div>
+      <div class="diff-box">
+        <div class="diff-label diff-label--after">After</div>
+        <div class="diff-code">.artist-grid {<br>  grid-template-columns:<br>    repeat(auto-fill, minmax(<mark>180px</mark>, 1fr));<br>  gap: <mark>24px</mark>;<br>}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── T4 ── -->
+  <section id="t4">
+    <div class="task-badge">Task 4 — Card Glassmorphism <span class="agent-badge">Claude main</span></div>
+    <p class="desc">
+      <strong>Vấn đề:</strong> Card <code>background: rgba(255,255,255,.035)</code> và inset border <code>.06</code> quá mờ — cảm giác flat. Standalone trông có depth và glass rõ hơn.<br>
+      <strong>Fix:</strong> Tăng background <code>.035 → .05</code>, inset border <code>.06 → .10</code>, hover purple glow <code>.32 → .45</code>. Album card cũng áp dụng tương tự.
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-header">Sequence — <span>Glassmorphism enhancement</span></div>
+      <div class="diagram-svg-wrap">
+        <svg width="600" height="190" viewBox="0 0 600 190">
+          <defs>
+            <marker id="arr4" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(168,85,247,.8)"/>
+            </marker>
+            <marker id="arr4-em" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.8)"/>
+            </marker>
+          </defs>
+          <rect x="30" y="10" width="130" height="28" rx="6" class="lifeline-indigo"/>
+          <text x="95" y="28" class="lifeline-label" style="font-size:10px">.artist-card, .album-card</text>
+          <rect x="230" y="10" width="130" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="295" y="28" class="lifeline-label" style="font-size:10px">CSS cascade</text>
+          <rect x="430" y="10" width="120" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="490" y="28" class="lifeline-label" style="font-size:10px">Visual depth</text>
+          <line x1="95" y1="38" x2="95" y2="180" class="dashed"/>
+          <line x1="295" y1="38" x2="295" y2="180" class="dashed"/>
+          <line x1="490" y1="38" x2="490" y2="180" class="dashed"/>
+          <rect x="95" y="50" width="190" height="16" rx="3" class="step-hi"/>
+          <line x1="95" y1="58" x2="285" y2="58" class="msg-line" marker-end="url(#arr4)"/>
+          <text x="190" y="55" class="msg" text-anchor="middle">background: rgba(255,255,255,.05)</text>
+          <rect x="95" y="76" width="190" height="16" rx="3" class="step-hi"/>
+          <line x1="95" y1="84" x2="285" y2="84" class="msg-line" marker-end="url(#arr4)"/>
+          <text x="190" y="81" class="msg" text-anchor="middle">inset border: rgba(white,.10)</text>
+          <rect x="95" y="102" width="190" height="16" rx="3" class="step-hi"/>
+          <line x1="95" y1="110" x2="285" y2="110" class="msg-line" marker-end="url(#arr4)"/>
+          <text x="190" y="107" class="msg" text-anchor="middle">hover glow: rgba(purple,.45)</text>
+          <rect x="295" y="128" width="185" height="16" rx="3" class="step-hi-em"/>
+          <line x1="295" y1="136" x2="480" y2="136" class="msg-line msg-line-em" marker-end="url(#arr4-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="387" y="133" class="msg" text-anchor="middle" style="fill:var(--emerald)">Cards visually "float" on dark bg</text>
+          <rect x="295" y="155" width="185" height="16" rx="3" class="step-hi-em"/>
+          <line x1="295" y1="163" x2="480" y2="163" class="msg-line msg-line-em" marker-end="url(#arr4-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="387" y="160" class="msg" text-anchor="middle" style="fill:var(--emerald)">Hover glow rõ hơn ≈ standalone</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Card mock -->
+    <div class="compare-row">
+      <div class="compare-card">
+        <div class="compare-card-label">Before (glass rất nhạt)</div>
+        <div class="compare-card-body" style="background:#050a14">
+          <div class="mock-card" style="max-width:140px;margin:0 auto">
+            <div class="mock-avatar">RH</div>
+            <span class="mock-name">Radiohead</span>
+            <span class="mock-sub">Nghệ sĩ</span>
+          </div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-label">After (glass rõ hơn)</div>
+        <div class="compare-card-body" style="background:#050a14">
+          <div class="mock-card mock-card--after" style="max-width:140px;margin:0 auto">
+            <div class="mock-avatar" style="box-shadow:inset 0 0 0 2px rgba(168,85,247,.15),0 8px 24px rgba(0,0,0,.5)">RH</div>
+            <span class="mock-name">Radiohead</span>
+            <span class="mock-sub">Nghệ sĩ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── T5 ── -->
+  <section id="t5">
+    <div class="task-badge">Task 5 — Library Breadcrumb Chip <span class="agent-badge">Claude main</span></div>
+    <p class="desc">
+      <strong>Vấn đề:</strong> Standalone hiện <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700;color:#a855f7;vertical-align:middle">THƯ VIỆN</span> chip phía trên page title. Live app thiếu element này.<br>
+      <strong>Fix:</strong> Thêm class <code>.library-tag</code> vào <code>index.css</code> + thêm <code>&lt;div className="library-tag"&gt;THƯ VIỆN&lt;/div&gt;</code> vào <code>ArtistsPage.tsx</code> trước <code>page-title</code>.
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-header">Sequence — <span>Breadcrumb chip injection</span></div>
+      <div class="diagram-svg-wrap">
+        <svg width="560" height="160" viewBox="0 0 560 160">
+          <defs>
+            <marker id="arr5" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(168,85,247,.8)"/>
+            </marker>
+            <marker id="arr5-em" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.8)"/>
+            </marker>
+          </defs>
+          <rect x="30" y="10" width="110" height="28" rx="6" class="lifeline-indigo"/>
+          <text x="85" y="28" class="lifeline-label" style="font-size:10px">ArtistsPage.tsx</text>
+          <rect x="210" y="10" width="110" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="265" y="28" class="lifeline-label" style="font-size:10px">index.css</text>
+          <rect x="390" y="10" width="110" height="28" rx="6" class="lifeline-emerald"/>
+          <text x="445" y="28" class="lifeline-label" style="font-size:10px">Rendered UI</text>
+          <line x1="85" y1="38" x2="85" y2="150" class="dashed"/>
+          <line x1="265" y1="38" x2="265" y2="150" class="dashed"/>
+          <line x1="445" y1="38" x2="445" y2="150" class="dashed"/>
+          <rect x="85" y="50" width="170" height="16" rx="3" class="step-hi"/>
+          <line x1="85" y1="58" x2="255" y2="58" class="msg-line" marker-end="url(#arr5)"/>
+          <text x="170" y="55" class="msg" text-anchor="middle">add .library-tag class</text>
+          <rect x="85" y="78" width="170" height="16" rx="3" class="step-hi-em"/>
+          <line x1="85" y1="86" x2="435" y2="86" class="msg-line msg-line-em" marker-end="url(#arr5-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="260" y="83" class="msg" text-anchor="middle" style="fill:var(--emerald)">&lt;div className="library-tag"&gt;THƯ VIỆN&lt;/div&gt;</text>
+          <rect x="265" y="106" width="170" height="16" rx="3" class="step-hi-em"/>
+          <line x1="265" y1="114" x2="435" y2="114" class="msg-line msg-line-em" marker-end="url(#arr5-em)" stroke="rgba(52,211,153,.7)"/>
+          <text x="350" y="111" class="msg" text-anchor="middle" style="fill:var(--emerald)">Purple chip above "Nghệ sĩ" title</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="diff-wrap">
+      <div class="diff-box">
+        <div class="diff-label diff-label--before">ArtistsPage.tsx — Before</div>
+        <div class="diff-code">return (<br>  &lt;div className="page"&gt;<br>    {stats &amp;&amp; (...)}<br>    &lt;h1 className="page-title"&gt;...</div>
+      </div>
+      <div class="diff-box">
+        <div class="diff-label diff-label--after">ArtistsPage.tsx — After</div>
+        <div class="diff-code">return (<br>  &lt;div className="page"&gt;<br>    {stats &amp;&amp; (...)}<br>    <mark>&lt;div className="library-tag"&gt;THƯ VIỆN&lt;/div&gt;</mark><br>    &lt;h1 className="page-title"&gt;...</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// Scroll-spy with IntersectionObserver
+const links = document.querySelectorAll('nav a[href^="#"]')
+const sections = Array.from(links).map(l => document.querySelector(l.getAttribute('href')))
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'))
+      const link = document.querySelector(`nav a[href="#${entry.target.id}"]`)
+      if (link) link.classList.add('active')
+    }
+  })
+}, { rootMargin: '-30% 0px -60% 0px' })
+
+sections.forEach(s => s && io.observe(s))
+
+// Sidebar collapse toggle
+const sidebar = document.getElementById('sidebar')
+let collapsed = false
+document.addEventListener('keydown', e => {
+  if (e.key === '\\') { collapsed = !collapsed; sidebar.style.transform = collapsed ? 'translateX(-100%)' : '' }
+})
+</script>
+</body>
+</html>

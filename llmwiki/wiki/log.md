@@ -1062,3 +1062,5 @@
 ## 2026-06-19 — orca-onboard — all-phases-done — knowledge-graph.json, ONBOARDING.md, domain-graph.json, wiki (3 files), html created
 - 2026-06-19 23:56 — session `aa4a4836` — 4 tool calls — files: 190626-cdn-enable-api-headers-seq.html, 190626-cdn-enable-api-headers.md, index.md, log.md
 - 2026-06-19 23:56 — session `7c2c3cdd` — 60 tool calls — files: .pre-commit-config.yaml, 190626-cdn-explainer-docs.md, 190626-cdn-explainer.html, 190626-latency-throughput-dashboard.html, 190626-latency-throughput-dashboard.md, 190626-onboard-cozyroom.html, 190626-onboard-cozyroom.md, 190626-search-perf-artists-load.md …
+## 2026-06-21 — orca-workflow — design-softness-polish — propose created: 5 CSS fixes to align live app with standalone reference
+## 2026-06-21 — orca-workflow — design-softness-polish — implemented: T1-T5 done (index.css + 5 page components)

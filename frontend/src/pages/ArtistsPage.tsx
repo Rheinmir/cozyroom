@@ -26,6 +26,7 @@ export default function ArtistsPage() {
           <span>{stats.tracks} {t('search.tracks').toLowerCase()}</span>
         </div>
       )}
+      <div className="library-tag">Thư viện</div>
       <h1 className="page-title">{t('nav.artists')}</h1>
       <div className="artist-grid">
         {artists.map(a => (

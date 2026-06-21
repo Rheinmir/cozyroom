@@ -112,3 +112,4 @@
 | [sources/draft/200626-db-latency-postmortem.md](sources/draft/200626-db-latency-postmortem.md) | draft | Postmortem: HAProxy Tailscale IP broken → site down; fixed bằng K8s DNS + node affinity + merged queries |
 | [sources/draft/200626-db-antipattern.md](sources/draft/200626-db-antipattern.md) | draft | ADR: DB trong K8s pod là antipattern — lịch sử Tailscale IP, lý do master-slave overkill, kiến trúc đúng cho homelab |
 | [sources/draft/200626-pgbouncer-swap.md](sources/draft/200626-pgbouncer-swap.md) | draft | Swap db-adapter HAProxy → PgBouncer: pool_mode=transaction, 5000 client / 50 server conns, commit 7d2a80c |
+| [draft/orca/210626-design-softness-polish.md](draft/orca/210626-design-softness-polish.md) | draft | Propose: 5 CSS fixes — ambient orb, avatar soften, grid spacing, glassmorphism, library tag — align live app với standalone reference |

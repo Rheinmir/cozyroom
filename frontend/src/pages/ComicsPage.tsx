@@ -388,6 +388,7 @@ export default function ComicsPage() {
       <div style={{ width: searchActive ? '60%' : '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: searchActive ? '1px solid var(--border)' : 'none' }}>
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
+          <div className="library-tag" style={{ alignSelf: 'flex-start' }}>Thư viện</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {(['md', 'eh'] as Source[]).map(s => (
               <button
@@ -396,7 +397,7 @@ export default function ComicsPage() {
                 style={{
                   padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 600,
-                  background: source === s ? 'var(--accent)' : 'var(--surface2)',
+                  background: source === s ? 'var(--accent)' : 'var(--elevated)',
                   color: source === s ? '#000' : 'var(--text)',
                 }}
               >
@@ -424,7 +425,7 @@ export default function ComicsPage() {
                     style={{
                       padding: '4px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
                       fontSize: 11, fontWeight: 600,
-                      background: dlFilter === f ? 'var(--accent)' : 'var(--surface2)',
+                      background: dlFilter === f ? 'var(--accent)' : 'var(--elevated)',
                       color: dlFilter === f ? '#000' : 'var(--text-muted)',
                     }}
                   >
@@ -561,7 +562,7 @@ export default function ComicsPage() {
                 {source === 'eh' && selected.tags && (
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                     {(Array.isArray(selected.tags) ? selected.tags as string[] : [selected.tags as string]).slice(0, 5).map((t: string) => (
-                      <span key={t} style={{ background: 'var(--surface2)', padding: '1px 5px', borderRadius: 3 }}>{t}</span>
+                      <span key={t} style={{ background: 'var(--elevated)', padding: '1px 5px', borderRadius: 3 }}>{t}</span>
                     ))}
                   </div>
                 )}
@@ -583,7 +584,7 @@ export default function ComicsPage() {
                     disabled={enqueueing === 'selected'}
                     style={{
                       padding: '6px 14px', borderRadius: 8, border: 'none',
-                      background: 'var(--surface2)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12,
+                      background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12,
                       opacity: enqueueing === 'selected' ? 0.5 : 1,
                     }}
                   >
@@ -593,7 +594,7 @@ export default function ComicsPage() {
                 {selectedDl && selectedDl.status === 'done' && (
                   <button
                     onClick={() => handleReadLocal(selectedDl)}
-                    style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--surface2)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
+                    style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
                   >
                     📂 Read Local
                   </button>
@@ -635,7 +636,7 @@ export default function ComicsPage() {
           <div style={{ padding: '10px 16px', background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <button
               onClick={() => setReading(null)}
-              style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--surface2)', color: 'var(--text)', cursor: 'pointer', fontSize: 12 }}
+              style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--elevated)', color: 'var(--text)', cursor: 'pointer', fontSize: 12 }}
             >
               ← Close
             </button>
@@ -652,7 +653,7 @@ export default function ComicsPage() {
                   setLocalChapterIdx(idx)
                   openLocalChapter(reading.dlId, localChapters[idx])
                 }}
-                style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, background: 'var(--surface2)', color: 'var(--text)', border: 'none' }}
+                style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, background: 'var(--elevated)', color: 'var(--text)', border: 'none' }}
               >
                 {localChapters.map((ch, i) => (
                   <option key={ch.id} value={i}>Ch {i + 1} ({ch.page_count}p)</option>
@@ -668,7 +669,7 @@ export default function ComicsPage() {
                   style={{
                     padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
                     fontSize: 11, fontWeight: 600,
-                    background: viewMode === m ? 'var(--accent)' : 'var(--surface2)',
+                    background: viewMode === m ? 'var(--accent)' : 'var(--elevated)',
                     color: viewMode === m ? '#000' : 'var(--text)',
                   }}
                 >

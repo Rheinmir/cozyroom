@@ -126,6 +126,7 @@ export default function TrendingPage() {
   return (
     <div className="page">
       <div className="trending-header">
+        <div className="library-tag">Thư viện</div>
         <h1 className="trending-title">{t('trending.title')}</h1>
       </div>
 
