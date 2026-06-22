@@ -882,12 +882,11 @@ func getTrendingTool(d ToolDeps) Tool {
 				}
 			}
 			rows, err := d.DB.QueryContext(context.Background(), `
-				SELECT r.id, r.name, r.language, r.topics,
-				       d.stars,
+				SELECT r.name, r.language,
 				       GREATEST(0, d.stars - COALESCE((
 				         SELECT stars FROM trending_star_history WHERE repo_id=r.id ORDER BY sampled_at ASC LIMIT 1
 				       ), d.stars)) AS star_delta,
-				       COALESCE(d.impact_score,0), COALESCE(d.impact_label,'')
+				       COALESCE(d.problem_solved,''), COALESCE(d.impact_score,0)
 				FROM trending_daily d
 				JOIN trending_repos r ON r.id=d.repo_id
 				WHERE d.date=$1
@@ -898,21 +897,27 @@ func getTrendingTool(d ToolDeps) Tool {
 				return nil, err
 			}
 			defer rows.Close()
-			var result []map[string]any
+			var sb strings.Builder
+			sb.WriteString("| # | Repo | ⭐ Tăng | Ngôn ngữ | Mô tả |\n")
+			sb.WriteString("|---|------|---------|----------|-------|\n")
+			rank := 1
 			for rows.Next() {
-				var id, name, lang, topicsRaw, tier string
-				var stars, delta, imp int
-				if err := rows.Scan(&id, &name, &lang, &topicsRaw, &stars, &delta, &imp, &tier); err != nil {
+				var name, lang, desc string
+				var delta, imp int
+				if err := rows.Scan(&name, &lang, &delta, &desc, &imp); err != nil {
 					continue
 				}
-				var topics []string
-				_ = json.Unmarshal([]byte(topicsRaw), &topics)
-				result = append(result, TrimRepo(id, name, lang, tier, stars, delta, imp, topics))
+				deltaStr := fmt.Sprintf("+%s", formatDelta(delta))
+				if delta > 5000 {
+					deltaStr += " 🚀"
+				}
+				if desc == "" {
+					desc = "—"
+				}
+				sb.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s |\n", rank, name, deltaStr, lang, desc))
+				rank++
 			}
-			if result == nil {
-				result = []map[string]any{}
-			}
-			return map[string]any{"date": date, "repos": result}, nil
+			return sb.String(), nil
 		},
 	}
 }

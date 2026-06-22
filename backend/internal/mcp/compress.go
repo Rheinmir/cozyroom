@@ -1,6 +1,16 @@
 package mcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
+
+func formatDelta(n int) string {
+	if n >= 1000 {
+		return fmt.Sprintf("%d,%03d", n/1000, n%1000)
+	}
+	return fmt.Sprintf("%d", n)
+}
 
 // TrimTrack strips a Track to minimal fields for AI context.
 func TrimTrack(id, title, artist, album string, dur int) map[string]any {

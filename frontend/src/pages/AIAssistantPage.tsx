@@ -245,18 +245,18 @@ function hastText(n: any): string {
 }
 
 const AI_RANK_GRADIENTS = [
-  'linear-gradient(135deg,#a855f7,#6366f1)',
-  'linear-gradient(135deg,#6366f1,#3b82f6)',
-  'linear-gradient(135deg,#10b981,#06b6d4)',
-  'linear-gradient(135deg,#f97316,#ef4444)',
-  'linear-gradient(135deg,#3b82f6,#06b6d4)',
-  'linear-gradient(135deg,#ec4899,#d946ef)',
-  'linear-gradient(135deg,#14b8a6,#06b6d4)',
-  'linear-gradient(135deg,#f97316,#f59e0b)',
-  'linear-gradient(135deg,#8b5cf6,#ec4899)',
-  'linear-gradient(135deg,#06b6d4,#3b82f6)',
-  'linear-gradient(135deg,#a855f7,#ec4899)',
-  'linear-gradient(135deg,#10b981,#6366f1)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 285) 0%, oklch(0.4 0.13 323) 46%, oklch(0.17 0.06 3) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 262) 0%, oklch(0.4 0.13 300) 46%, oklch(0.17 0.06 340) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.62 0.18 160) 0%, oklch(0.38 0.14 175) 46%, oklch(0.17 0.06 190) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.72 0.18 45) 0%, oklch(0.48 0.15 25) 46%, oklch(0.20 0.06 355) 100%)',
+  'radial-gradient(125% 125% at 30% 78%, oklch(0.55 0.20 240) 0%, oklch(0.35 0.15 270) 46%, oklch(0.15 0.07 300) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.67 0.19 345) 0%, oklch(0.43 0.14 310) 46%, oklch(0.18 0.06 280) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.65 0.14 185) 0%, oklch(0.42 0.12 210) 46%, oklch(0.18 0.05 230) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.70 0.18 45) 0%, oklch(0.46 0.15 20) 46%, oklch(0.20 0.06 355) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.60 0.22 290) 0%, oklch(0.38 0.16 320) 46%, oklch(0.16 0.07 350) 100%)',
+  'radial-gradient(125% 125% at 70% 22%, oklch(0.65 0.15 145) 0%, oklch(0.41 0.12 170) 46%, oklch(0.18 0.05 200) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.67 0.19 345) 0%, oklch(0.43 0.14 310) 46%, oklch(0.18 0.06 280) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.62 0.20 20) 0%, oklch(0.40 0.15 350) 46%, oklch(0.18 0.06 320) 100%)',
 ]
 
 function AiTable({ node }: { node: any }) {
@@ -272,8 +272,11 @@ function AiTable({ node }: { node: any }) {
   if (rows.length === 0) return null
   return (
     <div className="ai-leaderboard">
+      <div className="ai-lb-header">
+        <span className="ai-lb-chip">Bảng xếp hạng</span>
+        <h2 className="ai-lb-title">Xu hướng</h2>
+      </div>
       {rows.map((cells, i) => {
-        // column order: rank | name | stars | lang | desc
         const name  = cells[1] ?? cells[0] ?? ''
         const stars = cells[2] ?? ''
         const lang  = cells[3] ?? ''
@@ -283,18 +286,16 @@ function AiTable({ node }: { node: any }) {
         return (
           <div key={i} className="ai-lb-row">
             <span className="ai-lb-rank">{i + 1}</span>
-            <div className="ai-lb-icon" style={{ background: AI_RANK_GRADIENTS[i % AI_RANK_GRADIENTS.length] }} />
+            <div className="ai-lb-icon">
+              <div className="ai-lb-icon-bg" style={{ background: AI_RANK_GRADIENTS[i % AI_RANK_GRADIENTS.length] }} />
+            </div>
             <div className="ai-lb-body">
               <div className="ai-lb-name">{name}</div>
               {desc && <div className="ai-lb-desc">{desc}</div>}
             </div>
-            <div className="ai-lb-right">
-              {stars && <span className="ai-lb-stars">{stars}</span>}
-              {lang  && <span className="ai-lb-lang">{lang}</span>}
-              <span className={`ai-lb-trend ai-lb-trend--${trend}`}>
-                {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '—'}
-              </span>
-            </div>
+            <span className={`ai-lb-trend ai-lb-trend--${trend}`}>
+              {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '▬'}
+            </span>
           </div>
         )
       })}

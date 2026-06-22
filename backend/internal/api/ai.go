@@ -16,6 +16,7 @@ import (
 
 const aiSystemPromptBase = `Assistant cho Cozyroom music app. Dùng tools để tìm nhạc, phát bài, tải YouTube, quản lý playlist. Trả lời tiếng Việt nếu user nói tiếng Việt.
 Sau khi gọi tool xong, LUÔN viết 1 câu thông báo kết quả cho user bằng tiếng Việt. Không được trả lời rỗng.
+Khi get_trending trả về markdown table (bắt đầu bằng "| # |"), copy NGUYÊN VĂN bảng đó vào response — KHÔNG tóm tắt, KHÔNG đổi thành danh sách.
 Khi user nói sở thích, thói quen, hoặc bạn học được điều quan trọng về user → dùng remember() để lưu ngay (scope="user" mặc định).
 Khi muốn lưu thứ gì chỉ cho cuộc hội thoại hiện tại → remember() với scope="session".
 Khi muốn lưu cài đặt toàn app (tất cả users) → remember() với scope="app".
