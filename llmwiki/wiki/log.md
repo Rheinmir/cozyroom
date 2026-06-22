@@ -1,5 +1,10 @@
 # Operation Log
 
+## 2026-06-23 — orca-workflow — k8s-dns-resilience (proposed)
+
+- 3 tasks: nginx.conf runtime DNS fix, CoreDNS upstream forwarders, cloudflared stuck pods cleanup
+- Root cause: CoreDNS timeout chain after k8s restart → 502 on music.giatbh.io.vn
+
 ## 2026-06-22 — orca-workflow — trending-ai-dedup-lock (proposed)
 
 ## 2026-06-22 — orca-workflow — audit-fetch-cover (proposed)
