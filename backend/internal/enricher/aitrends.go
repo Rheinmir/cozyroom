@@ -156,17 +156,14 @@ func enrich(db *sql.DB, geminiKeys []string, openRouterKey string, force bool) {
 			}
 			if callErr != nil {
 				log.Printf("aitrends: %s [%s %s]: %v", t.id, s.baseURL, s.model, callErr)
-				// Rate limit or quota → advance to next slot
-				if isRateLimit(callErr) {
-					slotIdx++
-					continue
+				slotIdx++
+				if !isRateLimit(callErr) {
+					time.Sleep(500 * time.Millisecond)
 				}
 			} else {
 				log.Printf("aitrends: %s [%s]: empty parse, trying next slot", t.id, s.model)
 				slotIdx++
-				continue
 			}
-			time.Sleep(3 * time.Second)
 		}
 		if callErr != nil || (analysis[0] == "" && analysis[1] == "" && analysis[2] == "") {
 			log.Printf("aitrends: %s: giving up", t.id)
