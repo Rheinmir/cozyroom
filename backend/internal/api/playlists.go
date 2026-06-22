@@ -78,10 +78,15 @@ func (h *PlaylistHandlers) listPlaylists(w http.ResponseWriter, r *http.Request)
 		tRows.Close()
 
 		cRows, err := h.db.Query(
-			`SELECT DISTINCT al.id FROM playlist_tracks pt
-			 JOIN tracks t ON t.id = pt.track_id
-			 JOIN albums al ON al.id = t.album_id
-			 WHERE pt.playlist_id = $1 ORDER BY pt.position ASC LIMIT 4`, p.ID)
+			`SELECT id FROM (
+			   SELECT al.id, MIN(pt.position) AS first_pos
+			   FROM playlist_tracks pt
+			   JOIN tracks t ON t.id = pt.track_id
+			   JOIN albums al ON al.id = t.album_id
+			   WHERE pt.playlist_id = $1
+			   GROUP BY al.id
+			   ORDER BY first_pos ASC LIMIT 4
+			 ) sub`, p.ID)
 		if err == nil {
 			for cRows.Next() {
 				var aid string
