@@ -7,7 +7,7 @@ spec:
     storage: 10Gi
   accessModes: [ReadWriteOnce]
   hostPath:
-    path: /tmp/k8s-pgdata
+    path: /var/lib/k8s-pgdata
   nodeAffinity:
     required:
       nodeSelectorTerms:

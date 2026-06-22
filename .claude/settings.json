@@ -52,9 +52,45 @@
           }
         ],
         "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/pre_tool_use.py\""
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/pre_tool_use.py\""
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash"
       }
     ],
     "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/post_tool_use.py\""
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/post_tool_use.py\""
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit"
+      },
       {
         "hooks": [
           {
@@ -141,9 +177,41 @@
             "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/stop.py\""
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/stop.py\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/stop.py\""
+          }
+        ]
       }
     ],
     "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/session_end.py\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/llmwiki/.claude/hooks/session_end.py\""
+          }
+        ]
+      },
       {
         "hooks": [
           {

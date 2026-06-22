@@ -27,8 +27,8 @@ You must execute the following file system operations:
    | Subfolder | Put here when... | Example |
    |-----------|-----------------|---------|
    | `concepts/` | Abstract idea, pattern, or domain term — explained to a new team member, not pointed to in the codebase | `rag.md`, `graph-memory.md` |
-   | `entities/` | Concrete named thing in the system — service, model, API, tool, component, config | `cognee.md`, `neo4j.md` |
-   | `sources/` | Distilled reference or decision record from `raw/` — URL summary, ADR, paper takeaway | `why-neo4j.md`, `cognee-docs.md` |
+   | `entities/` | Concrete named thing in the system — service, model, API, tool, component, config | `auth-service.md`, `postgres.md` |
+   | `sources/` | Distilled reference or decision record from `raw/` — URL summary, ADR, paper takeaway | `why-postgres.md`, `api-docs.md` |
    | `sources/draft/` | Proposal not yet implemented (created by the `propose` skill) | `260425-new-approval-button-fe.md` |
 
    Each wiki file must follow this format:
@@ -79,13 +79,13 @@ You must execute the following file system operations:
 
    | Operation | When to invoke | Skill file |
    |-----------|---------------|------------|
-   | `ingest` | A new file appears in `raw/` | `skills/ingest.md` |
-   | `query` | User asks a question that requires synthesizing wiki knowledge | `skills/query.md` |
-   | `lint` | Periodically or when wiki feels stale | `skills/lint.md` |
-   | `propose` | Any new feature or change is requested | `skills/propose.md` |
-   | `impact-check` | Before modifying any shared symbol | `skills/impact-check.md` |
-   | `safe-change` | Editing code called from more than one place | `skills/safe-change.md` |
-   | `verify-before-commit` | Before every commit | `skills/verify-before-commit.md` |
+   | `ingest` | A new file appears in `raw/` | `llmwiki/skills/wiki-loop/ingest.md` |
+   | `query` | User asks a question that requires synthesizing wiki knowledge | `llmwiki/skills/wiki-loop/query.md` |
+   | `lint` | Periodically or when wiki feels stale | `llmwiki/skills/wiki-loop/lint.md` |
+   | `propose` | Any new feature or change is requested | `llmwiki/skills/dev-loop/propose.md` |
+   | `impact-check` | Before modifying any shared symbol | `llmwiki/skills/dev-loop/impact-check.md` |
+   | `safe-change` | Editing code called from more than one place | `llmwiki/skills/dev-loop/safe-change.md` |
+   | `verify-before-commit` | Before every commit | `llmwiki/skills/dev-loop/verify-before-commit.md` |
 
    **Invocation rules:**
    - New file in `raw/` → invoke `ingest` immediately

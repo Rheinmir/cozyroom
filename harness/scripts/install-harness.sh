@@ -51,18 +51,18 @@ fi
 mkdir -p "$ROOT/harness"
 cp -R "$SRC/harness/validators" "$ROOT/harness/" 2>/dev/null || true
 mkdir -p "$ROOT/harness/scripts" "$ROOT/harness/evals"
-cp "$SRC/harness/policy.yaml"               "$ROOT/harness/policy.yaml"
-cp "$SRC/harness/recipe.md"                 "$ROOT/harness/recipe.md"
-cp "$SRC/harness/scripts/wiki-health.py"    "$ROOT/harness/scripts/wiki-health.py"
+cp "$SRC/harness/policy.yaml"               "$ROOT/harness/policy.yaml"            2>/dev/null || true
+cp "$SRC/harness/recipe.md"                 "$ROOT/harness/recipe.md"               2>/dev/null || true
+cp "$SRC/harness/scripts/wiki-health.py"    "$ROOT/harness/scripts/wiki-health.py"  2>/dev/null || true
 cp "$SRC/harness/scripts/install-harness.sh" "$ROOT/harness/scripts/install-harness.sh" 2>/dev/null || true
 [ -f "$ROOT/harness/evals/promptfooconfig.yaml" ] || cp "$SRC/harness/evals/promptfooconfig.yaml" "$ROOT/harness/evals/promptfooconfig.yaml"
 log "L0 policy + validators + wiki-health + evals: OK"
 
 # ---------- 4. L1 adapter Claude Code ----------
 mkdir -p "$ROOT/llmwiki/.claude/hooks/validators"
-cp "$SRC/llmwiki/.claude/hooks/"*.py "$ROOT/llmwiki/.claude/hooks/"
+for f in "$SRC/llmwiki/.claude/hooks/"*.py; do cp "$f" "$ROOT/llmwiki/.claude/hooks/" 2>/dev/null || true; done
 # copy validators vào cạnh hooks để llmwiki deploy standalone vẫn chạy (resolution tier 2)
-cp "$SRC/harness/validators/"*.py "$ROOT/llmwiki/.claude/hooks/validators/"
+for f in "$SRC/harness/validators/"*.py; do cp "$f" "$ROOT/llmwiki/.claude/hooks/validators/" 2>/dev/null || true; done
 printf '# runtime data — khong commit\naudit/\n' > "$ROOT/llmwiki/.claude/.gitignore"
 
 SETTINGS="$ROOT/llmwiki/.claude/settings.json"

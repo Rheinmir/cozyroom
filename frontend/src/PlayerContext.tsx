@@ -423,7 +423,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       // Code 4 in 320K mode: the original file has an unsupported/corrupt format that ffmpeg
       // couldn't transcode cleanly. Try direct passthrough as a last resort.
       if (errCode === 4 && qualityRef.current === '320' && !tId.startsWith('yt:') && !el.src.includes('q=')) {
-        console.warn('320K transcode failed (format error). Trying direct passthrough...')
+        console.warn('[cozyroom] 320K transcode failed (format error). Falling back to lossless passthrough.')
         const currentPos = el.currentTime
         const fallbackSrc = streamUrl(tId, 'lossless')
         el.src = ''

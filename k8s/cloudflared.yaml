@@ -63,15 +63,15 @@ spec:
             - sh
             - -c
             - |
-              printf 'server {\n  listen 18080;\n  location / {\n    proxy_pass http://frontend.cozyroom-k8s.svc.cluster.local:80;\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_read_timeout 60s;\n  }\n}\n' > /etc/nginx/conf.d/proxy.conf
+              printf 'server {\n  listen 18080;\n  proxy_buffering off;\n  proxy_request_buffering off;\n  location / {\n    proxy_pass http://frontend.cozyroom-k8s.svc.cluster.local:80;\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_read_timeout 300s;\n    proxy_send_timeout 300s;\n  }\n}\n' > /etc/nginx/conf.d/proxy.conf
               nginx -g 'daemon off;'
           resources:
             requests:
               cpu: 5m
-              memory: 16Mi
-            limits:
-              cpu: 50m
               memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
         - name: cloudflared
           image: cloudflare/cloudflared:latest
           args:

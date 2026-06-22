@@ -27,5 +27,5 @@ Progress bar style `pct = progress / duration * 100` → NaN → 0% → thanh tr
 
 ## Origin
 - **Draft:** `wiki/draft/orca/210626-player-duration-persist.md`
-- **Commit:** _(filled by verify-before-commit)_
-- **Date promoted:** _(filled by verify-before-commit)_
+- **Commit:** `6a5cbf0` — fix: seed duration from track.duration_s on session restore
+- **Date promoted:** 2026-06-21
