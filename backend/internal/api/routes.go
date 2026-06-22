@@ -153,6 +153,8 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("DELETE /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("GET /api/lyrics/{id}/translate", h.translateLyricsHandler)
 	mux.HandleFunc("GET /stream/{id}", h.stream)
+	mux.HandleFunc("GET /api/ambient-sounds", h.listAmbientSounds)
+	mux.HandleFunc("GET /api/ambient-sounds/{name}", h.serveAmbientSound)
 
 	vh := &VideoHandlers{uc: h.video, hlsMgr: d.HLSMgr, trickplayDir: d.TrickplayDir, posterDir: d.PosterDir}
 	mux.HandleFunc("GET /api/videos", vh.listVideos)

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>230626 — Background Sounds Feature</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  background:linear-gradient(145deg,#bfdbfe 0%,#e0f2fe 40%,#f0f9ff 100%);
+  min-height:100vh;color:#1e3a5f;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle,#93c5fd44 1px,transparent 1px);
+  background-size:24px 24px;pointer-events:none;z-index:0;
+}
+.orb{
+  position:fixed;left:0;top:15%;width:200px;height:500px;
+  background:linear-gradient(180deg,#818cf855 0%,#38bdf855 50%,#34d39933 100%);
+  filter:blur(45px);pointer-events:none;z-index:0;
+}
+nav{
+  position:fixed;left:0;top:0;width:200px;height:100vh;
+  background:linear-gradient(180deg,rgba(255,255,255,.65) 0%,rgba(219,234,254,.55) 100%);
+  backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-right:1px solid rgba(255,255,255,.85);
+  z-index:100;padding:2rem 0;display:flex;flex-direction:column;
+  box-shadow:2px 0 20px rgba(96,165,250,.12);transition:transform .3s;
+}
+nav::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 60%);pointer-events:none;
+}
+.nav-brand{padding:0 1.25rem 1.25rem;font-weight:700;font-size:.85rem;color:#1e40af;
+  border-bottom:1px solid rgba(147,197,253,.3);margin-bottom:.75rem;line-height:1.4;}
+nav a{
+  display:block;padding:.6rem 1.25rem;font-size:.8rem;color:#3b5fa0;
+  text-decoration:none;border-left:2px solid transparent;transition:all .2s;
+}
+nav a:hover{background:rgba(219,234,254,.5);color:#1d4ed8;}
+nav a.active{border-left-color:#3b82f6;background:rgba(219,234,254,.7);color:#1d4ed8;font-weight:600;}
+.nav-footer{margin-top:auto;padding:.9rem 1.25rem;font-size:.72rem;color:#6b8fc4;
+  border-top:1px solid rgba(147,197,253,.2);line-height:1.6;}
+.collapse-btn{
+  position:absolute;top:1rem;right:-13px;width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.92);border:1px solid rgba(147,197,253,.5);
+  cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;
+  color:#3b82f6;z-index:101;box-shadow:0 2px 8px rgba(59,130,246,.2);
+}
+main{margin-left:200px;padding:2.5rem 2.5rem 5rem;position:relative;z-index:1;transition:margin-left .3s;}
+.page-title{font-size:1.55rem;font-weight:700;color:#1e3a5f;margin-bottom:.35rem;}
+.page-sub{font-size:.88rem;color:#4b6fa0;margin-bottom:2.5rem;}
+section{
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%);
+  border:1px solid rgba(255,255,255,.8);border-radius:16px;
+  padding:1.75rem 2rem;margin-bottom:2rem;
+  box-shadow:0 4px 24px rgba(96,165,250,.1),0 1px 4px rgba(0,0,0,.04);
+  position:relative;overflow:hidden;
+}
+section::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);
+}
+.task-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;}
+.badge{font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:999px;letter-spacing:.05em;}
+.b1{background:rgba(167,243,208,.6);color:#065f46;border:1px solid rgba(52,211,153,.4);}
+.b2{background:rgba(196,181,253,.6);color:#4c1d95;border:1px solid rgba(139,92,246,.4);}
+.b3{background:rgba(254,215,170,.6);color:#92400e;border:1px solid rgba(251,146,60,.4);}
+.b4{background:rgba(186,230,253,.6);color:#0c4a6e;border:1px solid rgba(56,189,248,.4);}
+.task-title{font-size:1.05rem;font-weight:700;color:#1e3a5f;}
+.agent-tag{font-size:.72rem;color:#4b6fa0;margin-left:auto;
+  background:rgba(219,234,254,.6);padding:.2rem .55rem;
+  border-radius:999px;border:1px solid rgba(147,197,253,.4);}
+.desc{
+  font-size:.88rem;line-height:1.65;color:#374151;
+  margin-bottom:1.25rem;background:rgba(241,245,249,.65);
+  padding:.75rem 1rem;border-radius:8px;border-left:3px solid rgba(99,102,241,.4);
+}
+.desc code{
+  background:rgba(99,102,241,.12);padding:.1em .35em;border-radius:4px;
+  font-family:'SF Mono',Monaco,monospace;font-size:.85em;color:#3730a3;
+}
+.diagram-box{
+  background:rgba(248,250,252,.75);border:1px solid rgba(203,213,225,.5);
+  border-radius:10px;padding:1rem;cursor:pointer;user-select:none;transition:background .2s;
+}
+.diagram-box:hover{background:rgba(241,245,249,.88);}
+.diagram-hint{font-size:.7rem;color:#9ca3af;text-align:center;margin-top:.45rem;}
+.step-g{opacity:.82;transition:opacity .3s,filter .3s;}
+.step-g.active{opacity:1;filter:drop-shadow(0 0 5px rgba(99,102,241,.45));}
+</style>
+</head>
+<body>
+<div class="orb"></div>
+
+<nav id="sidebar">
+  <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+  <div class="nav-brand">Background<br>Sounds<br><span style="font-weight:400;opacity:.65;font-size:.78rem">230626</span></div>
+  <a href="#t1">T1 Backend API</a>
+  <a href="#t2">T2 Hook</a>
+  <a href="#t3">T3 UI Panel</a>
+  <a href="#t4">T4 Integration</a>
+  <div class="nav-footer">Claude main<br>claude-sonnet-4-6<br><br>
+    <span style="opacity:.6">⬛ indigo = existing<br>🟩 emerald = new<br>🟧 orange = fail</span>
+  </div>
+</nav>
+
+<main id="main">
+  <div class="page-title">Background Sounds Feature</div>
+  <div class="page-sub">230626 · 4 tasks · macOS-style ambient sounds + RadialNav quick access</div>
+
+  <!-- T1 -->
+  <section id="t1">
+    <div class="task-header">
+      <span class="badge b1">T1</span>
+      <span class="task-title">Go Backend — Ambient Sounds Endpoint</span>
+      <span class="agent-tag">Claude main</span>
+    </div>
+    <p class="desc">
+      Tạo <code>backend/handler_ambient.go</code> với 2 routes: <code>GET /api/ambient-sounds</code> trả danh sách file có trong <code>backend/sounds/ambient/</code>, và <code>GET /api/ambient-sounds/:name</code> stream file audio với header <code>Accept-Ranges</code> để browser loop liền mạch. Noise types (Balanced/Bright/Dark) không cần file — frontend generate bằng Web Audio API. Nếu file không tồn tại → 404, frontend ẩn option đó.
+    </p>
+    <div class="diagram-box" id="diag-t1">
+      <svg viewBox="0 0 700 280" width="100%">
+        <rect x="20" y="14" width="110" height="26" rx="5" fill="#4f46e5"/>
+        <text x="75" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">Frontend</text>
+        <rect x="250" y="14" width="160" height="26" rx="5" fill="#059669"/>
+        <text x="330" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">handler_ambient.go</text>
+        <rect x="530" y="14" width="140" height="26" rx="5" fill="#0891b2"/>
+        <text x="600" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">sounds/ambient/</text>
+        <line x1="75" y1="40" x2="75" y2="265" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="330" y1="40" x2="330" y2="265" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="600" y1="40" x2="600" y2="265" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <!-- s1 -->
+        <g class="step-g" id="t1-s1">
+          <line x1="85" y1="80" x2="320" y2="80" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="318,76 330,80 318,84" fill="#4f46e5"/>
+          <text x="202" y="73" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">GET /api/ambient-sounds</text>
+        </g>
+        <!-- s2 -->
+        <g class="step-g" id="t1-s2">
+          <line x1="340" y1="110" x2="590" y2="110" stroke="#0891b2" stroke-width="1.8"/>
+          <polygon points="588,106 600,110 588,114" fill="#0891b2"/>
+          <text x="465" y="103" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="system-ui">readdir sounds/ambient/</text>
+        </g>
+        <!-- s3 -->
+        <g class="step-g" id="t1-s3">
+          <line x1="590" y1="140" x2="340" y2="140" stroke="#10b981" stroke-width="1.8" stroke-dasharray="5,3"/>
+          <polygon points="342,136 330,140 342,144" fill="#10b981"/>
+          <text x="465" y="133" text-anchor="middle" font-size="9" fill="#065f46" font-family="system-ui">[ocean,rain,stream,night,fire]</text>
+        </g>
+        <!-- s4 -->
+        <g class="step-g" id="t1-s4">
+          <line x1="320" y1="170" x2="85" y2="170" stroke="#10b981" stroke-width="1.8" stroke-dasharray="5,3"/>
+          <polygon points="87,166 75,170 87,174" fill="#10b981"/>
+          <text x="202" y="163" text-anchor="middle" font-size="9" fill="#065f46" font-family="system-ui">JSON: available sounds list</text>
+        </g>
+        <!-- s5: stream -->
+        <g class="step-g" id="t1-s5">
+          <line x1="85" y1="205" x2="320" y2="205" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="318,201 330,205 318,209" fill="#4f46e5"/>
+          <text x="202" y="198" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">GET /api/ambient-sounds/rain</text>
+          <line x1="340" y1="218" x2="590" y2="218" stroke="#0891b2" stroke-width="1.8"/>
+          <polygon points="588,214 600,218 588,222" fill="#0891b2"/>
+          <text x="465" y="212" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="system-ui">stream rain.m4a (Accept-Ranges)</text>
+        </g>
+        <text x="10" y="255" font-size="8.5" fill="#059669" font-family="system-ui">■ 404 nếu file không có → frontend ẩn option</text>
+        <text x="10" y="268" font-size="8" fill="#9ca3af" font-family="system-ui">* Click pause/resume</text>
+      </svg>
+    </div>
+    <div class="diagram-hint">Click để pause / resume</div>
+  </section>
+
+  <!-- T2 -->
+  <section id="t2">
+    <div class="task-header">
+      <span class="badge b2">T2</span>
+      <span class="task-title">useBackgroundSounds Hook</span>
+      <span class="agent-tag">Claude main</span>
+    </div>
+    <p class="desc">
+      Hook <code>useBackgroundSounds()</code> quản lý toàn bộ audio: (a) 3 noise types dùng <code>AudioBufferSourceNode</code> fill random samples — Pink/White/Brown noise, loop vô hạn, không cần file; (b) 5 ambient types dùng <code>&lt;audio loop&gt;</code> element stream từ backend. Volume độc lập với player chính. State persist vào <code>localStorage</code> key <code>bg-sounds</code>: <code>&#123; active, volume &#125;</code>.
+    </p>
+    <div class="diagram-box" id="diag-t2">
+      <svg viewBox="0 0 700 300" width="100%">
+        <rect x="20" y="14" width="140" height="26" rx="5" fill="#7c3aed"/>
+        <text x="90" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">useBackgroundSounds</text>
+        <rect x="250" y="14" width="130" height="26" rx="5" fill="#4f46e5"/>
+        <text x="315" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">Web Audio API</text>
+        <rect x="490" y="14" width="140" height="26" rx="5" fill="#059669"/>
+        <text x="560" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">&lt;audio loop&gt; element</text>
+        <line x1="90" y1="40" x2="90" y2="285" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="315" y1="40" x2="315" y2="285" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="560" y1="40" x2="560" y2="285" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <!-- s1: noise -->
+        <g class="step-g" id="t2-s1">
+          <line x1="100" y1="78" x2="305" y2="78" stroke="#7c3aed" stroke-width="1.8"/>
+          <polygon points="303,74 315,78 303,82" fill="#7c3aed"/>
+          <text x="202" y="71" text-anchor="middle" font-size="9" fill="#4c1d95" font-family="system-ui">play(Balanced/Bright/Dark Noise)</text>
+          <rect x="250" y="88" width="130" height="20" rx="3" fill="rgba(99,102,241,.13)" stroke="#818cf8" stroke-width="1"/>
+          <text x="315" y="102" text-anchor="middle" font-size="8.5" fill="#3730a3" font-family="system-ui">AudioBufferSourceNode loop</text>
+        </g>
+        <!-- s2: ambient -->
+        <g class="step-g" id="t2-s2">
+          <line x1="100" y1="140" x2="550" y2="140" stroke="#059669" stroke-width="1.8"/>
+          <polygon points="548,136 560,140 548,144" fill="#059669"/>
+          <text x="325" y="133" text-anchor="middle" font-size="9" fill="#065f46" font-family="system-ui">play(Ocean/Rain/Stream/Night/Fire)</text>
+          <rect x="490" y="150" width="140" height="20" rx="3" fill="rgba(16,185,129,.13)" stroke="#10b981" stroke-width="1"/>
+          <text x="560" y="164" text-anchor="middle" font-size="8.5" fill="#065f46" font-family="system-ui">src=/api/ambient-sounds/:n loop</text>
+        </g>
+        <!-- s3: volume -->
+        <g class="step-g" id="t2-s3">
+          <line x1="100" y1="198" x2="305" y2="198" stroke="#7c3aed" stroke-width="1.8"/>
+          <polygon points="303,194 315,198 303,202" fill="#7c3aed"/>
+          <text x="202" y="191" text-anchor="middle" font-size="9" fill="#4c1d95" font-family="system-ui">setVolume(0.4)</text>
+          <line x1="315" y1="210" x2="550" y2="210" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="548,206 560,210 548,214" fill="#6366f1"/>
+          <text x="432" y="204" text-anchor="middle" font-size="9" fill="#4338ca" font-family="system-ui">GainNode.gain = 0.4</text>
+        </g>
+        <!-- s4: persist -->
+        <g class="step-g" id="t2-s4">
+          <rect x="20" y="236" width="140" height="20" rx="3" fill="rgba(124,58,237,.12)" stroke="#a78bfa" stroke-width="1"/>
+          <text x="90" y="250" text-anchor="middle" font-size="8.5" fill="#4c1d95" font-family="system-ui">localStorage bg-sounds persist</text>
+        </g>
+        <text x="10" y="278" font-size="8.5" fill="#7c3aed" font-family="system-ui">■ noise = AudioBuffer fill; ambient = &lt;audio&gt; loop; volume = GainNode</text>
+        <text x="10" y="291" font-size="8" fill="#9ca3af" font-family="system-ui">* Click pause/resume</text>
+      </svg>
+    </div>
+    <div class="diagram-hint">Click để pause / resume</div>
+  </section>
+
+  <!-- T3 -->
+  <section id="t3">
+    <div class="task-header">
+      <span class="badge b3">T3</span>
+      <span class="task-title">BackgroundSoundsPanel Component</span>
+      <span class="agent-tag">Claude main</span>
+    </div>
+    <p class="desc">
+      Component floating dropdown kiểu macOS: danh sách âm thanh với checkmark trên option đang chọn, slider volume, nút close. Style dark-glass (matching app dark theme). Nhận <code>useBackgroundSounds()</code> làm data source. Hiển thị khi user click icon ở PlayerBar hoặc petal ở RadialNav. Đóng khi click outside.
+    </p>
+    <div class="diagram-box" id="diag-t3">
+      <svg viewBox="0 0 700 280" width="100%">
+        <rect x="20" y="14" width="110" height="26" rx="5" fill="#4f46e5"/>
+        <text x="75" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">User</text>
+        <rect x="220" y="14" width="160" height="26" rx="5" fill="#b45309"/>
+        <text x="300" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">BackgroundSoundsPanel</text>
+        <rect x="490" y="14" width="140" height="26" rx="5" fill="#7c3aed"/>
+        <text x="560" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">useBackgroundSounds</text>
+        <line x1="75" y1="40" x2="75" y2="265" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="300" y1="40" x2="300" y2="265" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="560" y1="40" x2="560" y2="265" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <!-- s1: open -->
+        <g class="step-g" id="t3-s1">
+          <line x1="85" y1="78" x2="290" y2="78" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="288,74 300,78 288,82" fill="#4f46e5"/>
+          <text x="187" y="71" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">click icon / petal → open panel</text>
+          <rect x="220" y="88" width="160" height="22" rx="4" fill="rgba(251,191,36,.15)" stroke="#fbbf24" stroke-width="1"/>
+          <text x="300" y="103" text-anchor="middle" font-size="8.5" fill="#92400e" font-family="system-ui">render: sound list + volume slider</text>
+        </g>
+        <!-- s2: select -->
+        <g class="step-g" id="t3-s2">
+          <line x1="85" y1="142" x2="290" y2="142" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="288,138 300,142 288,146" fill="#4f46e5"/>
+          <text x="187" y="135" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">click "Rain"</text>
+          <line x1="310" y1="155" x2="550" y2="155" stroke="#7c3aed" stroke-width="1.8"/>
+          <polygon points="548,151 560,155 548,159" fill="#7c3aed"/>
+          <text x="430" y="148" text-anchor="middle" font-size="9" fill="#4c1d95" font-family="system-ui">setActive("rain")</text>
+        </g>
+        <!-- s3: volume -->
+        <g class="step-g" id="t3-s3">
+          <line x1="85" y1="192" x2="290" y2="192" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="288,188 300,192 288,196" fill="#4f46e5"/>
+          <text x="187" y="185" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">drag volume slider</text>
+          <line x1="310" y1="205" x2="550" y2="205" stroke="#7c3aed" stroke-width="1.8"/>
+          <polygon points="548,201 560,205 548,209" fill="#7c3aed"/>
+          <text x="430" y="198" text-anchor="middle" font-size="9" fill="#4c1d95" font-family="system-ui">setVolume(v)</text>
+        </g>
+        <text x="10" y="250" font-size="8.5" fill="#b45309" font-family="system-ui">■ dark-glass floating panel · checkmark active · click-outside close</text>
+        <text x="10" y="263" font-size="8" fill="#9ca3af" font-family="system-ui">* Click pause/resume</text>
+      </svg>
+    </div>
+    <div class="diagram-hint">Click để pause / resume</div>
+  </section>
+
+  <!-- T4 -->
+  <section id="t4">
+    <div class="task-header">
+      <span class="badge b4">T4</span>
+      <span class="task-title">PlayerBar Icon + RadialNav Petal</span>
+      <span class="agent-tag">Claude main</span>
+    </div>
+    <p class="desc">
+      Hai điểm truy cập: (1) <strong>PlayerBar</strong> — thêm icon button 🎵 bên phải (cạnh Quality button), click toggle <code>BackgroundSoundsPanel</code>; nếu đang phát thì icon sáng lên. (2) <strong>RadialNav</strong> — thêm petal "Sounds" vào inner ring, tap → mở panel tại vị trí bubble. Cả hai dùng chung component panel và hook, không duplicate logic.
+    </p>
+    <div class="diagram-box" id="diag-t4">
+      <svg viewBox="0 0 700 260" width="100%">
+        <rect x="20" y="14" width="110" height="26" rx="5" fill="#4f46e5"/>
+        <text x="75" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">User</text>
+        <rect x="200" y="14" width="120" height="26" rx="5" fill="#0891b2"/>
+        <text x="260" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">PlayerBar</text>
+        <rect x="390" y="14" width="120" height="26" rx="5" fill="#059669"/>
+        <text x="450" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">RadialNav</text>
+        <rect x="570" y="14" width="110" height="26" rx="5" fill="#b45309"/>
+        <text x="625" y="31" text-anchor="middle" font-size="11" fill="white" font-weight="600" font-family="system-ui">Panel</text>
+        <line x1="75" y1="40" x2="75" y2="245" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="260" y1="40" x2="260" y2="245" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="450" y1="40" x2="450" y2="245" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <line x1="625" y1="40" x2="625" y2="245" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" opacity=".4"/>
+        <!-- s1: playerbar -->
+        <g class="step-g" id="t4-s1">
+          <line x1="85" y1="80" x2="250" y2="80" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="248,76 260,80 248,84" fill="#4f46e5"/>
+          <text x="167" y="73" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">click 🎵 icon</text>
+          <line x1="270" y1="93" x2="615" y2="93" stroke="#0891b2" stroke-width="1.8"/>
+          <polygon points="613,89 625,93 613,97" fill="#0891b2"/>
+          <text x="442" y="86" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="system-ui">toggle panel (anchor: PlayerBar)</text>
+        </g>
+        <!-- s2: radial -->
+        <g class="step-g" id="t4-s2">
+          <line x1="85" y1="140" x2="440" y2="140" stroke="#4f46e5" stroke-width="1.8"/>
+          <polygon points="438,136 450,140 438,144" fill="#4f46e5"/>
+          <text x="265" y="133" text-anchor="middle" font-size="9" fill="#3730a3" font-family="system-ui">tap "Sounds" petal</text>
+          <line x1="460" y1="153" x2="615" y2="153" stroke="#059669" stroke-width="1.8"/>
+          <polygon points="613,149 625,153 613,157" fill="#059669"/>
+          <text x="537" y="146" text-anchor="middle" font-size="9" fill="#065f46" font-family="system-ui">open panel (anchor: bubble)</text>
+        </g>
+        <!-- s3: active state -->
+        <g class="step-g" id="t4-s3">
+          <rect x="200" y="178" width="120" height="20" rx="3" fill="rgba(8,145,178,.12)" stroke="#7dd3fc" stroke-width="1"/>
+          <text x="260" y="192" text-anchor="middle" font-size="8.5" fill="#0c4a6e" font-family="system-ui">icon sáng khi đang phát</text>
+          <rect x="390" y="178" width="120" height="20" rx="3" fill="rgba(5,150,105,.12)" stroke="#6ee7b7" stroke-width="1"/>
+          <text x="450" y="192" text-anchor="middle" font-size="8.5" fill="#065f46" font-family="system-ui">petal pulse animation</text>
+        </g>
+        <text x="10" y="232" font-size="8.5" fill="#0891b2" font-family="system-ui">■ shared hook + panel — không duplicate logic</text>
+        <text x="10" y="245" font-size="8" fill="#9ca3af" font-family="system-ui">* Click pause/resume</text>
+      </svg>
+    </div>
+    <div class="diagram-hint">Click để pause / resume</div>
+  </section>
+</main>
+
+<script>
+const ids=['t1','t2','t3','t4'];
+const links={};
+ids.forEach(id=>{links[id]=document.querySelector(`nav a[href="#${id}"]`);});
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ids.forEach(id=>links[id].classList.remove('active'));links[e.target.id].classList.add('active');}
+  });
+},{threshold:.3});
+ids.forEach(id=>obs.observe(document.getElementById(id)));
+
+function anim(diagId,prefix,count,delay){
+  let cur=0,paused=false,tmr;
+  const el=document.getElementById(diagId);
+  function step(){
+    for(let i=1;i<=count;i++){
+      const s=document.getElementById(`${prefix}-s${i}`);
+      if(s) s.classList.toggle('active',i===cur+1);
+    }
+    cur=(cur+1)%count;
+    if(!paused) tmr=setTimeout(step,delay);
+  }
+  el.addEventListener('click',()=>{paused=!paused;if(!paused)step();else clearTimeout(tmr);});
+  step();
+}
+anim('diag-t1','t1',5,1300);
+anim('diag-t2','t2',4,1300);
+anim('diag-t3','t3',3,1400);
+anim('diag-t4','t4',3,1400);
+
+let vis=true;
+function toggleSidebar(){
+  vis=!vis;
+  document.getElementById('sidebar').style.transform=vis?'translateX(0)':'translateX(-190px)';
+  document.getElementById('main').style.marginLeft=vis?'200px':'20px';
+  document.querySelector('.collapse-btn').textContent=vis?'☰':'✕';
+}
+document.getElementById('sidebar').style.transition='transform .3s';
+document.getElementById('main').style.transition='margin-left .3s';
+</script>
+</body>
+</html>

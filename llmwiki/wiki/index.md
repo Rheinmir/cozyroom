@@ -3,6 +3,7 @@
 | File | Type | Summary |
 |------|------|---------|
 | [draft/orca/230626-k8s-dns-resilience.md](draft/orca/230626-k8s-dns-resilience.md) | draft | Fix k8s DNS resilience: nginx runtime resolver, CoreDNS forwarders, cloudflared pod cleanup |
+| [draft/orca/230626-background-sounds.md](draft/orca/230626-background-sounds.md) | draft | Background Sounds feature: macOS-style ambient sounds + RadialNav quick access |
 | [sources/project-requirements.md](sources/project-requirements.md) | source | Business goals, user workflows, and constraints for Cozyroom |
 | [sources/tech-stack-decisions.md](sources/tech-stack-decisions.md) | source | Go + React + SQLite + Docker architecture decisions, DB schema, all routes |
 | [sources/homelab-music-brainstorm.md](sources/homelab-music-brainstorm.md) | source | Prior-art Navidrome/Grafana homelab reference; WSL2 mount pattern |

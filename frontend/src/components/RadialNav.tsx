@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
+import { useBgSounds } from '../BgSoundsContext'
 import type { Playlist } from '../api'
 import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../api'
 import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
@@ -29,6 +30,7 @@ const IcRefresh     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill
 const IcStar        = () => I('M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z')
 const IcStarBorder  = () => I('M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zm-10 6.73l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 7.1l1.71 3.61 4.38.38-3.32 2.88 1 4.28L12 15.97z')
 const IcPlaylistAdd = () => I('M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z')
+const IcSounds = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
 
 
 type RadialItem = { route: string; label: string; icon: JSX.Element; r: number; onAction?: () => void }
@@ -76,6 +78,7 @@ export default function RadialNav() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { track, isPlaying, toggle, coverColors } = usePlayer()
+  const { isPlaying: bgPlaying, setPanelOpen: setBgPanelOpen } = useBgSounds()
 
   const [open, setOpen] = useState(false)
   const [trendingMode, setTrendingMode] = useState<'chart' | 'grid'>(() => {
@@ -413,6 +416,7 @@ export default function RadialNav() {
     { route: '/',          label: t('nav.artists'),                     icon: <IcHome />,     r: 86 },
     { route: '/ai',        label: 'AI',                                 icon: <IcAI />,       r: 80 },
     { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist />, r: 92 },
+    { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, r: bgPlaying ? 88 : 84, onAction: () => setBgPanelOpen(true) },
     ...(track ? [
       { route: 'star-track',   label: isStarred ? t('nav.unstar', { defaultValue: 'Bỏ sao' }) : t('nav.star', { defaultValue: 'Yêu thích' }), icon: isStarred ? <IcStar /> : <IcStarBorder />, r: 84, onAction: handleStarToggle },
       { route: 'playlist-add', label: t('nav.add_to_playlist', { defaultValue: 'Thêm vào' }), icon: <IcPlaylistAdd />, r: 88, onAction: () => setPlaylistPickerMode(true) },

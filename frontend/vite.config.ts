@@ -10,6 +10,7 @@ export default defineConfig({
       filename: 'sw2.js',
       devOptions: { enabled: true },
       workbox: {
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [

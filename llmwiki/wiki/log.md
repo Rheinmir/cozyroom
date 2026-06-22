@@ -1,5 +1,11 @@
 # Operation Log
 
+## 2026-06-23 — orca-workflow — background-sounds (done)
+
+- 4 tasks: Go ambient-sounds API, BgSoundsContext hook (WebAudio noise + file loop), BackgroundSoundsPanel UI, PlayerBar+RadialNav integration
+- Infinite loop playback via AudioBufferSourceNode.loop + <audio loop>; stops only on explicit pause/switch
+- vite.config.ts: raised maximumFileSizeToCacheInBytes to 4MB (pre-existing bundle size limit)
+
 ## 2026-06-23 — orca-workflow — k8s-dns-resilience (proposed)
 
 - 3 tasks: nginx.conf runtime DNS fix, CoreDNS upstream forwarders, cloudflared stuck pods cleanup

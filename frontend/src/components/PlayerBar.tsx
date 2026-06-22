@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
+import { useBgSounds } from '../BgSoundsContext'
+import BackgroundSoundsPanel from './BackgroundSoundsPanel'
 import type { RepeatMode, ShuffleMode } from '../PlayerContext'
 import { fetchArtistDetail } from '../api'
 import type { ArtistDetail } from '../api'
@@ -71,6 +73,7 @@ export default function PlayerBar() {
     setRepeat, setShuffleMode, setQuality, coverColors, setCoverColors,
     playbackError, setPlaybackError,
   } = usePlayer()
+  const { isPlaying: bgPlaying, panelOpen: bgPanelOpen, setPanelOpen: setBgPanelOpen } = useBgSounds()
 
   const [open,         setOpen]         = useState(false)
   const [mobileTab,    setMobileTab]    = useState<'player' | 'lyrics'>('player')
@@ -216,6 +219,18 @@ export default function PlayerBar() {
               <button className={'quality-btn' + (quality === 'lossless' ? ' quality-btn--lossless' : ' quality-btn--320')} onClick={() => setQuality(quality === 'lossless' ? '320' : 'lossless')}>
                 {quality === 'lossless' ? 'LOSSLESS' : '320K'}
               </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className={'ctrl-btn' + (bgPlaying ? ' ctrl-btn--active' : '')}
+                  onClick={() => setBgPanelOpen(!bgPanelOpen)}
+                  title="Background Sounds"
+                >
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
+                    <path d="M11 5.5a.5.5 0 0 0-.8-.4L6.5 8H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.5l3.7 2.9a.5.5 0 0 0 .8-.4V5.5zm3.2 2a.75.75 0 0 1 1.06.06A6 6 0 0 1 17 12a6 6 0 0 1-1.74 4.44.75.75 0 1 1-1.12-1A4.5 4.5 0 0 0 15.5 12a4.5 4.5 0 0 0-1.36-3.44.75.75 0 0 1 .06-1.06zm2.5-2.5a.75.75 0 0 1 1.06.05A9.5 9.5 0 0 1 20.5 12a9.5 9.5 0 0 1-2.74 6.95.75.75 0 1 1-1.06-1.06A8 8 0 0 0 19 12a8 8 0 0 0-2.3-5.89.75.75 0 0 1 .02-1.11z"/>
+                  </svg>
+                </button>
+                <BackgroundSoundsPanel />
+              </div>
             </div>
           </div>
 

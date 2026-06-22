@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { PlayerProvider } from './PlayerContext'
+import { BgSoundsProvider } from './BgSoundsContext'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import PlayerBar from './components/PlayerBar'
@@ -24,6 +25,7 @@ import ToolsPage from './pages/ToolsPage'
 
 export default function AppRoutes() {
   return (
+    <BgSoundsProvider>
     <PlayerProvider>
       <div className="shell">
         <Sidebar />
@@ -55,5 +57,6 @@ export default function AppRoutes() {
         <RadialNav />
       </div>
     </PlayerProvider>
+    </BgSoundsProvider>
   )
 }

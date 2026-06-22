@@ -1,0 +1,4 @@
+# Drop macOS background sound files here (.m4a / .mp3):
+#   ocean.m4a  rain.m4a  stream.m4a  night.m4a  fire.m4a
+# Source on macOS: /System/Library/Accessibility/Sounds/
+# Served via GET /api/ambient-sounds/:name
