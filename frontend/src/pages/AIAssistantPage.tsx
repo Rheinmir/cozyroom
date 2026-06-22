@@ -237,6 +237,71 @@ function ReactionBar({ logId }: { logId: string }) {
   )
 }
 
+function hastText(n: any): string {
+  if (!n) return ''
+  if (n.type === 'text') return n.value || ''
+  if (Array.isArray(n.children)) return n.children.map(hastText).join('')
+  return ''
+}
+
+const AI_RANK_GRADIENTS = [
+  'linear-gradient(135deg,#a855f7,#6366f1)',
+  'linear-gradient(135deg,#6366f1,#3b82f6)',
+  'linear-gradient(135deg,#10b981,#06b6d4)',
+  'linear-gradient(135deg,#f97316,#ef4444)',
+  'linear-gradient(135deg,#3b82f6,#06b6d4)',
+  'linear-gradient(135deg,#ec4899,#d946ef)',
+  'linear-gradient(135deg,#14b8a6,#06b6d4)',
+  'linear-gradient(135deg,#f97316,#f59e0b)',
+  'linear-gradient(135deg,#8b5cf6,#ec4899)',
+  'linear-gradient(135deg,#06b6d4,#3b82f6)',
+  'linear-gradient(135deg,#a855f7,#ec4899)',
+  'linear-gradient(135deg,#10b981,#6366f1)',
+]
+
+function AiTable({ node }: { node: any }) {
+  const tbody = node?.children?.find((c: any) => c.tagName === 'tbody')
+  if (!tbody) return null
+  const rows: string[][] = (tbody.children || [])
+    .filter((c: any) => c.tagName === 'tr')
+    .map((row: any) =>
+      (row.children || [])
+        .filter((c: any) => c.tagName === 'td' || c.tagName === 'th')
+        .map(hastText)
+    )
+  if (rows.length === 0) return null
+  return (
+    <div className="ai-leaderboard">
+      {rows.map((cells, i) => {
+        // column order: rank | name | stars | lang | desc
+        const name  = cells[1] ?? cells[0] ?? ''
+        const stars = cells[2] ?? ''
+        const lang  = cells[3] ?? ''
+        const desc  = cells[4] ?? ''
+        const starCount = parseInt((stars.match(/[\d,]+/)?.[0] ?? '0').replace(/,/g, ''), 10)
+        const trend = stars.includes('🚀') || starCount > 2000 ? 'up' : starCount < 400 ? 'down' : 'neutral'
+        return (
+          <div key={i} className="ai-lb-row">
+            <span className="ai-lb-rank">{i + 1}</span>
+            <div className="ai-lb-icon" style={{ background: AI_RANK_GRADIENTS[i % AI_RANK_GRADIENTS.length] }} />
+            <div className="ai-lb-body">
+              <div className="ai-lb-name">{name}</div>
+              {desc && <div className="ai-lb-desc">{desc}</div>}
+            </div>
+            <div className="ai-lb-right">
+              {stars && <span className="ai-lb-stars">{stars}</span>}
+              {lang  && <span className="ai-lb-lang">{lang}</span>}
+              <span className={`ai-lb-trend ai-lb-trend--${trend}`}>
+                {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '—'}
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function providerLogo(provider: string | undefined, model: string | undefined): React.ReactElement {
   let p = (provider || 'unknown').toLowerCase()
   if ((p === 'openrouter' || p === 'unknown') && model) {
@@ -693,7 +758,7 @@ export default function AIAssistantPage() {
               )}
               <div className="ai-bubble-text ai-bubble-text--md">
                 {msg.role === 'assistant'
-                  ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                  ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ table: ({ node }: any) => <AiTable node={node}/> }}>{msg.text}</ReactMarkdown>
                   : msg.text}
               </div>
             </div>

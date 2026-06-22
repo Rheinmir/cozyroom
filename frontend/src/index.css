@@ -234,6 +234,23 @@
 .ai-bubble-text--md th { background: rgba(255,255,255,0.08); font-weight: 600; }
 .ai-bubble-text--md tr:nth-child(even) { background: rgba(255,255,255,0.04); }
 
+/* AI leaderboard — rendered by AiTable component */
+.ai-leaderboard { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; width: 100%; }
+.ai-lb-row { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 10px 14px; transition: background 0.15s; }
+.ai-lb-row:hover { background: rgba(255,255,255,0.07); }
+.ai-lb-rank { font-size: 13px; font-weight: 600; min-width: 22px; text-align: center; color: rgba(255,255,255,0.45); flex-shrink: 0; }
+.ai-lb-icon { width: 48px; height: 48px; min-width: 48px; border-radius: 12px; flex-shrink: 0; }
+.ai-lb-body { flex: 1; min-width: 0; }
+.ai-lb-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-lb-desc { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-lb-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.ai-lb-stars { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.65); white-space: nowrap; }
+.ai-lb-lang { font-size: 10px; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.45); white-space: nowrap; }
+.ai-lb-trend { font-size: 11px; font-weight: 700; line-height: 1; }
+.ai-lb-trend--up { color: #2dd4bf; }
+.ai-lb-trend--down { color: #f472b6; }
+.ai-lb-trend--neutral { color: rgba(255,255,255,0.3); }
+
 /* AI Media Card */
 .ai-bubble--assistant { position: relative; }
 .ai-media-card { background: rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; width: 100%; box-sizing: border-box; }
