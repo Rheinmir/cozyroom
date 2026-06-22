@@ -118,3 +118,4 @@
 | [draft/orca/220626-ai-chat-design-fix.md](draft/orca/220626-ai-chat-design-fix.md) | draft | Fix 8 CSS regressions AI chat page vs standalone: chip teal, title 42px, avatar gradient, bubble glass, input pill |
 | [draft/audit-fetch-cover.md](draft/audit-fetch-cover.md) | draft | Audit cách fetch ảnh bìa trong app + rủi ro mất ảnh phía client |
 | [draft/orca/220626-audit-fetch-cover.md](draft/orca/220626-audit-fetch-cover.md) | draft | Propose: fix 7 backend + 4 frontend silent fail points cho cover art missing bug |
+| [draft/orca/220626-trending-ai-dedup-lock.md](draft/orca/220626-trending-ai-dedup-lock.md) | draft | Fix: pg_advisory_lock + early-exit guard — chặn 3 pod cùng chạy EnrichWithAI và over quota |

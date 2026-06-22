@@ -1,5 +1,12 @@
 # Operation Log
 
+## 2026-06-22 — orca-workflow — trending-ai-dedup-lock (proposed)
+
+## 2026-06-22 — orca-workflow — audit-fetch-cover (proposed)
+
+- Audit cover art fetch flow — 7 backend silent fails + 4 frontend issues found
+- Propose: 4 tasks (useDominantColor fix HIGH, npo-bg+Search onError, backend placeholder, logging)
+
 ## 2026-06-22 — orca-workflow — ai-chat-design-fix (proposed)
 
 - Propose: fix 8 CSS regressions AI chat page vs standalone mockup

@@ -80,7 +80,31 @@ func EnrichWithAI(db *sql.DB, geminiKeys []string, openRouterKey string) {
 	}
 	slotIdx := 0
 
+	// T1: advisory lock — only 1 pod enriches at a time; auto-released on pod crash
+	var locked bool
+	if err := db.QueryRow(`SELECT pg_try_advisory_lock(hashtext('ai-enrich')::bigint)`).Scan(&locked); err != nil {
+		log.Printf("aitrends: advisory lock query: %v — skipping", err)
+		return
+	}
+	if !locked {
+		log.Printf("aitrends: lock not acquired (another pod running) — skipping")
+		return
+	}
+	defer func() { db.QueryRow(`SELECT pg_advisory_unlock(hashtext('ai-enrich')::bigint)`).Scan(new(bool)) }()
+
 	today := time.Now().Format("2006-01-02")
+
+	// T2: early-exit if today already fully enriched
+	var pending int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM trending_daily WHERE date=$1 AND problem_solved IS NULL`, today).Scan(&pending); err != nil {
+		log.Printf("aitrends: pending check: %v", err)
+		return
+	}
+	if pending == 0 {
+		log.Printf("aitrends: all repos already enriched for %s — skipping", today)
+		return
+	}
+
 	rows, err := db.Query(`
 		SELECT r.id, r.name, r.description, r.language, r.topics
 		FROM trending_repos r
