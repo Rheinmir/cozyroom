@@ -808,8 +808,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   justify-content: center;
   font-size: 40px;
   font-weight: 700;
-  color: rgba(168,85,247,.7);
-  box-shadow: inset 0 0 0 2px rgba(168,85,247,.15), 0 8px 24px rgba(0,0,0,.5);
+  color: rgba(255,255,255,0.88);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.1), 0 8px 24px rgba(0,0,0,.5);
   overflow: hidden;
   flex-shrink: 0;
 }
