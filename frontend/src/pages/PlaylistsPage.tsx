@@ -41,13 +41,27 @@ function useDominantColor(src: string | undefined): string {
   return rgb
 }
 
-function PlaylistCoverMosaic({ coverIds }: { coverIds?: string[] }) {
+const PLAYLIST_GRADIENTS = [
+  'radial-gradient(140% 140% at 30% 22%, oklch(0.55 0.20 285) 0%, oklch(0.35 0.14 315) 50%, oklch(0.15 0.06 345) 100%)',
+  'radial-gradient(140% 140% at 70% 78%, oklch(0.58 0.18 160) 0%, oklch(0.36 0.14 185) 50%, oklch(0.15 0.06 210) 100%)',
+  'radial-gradient(140% 140% at 30% 22%, oklch(0.60 0.19 45) 0%, oklch(0.38 0.14 20) 50%, oklch(0.16 0.06 355) 100%)',
+  'radial-gradient(140% 140% at 30% 78%, oklch(0.52 0.19 240) 0%, oklch(0.33 0.14 268) 50%, oklch(0.14 0.07 300) 100%)',
+  'radial-gradient(140% 140% at 70% 22%, oklch(0.56 0.20 345) 0%, oklch(0.36 0.15 315) 50%, oklch(0.16 0.06 285) 100%)',
+  'radial-gradient(140% 140% at 30% 22%, oklch(0.60 0.17 185) 0%, oklch(0.38 0.13 210) 50%, oklch(0.16 0.05 230) 100%)',
+]
+function playlistGradientFor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (Math.imul(31, h) + name.charCodeAt(i)) | 0
+  return PLAYLIST_GRADIENTS[Math.abs(h) % PLAYLIST_GRADIENTS.length]
+}
+
+function PlaylistCoverMosaic({ coverIds, name = '' }: { coverIds?: string[]; name?: string }) {
   if (!coverIds || coverIds.length === 0) {
-    return <div className="playlist-cover-placeholder">★</div>
+    return <div className="playlist-cover-placeholder" style={{ background: playlistGradientFor(name) }}>♪</div>
   }
   const uniqueCovers = Array.from(new Set(coverIds.filter(id => id && id.trim() !== '')))
   if (uniqueCovers.length === 0) {
-    return <div className="playlist-cover-placeholder">★</div>
+    return <div className="playlist-cover-placeholder" style={{ background: playlistGradientFor(name) }}>♪</div>
   }
 
   // Less than 4 unique covers: show the first cover full size (items-1)
@@ -228,7 +242,7 @@ export default function PlaylistsPage() {
 
           <div className="album-hero">
             <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden', boxShadow: '0 20px 48px rgba(0,0,0,0.7)', flexShrink: 0 }}>
-              <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} />
+              <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} name={currentPlaylist.name} />
             </div>
             <div className="album-hero-info">
               <p className="hero-type">
@@ -331,7 +345,7 @@ export default function PlaylistsPage() {
                 ✕
               </button>
               
-              <PlaylistCoverMosaic coverIds={list.cover_ids} />
+              <PlaylistCoverMosaic coverIds={list.cover_ids} name={list.name} />
               
               <div className="playlist-info">
                 <div className="playlist-title">{list.name}</div>

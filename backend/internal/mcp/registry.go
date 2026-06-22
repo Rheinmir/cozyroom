@@ -886,7 +886,8 @@ func getTrendingTool(d ToolDeps) Tool {
 				       GREATEST(0, d.stars - COALESCE((
 				         SELECT stars FROM trending_star_history WHERE repo_id=r.id ORDER BY sampled_at ASC LIMIT 1
 				       ), d.stars)) AS star_delta,
-				       COALESCE(d.problem_solved,''), COALESCE(d.impact_score,0)
+				       COALESCE(d.problem_solved,''), COALESCE(d.tech_used,''), COALESCE(d.simple_flow,''),
+				       COALESCE(d.impact_score,0)
 				FROM trending_daily d
 				JOIN trending_repos r ON r.id=d.repo_id
 				WHERE d.date=$1
@@ -898,13 +899,13 @@ func getTrendingTool(d ToolDeps) Tool {
 			}
 			defer rows.Close()
 			var sb strings.Builder
-			sb.WriteString("| # | Repo | ⭐ Tăng | Ngôn ngữ | Mô tả |\n")
-			sb.WriteString("|---|------|---------|----------|-------|\n")
+			sb.WriteString("| # | Repo | ⭐ Tăng | Ngôn ngữ | Mô tả | Stack | Luồng |\n")
+			sb.WriteString("|---|------|---------|----------|-------|-------|-------|\n")
 			rank := 1
 			for rows.Next() {
-				var name, lang, desc string
+				var name, lang, desc, tech, flow string
 				var delta, imp int
-				if err := rows.Scan(&name, &lang, &delta, &desc, &imp); err != nil {
+				if err := rows.Scan(&name, &lang, &delta, &desc, &tech, &flow, &imp); err != nil {
 					continue
 				}
 				deltaStr := fmt.Sprintf("+%s", formatDelta(delta))
@@ -914,7 +915,9 @@ func getTrendingTool(d ToolDeps) Tool {
 				if desc == "" {
 					desc = "—"
 				}
-				sb.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s |\n", rank, name, deltaStr, lang, desc))
+				sb.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s | %s | %s |\n",
+					rank, name, deltaStr, lang,
+					TruncStr(desc, 60), TruncStr(tech, 40), TruncStr(flow, 50)))
 				rank++
 			}
 			return sb.String(), nil

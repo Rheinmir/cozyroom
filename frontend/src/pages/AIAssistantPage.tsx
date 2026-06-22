@@ -260,6 +260,7 @@ const AI_RANK_GRADIENTS = [
 ]
 
 function AiTable({ node }: { node: any }) {
+  const [expanded, setExpanded] = useState<number | null>(null)
   const tbody = node?.children?.find((c: any) => c.tagName === 'tbody')
   if (!tbody) return null
   const rows: string[][] = (tbody.children || [])
@@ -279,29 +280,57 @@ function AiTable({ node }: { node: any }) {
       {rows.map((cells, i) => {
         const name  = cells[1] ?? cells[0] ?? ''
         const stars = cells[2] ?? ''
-        const lang  = cells[3] ?? ''
-        const desc  = cells[4] ?? ''
+        const rawDesc = cells[4] ?? ''
+        const tech  = cells[5] ?? ''
+        const flow  = cells[6] ?? ''
+        const isOpen = expanded === i
+        const desc = (rawDesc && rawDesc !== '—') ? rawDesc : tech
         const starCount = parseInt((stars.match(/[\d,]+/)?.[0] ?? '0').replace(/,/g, ''), 10)
         const trend = stars.includes('🚀') || starCount > 2000 ? 'up' : starCount < 400 ? 'down' : 'neutral'
+        const starsLabel = stars.replace(' 🚀', '').trim()
+        const ghUrl = name.includes('/') ? `https://github.com/${name}` : null
         return (
-          <div key={i} className="ai-lb-row">
-            <span className="ai-lb-rank">{i + 1}</span>
-            <div className="ai-lb-icon">
-              <div className="ai-lb-icon-bg" style={{ background: AI_RANK_GRADIENTS[i % AI_RANK_GRADIENTS.length] }} />
+          <div
+            key={i}
+            className={`ai-lb-row${isOpen ? ' ai-lb-row--open' : ''}`}
+            onClick={() => setExpanded(isOpen ? null : i)}
+          >
+            <div className="ai-lb-row-main">
+              <span className="ai-lb-rank">{i + 1}</span>
+              <div className="ai-lb-icon">
+                <div className="ai-lb-icon-bg" style={{ background: AI_RANK_GRADIENTS[i % AI_RANK_GRADIENTS.length] }} />
+              </div>
+              <div className="ai-lb-body">
+                <div className="ai-lb-name">{name}</div>
+                {desc && <div className="ai-lb-desc">{desc}</div>}
+              </div>
+              <span className={`ai-lb-trend ai-lb-trend--${trend}`}>
+                {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '▬'} {starsLabel}
+              </span>
             </div>
-            <div className="ai-lb-body">
-              <div className="ai-lb-name">{name}</div>
-              {desc && <div className="ai-lb-desc">{desc}</div>}
-            </div>
-            <span className={`ai-lb-trend ai-lb-trend--${trend}`}>
-              {trend === 'up' ? '▲' : trend === 'down' ? '▼' : '▬'}
-            </span>
+            {isOpen && (
+              <div className="ai-lb-detail">
+                {tech && <div className="ai-lb-detail-item"><span className="ai-lb-detail-label">Stack</span>{tech}</div>}
+                {flow && <div className="ai-lb-detail-item"><span className="ai-lb-detail-label">Flow</span>{flow}</div>}
+                {ghUrl && (
+                  <a
+                    href={ghUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ai-lb-gh-link"
+                    onClick={e => e.stopPropagation()}
+                  >GitHub →</a>
+                )}
+              </div>
+            )}
           </div>
         )
       })}
     </div>
   )
 }
+
+const MD_COMPONENTS = { table: ({ node }: any) => <AiTable node={node} /> }
 
 function providerLogo(provider: string | undefined, model: string | undefined): React.ReactElement {
   let p = (provider || 'unknown').toLowerCase()
@@ -759,7 +788,7 @@ export default function AIAssistantPage() {
               )}
               <div className="ai-bubble-text ai-bubble-text--md">
                 {msg.role === 'assistant'
-                  ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ table: ({ node }: any) => <AiTable node={node}/> }}>{msg.text}</ReactMarkdown>
+                  ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>{msg.text}</ReactMarkdown>
                   : msg.text}
               </div>
             </div>
