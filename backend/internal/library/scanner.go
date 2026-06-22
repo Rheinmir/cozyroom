@@ -287,6 +287,8 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 			_ = os.WriteFile(dest, m.Picture().Data, 0644)
 		}
 		coverPath = "/api/covers/" + albumID
+	} else if m != nil {
+		log.Printf("scanner: no ID3 cover for %s", path)
 	}
 
 	if _, err := tx.Exec(

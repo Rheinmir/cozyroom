@@ -97,6 +97,7 @@ Skills managed globally via `npx skills`. Use `Skill` tool to invoke.
 | `join-project` | Orient nhanh vào project đã có llmwiki |
 | `orca-workflow` | Orchestrating multi-agent tasks |
 | `orca-onboard` | Onboarding new agent to Orca |
+| `deploy-k8s-frontend` | Deploy frontend: build Docker → push registry → kubectl rollout → verify |
 
 ## Invocation rules
 - New file in `llmwiki/raw/` → invoke `ingest` immediately

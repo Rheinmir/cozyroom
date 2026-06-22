@@ -410,7 +410,7 @@ export default function SearchPage() {
               <Link key={al.id} to={`/album/${al.id}`} className="album-card">
                 <div className="album-cover">
                   {al.cover_url
-                    ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" />
+                    ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     : <span className="no-cover">♪</span>
                   }
                 </div>

@@ -53,9 +53,21 @@ var resizeWhitelist = map[int]bool{80: true, 200: true, 300: true, 400: true, 51
 // serveResizedImage serves id+".jpg" from imgDir, optionally resizing to ?w=N.
 // Resized copies are cached in imgDir/resized/. Always sets a 7-day Cache-Control.
 // singleflight prevents concurrent requests from writing the same resized file simultaneously.
+func serveCoverPlaceholder(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#1e1e2e"/></svg>`))
+}
+
 func serveResizedImage(w http.ResponseWriter, r *http.Request, imgDir, id string) {
 	filePath := filepath.Join(imgDir, id+".jpg")
 	w.Header().Set("Cache-Control", "public, max-age=604800")
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		serveCoverPlaceholder(w)
+		return
+	}
 
 	width, err := strconv.Atoi(r.URL.Query().Get("w"))
 	if err != nil || !resizeWhitelist[width] {
@@ -312,8 +324,9 @@ func (h *handlers) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ?q=320 → transcode lossless to 320 kbps MP3 on the fly via ffmpeg
-	if r.URL.Query().Get("q") == "320" && transcode.IsLossless(filePath) {
+	// ?q=320 → transcode to 320 kbps MP3 via ffmpeg (all formats, not just lossless —
+	// ensures browsers get valid MP3 even for unusual/corrupt MP3 encodings)
+	if r.URL.Query().Get("q") == "320" {
 		w.Header().Set("Content-Type", "audio/mpeg")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("X-Accel-Buffering", "no")

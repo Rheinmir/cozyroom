@@ -65,19 +65,7 @@ Expected: `deployment "frontend" successfully rolled out`
 - Backend deploy: build `Dockerfile` (Go binary), push `cozyroom-backend:k8s`, restart `deployment/backend`
 - Full cluster deploy: build cả backend + frontend + cloak-proxy
 
-## Bugs distilled (2026-06-11)
-
-Hai bugs đã fix trước khi distill skill này:
-
-### 1. Player progress bar / time 0:00 (PlayerContext.tsx)
-**Root cause:** `trackRef.current` sync async qua `useEffect` → window stale khi YT↔local transition → `getActive()` trả wrong element → `timeupdate`/`loadedmetadata` bị filter → progress/duration = 0  
-**Fix:** Thêm `trackRef.current = t` synchronously TRƯỚC `setTrack(t)` trong `startTrack`; fallback `setDuration` trong `onTime`
-
-### 2. YouTube cover không retry (handler.go + RadialNav.tsx + PlayerBar.tsx)
-**Root cause:** Backend trả HTTP 200 + 1×1 JPEG khi thumbnail fetch fail → `img.onerror` không fire → không retry  
-**Fix:** Backend trả HTTP 503; frontend `onError` retry tối đa 4 lần với delay tăng dần (2s, 4s, 6s, 8s)
-
 ## Origin
 
 - Distilled: 2026-06-11
-- Session: design feedback `/album/86b29b373e3a839f`
+- Cleaned: 2026-06-22 (bugs moved to wiki)

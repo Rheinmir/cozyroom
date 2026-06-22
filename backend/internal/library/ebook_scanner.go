@@ -85,6 +85,8 @@ func ScanEbooks(db *sql.DB, ebooksDir, coversDir string) error {
 				if _, err := os.Stat(dest); os.IsNotExist(err) {
 					if err := extractPdfCover(path, dest); err == nil {
 						coverURL = "/api/ebook-covers/" + ebookID
+					} else {
+						log.Printf("ebook scanner: pdftoppm failed for %s: %v", path, err)
 					}
 				} else {
 					coverURL = "/api/ebook-covers/" + ebookID

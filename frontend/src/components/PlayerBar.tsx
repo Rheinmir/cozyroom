@@ -235,7 +235,7 @@ export default function PlayerBar() {
           {/* ── Unified Now Playing overlay (desktop + mobile) ── */}
           <div className={'npo' + (open ? ' npo--open' : '') + (ctrlsVisible ? ' npo--ctrls-active' : '')} onTouchStart={showCtrls}>
             <div className="npo-bg">
-              <img src={track.album_id.startsWith('yt:') ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg` : `/api/covers/${track.album_id}?w=512`} alt="" key={track.id} />
+              <img src={track.album_id.startsWith('yt:') ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg` : `/api/covers/${track.album_id}?w=512`} alt="" key={track.id} onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
               <div 
                 className="npo-bg-overlay" 
                 style={{ background: `linear-gradient(160deg, ${coverColors[0]}66 0%, #121212f2 80%)` }} 
