@@ -73,6 +73,15 @@ func buildSlots(geminiKeys []string, openRouterKey string) []aiSlot {
 }
 
 func EnrichWithAI(db *sql.DB, geminiKeys []string, openRouterKey string) {
+	enrich(db, geminiKeys, openRouterKey, false)
+}
+
+// EnrichWithAIForce bypasses the advisory lock (for manual trigger when lock is stuck).
+func EnrichWithAIForce(db *sql.DB, geminiKeys []string, openRouterKey string) {
+	enrich(db, geminiKeys, openRouterKey, true)
+}
+
+func enrich(db *sql.DB, geminiKeys []string, openRouterKey string, force bool) {
 	slots := buildSlots(geminiKeys, openRouterKey)
 	if len(slots) == 0 {
 		log.Printf("aitrends: no API keys configured")
@@ -80,17 +89,19 @@ func EnrichWithAI(db *sql.DB, geminiKeys []string, openRouterKey string) {
 	}
 	slotIdx := 0
 
-	// T1: advisory lock — only 1 pod enriches at a time; auto-released on pod crash
-	var locked bool
-	if err := db.QueryRow(`SELECT pg_try_advisory_lock(hashtext('ai-enrich')::bigint)`).Scan(&locked); err != nil {
-		log.Printf("aitrends: advisory lock query: %v — skipping", err)
-		return
+	if !force {
+		// advisory lock — only 1 pod enriches at a time; auto-released on pod crash
+		var locked bool
+		if err := db.QueryRow(`SELECT pg_try_advisory_lock(hashtext('ai-enrich')::bigint)`).Scan(&locked); err != nil {
+			log.Printf("aitrends: advisory lock query: %v — skipping", err)
+			return
+		}
+		if !locked {
+			log.Printf("aitrends: lock not acquired (another pod running) — skipping")
+			return
+		}
+		defer func() { db.QueryRow(`SELECT pg_advisory_unlock(hashtext('ai-enrich')::bigint)`).Scan(new(bool)) }()
 	}
-	if !locked {
-		log.Printf("aitrends: lock not acquired (another pod running) — skipping")
-		return
-	}
-	defer func() { db.QueryRow(`SELECT pg_advisory_unlock(hashtext('ai-enrich')::bigint)`).Scan(new(bool)) }()
 
 	today := time.Now().Format("2006-01-02")
 

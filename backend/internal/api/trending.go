@@ -135,6 +135,13 @@ func (h *TrendingHandlers) refresh(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status":"started"}`))
 }
 
+func (h *TrendingHandlers) forceEnrich(w http.ResponseWriter, r *http.Request) {
+	go enricher.EnrichWithAIForce(h.db, h.geminiKeys, h.openRouterKey)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte(`{"status":"started"}`))
+}
+
 func (h *TrendingHandlers) repoHistory(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {

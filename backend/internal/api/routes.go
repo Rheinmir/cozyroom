@@ -221,6 +221,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/trending/dates",     th.listDates)
 	mux.HandleFunc("GET /api/trending/history",   th.repoHistory)
 	mux.HandleFunc("POST /api/trending/refresh",  th.refresh)
+	mux.HandleFunc("POST /api/trending/enrich",   th.forceEnrich)
 
 	yh := &YouTubeHandlers{db: d.ScanDB, musicPath: d.MusicPath, ytDownloadPath: d.YtDownloadPath, coversDir: d.CoversDir, cloakProxyURL: d.CloakProxyURL}
 	mux.HandleFunc("GET /api/youtube/search", yh.search)
