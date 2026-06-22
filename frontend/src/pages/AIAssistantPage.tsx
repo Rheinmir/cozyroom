@@ -548,8 +548,8 @@ export default function AIAssistantPage() {
           <div key={msg.id} className={`ai-bubble-group ai-bubble-group--${msg.role}`}>
             {msg.role === 'assistant' && (
               <div className="ai-avatar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#000000">
+                  <path d="M5 4h6c4.42 0 7 2.69 7 8s-2.58 8-7 8H5V4zm3 3v10h3c2.76 0 4-1.49 4-5s-1.24-5-4-5H8z"/>
                 </svg>
               </div>
             )}
@@ -599,11 +599,24 @@ export default function AIAssistantPage() {
           </div>
         ))}
         {loading && (
-          <div className="ai-bubble ai-bubble--assistant">
-            {statusText
-              ? <span className="ai-status-text">{statusText}</span>
-              : <span className="ai-typing">···</span>
-            }
+          <div className="ai-bubble-group ai-bubble-group--assistant">
+            <div className="ai-avatar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#000000">
+                <path d="M5 4h6c4.42 0 7 2.69 7 8s-2.58 8-7 8H5V4zm3 3v10h3c2.76 0 4-1.49 4-5s-1.24-5-4-5H8z"/>
+              </svg>
+            </div>
+            <div className="ai-bubble-inner">
+              <div className="ai-bubble ai-bubble--assistant">
+                <div className="ai-typing-indicator">
+                  <span className="ai-typing-dots">
+                    <span className="ai-dot ai-dot--1" />
+                    <span className="ai-dot ai-dot--2" />
+                    <span className="ai-dot ai-dot--3" />
+                  </span>
+                  <span>{statusText || 'đang soạn gợi ý…'}</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         <div ref={bottomRef} />
