@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [draft/orca/230626-ai-input-ux.md](draft/orca/230626-ai-input-ux.md) | draft | textarea vertical centering + multiline toggle; Tools/Analytics vào ai-controls-row |
 | [draft/orca/230626-sounds-serving-hostpath.md](draft/orca/230626-sounds-serving-hostpath.md) | draft | Move Apple sound files out of git+image to k8s hostPath /mnt/f/sounds/ambient/ |
 | [sources/draft/230626-sync-template.md](sources/draft/230626-sync-template.md) | draft | 2026-06-23 |
 | [draft/orca/230626-k8s-dns-resilience.md](draft/orca/230626-k8s-dns-resilience.md) | draft | Fix k8s DNS resilience: nginx runtime resolver, CoreDNS forwarders, cloudflared pod cleanup |

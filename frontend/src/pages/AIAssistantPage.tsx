@@ -296,9 +296,9 @@ function AiTable({ node }: { node: any }) {
             onClick={() => setExpanded(isOpen ? null : i)}
           >
             <div className="ai-lb-row-main">
-              <span className="ai-lb-rank">{i + 1}</span>
               <div className="ai-lb-icon">
                 <div className="ai-lb-icon-bg" style={{ background: AI_RANK_GRADIENTS[i % AI_RANK_GRADIENTS.length] }} />
+                <span className="ai-lb-rank">{i + 1}</span>
               </div>
               <div className="ai-lb-body">
                 <div className="ai-lb-name">{name}</div>
@@ -489,6 +489,7 @@ export default function AIAssistantPage() {
   const lastUserTextRef = useRef<string>('')
   const [slashSuggestions, setSlashSuggestions] = useState<typeof MCP_TOOLS>([])
   const [slashIdx, setSlashIdx] = useState(0)
+  const [multiline, setMultiline] = useState(false)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -655,6 +656,7 @@ export default function AIAssistantPage() {
     const text = input.trim()
     if (!text || loading) return
     setInput('')
+    setMultiline(false)
     sendMessage(text)
   }
 
@@ -753,6 +755,10 @@ export default function AIAssistantPage() {
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      setMultiline(true)
+      return
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       send()
@@ -763,10 +769,6 @@ export default function AIAssistantPage() {
     <div className="ai-page">
       <div className="library-tag">TRỢ LÝ</div>
       <h1 className="page-title" style={{ marginBottom: 8 }}>Trợ lý AI</h1>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '0 8px 4px' }}>
-        <Link to="/tools" style={{ fontSize: 11, opacity: 0.45, color: 'inherit', textDecoration: 'none' }}>🛠 Tools</Link>
-        <Link to="/ai/stats" style={{ fontSize: 11, opacity: 0.45, color: 'inherit', textDecoration: 'none' }}>📊 Analytics</Link>
-      </div>
       <div className="ai-messages">
         {messages.map(msg => (
           <div key={msg.id} className={`ai-bubble-group ai-bubble-group--${msg.role}`}>
@@ -857,6 +859,8 @@ export default function AIAssistantPage() {
           onChange={e => setModel(e.target.value)}
           disabled={loading}
         />
+        <Link to="/tools" style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>🛠</Link>
+        <Link to="/ai/stats" style={{ fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>📊</Link>
       </div>
 
       {memoryOpen && (
@@ -951,8 +955,8 @@ export default function AIAssistantPage() {
         })()}
         <textarea
           ref={inputRef}
-          className="ai-input"
-          rows={2}
+          className={`ai-input${multiline ? ' ai-input--multiline' : ''}`}
+          rows={multiline ? 3 : 1}
           placeholder={t('ai.placeholder')}
           value={input}
           onChange={e => {

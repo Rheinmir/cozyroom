@@ -243,7 +243,7 @@
 .ai-lb-row:hover { background: rgba(255,255,255,0.05); }
 .ai-lb-row--open { background: rgba(255,255,255,0.04); box-shadow: rgba(255,255,255,0.1) 0px 0px 0px 1px inset; }
 .ai-lb-row-main { display: flex; align-items: center; gap: 18px; width: 100%; }
-.ai-lb-rank { font-family: 'Geist Mono', 'Courier New', monospace; font-size: 18px; font-weight: 500; width: 28px; min-width: 28px; text-align: center; color: rgb(196,165,255); flex-shrink: 0; }
+.ai-lb-rank { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; font-family: 'Geist Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.95); text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 .ai-lb-icon { position: relative; width: 48px; height: 48px; min-width: 48px; border-radius: 11px; overflow: hidden; flex-shrink: 0; box-shadow: rgba(255,255,255,0.1) 0px 0px 0px 1px inset; }
 .ai-lb-icon-bg { position: absolute; inset: 0; }
 .ai-lb-body { flex: 1; min-width: 0; }
