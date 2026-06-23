@@ -98,8 +98,10 @@ Skills managed globally via `npx skills`. Use `Skill` tool to invoke.
 | `orca-workflow` | Orchestrating multi-agent tasks |
 | `orca-onboard` | Onboarding new agent to Orca |
 | `deploy-k8s-frontend` | Deploy frontend: build Docker → push registry → kubectl rollout → verify |
+| `frontend-index` | Trước mọi refactor frontend — quét 37 components, tạo map exports/imports/props/used-by |
 
 ## Invocation rules
 - New file in `llmwiki/raw/` → invoke `ingest` immediately
 - New feature request → invoke `propose` first, stop, wait for approval
 - Edit to shared code → invoke `impact-check` then `safe-change`
+- Refactor / rename / move bất kỳ thứ gì trong `frontend/src/` → invoke `frontend-index` trước

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>240626 — frontend-component-index skill</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --border: #2d3154;
+    --indigo: #6366f1;
+    --emerald: #10b981;
+    --amber: #f59e0b;
+    --rose: #f43f5e;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --badge-h: 20px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif; padding: 32px; }
+
+  h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #f8fafc; }
+  .subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 32px; }
+
+  .diagrams { display: flex; flex-direction: column; gap: 48px; }
+  .diagram-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .diagram-box h2 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+  .badge { display: inline-flex; align-items: center; height: var(--badge-h); padding: 0 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+  .badge-claude { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+  .badge-task { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.35); font-size: 0.65rem; }
+
+  /* Sequence diagram */
+  .seq-wrap { overflow-x: auto; margin-top: 20px; }
+  svg.seq { min-width: 700px; }
+
+  /* Controls */
+  .controls { margin-top: 14px; display: flex; gap: 8px; align-items: center; }
+  button { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 5px 14px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; transition: border-color 0.2s; }
+  button:hover { border-color: var(--indigo); }
+  .speed-label { font-size: 0.75rem; color: var(--muted); }
+
+  /* Legend */
+  .legend { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>240626 — skill: frontend-component-index</h1>
+<p class="subtitle">Propose · 4 tasks · Agent: Claude main · 2026-06-24</p>
+
+<div class="diagrams">
+
+  <!-- TASK 1 -->
+  <div class="diagram-box" id="box1">
+    <h2>Task 1 — Viết <code>index-frontend.py</code> <span class="badge badge-claude">Claude main</span> <span class="badge badge-task">T1</span></h2>
+    <div class="seq-wrap">
+      <svg class="seq" id="seq1" height="320" viewBox="0 0 800 320"></svg>
+    </div>
+    <div class="controls">
+      <button onclick="toggleAnim('seq1','btn1')">⏸ Pause</button><span id="btn1"></span>
+      <span class="speed-label">Click diagram to pause/resume</span>
+    </div>
+  </div>
+
+  <!-- TASK 2 -->
+  <div class="diagram-box" id="box2">
+    <h2>Task 2 — Viết <code>SKILL.md</code> cho skill <code>frontend-index</code> <span class="badge badge-claude">Claude main</span> <span class="badge badge-task">T2</span></h2>
+    <div class="seq-wrap">
+      <svg class="seq" id="seq2" height="280" viewBox="0 0 800 280"></svg>
+    </div>
+    <div class="controls">
+      <button onclick="toggleAnim('seq2','btn2')">⏸ Pause</button><span id="btn2"></span>
+    </div>
+  </div>
+
+  <!-- TASK 3 -->
+  <div class="diagram-box" id="box3">
+    <h2>Task 3 — Chạy script → tạo baseline <code>frontend-component-map.md</code> <span class="badge badge-claude">Claude main</span> <span class="badge badge-task">T3</span></h2>
+    <div class="seq-wrap">
+      <svg class="seq" id="seq3" height="300" viewBox="0 0 800 300"></svg>
+    </div>
+    <div class="controls">
+      <button onclick="toggleAnim('seq3','btn3')">⏸ Pause</button><span id="btn3"></span>
+    </div>
+  </div>
+
+  <!-- TASK 4 -->
+  <div class="diagram-box" id="box4">
+    <h2>Task 4 — Đăng ký skill trong CLAUDE.md + README <span class="badge badge-claude">Claude main</span> <span class="badge badge-task">T4</span></h2>
+    <div class="seq-wrap">
+      <svg class="seq" id="seq4" height="240" viewBox="0 0 800 240"></svg>
+    </div>
+    <div class="controls">
+      <button onclick="toggleAnim('seq4','btn4')">⏸ Pause</button><span id="btn4"></span>
+    </div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div> Component có sẵn</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Thêm / sửa mới</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Trigger / invoke</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f43f5e"></div> Nhánh fail / chặn</div>
+</div>
+
+<script>
+const C = { indigo:'#6366f1', emerald:'#10b981', amber:'#f59e0b', rose:'#f43f5e', muted:'#475569', text:'#e2e8f0', bg:'#1a1d2e' };
+
+function makeSVG(id, lifelines, messages) {
+  const svg = document.getElementById(id);
+  const W = 800, laneW = Math.floor(W / lifelines.length);
+  const laneX = lifelines.map((_,i) => laneW/2 + i*laneW);
+  const headerY = 30, lineStart = 55, msgGap = 42;
+  const svgH = parseInt(svg.getAttribute('height'));
+
+  // Draw lifeline headers
+  lifelines.forEach((ll, i) => {
+    const x = laneX[i];
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x-60); rect.setAttribute('y', 6);
+    rect.setAttribute('width', 120); rect.setAttribute('height', 28);
+    rect.setAttribute('rx', 6);
+    rect.setAttribute('fill', ll.color+'22');
+    rect.setAttribute('stroke', ll.color);
+    rect.setAttribute('stroke-width', 1.5);
+    svg.appendChild(rect);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', x); txt.setAttribute('y', 24);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size','11'); txt.setAttribute('fill', ll.color);
+    txt.setAttribute('font-weight','600');
+    txt.textContent = ll.name;
+    svg.appendChild(txt);
+    // vertical line
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', x); line.setAttribute('y1', lineStart);
+    line.setAttribute('x2', x); line.setAttribute('y2', svgH-10);
+    line.setAttribute('stroke', ll.color); line.setAttribute('stroke-width', 1);
+    line.setAttribute('stroke-dasharray','4 3'); line.setAttribute('opacity','0.35');
+    svg.appendChild(line);
+  });
+
+  // Draw messages (animated)
+  messages.forEach((msg, idx) => {
+    const y = lineStart + (idx+1)*msgGap;
+    const x1 = laneX[msg.from], x2 = laneX[msg.to];
+    const dir = x2 > x1 ? 1 : -1;
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('opacity','0');
+    g.dataset.idx = idx;
+
+    // arrow line
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    const pad = 4;
+    line.setAttribute('x1', x1 + dir*pad); line.setAttribute('y1', y);
+    line.setAttribute('x2', x2 - dir*12); line.setAttribute('y2', y);
+    line.setAttribute('stroke', msg.color || C.indigo);
+    line.setAttribute('stroke-width', 1.5);
+    if(msg.dashed) line.setAttribute('stroke-dasharray','4 3');
+    g.appendChild(line);
+
+    // arrowhead
+    const arr = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    const ax = x2 - dir*12, ay = y;
+    arr.setAttribute('points', `${ax},${ay-4} ${ax+dir*10},${ay} ${ax},${ay+4}`);
+    arr.setAttribute('fill', msg.color || C.indigo);
+    g.appendChild(arr);
+
+    // label
+    const lx = (x1+x2)/2, ly = y-6;
+    const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    const approxW = Math.min(msg.label.length*6.5 + 12, 200);
+    bg.setAttribute('x', lx - approxW/2); bg.setAttribute('y', ly-12);
+    bg.setAttribute('width', approxW); bg.setAttribute('height', 16);
+    bg.setAttribute('rx', 3); bg.setAttribute('fill', C.bg); bg.setAttribute('opacity','0.85');
+    g.appendChild(bg);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', lx); txt.setAttribute('y', ly);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size','10'); txt.setAttribute('fill', C.text);
+    txt.textContent = msg.label;
+    g.appendChild(txt);
+
+    svg.appendChild(g);
+  });
+
+  return { svg, count: messages.length };
+}
+
+// ── Seq 1: index-frontend.py ──────────────────────────────────────
+const s1 = makeSVG('seq1',
+  [
+    {name:'Claude main', color: C.indigo},
+    {name:'frontend/src/', color: C.emerald},
+    {name:'index-frontend.py', color: C.emerald},
+    {name:'component-map.md', color: C.amber},
+  ],
+  [
+    {from:0,to:1, label:'glob **/*.tsx|ts', color:C.indigo},
+    {from:1,to:0, label:'37 file paths', color:C.emerald, dashed:true},
+    {from:0,to:2, label:'create index-frontend.py', color:C.emerald},
+    {from:2,to:1, label:'parse exports, imports, props', color:C.emerald},
+    {from:1,to:2, label:'metadata per file', color:C.emerald, dashed:true},
+    {from:2,to:0, label:'script ready', color:C.emerald, dashed:true},
+  ]
+);
+
+// ── Seq 2: SKILL.md ───────────────────────────────────────────────
+const s2 = makeSVG('seq2',
+  [
+    {name:'Claude main', color: C.indigo},
+    {name:'skills/frontend-index/', color: C.emerald},
+    {name:'CLAUDE.md', color: C.amber},
+  ],
+  [
+    {from:0,to:1, label:'create SKILL.md (triggers, steps)', color:C.emerald},
+    {from:1,to:0, label:'skill definition written', color:C.emerald, dashed:true},
+    {from:0,to:2, label:'add row frontend-index to Skills table', color:C.amber},
+    {from:2,to:0, label:'registered', color:C.amber, dashed:true},
+  ]
+);
+
+// ── Seq 3: baseline map ───────────────────────────────────────────
+const s3 = makeSVG('seq3',
+  [
+    {name:'Claude main', color: C.indigo},
+    {name:'index-frontend.py', color: C.emerald},
+    {name:'frontend/src/', color: C.indigo},
+    {name:'component-map.md', color: C.amber},
+  ],
+  [
+    {from:0,to:1, label:'python index-frontend.py', color:C.amber},
+    {from:1,to:2, label:'scan 37 files', color:C.emerald},
+    {from:2,to:1, label:'exports + imports + props', color:C.emerald, dashed:true},
+    {from:1,to:3, label:'write baseline map', color:C.emerald},
+    {from:3,to:0, label:'37 components mapped', color:C.amber, dashed:true},
+  ]
+);
+
+// ── Seq 4: register ───────────────────────────────────────────────
+const s4 = makeSVG('seq4',
+  [
+    {name:'Claude main', color: C.indigo},
+    {name:'CLAUDE.md', color: C.amber},
+    {name:'llmwiki README', color: C.amber},
+  ],
+  [
+    {from:0,to:1, label:'append frontend-index row to Skills table', color:C.amber},
+    {from:0,to:2, label:'note: frontend-index skill added', color:C.amber},
+    {from:1,to:0, label:'done', color:C.amber, dashed:true},
+  ]
+);
+
+// ── Animation engine ─────────────────────────────────────────────
+const anims = {};
+function startAnim(id) {
+  const svg = document.getElementById(id);
+  const msgs = svg.querySelectorAll('g[data-idx]');
+  if(!msgs.length) return;
+  let current = 0, paused = false;
+  function showNext() {
+    if(paused) return;
+    if(current < msgs.length) {
+      msgs[current].setAttribute('opacity','1');
+      current++;
+      setTimeout(showNext, 700);
+    } else {
+      // loop: reset after delay
+      setTimeout(() => {
+        msgs.forEach(m => m.setAttribute('opacity','0'));
+        current = 0;
+        setTimeout(showNext, 400);
+      }, 2200);
+    }
+  }
+  showNext();
+  anims[id] = { paused: false, toggle: () => { paused = !paused; if(!paused) showNext(); } };
+}
+
+function toggleAnim(id, btnId) {
+  if(!anims[id]) return;
+  anims[id].toggle();
+  const btn = document.getElementById(btnId) || document.querySelector(`[onclick*="${btnId}"]`);
+}
+
+// click on svg to pause
+['seq1','seq2','seq3','seq4'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () => toggleAnim(id));
+  startAnim(id);
+});
+</script>
+</body>
+</html>

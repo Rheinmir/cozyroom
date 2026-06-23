@@ -125,3 +125,6 @@
 | [draft/orca/220626-audit-fetch-cover.md](draft/orca/220626-audit-fetch-cover.md) | draft | Propose: fix 7 backend + 4 frontend silent fail points cho cover art missing bug |
 | [draft/orca/220626-trending-ai-dedup-lock.md](draft/orca/220626-trending-ai-dedup-lock.md) | draft | Fix: pg_advisory_lock + early-exit guard — chặn 3 pod cùng chạy EnrichWithAI và over quota |
 | [draft/orca/230626-sounds-serving-hostpath.md](draft/orca/230626-sounds-serving-hostpath.md) | draft | Propose: move ambient sounds ra khỏi image + git, dùng hostPath mount giống music/films |
+| [draft/orca/240626-frontend-component-index-skill.md](draft/orca/240626-frontend-component-index-skill.md) | draft | Propose: skill frontend-index — quét 37 components, tạo map exports/imports/props để refactor không bao giờ bỏ sót |
+| [concepts/frontend-component-map.md](concepts/frontend-component-map.md) | concept | Map toàn bộ 36 components frontend: exports, imports, props, used-by — auto-generated bởi index-frontend.py |
+| [draft/orca/240626-frontend-index-audit.md](draft/orca/240626-frontend-index-audit.md) | draft | Audit frontend-index skill: 3 bugs — path normalize (HIGH), used-by broken cross-dir, duplicate imports |

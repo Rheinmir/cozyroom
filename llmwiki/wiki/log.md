@@ -1126,3 +1126,25 @@
 
 ## 2026-06-23 — install-harness — mode=migrate
 - Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, health-check, evals)
+## 2026-06-24 — orca-workflow — frontend-component-index-skill
+- Tạo skill `frontend-index`: script `harness/scripts/index-frontend.py`, command `.claude/commands/frontend-index.md`
+- Chạy baseline scan: 36 files → `llmwiki/wiki/concepts/frontend-component-map.md`
+- Đăng ký invocation rule trong CLAUDE.md
+
+
+## 2026-06-24 — harness-update + sync-template — migrate/update xong, sync hoàn tất
+
+- **harness-update**: mode=migrate (bundle = project) — L0–L4 cài/sync
+  - settings.json MERGE (backup .bak.*)
+  - Harness tự kiểm: ⛔×3 BỊ CHẶN ✓
+  - pre-commit: chưa cài — TODO user
+- **sync-template --full --strategy pull**: downstream từ Rheinmir/setup@orca (v1.2.0)
+  - same=30, clean-update=0, kept-local=27, conflict=0
+  - OKF migrated: 0
+  - 27 file custom giữ local, 11 conflict đã force pull remote
+## 2026-06-24 — orca-workflow — frontend-index-audit
+- Audit: tìm 50 unnormalized paths, 10 duplicate import lines, used-by broken cho cross-dir
+- Fix: .resolve() trong parse_file, dedup imports, --verify mode
+- PlayerContext.used_by: 1 → 9 sau fix; api.ts.used_by: 1 → 17
+- Wire R8 frontend-map-verify vào .pre-commit-config.yaml
+
