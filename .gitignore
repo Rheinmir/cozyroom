@@ -31,6 +31,10 @@ backend/*.exe
 .DS_Store
 Thumbs.db
 
+# ambient sounds — large binary files, served via hostPath in k8s
+backend/sounds/ambient/*.m4a
+backend/sounds/ambient/*.mp3
+
 # design snapshots
 cozyroom-ui-snapshot.html
 cozyroom-ui-snapshot.zip

@@ -19,6 +19,14 @@
 - Infinite loop playback via AudioBufferSourceNode.loop + <audio loop>; stops only on explicit pause/switch
 - vite.config.ts: raised maximumFileSizeToCacheInBytes to 4MB (pre-existing bundle size limit)
 
+## 2026-06-23 — orca-workflow — sounds-serving-hostpath (done)
+
+- T1: 8 .m4a files copied to /mnt/f/sounds/ambient/ on k8s node
+- T2: backend Deployment patched — hostPath volume + AMBIENT_SOUNDS_DIR=/app/sounds/ambient
+- T3: git rm --cached 13 sound files, .gitignore updated, Dockerfile COPY sounds removed
+- T4: verified 206 Partial Content Range streaming from hostPath; API returns 8 sounds
+- Backend image: 499MB → ~280MB after next rebuild
+
 ## 2026-06-23 — orca-workflow — k8s-dns-resilience (proposed)
 
 - 3 tasks: nginx.conf runtime DNS fix, CoreDNS upstream forwarders, cloudflared stuck pods cleanup

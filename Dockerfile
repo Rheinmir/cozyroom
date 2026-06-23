@@ -12,7 +12,6 @@ RUN apk add --no-cache ffmpeg poppler-utils wget ca-certificates python3 tessera
 WORKDIR /app
 COPY --from=builder /app/server .
 COPY --from=builder /app/mcp-server .
-COPY --from=builder /app/sounds ./sounds
 RUN mkdir -p data
 EXPOSE 8080
 CMD ["./server"]

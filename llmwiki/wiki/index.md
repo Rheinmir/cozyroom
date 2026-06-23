@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [draft/orca/230626-sounds-serving-hostpath.md](draft/orca/230626-sounds-serving-hostpath.md) | draft | Move Apple sound files out of git+image to k8s hostPath /mnt/f/sounds/ambient/ |
 | [sources/draft/230626-sync-template.md](sources/draft/230626-sync-template.md) | draft | 2026-06-23 |
 | [draft/orca/230626-k8s-dns-resilience.md](draft/orca/230626-k8s-dns-resilience.md) | draft | Fix k8s DNS resilience: nginx runtime resolver, CoreDNS forwarders, cloudflared pod cleanup |
 | [draft/orca/230626-background-sounds.md](draft/orca/230626-background-sounds.md) | draft | Background Sounds feature: macOS-style ambient sounds + RadialNav quick access |
@@ -122,3 +123,4 @@
 | [draft/audit-fetch-cover.md](draft/audit-fetch-cover.md) | draft | Audit cách fetch ảnh bìa trong app + rủi ro mất ảnh phía client |
 | [draft/orca/220626-audit-fetch-cover.md](draft/orca/220626-audit-fetch-cover.md) | draft | Propose: fix 7 backend + 4 frontend silent fail points cho cover art missing bug |
 | [draft/orca/220626-trending-ai-dedup-lock.md](draft/orca/220626-trending-ai-dedup-lock.md) | draft | Fix: pg_advisory_lock + early-exit guard — chặn 3 pod cùng chạy EnrichWithAI và over quota |
+| [draft/orca/230626-sounds-serving-hostpath.md](draft/orca/230626-sounds-serving-hostpath.md) | draft | Propose: move ambient sounds ra khỏi image + git, dùng hostPath mount giống music/films |
