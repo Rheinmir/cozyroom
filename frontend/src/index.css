@@ -1132,6 +1132,29 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   background: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
+
+.bgsounds-backdrop { display: none; }
+
+/* ── Mobile: centered overlay with backdrop ─────────────── */
+@media (max-width: 640px) {
+  .bgsounds-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 899;
+  }
+  .bgsounds-panel {
+    bottom: auto;
+    right: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 48px);
+    max-width: 320px;
+    z-index: 900;
+  }
+}
 /* ───────────────────────────────────────────────────────── */
 
 .player-progress {

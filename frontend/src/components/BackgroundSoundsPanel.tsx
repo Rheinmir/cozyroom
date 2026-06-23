@@ -20,6 +20,8 @@ export default function BackgroundSoundsPanel() {
   if (!panelOpen) return null
 
   return (
+    <>
+    <div className="bgsounds-backdrop" onClick={() => setPanelOpen(false)} />
     <div className="bgsounds-panel" ref={panelRef}>
       <div className="bgsounds-header">
         <span className="bgsounds-icon">
@@ -61,5 +63,6 @@ export default function BackgroundSoundsPanel() {
         </svg>
       </div>
     </div>
+    </>
   )
 }

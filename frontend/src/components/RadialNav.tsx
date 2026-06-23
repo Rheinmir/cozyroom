@@ -416,7 +416,7 @@ export default function RadialNav() {
     { route: '/',          label: t('nav.artists'),                     icon: <IcHome />,     r: 86 },
     { route: '/ai',        label: 'AI',                                 icon: <IcAI />,       r: 80 },
     { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist />, r: 92 },
-    { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, r: bgPlaying ? 88 : 84, onAction: () => setBgPanelOpen(true) },
+    { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, r: bgPlaying ? 88 : 84, onAction: () => { setBgPanelOpen(true); setOpen(false) } },
     ...(track ? [
       { route: 'star-track',   label: isStarred ? t('nav.unstar', { defaultValue: 'Bỏ sao' }) : t('nav.star', { defaultValue: 'Yêu thích' }), icon: isStarred ? <IcStar /> : <IcStarBorder />, r: 84, onAction: handleStarToggle },
       { route: 'playlist-add', label: t('nav.add_to_playlist', { defaultValue: 'Thêm vào' }), icon: <IcPlaylistAdd />, r: 88, onAction: () => setPlaylistPickerMode(true) },
