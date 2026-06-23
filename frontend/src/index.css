@@ -1047,9 +1047,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 /* ── Background Sounds Panel ─────────────────────────────── */
 .bgsounds-panel {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: 0;
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
   width: 220px;
   background: rgba(28, 28, 30, 0.94);
   backdrop-filter: blur(20px) saturate(180%);

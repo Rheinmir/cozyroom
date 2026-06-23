@@ -1,5 +1,18 @@
 # Operation Log
 
+## 2026-06-23 — harness-update — migrate/update xong, nợ đã backfill: 1 file
+
+- Mode: migrate (project chính là bundle)
+- Debt: 1 file backfilled — `llmwiki/wiki/draft/audit-fetch-cover.md` (thiếu `## Origin`)
+- settings.json: MERGE (backup .bak.*)
+- Harness tự kiểm: ⛔×3 BỊ CHẶN ✓
+
+## 2026-06-23 — sync-template — sync-template
+
+- Downstream sync from Rheinmir/setup@orca (template v1.2.0)
+- same=26, new=0, clean-update=0, kept-local=22, conflict=0
+- No OKF migrations needed; Windows Unicode fix: PYTHONIOENCODING=utf-8
+
 ## 2026-06-23 — orca-workflow — background-sounds (done)
 
 - 4 tasks: Go ambient-sounds API, BgSoundsContext hook (WebAudio noise + file loop), BackgroundSoundsPanel UI, PlayerBar+RadialNav integration
@@ -1093,3 +1106,15 @@
 - 2026-06-19 23:56 — session `7c2c3cdd` — 60 tool calls — files: .pre-commit-config.yaml, 190626-cdn-explainer-docs.md, 190626-cdn-explainer.html, 190626-latency-throughput-dashboard.html, 190626-latency-throughput-dashboard.md, 190626-onboard-cozyroom.html, 190626-onboard-cozyroom.md, 190626-search-perf-artists-load.md …
 ## 2026-06-21 — orca-workflow — design-softness-polish — propose created: 5 CSS fixes to align live app with standalone reference
 ## 2026-06-21 — orca-workflow — design-softness-polish — implemented: T1-T5 done (index.css + 5 page components)
+-  sync-template --full ← Rheinmir/setup@orca (v1.2.0): +18 pulled, OKF 0 migrated, installed 14 skill, conflict 21
+-  sync-template --full ← Rheinmir/setup@orca (v1.2.0): +0 pulled, OKF 0 migrated, installed 0 skill, conflict 0
+
+## 2026-06-23 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, health-check, evals)
+- ⚠ CÓ NỢ wiki (thiếu Origin / index lệch) — backfill trước khi tin Stop hook
+
+## 2026-06-23 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, health-check, evals)
+
+## 2026-06-23 — install-harness — mode=migrate
+- Cài harness L0–L4 (validators, hooks, pre-commit, wiki-health, health-check, evals)

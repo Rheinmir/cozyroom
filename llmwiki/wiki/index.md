@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [sources/draft/230626-sync-template.md](sources/draft/230626-sync-template.md) | draft | 2026-06-23 |
 | [draft/orca/230626-k8s-dns-resilience.md](draft/orca/230626-k8s-dns-resilience.md) | draft | Fix k8s DNS resilience: nginx runtime resolver, CoreDNS forwarders, cloudflared pod cleanup |
 | [draft/orca/230626-background-sounds.md](draft/orca/230626-background-sounds.md) | draft | Background Sounds feature: macOS-style ambient sounds + RadialNav quick access |
 | [sources/project-requirements.md](sources/project-requirements.md) | source | Business goals, user workflows, and constraints for Cozyroom |
