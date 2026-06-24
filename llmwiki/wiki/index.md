@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [draft/orca/240626-bgsounds-glass.md](draft/orca/240626-bgsounds-glass.md) | draft | Glassmorphism cho bgsounds-panel: gradient bg, blur, sheen, icon gradient |
 | [draft/orca/230626-ai-input-ux.md](draft/orca/230626-ai-input-ux.md) | draft | textarea vertical centering + multiline toggle; Tools/Analytics vào ai-controls-row |
 | [draft/orca/230626-sounds-serving-hostpath.md](draft/orca/230626-sounds-serving-hostpath.md) | draft | Move Apple sound files out of git+image to k8s hostPath /mnt/f/sounds/ambient/ |
 | [sources/draft/230626-sync-template.md](sources/draft/230626-sync-template.md) | draft | 2026-06-23 |

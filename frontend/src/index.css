@@ -1051,30 +1051,34 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   bottom: 80px;
   right: 16px;
   width: 220px;
-  background: rgba(28, 28, 30, 0.94);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
+  background: linear-gradient(135deg, rgba(40,35,80,0.72) 0%, rgba(20,25,55,0.68) 100%);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.15),
+              inset 0 0 0 1px rgba(99,102,241,0.08);
   z-index: 500;
   overflow: hidden;
-  color: #e8e8e8;
+  color: #f0f0f8;
 }
 .bgsounds-header {
   display: flex;
   align-items: center;
   gap: 7px;
   padding: 10px 12px 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
 }
 .bgsounds-icon {
   width: 22px; height: 22px;
-  background: #2060d0;
+  background: linear-gradient(135deg, #6366f1, #2dd4bf);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   color: #fff;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.5);
 }
 .bgsounds-title { font-size: 12.5px; font-weight: 600; flex: 1; }
 .bgsounds-active-name { font-size: 10.5px; color: rgba(255,255,255,0.45); }
