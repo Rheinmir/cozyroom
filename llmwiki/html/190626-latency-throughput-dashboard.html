@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cozyroom — Performance Dashboard</title>
+<style>
+:root{
+  --glass-1:rgba(255,255,255,.55);--glass-2:rgba(255,255,255,.70);--glass-3:rgba(255,255,255,.88);
+  --blur-1:24px;--blur-2:8px;--blur-3:4px;
+  --edge-hi:inset 0 1px 0 rgba(255,255,255,.85);
+  --border:rgba(30,90,170,.14);
+  --text-1:#0f0f12;--text-2:#4a4a55;
+  --red:#ff2d55;--orange:#ff9500;--green:#34c759;--blue:#0a84ff;--teal:#30b0c7;--indigo:#5856d6;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
+  --mono:'SF Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:thin;scrollbar-color:transparent transparent;background:#e9f0fb}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+::-webkit-scrollbar{width:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+html.scrolling::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb:hover{background-color:rgba(10,132,255,.32)}
+
+body{font-family:var(--font);color:var(--text-1);padding-left:200px;
+  background:radial-gradient(900px 500px at 12% -10%,rgba(10,132,255,.10),transparent 60%),
+    radial-gradient(700px 420px at 95% 15%,rgba(90,162,232,.08),transparent 55%),
+    linear-gradient(180deg,#eef4fd,#e6eefb);
+  transition:padding-left .28s cubic-bezier(.4,0,.2,1);min-height:100vh}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),
+    radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),
+    radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),
+    radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.12),transparent 60%),
+    radial-gradient(560px 420px at 44% 55%,rgba(10,132,255,.10),transparent 60%),
+    radial-gradient(400px 360px at 80% 48%,rgba(48,176,199,.09),transparent 60%),
+    radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.13),transparent 65%);
+  animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);
+  background-size:22px 22px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+@media(prefers-reduced-motion:reduce){body::before{animation:none}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;
+  display:flex;flex-direction:column;gap:2px;padding:18px 12px;overflow-y:auto;
+  background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);
+  transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),
+    linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav>*{position:relative}
+.logo{margin:0 0 16px;padding:6px 10px;font-size:13px;font-weight:700;
+  background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-label{font-size:10px;font-weight:600;color:#8a8a99;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px 4px;margin-top:4px}
+nav a{display:block;padding:8px 12px;border-radius:10px;font-size:13px;color:var(--text-2);text-decoration:none;overflow:hidden;transition:background .15s,color .15s}
+nav a:hover{background:rgba(10,132,255,.06);color:var(--text-1)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.10);font-weight:600}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;
+  background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border:1px solid transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);
+  transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;
+  background:rgba(0,0,0,.04);border:none;overflow:hidden}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+
+/* HERO */
+.hero{padding:64px 24px 40px;max-width:1100px;margin:0 auto}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#0a84ff;margin-bottom:12px;opacity:.85}
+.hero h1{font-size:clamp(28px,4vw,48px);font-weight:700;letter-spacing:-.02em;line-height:1.1;
+  background:linear-gradient(135deg,#0a84ff,#5aa2e8,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px}
+.hero p{font-size:15px;color:var(--text-2);max-width:600px;line-height:1.7;margin-bottom:28px}
+
+/* KPI CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:1100px;margin:0 24px 8px;padding:0}
+@media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.kpi-row{grid-template-columns:1fr}}
+.kpi{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  -webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:18px 20px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+.kpi.blue::before{background:linear-gradient(90deg,#0a84ff,#64b5f7)}
+.kpi.green::before{background:linear-gradient(90deg,#34c759,#5ed77a)}
+.kpi.orange::before{background:linear-gradient(90deg,#ff9500,#ffb340)}
+.kpi.red::before{background:linear-gradient(90deg,#ff2d55,#ff6b80)}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text-2);letter-spacing:.04em;margin-bottom:6px}
+.kpi-val{font-size:32px;font-weight:700;line-height:1;letter-spacing:-.03em;margin-bottom:4px}
+.kpi.blue .kpi-val{color:#0a84ff}
+.kpi.green .kpi-val{color:#28a745}
+.kpi.orange .kpi-val{color:#f08c00}
+.kpi.red .kpi-val{color:var(--red)}
+.kpi-sub{font-size:11px;color:var(--text-2)}
+.kpi-delta{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:4px}
+.delta-good{background:rgba(52,199,89,.12);color:#28a745}
+.delta-warn{background:rgba(255,149,0,.12);color:#f08c00}
+
+/* SECTIONS */
+section{padding:56px 24px 64px;max-width:1100px;margin:0 auto}
+.s-bg{position:relative;overflow:visible}
+.s-bg::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);pointer-events:none}
+.s-bg0::before{background:linear-gradient(180deg,rgba(10,132,255,.04),transparent 60%)}
+.s-bg1::before{background:linear-gradient(180deg,rgba(48,176,199,.04),transparent 60%)}
+.s-bg2::before{background:linear-gradient(180deg,rgba(88,86,214,.04),transparent 60%)}
+.s-bg3::before{background:linear-gradient(180deg,rgba(52,199,89,.04),transparent 60%)}
+.s-bg4::before{background:linear-gradient(180deg,rgba(255,149,0,.05),transparent 60%)}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;margin-bottom:10px}
+.sh h2{font-size:clamp(20px,3vw,30px);font-weight:700;letter-spacing:-.02em;color:#1d1d1f;margin-bottom:8px}
+.sh p{font-size:14px;color:var(--text-2);max-width:680px;line-height:1.7}
+#sec-0 .tag{background:rgba(10,132,255,.10);color:#0a84ff}
+#sec-1 .tag{background:rgba(48,176,199,.12);color:#30b0c7}
+#sec-2 .tag{background:rgba(88,86,214,.10);color:#5856d6}
+#sec-3 .tag{background:rgba(52,199,89,.10);color:#28a745}
+#sec-4 .tag{background:rgba(255,149,0,.10);color:#f08c00}
+
+/* GLASS CARDS */
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  -webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:20px}
+.chart-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  -webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:24px;margin:20px 0;overflow-x:auto}
+.chart-caption{font-size:12px;color:var(--text-2);margin-top:12px;text-align:center;font-style:italic}
+
+/* DATA TABLE */
+.dt-wrap{background:var(--glass-3);backdrop-filter:blur(var(--blur-3)) saturate(1.05);
+  -webkit-backdrop-filter:blur(var(--blur-3)) saturate(1.05);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);overflow:hidden;margin:20px 0}
+.dt-wrap table{width:100%;border-collapse:collapse}
+.dt-wrap th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-2);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.dt-wrap td{font-size:13px;padding:10px 16px;border-bottom:1px solid rgba(30,90,170,.06);color:var(--text-1)}
+.dt-wrap tr:last-child td{border-bottom:none}
+.dt-wrap tr:hover td{background:rgba(10,132,255,.03)}
+.badge{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:2px 8px}
+.b-g{background:rgba(52,199,89,.12);color:#28a745}
+.b-r{background:rgba(255,45,85,.10);color:#e0264b}
+.b-o{background:rgba(255,149,0,.10);color:#f08c00}
+.b-b{background:rgba(10,132,255,.10);color:#0a84ff}
+.b-gr{background:rgba(142,142,147,.12);color:#636366}
+.mono{font-family:var(--mono);font-size:12px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+@media(max-width:700px){.g2,.g3{grid-template-columns:1fr}}
+
+/* PROGRESS BARS */
+.gauge-row{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+.gauge-item{}
+.gauge-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.gauge-label{font-size:13px;font-weight:600;color:var(--text-1)}
+.gauge-meta{font-size:11px;color:var(--text-2)}
+.gauge-track{height:8px;background:rgba(30,90,170,.09);border-radius:20px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:20px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.g-blue .gauge-fill{background:linear-gradient(90deg,#0a84ff,#64b5f7)}
+.g-green .gauge-fill{background:linear-gradient(90deg,#34c759,#5ed77a)}
+.g-orange .gauge-fill{background:linear-gradient(90deg,#ff9500,#ffb340)}
+.g-red .gauge-fill{background:linear-gradient(90deg,#ff2d55,#ff6b80)}
+.g-teal .gauge-fill{background:linear-gradient(90deg,#30b0c7,#5ecfe0)}
+
+/* FIX CARDS */
+.fix-card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  -webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:18px 20px}
+.fix-title{font-size:13px;font-weight:700;color:var(--text-1);margin-bottom:4px}
+.fix-meta{font-size:11px;color:var(--text-2);margin-bottom:10px}
+.fix-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:8px}
+.fix-before{color:var(--red);font-weight:600;font-family:var(--mono)}
+.fix-after{color:#28a745;font-weight:600;font-family:var(--mono)}
+.fix-arrow{color:var(--text-2);font-size:14px}
+.fix-pct{display:inline-block;font-size:10px;font-weight:700;background:rgba(52,199,89,.12);color:#28a745;border-radius:6px;padding:1px 6px}
+
+/* INFO BOX */
+.info-box{background:var(--glass-3);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;margin:16px 0;font-size:13px;color:var(--text-2);line-height:1.7}
+.info-box strong{color:var(--text-1)}
+
+/* RIPPLE */
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -10px 20px rgba(10,132,255,.12),0 0 14px rgba(10,132,255,.10);
+  backdrop-filter:blur(2px) saturate(1.25);-webkit-backdrop-filter:blur(2px) saturate(1.25);
+  transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+
+footer{padding:32px 24px;max-width:1100px;margin:0 auto;border-top:1px solid var(--border);font-size:12px;color:var(--text-2)}
+@media(max-width:640px){body{padding-left:0}nav{box-shadow:0 8px 30px rgba(0,0,0,.14)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Cozyroom Perf</div>
+  <span class="nav-label">Mục lục</span>
+  <a href="#sec-0">Tổng quan</a>
+  <a href="#sec-1">Latency</a>
+  <a href="#sec-2">Streaming</a>
+  <a href="#sec-3">Throughput</a>
+  <a href="#sec-4">Cải thiện hôm nay</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Cozyroom · Báo cáo Performance · 2026-06-19</div>
+  <h1>Latency &amp; Throughput</h1>
+  <p>Ước lượng thực tế dựa trên kiến trúc hiện tại: K3s + CF Tunnel + Go backend + PostgreSQL. Số liệu trước/sau các fix trong session hôm nay.</p>
+</div>
+
+<!-- KPI CARDS -->
+<div class="kpi-row">
+  <div class="kpi blue">
+    <div class="kpi-label">API P50 (StaleWhile)</div>
+    <div class="kpi-val">0<span style="font-size:16px">ms</span></div>
+    <div class="kpi-sub">Artists/Albums/Stats từ SW cache <span class="kpi-delta delta-good">+100%</span></div>
+  </div>
+  <div class="kpi green">
+    <div class="kpi-label">Audio 2nd+ play</div>
+    <div class="kpi-val">20<span style="font-size:16px">ms</span></div>
+    <div class="kpi-sub">CF edge cache Singapore <span class="kpi-delta delta-good">-94%</span></div>
+  </div>
+  <div class="kpi orange">
+    <div class="kpi-label">Max concurrent streams</div>
+    <div class="kpi-val">71<span style="font-size:16px">+</span></div>
+    <div class="kpi-sub">FLAC @ 100 Mbps upload limit</div>
+  </div>
+  <div class="kpi green">
+    <div class="kpi-label">Deploy downtime</div>
+    <div class="kpi-val">0<span style="font-size:16px">s</span></div>
+    <div class="kpi-sub">readinessProbe + maxUnavailable:0 <span class="kpi-delta delta-good">-100%</span></div>
+  </div>
+</div>
+
+<!-- SECTION 0: Tổng quan -->
+<div class="s-bg s-bg0">
+<section id="sec-0">
+  <div class="sh">
+    <div class="tag">01 · Tổng quan</div>
+    <h2>Kiến trúc & request path</h2>
+    <p>Mỗi request từ browser đi qua nhiều lớp. Tổng latency = tổng RTT qua từng hop. CF Tunnel là điểm tập trung — nó vừa là ingress vừa là CDN nếu cache được bật.</p>
+  </div>
+
+  <div class="chart-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 160" style="width:100%;height:auto">
+      <defs>
+        <marker id="a0" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#0a84ff"/>
+        </marker>
+        <marker id="a0g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#34c759"/>
+        </marker>
+      </defs>
+      <!-- Browser -->
+      <rect x="10" y="52" width="100" height="56" rx="10" fill="rgba(255,255,255,.85)" stroke="#0a84ff" stroke-width="1.5"/>
+      <text x="60" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#0a84ff" font-family="-apple-system,sans-serif">🌐 Browser</text>
+      <text x="60" y="95" text-anchor="middle" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">SW Cache</text>
+      <text x="60" y="109" text-anchor="middle" font-size="9" fill="#34c759" font-family="-apple-system,sans-serif">hit → 0ms ⚡</text>
+
+      <!-- line browser → CF -->
+      <line x1="112" y1="80" x2="168" y2="80" stroke="#0a84ff" stroke-width="1.5" marker-end="url(#a0)"/>
+      <text x="140" y="70" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">~20ms</text>
+
+      <!-- CF Edge -->
+      <rect x="170" y="44" width="120" height="72" rx="10" fill="rgba(255,255,255,.85)" stroke="#0a84ff" stroke-width="1.5"/>
+      <text x="230" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="#0a84ff" font-family="-apple-system,sans-serif">☁ CF Edge</text>
+      <text x="230" y="84" text-anchor="middle" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">Singapore</text>
+      <text x="230" y="100" text-anchor="middle" font-size="9" fill="#34c759" font-family="-apple-system,sans-serif">audio cache ✓</text>
+      <text x="230" y="112" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">CF Workers</text>
+
+      <!-- CF → Cloudflared -->
+      <line x1="292" y1="80" x2="348" y2="80" stroke="#8a8a99" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a0)"/>
+      <text x="320" y="70" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">miss only</text>
+      <text x="320" y="96" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">~10ms</text>
+
+      <!-- Cloudflared -->
+      <rect x="350" y="52" width="110" height="56" rx="10" fill="rgba(255,255,255,.85)" stroke="#8a8a99" stroke-width="1.5"/>
+      <text x="405" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="#4a4a55" font-family="-apple-system,sans-serif">Cloudflared</text>
+      <text x="405" y="95" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">tunnel daemon</text>
+
+      <!-- Cloudflared → nginx -->
+      <line x1="462" y1="80" x2="508" y2="80" stroke="#8a8a99" stroke-width="1.5" marker-end="url(#a0)"/>
+      <text x="485" y="70" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">~1ms</text>
+
+      <!-- nginx -->
+      <rect x="510" y="52" width="100" height="56" rx="10" fill="rgba(255,255,255,.85)" stroke="#8a8a99" stroke-width="1.5"/>
+      <text x="560" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="#4a4a55" font-family="-apple-system,sans-serif">nginx</text>
+      <text x="560" y="95" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">K8s frontend</text>
+
+      <!-- nginx → Go -->
+      <line x1="612" y1="80" x2="648" y2="80" stroke="#8a8a99" stroke-width="1.5" marker-end="url(#a0)"/>
+      <text x="630" y="70" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">~1ms</text>
+
+      <!-- Go Backend -->
+      <rect x="650" y="44" width="110" height="72" rx="10" fill="rgba(255,255,255,.85)" stroke="#5856d6" stroke-width="1.5"/>
+      <text x="705" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#5856d6" font-family="-apple-system,sans-serif">Go Backend</text>
+      <text x="705" y="84" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">K8s pod</text>
+      <text x="705" y="100" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">readinessProbe ✓</text>
+      <text x="705" y="113" text-anchor="middle" font-size="9" fill="#5856d6" font-family="-apple-system,sans-serif">~5000 RPS cap</text>
+
+      <!-- Go → PG -->
+      <line x1="762" y1="80" x2="808" y2="80" stroke="#8a8a99" stroke-width="1.5" marker-end="url(#a0)"/>
+      <text x="785" y="70" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">~2ms</text>
+
+      <!-- PostgreSQL -->
+      <rect x="810" y="52" width="100" height="56" rx="10" fill="rgba(255,255,255,.85)" stroke="#30b0c7" stroke-width="1.5"/>
+      <text x="860" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#30b0c7" font-family="-apple-system,sans-serif">PostgreSQL</text>
+      <text x="860" y="93" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">Citus 12.1</text>
+      <text x="860" y="107" text-anchor="middle" font-size="9" fill="#30b0c7" font-family="-apple-system,sans-serif">~3000 QPS cap</text>
+
+      <!-- Total path labels -->
+      <text x="460" y="145" text-anchor="middle" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">Miss path (lần đầu): ~35–60ms tới Go backend · Total round-trip: ~80–150ms</text>
+      <text x="140" y="145" text-anchor="middle" font-size="10" fill="#34c759" font-family="-apple-system,sans-serif" font-weight="600">Hit path: ~20ms ⚡</text>
+    </svg>
+    <div class="chart-caption">Request path đầy đủ. SW Cache hit → chỉ browser. CF Edge hit → miss cloudflared/nginx/backend. Miss → đi full stack.</div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#0a84ff;margin-bottom:10px">Cache layers hiện tại</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:7px">
+        <li style="font-size:13px;color:var(--text-2)"><span style="color:#34c759;font-weight:700">L1</span> Service Worker — artists/albums/stats <span class="badge b-g">StaleWhileRevalidate</span></li>
+        <li style="font-size:13px;color:var(--text-2)"><span style="color:#34c759;font-weight:700">L1</span> Service Worker — images/covers <span class="badge b-g">CacheFirst</span></li>
+        <li style="font-size:13px;color:var(--text-2)"><span style="color:#0a84ff;font-weight:700">L2</span> CF Edge — audio lossless <span class="badge b-b">public max-age=3600</span></li>
+        <li style="font-size:13px;color:var(--text-2)"><span style="color:#0a84ff;font-weight:700">L2</span> CF Edge — images 7 ngày <span class="badge b-b">public max-age=604800</span></li>
+        <li style="font-size:13px;color:var(--text-2)"><span style="color:#ff9500;font-weight:700">L3</span> Go memory — YT search 5 min <span class="badge b-o">in-memory map</span></li>
+        <li style="font-size:13px;color:var(--text-2)"><span style="color:var(--red);font-weight:700">❌</span> tracks API — no cache <span class="badge b-r">NetworkFirst 4s</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#5856d6;margin-bottom:10px">Bottleneck thực sự</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:7px">
+        <li style="font-size:13px;color:var(--text-2)">🏠 <strong>Home upload bandwidth</strong> — giới hạn concurrent streams</li>
+        <li style="font-size:13px;color:var(--text-2)">📡 CF Tunnel RTT — ~20ms Vietnam → Singapore (fixed, hardware)</li>
+        <li style="font-size:13px;color:var(--text-2)">🐍 yt-dlp cold start — ~3-5s (mitigated by debounce+cache)</li>
+        <li style="font-size:13px;color:var(--text-2)">🔊 ffmpeg transcode — ~500ms startup cho 320kbps (by design)</li>
+        <li style="font-size:13px;color:var(--text-2)">✅ Go HTTP, PostgreSQL, Disk I/O — <strong>không phải bottleneck</strong> ở quy mô hiện tại</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 1: Latency -->
+<div class="s-bg s-bg1">
+<section id="sec-1">
+  <div class="sh">
+    <div class="tag">02 · Latency</div>
+    <h2>Phân tích Latency theo endpoint</h2>
+    <p>So sánh P50 latency trước và sau các fix hôm nay. Trục X tính bằng ms, max 5000ms. Số nhỏ = tốt.</p>
+  </div>
+
+  <!-- Horizontal bar chart -->
+  <div class="chart-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 340" style="width:100%;height:auto">
+      <defs>
+        <linearGradient id="gBefore" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#ff2d55" stop-opacity=".8"/>
+          <stop offset="100%" stop-color="#ff6b80" stop-opacity=".7"/>
+        </linearGradient>
+        <linearGradient id="gAfter" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#34c759" stop-opacity=".85"/>
+          <stop offset="100%" stop-color="#5ed77a" stop-opacity=".75"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Legend -->
+      <rect x="520" y="14" width="14" height="14" rx="4" fill="url(#gBefore)"/>
+      <text x="540" y="25" font-size="11" fill="#4a4a55" font-family="-apple-system,sans-serif">Trước fix</text>
+      <rect x="620" y="14" width="14" height="14" rx="4" fill="url(#gAfter)"/>
+      <text x="640" y="25" font-size="11" fill="#4a4a55" font-family="-apple-system,sans-serif">Sau fix</text>
+
+      <!-- Axis labels top -->
+      <text x="200" y="12" font-size="10" fill="#8a8a99" font-family="-apple-system,sans-serif">0</text>
+      <text x="344" y="12" font-size="10" fill="#8a8a99" font-family="-apple-system,sans-serif">1000ms</text>
+      <text x="488" y="12" font-size="10" fill="#8a8a99" font-family="-apple-system,sans-serif">2000ms</text>
+      <text x="632" y="12" font-size="10" fill="#8a8a99" font-family="-apple-system,sans-serif">3000ms</text>
+      <text x="776" y="12" font-size="10" fill="#8a8a99" font-family="-apple-system,sans-serif">4000ms</text>
+
+      <!-- Grid lines -->
+      <line x1="200" y1="18" x2="200" y2="330" stroke="rgba(30,90,170,.08)" stroke-width="1"/>
+      <line x1="344" y1="18" x2="344" y2="330" stroke="rgba(30,90,170,.06)" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="488" y1="18" x2="488" y2="330" stroke="rgba(30,90,170,.06)" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="632" y1="18" x2="632" y2="330" stroke="rgba(30,90,170,.06)" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="776" y1="18" x2="776" y2="330" stroke="rgba(30,90,170,.06)" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- Row function: label at x=198, before bar, after bar, value label -->
+      <!-- Scale: 4000ms = 576px → 1ms = 0.144px; origin x=200 -->
+
+      <!-- Row 1: GET /api/artists -->
+      <text x="196" y="47" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">GET /api/artists</text>
+      <rect x="200" y="30" width="50.4" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="256" y="40" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">350ms</text>
+      <rect x="200" y="43" width="0.7" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="205" y="53" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~5ms (SW cache ⚡)</text>
+
+      <!-- Row 2: GET /api/stats -->
+      <text x="196" y="83" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">GET /api/stats</text>
+      <rect x="200" y="66" width="50.4" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="256" y="76" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">350ms</text>
+      <rect x="200" y="79" width="0.7" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="205" y="89" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~5ms (SW cache ⚡)</text>
+
+      <!-- Row 3: GET /api/albums/{id} -->
+      <text x="196" y="119" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">GET /api/albums/{id}</text>
+      <rect x="200" y="102" width="50.4" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="256" y="112" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">350ms (all albums)</text>
+      <rect x="200" y="115" width="1.44" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="210" y="125" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~10ms (single row)</text>
+
+      <!-- Row 4: GET /api/covers -->
+      <text x="196" y="155" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">GET /api/covers</text>
+      <rect x="200" y="138" width="7.2" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="212" y="148" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">50ms</text>
+      <rect x="200" y="151" width="0.7" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="205" y="161" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~5ms (CacheFirst ⚡)</text>
+
+      <!-- Row 5: GET /api/tracks -->
+      <text x="196" y="191" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">GET /api/tracks</text>
+      <rect x="200" y="174" width="14.4" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="220" y="184" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">100ms</text>
+      <rect x="200" y="187" width="14.4" height="10" rx="3" fill="rgba(200,200,210,.6)"/>
+      <text x="220" y="197" font-size="9" fill="#636366" font-family="-apple-system,sans-serif">~100ms (NetworkFirst, không đổi)</text>
+
+      <!-- Row 6: Audio stream 1st play -->
+      <text x="196" y="227" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">Audio first play</text>
+      <rect x="200" y="210" width="50.4" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="256" y="220" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">350ms (full tunnel RTT)</text>
+      <rect x="200" y="223" width="14.4" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="220" y="233" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~100ms (CF miss + cache)</text>
+
+      <!-- Row 7: Audio stream 2nd+ -->
+      <text x="196" y="263" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">Audio 2nd+ play</text>
+      <rect x="200" y="246" width="50.4" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="256" y="256" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">350ms (no cache)</text>
+      <rect x="200" y="259" width="2.88" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="210" y="269" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~20ms (CF edge hit ⚡)</text>
+
+      <!-- Row 8: YT search -->
+      <text x="196" y="299" text-anchor="end" font-size="11" fill="var(--text-2)" font-family="-apple-system,sans-serif">YT search (cached)</text>
+      <rect x="200" y="282" width="504" height="10" rx="3" fill="url(#gBefore)"/>
+      <text x="710" y="292" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">3500ms</text>
+      <rect x="200" y="295" width="14.4" height="10" rx="3" fill="url(#gAfter)"/>
+      <text x="220" y="305" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">~100ms (5-min cache + 300ms debounce)</text>
+    </svg>
+    <div class="chart-caption">P50 latency ước lượng. Scale 0–4000ms. YT search (trước 3500ms) là case cải thiện rõ nhất — 35× nhanh hơn.</div>
+  </div>
+
+  <div class="dt-wrap">
+    <table>
+      <thead><tr>
+        <th>Endpoint</th><th>Cơ chế cache</th><th>Before (P50)</th><th>After (P50)</th><th>Cải thiện</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="mono">/api/artists</td><td><span class="badge b-g">StaleWhileRevalidate</span></td><td style="color:var(--red)">~350ms</td><td style="color:#28a745">~0ms</td><td><span class="badge b-g">instant</span></td></tr>
+        <tr><td class="mono">/api/stats</td><td><span class="badge b-g">StaleWhileRevalidate</span></td><td style="color:var(--red)">~350ms</td><td style="color:#28a745">~0ms</td><td><span class="badge b-g">instant</span></td></tr>
+        <tr><td class="mono">/api/albums/{id}</td><td><span class="badge b-b">new endpoint</span></td><td style="color:var(--red)">~350ms</td><td style="color:#28a745">~10ms</td><td><span class="badge b-g">35×</span></td></tr>
+        <tr><td class="mono">/api/covers/{id}</td><td><span class="badge b-g">CacheFirst</span></td><td style="color:#f08c00">~50ms</td><td style="color:#28a745">~0ms</td><td><span class="badge b-g">instant</span></td></tr>
+        <tr><td class="mono">/api/tracks?album_id=</td><td><span class="badge b-o">NetworkFirst 4s</span></td><td style="color:#f08c00">~100ms</td><td style="color:#636366">~100ms</td><td><span class="badge b-gr">không đổi</span></td></tr>
+        <tr><td class="mono">/api/youtube/search (cache hit)</td><td><span class="badge b-b">in-memory 5min</span></td><td style="color:var(--red)">~3500ms</td><td style="color:#28a745">~100ms</td><td><span class="badge b-g">35×</span></td></tr>
+        <tr><td class="mono">/stream/{id} lossless 1st</td><td><span class="badge b-o">CF miss → origin</span></td><td style="color:var(--red)">~350ms</td><td style="color:#28a745">~100ms</td><td><span class="badge b-g">3.5×</span></td></tr>
+        <tr><td class="mono">/stream/{id} lossless 2nd+</td><td><span class="badge b-g">CF edge hit</span></td><td style="color:var(--red)">~350ms</td><td style="color:#28a745">~20ms</td><td><span class="badge b-g">17×</span></td></tr>
+        <tr><td class="mono">/stream/{id}?q=320</td><td><span class="badge b-r">no-cache (streaming)</span></td><td style="color:#f08c00">~1000ms</td><td style="color:#636366">~1000ms</td><td><span class="badge b-gr">không đổi</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 2: Streaming -->
+<div class="s-bg s-bg2">
+<section id="sec-2">
+  <div class="sh">
+    <div class="tag">03 · Streaming</div>
+    <h2>Audio streaming performance</h2>
+    <p>Streaming latency phụ thuộc vào loại file và cache state. Lossless passthrough hưởng lợi từ CF edge; transcode path không cache được (streaming response, không có Content-Length).</p>
+  </div>
+
+  <div class="chart-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 200" style="width:100%;height:auto">
+      <!-- 3 columns: lossless 1st, lossless 2nd+, transcode 320kbps -->
+      <!-- Vertical bar chart, height 160px, max 1200ms -->
+      <!-- Scale: 1200ms = 140px → 1ms = 0.117px -->
+
+      <text x="430" y="14" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-2)" font-family="-apple-system,sans-serif">Time to first byte (ms)</text>
+
+      <!-- Y axis labels -->
+      <text x="48" y="34" text-anchor="end" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">1200ms</text>
+      <text x="48" y="87" text-anchor="end" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">600ms</text>
+      <text x="48" y="171" text-anchor="end" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">0</text>
+
+      <!-- Grid lines -->
+      <line x1="52" y1="30" x2="830" y2="30" stroke="rgba(30,90,170,.06)" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="52" y1="83" x2="830" y2="83" stroke="rgba(30,90,170,.06)" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="52" y1="168" x2="830" y2="168" stroke="rgba(30,90,170,.10)" stroke-width="1"/>
+
+      <!-- Group 1: Lossless passthrough -->
+      <text x="200" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#4a4a55" font-family="-apple-system,sans-serif">Lossless passthrough</text>
+      <!-- Before bar -->
+      <rect x="110" y="127" width="50" height="41" rx="6" fill="rgba(255,45,85,.65)"/>
+      <text x="135" y="120" text-anchor="middle" font-size="10" fill="#e0264b" font-weight="600" font-family="-apple-system,sans-serif">350ms</text>
+      <text x="135" y="196" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">trước</text>
+      <!-- After 1st play bar -->
+      <rect x="180" y="156" width="50" height="12" rx="4" fill="rgba(255,149,0,.65)"/>
+      <text x="205" y="150" text-anchor="middle" font-size="10" fill="#f08c00" font-weight="600" font-family="-apple-system,sans-serif">100ms</text>
+      <text x="205" y="196" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">1st play</text>
+      <!-- After 2nd+ play bar -->
+      <rect x="250" y="165" width="50" height="3" rx="3" fill="rgba(52,199,89,.85)"/>
+      <text x="275" y="158" text-anchor="middle" font-size="10" fill="#28a745" font-weight="700" font-family="-apple-system,sans-serif">20ms ⚡</text>
+      <text x="275" y="196" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">2nd+ (CF)</text>
+
+      <!-- Divider -->
+      <line x1="390" y1="20" x2="390" y2="180" stroke="rgba(30,90,170,.08)" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- Group 2: 320kbps Transcode -->
+      <text x="570" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#4a4a55" font-family="-apple-system,sans-serif">320kbps Transcode</text>
+      <!-- Before bar (unchanged) -->
+      <rect x="480" y="51" width="50" height="117" rx="6" fill="rgba(255,45,85,.40)"/>
+      <text x="505" y="44" text-anchor="middle" font-size="10" fill="#e0264b" font-weight="600" font-family="-apple-system,sans-serif">~1000ms</text>
+      <text x="505" y="196" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">trước</text>
+      <!-- After bar (unchanged) -->
+      <rect x="550" y="51" width="50" height="117" rx="6" fill="rgba(200,200,210,.55)"/>
+      <text x="575" y="44" text-anchor="middle" font-size="10" fill="#636366" font-weight="600" font-family="-apple-system,sans-serif">~1000ms</text>
+      <text x="575" y="196" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">sau (no change)</text>
+
+      <!-- Explanation right side -->
+      <rect x="660" y="28" width="170" height="140" rx="8" fill="rgba(255,255,255,.6)" stroke="rgba(30,90,170,.10)" stroke-width="1"/>
+      <text x="745" y="48" text-anchor="middle" font-size="11" font-weight="700" fill="#5856d6" font-family="-apple-system,sans-serif">Tại sao 320k không cache?</text>
+      <text x="668" y="66" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">• ffmpeg pipe → no Content-Length</text>
+      <text x="668" y="82" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">• CF không cache streaming resp</text>
+      <text x="668" y="98" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">• Cần: pre-transcode + store file</text>
+      <text x="668" y="114" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">  → serve static → CF cache</text>
+      <text x="668" y="130" font-size="10" fill="#f08c00" font-family="-apple-system,sans-serif">→ Future optimization</text>
+      <text x="668" y="146" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">• Lossless: http.ServeFile có</text>
+      <text x="668" y="162" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">  Content-Length → CF cache ✓</text>
+    </svg>
+    <div class="chart-caption">Lossless passthrough: CF cache giảm latency từ 350ms → 20ms lần 2. 320kbps transcode không cache được — by design.</div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#5856d6;margin-bottom:10px">Tại sao lossless cache được?</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text-2)">
+        <li>✓ <code style="font-family:var(--mono);font-size:11px">http.ServeFile</code> → Go tự set Content-Length</li>
+        <li>✓ Supports HTTP Range (206 Partial) → CF cache Range responses</li>
+        <li>✓ <code style="font-family:var(--mono);font-size:11px">Cache-Control: public, max-age=3600</code> → CF nhận</li>
+        <li>✓ URL = <code style="font-family:var(--mono);font-size:11px">/stream/{hex-id}</code> deterministic → same URL = same bytes</li>
+        <li>✓ TTL 1h đủ cho session nghe nhạc; file đổi → ID mới → cache miss tự nhiên</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#5856d6;margin-bottom:10px">Ước tính tiết kiệm bandwidth</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text-2)">
+        <li>FLAC avg bitrate: ~1.4 Mbps</li>
+        <li>Nếu 10 người nghe bài phổ biến: 10 × 1.4 = 14 Mbps</li>
+        <li>Sau CF cache: lần 2-10 → CF serve, home bandwidth = 0</li>
+        <li>Savings: 9/10 requests × 1.4 Mbps = <strong style="color:#28a745">12.6 Mbps tiết kiệm</strong></li>
+        <li>→ Effective capacity tăng 10× cho bài phổ biến</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 3: Throughput -->
+<div class="s-bg s-bg3">
+<section id="sec-3">
+  <div class="sh">
+    <div class="tag">04 · Throughput</div>
+    <h2>Capacity &amp; throughput tối đa</h2>
+    <p>Ở quy mô hiện tại (personal homelab), hầu hết components có headroom lớn. Bottleneck thực sự là <strong>home upload bandwidth</strong> — không scale bằng code, chỉ bằng CDN caching.</p>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#28a745;margin-bottom:14px">Capacity ước tính</div>
+      <div class="gauge-row">
+        <div class="gauge-item g-blue">
+          <div class="gauge-header">
+            <span class="gauge-label">Go HTTP Server</span>
+            <span class="gauge-meta">~50 RPS hiện tại / ~5000 RPS cap</span>
+          </div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:1%"></div></div>
+          <div style="font-size:11px;color:#28a745;margin-top:4px">1% utilized · headroom 100×</div>
+        </div>
+        <div class="gauge-item g-teal">
+          <div class="gauge-header">
+            <span class="gauge-label">PostgreSQL (Citus)</span>
+            <span class="gauge-meta">~30 QPS hiện tại / ~3000 QPS cap</span>
+          </div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:1%"></div></div>
+          <div style="font-size:11px;color:#28a745;margin-top:4px">1% utilized · headroom 100×</div>
+        </div>
+        <div class="gauge-item g-orange">
+          <div class="gauge-header">
+            <span class="gauge-label">🔴 Upload Bandwidth (BOTTLENECK)</span>
+            <span class="gauge-meta">~5 Mbps used / ~100 Mbps cap</span>
+          </div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:5%"></div></div>
+          <div style="font-size:11px;color:#f08c00;margin-top:4px">5% utilized · capped tại ~71 FLAC concurrent</div>
+        </div>
+        <div class="gauge-item g-green">
+          <div class="gauge-header">
+            <span class="gauge-label">Disk I/O (music files)</span>
+            <span class="gauge-meta">~5 MB/s used / ~500 MB/s cap</span>
+          </div>
+          <div class="gauge-track"><div class="gauge-fill" style="width:1%"></div></div>
+          <div style="font-size:11px;color:#28a745;margin-top:4px">1% utilized · headroom 100×</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#28a745;margin-bottom:14px">Max concurrent streams (ước lượng)</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-1);margin-bottom:4px">FLAC lossless (~1.4 Mbps/stream)</div>
+          <div style="font-size:11px;color:var(--text-2);margin-bottom:6px">100 Mbps ÷ 1.4 Mbps =</div>
+          <div style="font-size:28px;font-weight:700;color:#f08c00;line-height:1">71 <span style="font-size:13px">streams</span></div>
+          <div style="font-size:11px;color:var(--text-2)">Sau CF cache: bài phổ biến → home bandwidth = 0 → <span style="color:#28a745;font-weight:600">effective ∞</span></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--text-1);margin-bottom:4px">MP3 320kbps (~0.32 Mbps/stream)</div>
+          <div style="font-size:11px;color:var(--text-2);margin-bottom:6px">100 Mbps ÷ 0.32 Mbps =</div>
+          <div style="font-size:28px;font-weight:700;color:#28a745;line-height:1">312 <span style="font-size:13px">streams</span></div>
+          <div style="font-size:11px;color:var(--text-2)">Nhưng mỗi stream cần 1 ffmpeg process → CPU bound trước bandwidth</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dt-wrap" style="margin-top:20px">
+    <table>
+      <thead><tr>
+        <th>Component</th><th>Current load (est)</th><th>Max capacity (est)</th><th>Headroom</th><th>Scaling</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Go HTTP server</td><td>~50 RPS</td><td>~5000 RPS</td><td><span class="badge b-g">100×</span></td><td>Horizontal pod scaling</td></tr>
+        <tr><td>PostgreSQL Citus</td><td>~30 QPS</td><td>~3000 QPS</td><td><span class="badge b-g">100×</span></td><td>Add Citus workers</td></tr>
+        <tr><td style="color:var(--red);font-weight:600">🔴 Upload bandwidth</td><td>~5 Mbps</td><td>~100 Mbps</td><td><span class="badge b-o">20×</span></td><td>CF edge cache (done ✓)</td></tr>
+        <tr><td>Disk I/O (NVMe)</td><td>~5 MB/s</td><td>~500 MB/s</td><td><span class="badge b-g">100×</span></td><td>Horizontal disk shards</td></tr>
+        <tr><td>Service Worker cache</td><td>—</td><td>50MB per browser</td><td><span class="badge b-g">large</span></td><td>Browser storage limit</td></tr>
+        <tr><td>CF Tunnel / Edge</td><td>minimal</td><td>Cloudflare global</td><td><span class="badge b-g">unlimited</span></td><td>Cloudflare scales</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box">
+    <strong>Kết luận throughput:</strong> Ở quy mô cá nhân (gia đình + bạn bè), hệ thống dư sức. Bottleneck duy nhất là bandwidth nhà khi stream nhiều bài cùng lúc. CF edge cache giải quyết phần lớn — bài đã play một lần thì lần sau không tốn bandwidth nhà. Muốn scale lên 100+ concurrent users thực sự cần thuê CDN hoặc dùng S3/R2 làm origin.
+  </div>
+</section>
+</div>
+
+<!-- SECTION 4: Fixes today -->
+<div class="s-bg s-bg4">
+<section id="sec-4">
+  <div class="sh">
+    <div class="tag">05 · Session hôm nay</div>
+    <h2>6 cải thiện trong session 2026-06-19</h2>
+    <p>Tất cả các fix được commit trong cùng session. Tổng hợp impact: P50 cho phần lớn API giảm từ ~350ms xuống ~0ms. Deploy không còn downtime.</p>
+  </div>
+
+  <div class="g2" style="margin-top:0">
+    <div class="fix-card">
+      <div class="fix-title">🎯 StaleWhileRevalidate cho Artists/Albums/Stats</div>
+      <div class="fix-meta">frontend/vite.config.ts · frontend/src/pages/ArtistsPage.tsx</div>
+      <div class="fix-row">
+        <span class="fix-before">NetworkFirst (~350ms)</span>
+        <span class="fix-arrow">→</span>
+        <span class="fix-after">StaleWhileRevalidate (~0ms)</span>
+        <span class="fix-pct">instant</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:8px">3 API routes + staleTime 5min trong React Query. Không còn loading spinner khi vào lại trang.</div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">🔍 YouTube search debounce + in-memory cache</div>
+      <div class="fix-meta">frontend/src/components/Header.tsx · backend/internal/api/youtube.go</div>
+      <div class="fix-row">
+        <span class="fix-before">3500ms (yt-dlp mỗi key)</span>
+        <span class="fix-arrow">→</span>
+        <span class="fix-after">~100ms (cache hit)</span>
+        <span class="fix-pct">35×</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:8px">300ms debounce + Go mutex cache TTL 5min. yt-dlp chỉ chạy khi thực sự cần.</div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">💿 GET /api/albums/{id} — single-row query</div>
+      <div class="fix-meta">backend/internal/api/ · frontend/src/pages/AlbumPage.tsx</div>
+      <div class="fix-row">
+        <span class="fix-before">~350ms (fetch all albums)</span>
+        <span class="fix-arrow">→</span>
+        <span class="fix-after">~10ms (single row)</span>
+        <span class="fix-pct">35×</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:8px">Thêm endpoint + handler + usecase + repo method. AlbumPage không còn filter client-side.</div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">🎵 Cache-Control: public cho audio lossless</div>
+      <div class="fix-meta">backend/internal/api/handler.go · CF Edge</div>
+      <div class="fix-row">
+        <span class="fix-before">~350ms (mỗi lần, full tunnel)</span>
+        <span class="fix-arrow">→</span>
+        <span class="fix-after">~20ms (CF edge hit)</span>
+        <span class="fix-pct">17×</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:8px">1 dòng header. CF Singapore cache audio 1h. Lần 2 không về nhà nữa. Bandwidth tiết kiệm.</div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">🚀 readinessProbe + maxUnavailable: 0</div>
+      <div class="fix-meta">k8s/backend.yaml</div>
+      <div class="fix-row">
+        <span class="fix-before">5–15s downtime mỗi deploy</span>
+        <span class="fix-arrow">→</span>
+        <span class="fix-after">0s downtime</span>
+        <span class="fix-pct">100%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:8px">K8s chờ new pod pass readiness trước khi terminate old pod. Zero downtime rolling update.</div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">⚡ staleTime 5min cho ArtistPage/AlbumPage</div>
+      <div class="fix-meta">frontend/src/pages/ArtistPage.tsx · AlbumPage.tsx</div>
+      <div class="fix-row">
+        <span class="fix-before">Loading spinner mỗi lần mount</span>
+        <span class="fix-arrow">→</span>
+        <span class="fix-after">Instant nếu fresh cache</span>
+        <span class="fix-pct">UX +</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:8px">React Query không refetch nếu data &lt; 5min tuổi. Điều hướng Artists → Album → back = instant.</div>
+    </div>
+  </div>
+
+  <div class="info-box" style="margin-top:24px">
+    <strong>Mục tiêu tối thượng (theo slide):</strong> Thiết kế sao cho đạt <em>Throughput tối đa</em> với <em>Latency ở mức chấp nhận được</em>.<br><br>
+    Cozyroom hiện tại: <strong>Latency ✓</strong> — đã giải quyết bằng multi-layer cache (SW + CF + React Query). <strong>Throughput ✓</strong> — Go + Postgres có headroom 100×, chỉ bottleneck ở bandwidth nhà (giải quyết bằng CF edge cache audio). <strong>Next step:</strong> pre-transcode 320kbps → store → CF cache; hoặc dùng R2/S3 làm origin cho audio.
+  </div>
+</section>
+</div>
+
+<footer>
+  Cozyroom · Performance Dashboard · 2026-06-19 · Số liệu ước lượng dựa trên kiến trúc thực tế, không phải benchmark chính thức.
+</footer>
+
+<script>
+// Scrollbar flash
+(function(){
+  const f=el=>{let t;return()=>{el.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>el.classList.remove('scrolling'),900);}};
+  window.addEventListener('scroll',f(document.documentElement),{passive:true});
+  const nav=document.querySelector('nav');if(nav)nav.addEventListener('scroll',f(nav),{passive:true});
+})();
+
+// Nav collapse
+(function(){
+  const nav=document.querySelector('nav');if(!nav)return;
+  const btn=document.createElement('button');btn.className='nav-toggle';btn.textContent='☰';
+  document.body.appendChild(btn);
+  const close=document.createElement('button');close.className='nav-close';close.textContent='✕';
+  nav.appendChild(close);
+  const apply=c=>{document.body.classList.toggle('nav-collapsed',c);
+    try{localStorage.setItem('navCollapsed',c?'1':'0');}catch(e){}};
+  btn.addEventListener('click',()=>apply(false));
+  close.addEventListener('click',()=>apply(true));
+  try{const s=localStorage.getItem('navCollapsed');
+    if(s==='1'||(s!=='0'&&matchMedia('(max-width:640px)').matches))apply(true);
+  }catch(e){}
+})();
+
+// Ripple
+(function(){
+  function attach(el){
+    el.addEventListener('pointerdown',function(e){
+      const r=el.getBoundingClientRect();
+      const x=e.clientX-r.left,y=e.clientY-r.top;
+      const rad=Math.hypot(Math.max(x,r.width-x),Math.max(y,r.height-y));
+      const ink=document.createElement('span');ink.className='ripple-ink';
+      ink.style.width=ink.style.height=rad*2+'px';
+      ink.style.left=(x-rad)+'px';ink.style.top=(y-rad)+'px';
+      el.appendChild(ink);ink.addEventListener('animationend',()=>ink.remove());
+    });
+  }
+  document.querySelectorAll('nav a,.nav-toggle,.nav-close').forEach(attach);
+})();
+
+// Scroll spy
+(function(){
+  const links=[...document.querySelectorAll('nav a[href^="#"]')];
+  const sections=[...document.querySelectorAll('section[id]')];
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){
+      links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));
+    }});
+  },{rootMargin:'-40% 0px -55% 0px'});
+  sections.forEach(s=>obs.observe(s));
+})();
+
+// Animate gauge fills on scroll
+(function(){
+  const fills=document.querySelectorAll('.gauge-fill');
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const f=e.target;
+        const pct=f.style.width;
+        f.style.width='0%';
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.width=pct;}));
+        obs.unobserve(f);
+      }
+    });
+  },{threshold:.3});
+  fills.forEach(f=>{
+    const target=f.style.width;f.dataset.target=target;f.style.width='0%';
+    obs.observe(f);
+  });
+})();
+</script>
+</body>
+</html>

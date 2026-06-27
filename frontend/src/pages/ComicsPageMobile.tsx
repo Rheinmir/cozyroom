@@ -266,7 +266,7 @@ export default function ComicsPageMobile() {
             <button key={s} onClick={() => handleSourceChange(s)} style={{
               padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: 600,
-              background: source === s ? 'var(--accent)' : 'var(--surface2)',
+              background: source === s ? 'var(--accent)' : 'var(--elevated)',
               color: source === s ? '#000' : 'var(--text)',
             }}>
               {s === 'md' ? 'MangaDex' : 'E-Hentai'}
@@ -293,7 +293,7 @@ export default function ComicsPageMobile() {
                   style={{
                     padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer',
                     fontSize: 11, fontWeight: 600,
-                    background: dlFilter === f ? 'var(--accent)' : 'var(--surface2)',
+                    background: dlFilter === f ? 'var(--accent)' : 'var(--elevated)',
                     color: dlFilter === f ? '#000' : 'var(--text-muted)',
                   }}
                 >
@@ -464,7 +464,7 @@ export default function ComicsPageMobile() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', flexShrink: 0, borderBottom: '1px solid var(--border)' }}>
             <button onClick={() => setSelected(null)} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
-              background: 'var(--surface2)', color: 'var(--text)', fontSize: 13,
+              background: 'var(--elevated)', color: 'var(--text)', fontSize: 13,
             }}>← Back</button>
             <span style={{ fontSize: 13, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
           </div>
@@ -482,7 +482,7 @@ export default function ComicsPageMobile() {
               {source === 'eh' && selected.tags && (
                 <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {(Array.isArray(selected.tags) ? selected.tags as string[] : [selected.tags as string]).slice(0, 6).map((t: string) => (
-                    <span key={t} style={{ background: 'var(--surface2)', fontSize: 10, padding: '2px 6px', borderRadius: 4 }}>{t}</span>
+                    <span key={t} style={{ background: 'var(--elevated)', fontSize: 10, padding: '2px 6px', borderRadius: 4 }}>{t}</span>
                   ))}
                 </div>
               )}
@@ -503,7 +503,7 @@ export default function ComicsPageMobile() {
                   disabled={enqueueing === 'selected'}
                   style={{
                     flex: 1, padding: '12px', borderRadius: 12, border: 'none',
-                    background: 'var(--surface2)', color: 'var(--text)', fontWeight: 700, fontSize: 14,
+                    background: 'var(--elevated)', color: 'var(--text)', fontWeight: 700, fontSize: 14,
                     opacity: enqueueing === 'selected' ? 0.5 : 1,
                   }}
                 >
@@ -513,7 +513,7 @@ export default function ComicsPageMobile() {
               {selectedDl && selectedDl.status === 'done' && (
                 <button
                   onClick={() => handleReadLocal(selectedDl)}
-                  style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--surface2)', color: 'var(--text)', fontWeight: 700, fontSize: 14 }}
+                  style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 700, fontSize: 14 }}
                 >
                   📂 Local
                 </button>
@@ -549,7 +549,7 @@ export default function ComicsPageMobile() {
       {reading && (
         <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 200, display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <button onClick={() => setReading(null)} style={{ padding: '6px 12px', borderRadius: 8, border: 'none', background: 'var(--surface2)', color: 'var(--text)', fontSize: 12 }}>
+            <button onClick={() => setReading(null)} style={{ padding: '6px 12px', borderRadius: 8, border: 'none', background: 'var(--elevated)', color: 'var(--text)', fontSize: 12 }}>
               ← Close
             </button>
             <span style={{ fontSize: 12, opacity: 0.7, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -565,7 +565,7 @@ export default function ComicsPageMobile() {
                   setLocalChapterIdx(idx)
                   openLocalChapter(reading.dlId, localChapters[idx])
                 }}
-                style={{ fontSize: 10, padding: '3px 6px', borderRadius: 6, background: 'var(--surface2)', color: 'var(--text)', border: 'none' }}
+                style={{ fontSize: 10, padding: '3px 6px', borderRadius: 6, background: 'var(--elevated)', color: 'var(--text)', border: 'none' }}
               >
                 {localChapters.map((ch, i) => (
                   <option key={ch.id} value={i}>Ch {i + 1}</option>
@@ -577,7 +577,7 @@ export default function ComicsPageMobile() {
               {(['scroll', 'page'] as ViewMode[]).map(m => (
                 <button key={m} onClick={() => setViewMode(m)} style={{
                   padding: '4px 10px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600,
-                  background: viewMode === m ? 'var(--accent)' : 'var(--surface2)',
+                  background: viewMode === m ? 'var(--accent)' : 'var(--elevated)',
                   color: viewMode === m ? '#000' : 'var(--text)',
                 }}>
                   {m === 'scroll' ? 'Scroll' : 'Page'}

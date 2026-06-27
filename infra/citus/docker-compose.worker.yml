@@ -1,0 +1,13 @@
+services:
+  citus-worker:
+    image: citusdata/citus:12.1
+    container_name: citus-worker
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: cozyroom
+      POSTGRES_USER: cozyroom
+      POSTGRES_PASSWORD: ${CITUS_PASSWORD}
+    volumes:
+      - /var/lib/citus-worker:/var/lib/postgresql/data
+    restart: unless-stopped

@@ -1,4 +1,16 @@
-FILE FIRST
+## ⚠️ TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỤNG VÀO DATABASE ⚠️
+
+**PRODUCTION DATABASE: `/mnt/c/Users/olive/orca/workspaces/home-spotify/m/data/metadata.db`**
+
+TRƯỚC KHI `docker compose up --force-recreate` hoặc bất kỳ thao tác nào với container:
+1. PHẢI kiểm tra volume mount path của container đang chạy: `docker inspect <container> | grep -A5 Mounts`
+2. PHẢI đảm bảo path mount KHÔNG THAY ĐỔI so với container cũ
+3. KHÔNG BAO GIỜ đổi `./data` path mà không backup trước
+4. KHÔNG BAO GIỜ recreate container mà không xác nhận DB path với user
+
+Vi phạm rule này = mất dữ liệu người dùng không thể khôi phục.
+
+---
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
@@ -59,9 +71,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 These guidelines are working if: fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 ## Rules
-- FOLLOW the instructions in README.md in wiki folder
+- FOLLOW the instructions in README.md in llmwiki/wiki folder
 - EVERY wiki file must have an `## Origin` section — source is always traceable
-- NEVER write to `raw/`
+- NEVER write to `llmwiki/raw/`
 - ALWAYS update `llmwiki/wiki/index.md` when adding or removing a wiki file
 - ALWAYS append to `llmwiki/wiki/log.md` after every operation
 - Use `[[wikilinks]]` to cross-reference entries in `llmwiki/wiki/`
@@ -70,20 +82,23 @@ These guidelines are working if: fewer unnecessary changes in diffs, fewer rewri
 
 ## Skills
 
-| Skill | Invoke when | File |
-|-------|------------|------|
-| `ingest` | A new file appears in `raw/` | `llmwiki/skills/wiki-loop/ingest.md` |
-| `query` | User asks a question requiring wiki synthesis | `llmwiki/skills/wiki-loop/query.md` |
-| `lint` | After every 10 ingests, or wiki feels stale | `llmwiki/skills/wiki-loop/lint.md` |
-| `propose` | Any new feature or change is requested | `llmwiki/skills/dev-loop/propose.md` |
-| `impact-check` | Before modifying any shared symbol | `llmwiki/skills/dev-loop/impact-check.md` |
-| `safe-change` | Editing code called from more than one place | `llmwiki/skills/dev-loop/safe-change.md` |
-| `verify-before-commit` | Before every commit | `llmwiki/skills/dev-loop/verify-before-commit.md` |
-| `md-to-html` | User wants to render a professional HTML report | `llmwiki/skills/utils/md-to-html.md` |
-| `sync-template` | Upstreaming template improvements to master repo | `llmwiki/skills/utils/sync-template.md` |
-| `onboard-codebase` | Deep analysis of legacy code to populate Wiki | `llmwiki/skills/dev-loop/onboard-codebase.md` |
+Skills managed globally via `npx skills`. Use `Skill` tool to invoke.
+
+| Skill | Invoke when |
+|-------|------------|
+| `ingest` | New file in `llmwiki/raw/` |
+| `query` | Question requiring wiki synthesis |
+| `lint` | After every 10 ingests, or wiki feels stale |
+| `propose` | Any new feature or change requested |
+| `impact-check` | Before modifying any shared symbol |
+| `safe-change` | Editing code called from more than one place |
+| `verify-before-commit` | Before every commit |
+| `new-project-setup` | Deploy llmwiki vào project mới từ đầu |
+| `join-project` | Orient nhanh vào project đã có llmwiki |
+| `orca-workflow` | Orchestrating multi-agent tasks |
+| `orca-onboard` | Onboarding new agent to Orca |
 
 ## Invocation rules
-- New file in `raw/` → invoke `ingest` immediately
+- New file in `llmwiki/raw/` → invoke `ingest` immediately
 - New feature request → invoke `propose` first, stop, wait for approval
 - Edit to shared code → invoke `impact-check` then `safe-change`

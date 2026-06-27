@@ -1,0 +1,18 @@
+# ⚙️  GENERATED FROM policy.yaml — đừng sửa tay; sửa policy.yaml rồi chạy gen-converters.py
+name: harness
+on: [pull_request, push]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.x' }
+      - run: pip install pyyaml
+      - name: harness validator (layer=repo) trên file .md đổi
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          files=$(git diff --name-only "$base" HEAD 2>/dev/null | grep -E '\.md$' || true)
+          [ -z "$files" ] && { echo "no changed .md"; exit 0; }
+          python3 harness/poc-vendor-neutral/bin/llmwiki-validate.py files $files

@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cozyroom — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{background:#050505;color:rgba(255,255,255,0.92);font-family:'Geist',system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;}
+::selection{background:rgba(168,85,247,0.35);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:99px;border:3px solid transparent;background-clip:content-box;}
+::-webkit-scrollbar-track{background:transparent;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;border:none;background:none;color:inherit;font-family:inherit;font-size:inherit;}
+
+@keyframes cz-orbA{0%,100%{transform:translate3d(0,0,0) scale(1);}50%{transform:translate3d(40px,-30px,0) scale(1.12);}}
+@keyframes cz-orbB{0%,100%{transform:translate3d(0,0,0) scale(1.05);}50%{transform:translate3d(-50px,30px,0) scale(0.92);}}
+
+.outer{position:relative;width:100%;height:100dvh;overflow:hidden;}
+.orb-a{position:fixed;top:-220px;left:-160px;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(168,85,247,0.55),rgba(168,85,247,0) 62%);filter:blur(70px);opacity:0.42;z-index:0;pointer-events:none;animation:cz-orbA 18s ease-in-out infinite;}
+.orb-b{position:fixed;bottom:-260px;right:-180px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(45,212,191,0.42),rgba(45,212,191,0) 62%);filter:blur(80px);opacity:0.34;z-index:0;pointer-events:none;animation:cz-orbB 22s ease-in-out infinite;}
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.04;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+.shell{position:relative;z-index:1;display:flex;flex-direction:column;height:100dvh;}
+.shell-body{display:flex;flex:1;min-height:0;}
+
+/* Sidebar */
+.sidebar{width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:22px;padding:20px 12px;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.05);}
+.sidebar-brand{display:flex;align-items:center;gap:12px;padding:2px 6px;}
+.brand-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,#a855f7,#2dd4bf);box-shadow:0 8px 22px -8px rgba(168,85,247,0.7),inset 0 1px 1px rgba(255,255,255,0.4);flex-shrink:0;}
+.brand-dot{width:11px;height:11px;border-radius:50%;background:#050505;box-shadow:inset 0 0 0 2px rgba(255,255,255,0.85);}
+.brand-name{font-size:17px;font-weight:600;letter-spacing:-0.02em;color:#fff;}
+.sidebar-label{font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:rgba(255,255,255,0.32);padding:0 12px 8px;}
+.nav-section{display:flex;flex-direction:column;gap:4px;}
+.nav-link{position:relative;display:flex;align-items:center;gap:13px;width:100%;padding:10px 12px;border-radius:13px;background:transparent;color:rgba(255,255,255,0.64);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .4s ease;text-align:left;}
+.nav-link:hover{color:#fff;}
+.nav-link.active{color:#fff;}
+.nav-link.active::before{content:'';position:absolute;inset:0;border-radius:13px;background:rgba(168,85,247,0.15);box-shadow:inset 0 0 0 1px rgba(168,85,247,0.32),0 0 28px -12px rgba(168,85,247,0.6);}
+.nav-link svg,.nav-link span{position:relative;z-index:1;}
+
+/* Main wrapper */
+.main-wrapper{flex:1;min-width:0;display:flex;flex-direction:column;}
+.top-header{flex-shrink:0;padding:14px 24px;background:rgba(5,5,5,0.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.04);}
+.search-wrap{position:relative;max-width:440px;width:100%;margin:0 auto;}
+.search-input{width:100%;padding:9px 14px 9px 38px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;color:rgba(255,255,255,0.9);font-family:'Geist',sans-serif;font-size:13px;outline:none;transition:border-color .3s;}
+.search-input::placeholder{color:rgba(255,255,255,0.32);}
+.search-input:focus{border-color:rgba(168,85,247,0.5);}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.35);pointer-events:none;}
+.main{flex:1;overflow-y:auto;}
+.page{padding:28px 28px 80px;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* Eyebrow / labels */
+.eyebrow{display:inline-block;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:14px;}
+.eyebrow-purple{color:rgba(168,85,247,0.9);background:rgba(168,85,247,0.1);box-shadow:inset 0 0 0 1px rgba(168,85,247,0.25);}
+.eyebrow-teal{color:rgba(45,212,191,0.95);background:rgba(45,212,191,0.1);box-shadow:inset 0 0 0 1px rgba(45,212,191,0.25);}
+.page-title{font-size:28px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;}
+.page-meta{font-family:'Geist Mono',monospace;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:24px;display:flex;align-items:center;gap:6px;}
+.page-meta::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#2dd4bf;box-shadow:0 0 10px #2dd4bf;}
+.section-label{display:block;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:18px;}
+
+/* Artist grid */
+.artist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px;}
+.artist-card{padding:6px;border-radius:24px;background:rgba(255,255,255,0.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);cursor:pointer;transition:all .6s cubic-bezier(0.32,0.72,0,1);}
+.artist-card:hover{transform:translateY(-5px);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.13),0 28px 56px -26px rgba(0,0,0,0.95),0 0 50px -14px rgba(168,85,247,0.32);}
+.artist-card-inner{display:flex;flex-direction:column;align-items:center;gap:15px;padding:22px 16px;border-radius:18px;background:linear-gradient(180deg,#0e0e13,#08080a);box-shadow:inset 0 1px 1px rgba(255,255,255,0.06);}
+.artist-avatar{position:relative;width:104px;height:104px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 20px 38px -16px rgba(0,0,0,0.85),inset 0 0 0 1px rgba(255,255,255,0.14);flex-shrink:0;}
+.a-bg{position:absolute;inset:0;}
+.a-init{position:relative;z-index:1;font-size:30px;font-weight:600;letter-spacing:0.02em;color:rgba(255,255,255,0.9);text-shadow:0 2px 8px rgba(0,0,0,0.4);}
+.artist-name{font-size:14px;font-weight:600;color:rgba(255,255,255,0.94);text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.artist-sub{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+
+/* Album grid */
+.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;}
+.album-card{padding:6px;border-radius:22px;background:rgba(255,255,255,0.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);cursor:pointer;transition:all .6s cubic-bezier(0.32,0.72,0,1);}
+.album-card:hover{transform:translateY(-5px);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.13),0 28px 56px -26px rgba(0,0,0,0.95),0 0 50px -14px rgba(45,212,191,0.28);}
+.album-card-inner{padding:12px;border-radius:16px;background:linear-gradient(180deg,#0e0e13,#08080a);box-shadow:inset 0 1px 1px rgba(255,255,255,0.06);}
+.album-cover{position:relative;width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 16px 32px -16px rgba(0,0,0,0.8),inset 0 0 0 1px rgba(255,255,255,0.1);}
+.album-title{font-size:14px;font-weight:600;color:rgba(255,255,255,0.94);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.album-meta{font-family:'Geist Mono',monospace;font-size:11px;color:rgba(255,255,255,0.42);margin-top:5px;}
+
+/* Playlist grid */
+.playlist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;}
+
+/* Back button */
+.back-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;background:rgba(255,255,255,0.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:13px;font-weight:500;cursor:pointer;transition:all .5s cubic-bezier(0.32,0.72,0,1);margin:20px 28px 0;}
+.back-btn:hover{background:rgba(255,255,255,0.09);color:#fff;}
+
+/* Hero */
+.artist-hero{display:flex;align-items:flex-end;gap:24px;padding:24px 28px 20px;}
+.hero-avatar{position:relative;width:128px;height:128px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 24px 48px -20px rgba(0,0,0,0.9),inset 0 0 0 1px rgba(255,255,255,0.14);flex-shrink:0;}
+.hero-avatar .a-bg{position:absolute;inset:0;}
+.hero-avatar .a-init{font-size:44px;}
+.hero-text .eyebrow{margin-bottom:10px;}
+.hero-text h1{font-size:36px;font-weight:700;letter-spacing:-0.025em;line-height:1;margin-bottom:8px;}
+.hero-text p{font-family:'Geist Mono',monospace;font-size:13px;color:rgba(255,255,255,0.5);}
+
+.album-hero{display:flex;align-items:flex-end;gap:24px;padding:24px 28px 20px;}
+.hero-cover{position:relative;width:152px;height:152px;border-radius:16px;overflow:hidden;flex-shrink:0;box-shadow:0 24px 48px -20px rgba(0,0,0,0.9),inset 0 0 0 1px rgba(255,255,255,0.1);}
+
+.play-all-btn{display:inline-flex;align-items:center;gap:14px;padding:8px 8px 8px 22px;border-radius:999px;background:#fff;color:#070708;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 14px 30px -12px rgba(168,85,247,0.5);transition:all .5s cubic-bezier(0.32,0.72,0,1);margin-top:18px;}
+.play-all-btn:hover{transform:scale(1.03);}
+.play-all-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,#a855f7,#2dd4bf);}
+
+/* Track list */
+.track-header{display:flex;align-items:center;gap:16px;padding:0 14px 10px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.35);}
+.track-list{display:flex;flex-direction:column;gap:1px;}
+.track-row{display:flex;align-items:center;gap:16px;padding:10px 14px;border-radius:12px;cursor:pointer;transition:background .2s;}
+.track-row:hover{background:rgba(255,255,255,0.05);}
+.track-num{width:24px;font-family:'Geist Mono',monospace;font-size:13px;color:rgba(255,255,255,0.4);flex-shrink:0;text-align:center;}
+.track-title{flex:1;font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.track-title.playing{color:#a855f7;}
+.track-sub{font-size:12px;color:rgba(255,255,255,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-dur{font-family:'Geist Mono',monospace;font-size:13px;color:rgba(255,255,255,0.4);}
+
+/* Player bar */
+.player-bar{flex-shrink:0;position:relative;background:rgba(5,5,5,0.88);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,0.06);}
+.mini-prog-track{position:absolute;top:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.06);}
+.mini-prog-fill{height:100%;background:linear-gradient(90deg,#a855f7,#2dd4bf);transition:width .5s linear;}
+.player-full{display:flex;align-items:center;gap:20px;padding:11px 24px;}
+
+.player-left{display:flex;align-items:center;gap:13px;width:240px;min-width:180px;}
+.player-cover{width:46px;height:46px;border-radius:11px;overflow:hidden;flex-shrink:0;box-shadow:0 10px 22px -10px rgba(0,0,0,0.8),inset 0 0 0 1px rgba(255,255,255,0.12);position:relative;}
+.cover-bg{position:absolute;inset:0;}
+.player-info{min-width:0;flex:1;}
+.player-title{font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.player-artist{font-size:11px;color:rgba(255,255,255,0.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.heart-btn{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);transition:color .4s ease;flex-shrink:0;}
+.heart-btn:hover{color:#2dd4bf;}
+
+.player-center{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;max-width:560px;margin:0 auto;}
+.player-controls{display:flex;align-items:center;gap:18px;}
+.ctrl-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.55);transition:color .4s ease;}
+.ctrl-btn:hover{color:#fff;}
+.ctrl-repeat{color:rgba(168,85,247,0.95);}
+.ctrl-repeat:hover{color:#c4a5ff;}
+.play-btn{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 12px 28px -10px rgba(168,85,247,0.6),inset 0 0 0 1px rgba(255,255,255,0.5);transition:all .5s cubic-bezier(0.32,0.72,0,1);}
+.play-btn:hover{transform:scale(1.06);box-shadow:0 16px 34px -10px rgba(168,85,247,0.8);}
+.player-timeline{display:flex;align-items:center;gap:11px;width:100%;}
+.t-label{font-family:'Geist Mono',monospace;font-size:11px;color:rgba(255,255,255,0.4);width:34px;text-align:center;flex-shrink:0;}
+.t-track{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,0.1);position:relative;cursor:pointer;}
+.t-fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;background:linear-gradient(90deg,#a855f7,#2dd4bf);}
+.t-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);}
+
+.player-right{width:240px;min-width:180px;display:flex;align-items:center;justify-content:flex-end;gap:10px;}
+.vol-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;transition:all .4s ease;}
+.vol-btn:hover{color:#fff;background:rgba(255,255,255,0.09);}
+.smart-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;background:rgba(168,85,247,0.13);box-shadow:inset 0 0 0 1px rgba(168,85,247,0.3);color:#c4a5ff;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.08em;cursor:pointer;transition:background .4s;}
+.smart-badge:hover{background:rgba(168,85,247,0.22);}
+.quality-badge{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,0.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.06em;}
+</style>
+</head>
+<body>
+<div class="outer">
+  <div class="orb-a"></div>
+  <div class="orb-b"></div>
+  <div class="noise"></div>
+
+  <div class="shell">
+    <div class="shell-body">
+
+      <nav class="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-icon"><div class="brand-dot"></div></div>
+          <span class="brand-name">Cozyroom</span>
+        </div>
+        <div>
+          <div class="sidebar-label">Thư viện</div>
+          <div class="nav-section">
+            <button class="nav-link active" onclick="show('artists')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+              <span>Nghệ sĩ</span>
+            </button>
+            <button class="nav-link" onclick="show('playlists')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h14M3 18h10"/></svg>
+              <span>Playlists</span>
+            </button>
+            <button class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M9 5v14M15 5v14"/></svg>
+              <span>Phim</span>
+            </button>
+            <button class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2.2-1.3-4.5-1.3-7 0v12c2.5-1.3 4.8-1.3 7 0 2.2-1.3 4.5-1.3 7 0V6c-2.5-1.3-4.8-1.3-7 0z"/><path d="M12 6v12"/></svg>
+              <span>Sách điện tử</span>
+            </button>
+            <button class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="12" rx="2.5"/><rect x="8" y="8" width="12" height="12" rx="2.5"/></svg>
+              <span>Truyện tranh</span>
+            </button>
+            <button class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 3 6-7"/><path d="M16 6h4v4"/></svg>
+              <span>Xu hướng</span>
+            </button>
+            <button class="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.7 5.6L19 11l-5.3 1.7L12 18l-1.7-5.3L5 11l5.3-1.4z"/></svg>
+              <span>Trợ lý AI</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="main-wrapper">
+        <div class="top-header">
+          <div class="search-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-input" placeholder="Nghệ sĩ, album, bài hát…" oninput="onSearch(this.value)"/>
+          </div>
+        </div>
+        <div class="main">
+
+          <div id="view-artists" class="view active">
+            <div class="page">
+              <div class="eyebrow eyebrow-purple">Thư viện</div>
+              <h1 class="page-title">Nghệ sĩ</h1>
+              <div class="page-meta">5 nghệ sĩ · 8 albums · 40 bài hát</div>
+              <div class="artist-grid" id="artist-grid"></div>
+            </div>
+          </div>
+
+          <div id="view-artist" class="view">
+            <button class="back-btn" onclick="show('artists')">← Thư viện</button>
+            <div id="artist-hero-wrap"></div>
+            <div class="page" style="padding-top:20px">
+              <span class="section-label">Albums</span>
+              <div class="album-grid" id="artist-albums"></div>
+            </div>
+          </div>
+
+          <div id="view-album" class="view">
+            <button class="back-btn" id="album-back-btn" onclick="backToArtist()">← Nghệ sĩ</button>
+            <div id="album-hero-wrap"></div>
+            <div class="page" style="padding-top:20px">
+              <div class="track-header">
+                <span style="width:24px">#</span>
+                <span style="flex:1">Bài hát</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>
+              </div>
+              <div class="track-list" id="album-tracks"></div>
+            </div>
+          </div>
+
+          <div id="view-playlists" class="view">
+            <div class="page">
+              <div class="eyebrow eyebrow-purple">Thư viện</div>
+              <h1 class="page-title">Playlists</h1>
+              <div class="page-meta">4 playlists · nhạc tuyển chọn</div>
+              <div class="playlist-grid" id="playlist-grid"></div>
+            </div>
+          </div>
+
+          <div id="view-playlist" class="view">
+            <button class="back-btn" onclick="show('playlists')">← Playlists</button>
+            <div id="playlist-hero-wrap"></div>
+            <div class="page" style="padding-top:20px">
+              <div class="track-header">
+                <span style="width:24px">#</span>
+                <span style="flex:1">Bài hát</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>
+              </div>
+              <div class="track-list" id="playlist-tracks"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="player-bar">
+      <div class="mini-prog-track">
+        <div class="mini-prog-fill" id="mini-prog" style="width:31%"></div>
+      </div>
+      <div class="player-full">
+
+        <div class="player-left">
+          <div class="player-cover" id="player-cover">
+            <div class="cover-bg" id="cover-bg"></div>
+          </div>
+          <div class="player-info">
+            <div class="player-title" id="player-title">Karma Police</div>
+            <div class="player-artist" id="player-artist">Radiohead</div>
+          </div>
+          <button class="heart-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-6.8-4.4-6.8-9.1A3.4 3.4 0 0 1 12 7.2a3.4 3.4 0 0 1 6.8 3.7C18.8 15.6 12 20 12 20z"/></svg>
+          </button>
+        </div>
+
+        <div class="player-center">
+          <div class="player-controls">
+            <button class="ctrl-btn">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h4l9 10h3"/><path d="M4 17h4l3-3"/><path d="M17 4l3 3-3 3"/><path d="M17 14l3 3-3 3"/></svg>
+            </button>
+            <button class="ctrl-btn" onclick="prevTrack()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h1.8v12H7zM19 6l-9 6 9 6z"/></svg>
+            </button>
+            <button class="play-btn" id="play-btn" onclick="togglePlay()">
+              <svg id="play-icon" width="18" height="18" viewBox="0 0 24 24" fill="#070708"><path d="M8 6.5l9 5.5-9 5.5z"/></svg>
+            </button>
+            <button class="ctrl-btn" onclick="nextTrack()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 6h-1.8v12H17zM5 6l9 6-9 6z"/></svg>
+            </button>
+            <button class="ctrl-btn ctrl-repeat">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9a4 4 0 0 1 4-4h7"/><path d="M14 2l3 3-3 3"/><path d="M19 15a4 4 0 0 1-4 4H8"/><path d="M10 22l-3-3 3-3"/></svg>
+            </button>
+          </div>
+          <div class="player-timeline">
+            <span class="t-label" id="time-cur">1:22</span>
+            <div class="t-track" onclick="seek(event,this)" id="t-bar">
+              <div class="t-fill" id="t-fill" style="width:31%"></div>
+              <div class="t-thumb" id="t-thumb" style="left:31%"></div>
+            </div>
+            <span class="t-label" id="time-dur">4:21</span>
+          </div>
+        </div>
+
+        <div class="player-right">
+          <button class="vol-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9v6h4l5 4V5L9 9z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg>
+          </button>
+          <button class="smart-badge">✦ SMART</button>
+          <button class="quality-badge">320K</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var ARTISTS=[
+  {id:'a1',name:'Radiohead',       bg:'radial-gradient(120% 120% at 30% 25%,#a855f7,#3b0764)',i:'RH'},
+  {id:'a2',name:'Daft Punk',       bg:'radial-gradient(120% 120% at 30% 25%,#2dd4bf,#134e4a)',i:'DP'},
+  {id:'a3',name:'Portishead',      bg:'radial-gradient(120% 120% at 30% 25%,#60a5fa,#1e3a5f)',i:'PT'},
+  {id:'a4',name:'Boards of Canada',bg:'radial-gradient(120% 120% at 30% 25%,#f59e0b,#78350f)',i:'BC'},
+  {id:'a5',name:'Massive Attack',  bg:'radial-gradient(120% 120% at 30% 25%,#8b5cf6,#1e1b4b)',i:'MA'},
+];
+var ALBUMS=[
+  {id:'alb1',aid:'a1',title:'OK Computer',              year:1997,bg:'radial-gradient(135% 135% at 20% 20%,#a855f7,#3b0764)'},
+  {id:'alb2',aid:'a1',title:'Kid A',                    year:2000,bg:'radial-gradient(135% 135% at 20% 20%,#818cf8,#1e1b4b)'},
+  {id:'alb3',aid:'a1',title:'In Rainbows',              year:2007,bg:'radial-gradient(135% 135% at 20% 20%,#f43f5e,#881337)'},
+  {id:'alb4',aid:'a2',title:'Discovery',                year:2001,bg:'radial-gradient(135% 135% at 20% 20%,#2dd4bf,#134e4a)'},
+  {id:'alb5',aid:'a2',title:'Random Access Memories',   year:2013,bg:'radial-gradient(135% 135% at 20% 20%,#f59e0b,#92400e)'},
+  {id:'alb6',aid:'a3',title:'Dummy',                    year:1994,bg:'radial-gradient(135% 135% at 20% 20%,#34d399,#065f46)'},
+  {id:'alb7',aid:'a4',title:'Music Has the Right to Children',year:1998,bg:'radial-gradient(135% 135% at 20% 20%,#f59e0b,#78350f)'},
+  {id:'alb8',aid:'a5',title:'Mezzanine',                year:1998,bg:'radial-gradient(135% 135% at 20% 20%,#8b5cf6,#1e1b4b)'},
+];
+var TRACKS={
+  alb1:[
+    {id:'t1', n:1, title:'Airbag',                     dur:'4:34'},
+    {id:'t2', n:2, title:'Paranoid Android',            dur:'6:23'},
+    {id:'t3', n:3, title:'Subterranean Homesick Alien', dur:'4:27'},
+    {id:'t4', n:4, title:'Exit Music (For a Film)',      dur:'4:05'},
+    {id:'t5', n:5, title:'Let Down',                    dur:'4:54'},
+    {id:'t6', n:6, title:'Karma Police',                dur:'4:21'},
+    {id:'t7', n:7, title:'Fitter Happier',              dur:'1:57'},
+    {id:'t8', n:8, title:'Electioneering',              dur:'3:50'},
+    {id:'t9', n:9, title:'Climbing Up the Walls',       dur:'4:45'},
+    {id:'t10',n:10,title:'No Surprises',                dur:'3:48'},
+  ],
+  alb2:[
+    {id:'t11',n:1,title:'Everything in Its Right Place',dur:'4:11'},
+    {id:'t12',n:2,title:'Kid A',                        dur:'4:44'},
+    {id:'t13',n:3,title:'The National Anthem',          dur:'5:51'},
+    {id:'t14',n:4,title:'How to Disappear Completely',  dur:'5:56'},
+    {id:'t15',n:5,title:'Treefingers',                  dur:'3:42'},
+    {id:'t16',n:6,title:'Optimistic',                   dur:'5:16'},
+  ],
+  alb3:[
+    {id:'t17',n:1,title:'15 Step',             dur:'3:57'},
+    {id:'t18',n:2,title:'Bodysnatchers',        dur:'4:01'},
+    {id:'t19',n:3,title:'Nude',                 dur:'4:15'},
+    {id:'t20',n:4,title:'Weird Fishes/Arpeggi', dur:'5:18'},
+    {id:'t21',n:5,title:'All I Need',           dur:'3:54'},
+    {id:'t22',n:7,title:'Reckoner',             dur:'4:50'},
+  ],
+  alb4:[
+    {id:'t23',n:1,title:'One More Time',                    dur:'5:20'},
+    {id:'t24',n:2,title:'Aerodynamic',                      dur:'3:32'},
+    {id:'t25',n:3,title:'Digital Love',                     dur:'5:01'},
+    {id:'t26',n:4,title:'Harder, Better, Faster, Stronger', dur:'3:45'},
+    {id:'t27',n:5,title:'Crescendolls',                     dur:'3:31'},
+    {id:'t28',n:7,title:'Superheroes',                      dur:'3:57'},
+  ],
+  alb5:[
+    {id:'t29',n:1,title:'Give Life Back to Music',dur:'4:34'},
+    {id:'t30',n:3,title:'Giorgio by Moroder',      dur:'9:04'},
+    {id:'t31',n:6,title:'Get Lucky',               dur:'6:09'},
+    {id:'t32',n:7,title:'Instant Crush',           dur:'5:37'},
+    {id:'t33',n:9,title:'Touch',                   dur:'8:18'},
+  ],
+  alb6:[
+    {id:'t34',n:1,title:'Mysterons',      dur:'5:02'},
+    {id:'t35',n:2,title:'Sour Times',     dur:'4:11'},
+    {id:'t36',n:3,title:'Strangers',      dur:'3:29'},
+    {id:'t37',n:5,title:'Wandering Star', dur:'4:51'},
+    {id:'t38',n:8,title:'Glory Box',      dur:'5:07'},
+  ],
+  alb7:[
+    {id:'t39',n:2, title:'An Eagle in Your Mind',dur:'6:04'},
+    {id:'t40',n:4, title:'Telephasic Workshop',   dur:'6:26'},
+    {id:'t41',n:9, title:'Roygbiv',               dur:'2:32'},
+    {id:'t42',n:12,title:'Olson',                 dur:'2:23'},
+  ],
+  alb8:[
+    {id:'t43',n:1,title:'Angel',          dur:'6:17'},
+    {id:'t44',n:2,title:'Risingson',      dur:'5:56'},
+    {id:'t45',n:3,title:'Teardrop',       dur:'5:29'},
+    {id:'t46',n:4,title:'Inertia Creeps', dur:'6:32'},
+    {id:'t47',n:5,title:'Exchange',       dur:'5:05'},
+  ],
+};
+var PLAYLISTS=[
+  {id:'pl1',name:'Late Night Vibes',     tids:['t6','t34','t43','t45','t19']},
+  {id:'pl2',name:'Electronic Classics',  tids:['t23','t24','t25','t26','t29','t31']},
+  {id:'pl3',name:'Chill Instrumentals',  tids:['t39','t40','t41','t43','t44']},
+  {id:'pl4',name:'Radiohead Essentials', tids:['t2','t4','t6','t11','t17','t20','t22']},
+];
+
+var curId='t6', playing=false, prog=0.31, tmr=null, curArtistId=null;
+
+function flat(){return Object.values(TRACKS).reduce(function(a,b){return a.concat(b);},[])}
+function tById(id){return flat().find(function(t){return t.id===id;})}
+function aById(id){return ARTISTS.find(function(a){return a.id===id;})}
+function albById(id){return ALBUMS.find(function(a){return a.id===id;})}
+function albForT(id){
+  for(var k in TRACKS){if(TRACKS[k].find(function(t){return t.id===id;}))return albById(k);}
+  return null;
+}
+
+function show(v){
+  document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(function(el){el.classList.remove('active');});
+  var lnk=document.querySelector('[onclick="show(\''+v+'\')"]');
+  if(lnk)lnk.classList.add('active');
+}
+
+function showArtist(aid){
+  curArtistId=aid;
+  var ar=aById(aid); if(!ar)return;
+  var albs=ALBUMS.filter(function(a){return a.aid===aid;});
+  var totalTracks=albs.reduce(function(s,a){return s+(TRACKS[a.id]||[]).length;},0);
+  document.getElementById('artist-hero-wrap').innerHTML=
+    '<div class="artist-hero">'+
+    '<div class="hero-avatar"><div class="a-bg" style="background:'+ar.bg+'"></div><span class="a-init">'+ar.i+'</span></div>'+
+    '<div class="hero-text">'+
+    '<div class="eyebrow eyebrow-purple">Nghệ sĩ</div>'+
+    '<h1>'+ar.name+'</h1>'+
+    '<p>'+albs.length+' albums · '+totalTracks+' bài hát</p>'+
+    '</div></div>';
+  document.getElementById('artist-albums').innerHTML=albs.map(function(alb){
+    var cnt=(TRACKS[alb.id]||[]).length;
+    return '<div class="album-card" onclick="showAlbum(\''+alb.id+'\')">'+
+      '<div class="album-card-inner">'+
+      '<div class="album-cover"><div class="a-bg" style="background:'+alb.bg+'"></div></div>'+
+      '<div class="album-title">'+alb.title+'</div>'+
+      '<div class="album-meta">'+alb.year+' · '+cnt+' bài</div>'+
+      '</div></div>';
+  }).join('');
+  show('artist');
+}
+
+function showAlbum(albId){
+  var alb=albById(albId); if(!alb)return;
+  var ar=aById(alb.aid);
+  var trks=TRACKS[albId]||[];
+  if(ar)document.getElementById('album-back-btn').textContent='← '+ar.name;
+  document.getElementById('album-hero-wrap').innerHTML=
+    '<div class="album-hero">'+
+    '<div class="hero-cover"><div class="a-bg" style="background:'+alb.bg+'"></div></div>'+
+    '<div class="hero-text">'+
+    '<div class="eyebrow eyebrow-teal">Album</div>'+
+    '<h1>'+alb.title+'</h1>'+
+    '<p>'+(ar?ar.name:'')+' · '+alb.year+' · '+trks.length+' bài hát</p>'+
+    '<button class="play-all-btn" onclick="playAlbum(\''+albId+'\')">'+
+    'Phát tất cả'+
+    '<span class="play-all-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="#070708"><path d="M8 6.5l9 5.5-9 5.5z"/></svg></span>'+
+    '</button>'+
+    '</div></div>';
+  document.getElementById('album-tracks').innerHTML=trks.map(function(t){
+    var p=t.id===curId;
+    return '<div class="track-row" onclick="playTrack(\''+t.id+'\')">'+
+      '<span class="track-num">'+(p?'▶':t.n)+'</span>'+
+      '<span class="track-title'+(p?' playing':'')+'">'+t.title+'</span>'+
+      '<span class="track-dur">'+t.dur+'</span></div>';
+  }).join('');
+  show('album');
+}
+
+function backToArtist(){if(curArtistId)showArtist(curArtistId);else show('artists');}
+
+function showPlaylist(plId){
+  var pl=PLAYLISTS.find(function(p){return p.id===plId;}); if(!pl)return;
+  var items=pl.tids.map(function(tid){
+    var t=tById(tid); var alb=albForT(tid); var ar=alb?aById(alb.aid):null;
+    return t?{t:t,alb:alb,ar:ar}:null;
+  }).filter(Boolean);
+  var bgs=items.slice(0,4).map(function(x){return x.alb?x.alb.bg:'radial-gradient(#1a1a2e,#0d0d12)';});
+  while(bgs.length<4)bgs.push('radial-gradient(#1a1a2e,#0d0d12)');
+  document.getElementById('playlist-hero-wrap').innerHTML=
+    '<div class="album-hero">'+
+    '<div class="hero-cover" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">'+
+      bgs.map(function(b){return '<div style="background:'+b+';width:100%;height:100%"></div>';}).join('')+
+    '</div>'+
+    '<div class="hero-text">'+
+    '<div class="eyebrow eyebrow-purple">Playlist</div>'+
+    '<h1>'+pl.name+'</h1>'+
+    '<p>'+items.length+' bài hát</p>'+
+    '</div></div>';
+  document.getElementById('playlist-tracks').innerHTML=items.map(function(x,i){
+    var p=x.t.id===curId;
+    return '<div class="track-row" onclick="playTrack(\''+x.t.id+'\')">'+
+      '<span class="track-num">'+(p?'▶':i+1)+'</span>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="track-title'+(p?' playing':'')+'">'+x.t.title+'</div>'+
+        '<div class="track-sub">'+(x.ar?x.ar.name:'')+(x.alb?' · '+x.alb.title:'')+'</div>'+
+      '</div>'+
+      '<span class="track-dur">'+x.t.dur+'</span></div>';
+  }).join('');
+  show('playlist');
+}
+
+function playAlbum(albId){var trks=TRACKS[albId]||[];if(trks.length)playTrack(trks[0].id);}
+
+function playTrack(id){curId=id;playing=true;prog=0;updatePlayer();refreshRows();startTimer();}
+
+function updatePlayer(){
+  var t=tById(curId); if(!t)return;
+  var alb=albForT(curId); var ar=alb?aById(alb.aid):null;
+  document.getElementById('player-title').textContent=t.title;
+  document.getElementById('player-artist').textContent=ar?ar.name:'';
+  document.getElementById('cover-bg').style.background=alb?alb.bg:'radial-gradient(#a855f7,#3b0764)';
+  document.getElementById('time-dur').textContent=t.dur;
+  var icon=document.getElementById('play-icon');
+  icon.innerHTML=playing
+    ?'<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'
+    :'<path d="M8 6.5l9 5.5-9 5.5z"/>';
+  updateProg();
+}
+
+function updateProg(){
+  var pct=(prog*100)+'%';
+  document.getElementById('t-fill').style.width=pct;
+  document.getElementById('t-thumb').style.left=pct;
+  document.getElementById('mini-prog').style.width=pct;
+  var t=tById(curId); if(!t)return;
+  var pts=t.dur.split(':'),tot=+pts[0]*60+ +pts[1];
+  var cur=Math.floor(prog*tot),m=Math.floor(cur/60),s=cur%60;
+  document.getElementById('time-cur').textContent=m+':'+(s<10?'0':'')+s;
+}
+
+function togglePlay(){
+  playing=!playing;
+  var icon=document.getElementById('play-icon');
+  icon.innerHTML=playing
+    ?'<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'
+    :'<path d="M8 6.5l9 5.5-9 5.5z"/>';
+  if(playing)startTimer();else clearInterval(tmr);
+}
+
+function startTimer(){
+  clearInterval(tmr);
+  tmr=setInterval(function(){
+    prog=Math.min(1,prog+1/240);updateProg();
+    if(prog>=1){prog=0;nextTrack();}
+  },500);
+}
+
+function seek(e,bar){
+  var r=bar.getBoundingClientRect();
+  prog=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  updateProg();
+}
+
+function nextTrack(){var all=flat(),idx=all.findIndex(function(t){return t.id===curId;});prog=0;playTrack(all[(idx+1)%all.length].id);}
+function prevTrack(){var all=flat(),idx=all.findIndex(function(t){return t.id===curId;});prog=0;playTrack(all[(idx-1+all.length)%all.length].id);}
+
+function refreshRows(){
+  document.querySelectorAll('.track-row').forEach(function(row){
+    var m=(row.getAttribute('onclick')||'').match(/playTrack\('([^']+)'\)/);
+    if(!m)return;
+    var p=m[1]===curId;
+    var num=row.querySelector('.track-num');
+    var title=row.querySelector('.track-title');
+    if(title)title.classList.toggle('playing',p);
+    if(num&&p)num.textContent='▶';
+  });
+}
+
+function onSearch(q){
+  q=q.toLowerCase().trim();
+  if(!q){renderArtists();show('artists');return;}
+  var ra=ARTISTS.filter(function(a){return a.name.toLowerCase().includes(q);});
+  var ral=ALBUMS.filter(function(a){return a.title.toLowerCase().includes(q);});
+  document.getElementById('artist-grid').innerHTML=
+    ra.map(artistCard).join('')+
+    ral.map(function(alb){
+      var ar=aById(alb.aid);
+      return '<div class="artist-card" onclick="showAlbum(\''+alb.id+'\')">'+
+        '<div class="artist-card-inner">'+
+        '<div class="artist-avatar"><div class="a-bg" style="background:'+alb.bg+'"></div></div>'+
+        '<div class="artist-name">'+alb.title+'</div>'+
+        '<div class="artist-sub">Album · '+(ar?ar.name:'')+'</div>'+
+        '</div></div>';
+    }).join('');
+  show('artists');
+}
+
+function artistCard(a){
+  return '<div class="artist-card" onclick="showArtist(\''+a.id+'\')">'+
+    '<div class="artist-card-inner">'+
+    '<div class="artist-avatar"><div class="a-bg" style="background:'+a.bg+'"></div><span class="a-init">'+a.i+'</span></div>'+
+    '<div class="artist-name">'+a.name+'</div>'+
+    '<div class="artist-sub">Nghệ sĩ</div>'+
+    '</div></div>';
+}
+
+function renderArtists(){document.getElementById('artist-grid').innerHTML=ARTISTS.map(artistCard).join('');}
+
+function renderPlaylists(){
+  document.getElementById('playlist-grid').innerHTML=PLAYLISTS.map(function(pl){
+    var bgs=pl.tids.slice(0,4).map(function(tid){
+      var alb=albForT(tid);return alb?alb.bg:'radial-gradient(#1a1a2e,#0d0d12)';
+    });
+    while(bgs.length<4)bgs.push('radial-gradient(#1a1a2e,#0d0d12)');
+    return '<div class="album-card" onclick="showPlaylist(\''+pl.id+'\')">'+
+      '<div class="album-card-inner">'+
+      '<div class="album-cover" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">'+
+        bgs.map(function(b){return '<div style="background:'+b+';width:100%;height:100%"></div>';}).join('')+
+      '</div>'+
+      '<div class="album-title">'+pl.name+'</div>'+
+      '<div class="album-meta">'+pl.tids.length+' bài hát</div>'+
+      '</div></div>';
+  }).join('');
+}
+
+renderArtists();
+renderPlaylists();
+updatePlayer();
+</script>
+</body>
+</html>

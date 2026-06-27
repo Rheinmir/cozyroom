@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { usePlayer } from '../PlayerContext'
+import { useBgSounds } from '../BgSoundsContext'
 import type { RepeatMode, ShuffleMode } from '../PlayerContext'
 import type { Track } from '../types'
 import FavoritePill from '../components/FavoritePill'
@@ -34,6 +35,8 @@ interface Action {
   duration_s?: number
   mode?: string
   tracks?: Track[]
+  name?: string
+  volume?: number
 }
 
 interface ChatTurn {
@@ -464,6 +467,7 @@ function providerLogo(provider: string | undefined, model: string | undefined): 
 export default function AIAssistantPage() {
   const { t } = useTranslation()
   const player = usePlayer()
+  const bgSounds = useBgSounds()
   const location = useLocation()
   const [messages, setMessages] = useState<Message[]>([
     { id: msgSeq++, role: 'assistant', text: t('ai.greeting') },
@@ -642,6 +646,11 @@ export default function AIAssistantPage() {
       player.toggle()
     } else if (action.type === 'play_queue' && action.tracks && action.tracks.length > 0) {
       player.play(action.tracks[0], action.tracks)
+    } else if (action.type === 'play_ambient_sound' && action.name) {
+      bgSounds.setActive(action.name)
+      if (typeof action.volume === 'number') bgSounds.setVolume(action.volume)
+    } else if (action.type === 'stop_ambient_sound') {
+      bgSounds.setActive(null)
     }
   }
 

@@ -184,4 +184,19 @@ export const MCP_TOOLS: McpTool[] = [
     description: 'Tạo skill / tool tùy chỉnh cho AI',
     flow: ['Gọi create_custom_skill(name=..., description=..., steps=[...])', 'Skill được lưu và dùng được ngay trong session tiếp theo'],
   },
+  {
+    name: 'list_ambient_sounds', category: '🔊 Ambient', categoryColor: '#6366f1', uiRoute: '/ai', prompt: 'xem danh sách âm thanh nền',
+    description: 'Liệt kê các âm thanh nền khả dụng (rain, ocean, fire...)',
+    flow: ['Gọi list_ambient_sounds()', 'Nhận sounds[] với name và label', 'Dùng name cho play_ambient_sound'],
+  },
+  {
+    name: 'play_ambient_sound', category: '🔊 Ambient', categoryColor: '#6366f1', uiRoute: '/ai', prompt: 'bật âm thanh nền ',
+    description: 'Phát âm thanh nền (mưa, sóng biển, lửa...)',
+    flow: ['Gọi list_ambient_sounds() để lấy danh sách', 'Gọi play_ambient_sound(name="rain", volume=0.3)', 'volume tuỳ chọn, mặc định 0.3'],
+  },
+  {
+    name: 'stop_ambient_sound', category: '🔊 Ambient', categoryColor: '#6366f1', uiRoute: '/ai', prompt: 'tắt âm thanh nền',
+    description: 'Dừng âm thanh nền đang phát',
+    flow: ['Gọi stop_ambient_sound() — không cần tham số'],
+  },
 ]

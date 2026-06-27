@@ -1,0 +1,194 @@
+{
+  "date": "2026-06-12",
+  "pages": 90,
+  "broken_wikilinks": [
+    {
+      "from": "concepts/APIReference.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "concepts/APIReference.md",
+      "wikilink": "concepts/YouTubeIntegration"
+    },
+    {
+      "from": "concepts/APIReference.md",
+      "wikilink": "concepts/TrendingInsights"
+    },
+    {
+      "from": "concepts/APIReference.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "concepts/APIReference.md",
+      "wikilink": "concepts/ComicsDownloader"
+    },
+    {
+      "from": "concepts/Architecture.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/Architecture.md",
+      "wikilink": "concepts/SmartRadio"
+    },
+    {
+      "from": "concepts/Architecture.md",
+      "wikilink": "concepts/DeezerEnricher"
+    },
+    {
+      "from": "concepts/Architecture.md",
+      "wikilink": "sources/tech-stack-decisions"
+    },
+    {
+      "from": "concepts/CleanArchitecture.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "concepts/CleanArchitecture.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/CleanArchitecture.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "concepts/CleanArchitecture.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/DeezerEnricher.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "concepts/FavoritePlaylistPill.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/FavoritePlaylistPill.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "concepts/FavoritePlaylistPill.md",
+      "wikilink": "concepts/CleanArchitecture"
+    },
+    {
+      "from": "concepts/MCPToolsCheatsheet.md",
+      "wikilink": "concepts/MCPServer"
+    },
+    {
+      "from": "concepts/MCPToolsCheatsheet.md",
+      "wikilink": "concepts/AIAgentRuntime"
+    },
+    {
+      "from": "concepts/MCPToolsCheatsheet.md",
+      "wikilink": "sources/270526-playlist-tool-bugs-postmortem"
+    },
+    {
+      "from": "concepts/NowPlayingUI.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "concepts/NowPlayingUI.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "concepts/Scanner.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "concepts/Scanner.md",
+      "wikilink": "concepts/SmartRadio"
+    },
+    {
+      "from": "concepts/SmartRadio.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/SmartRadio.md",
+      "wikilink": "sources/tech-stack-decisions"
+    },
+    {
+      "from": "concepts/VideoStreaming.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/YouTubeIntegration.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "concepts/YouTubeIntegration.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "log.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "log.md",
+      "wikilink": "concepts/Scanner"
+    },
+    {
+      "from": "log.md",
+      "wikilink": "concepts/DeezerEnricher"
+    },
+    {
+      "from": "log.md",
+      "wikilink": "concepts/CleanArchitecture"
+    },
+    {
+      "from": "log.md",
+      "wikilink": "concepts/EbookEnhancements"
+    },
+    {
+      "from": "sources/270526-playlist-tool-bugs-postmortem.md",
+      "wikilink": "concepts/MCPServer"
+    },
+    {
+      "from": "sources/270526-playlist-tool-bugs-postmortem.md",
+      "wikilink": "concepts/AIAgentRuntime"
+    },
+    {
+      "from": "sources/270526-playlist-tool-bugs-postmortem.md",
+      "wikilink": "concepts/FavoritePlaylistPill"
+    },
+    {
+      "from": "sources/draft/190526-remove-tab-toast-lyrics-back-fe.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "sources/draft/190526-remove-tab-toast-lyrics-back-fe.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "sources/draft/190526-remove-tab-toast-lyrics-back-fe.md",
+      "wikilink": "concepts/Lyrics"
+    },
+    {
+      "from": "sources/music-giatbh-io-vn-evaluation.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "sources/music-giatbh-io-vn-evaluation.md",
+      "wikilink": "concepts/Architecture"
+    },
+    {
+      "from": "sources/music-giatbh-io-vn-evaluation.md",
+      "wikilink": "concepts/MobileUI"
+    },
+    {
+      "from": "sources/music-giatbh-io-vn-evaluation.md",
+      "wikilink": "concepts/DeezerEnricher"
+    },
+    {
+      "from": "sources/music-giatbh-io-vn-evaluation.md",
+      "wikilink": "concepts/MobileUI"
+    },
+    {
+      "from": "sources/rtk-ai-rtk.md",
+      "wikilink": "concepts/RTK"
+    }
+  ],
+  "orphans": [],
+  "missing_in_index": [],
+  "extra_in_index": [],
+  "stale": []
+}

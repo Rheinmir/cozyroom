@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>220626 — Trending AI Dedup Lock</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#dbeafe 0%,#e0f2fe 40%,#f0f9ff 100%);
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:radial-gradient(circle,rgba(99,179,237,.15) 1px,transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;z-index:0;
+}
+/* ── ORB ── */
+.orb{
+  position:fixed;left:0;top:0;width:200px;height:100vh;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(99,179,237,.18) 0%,rgba(147,197,253,.12) 50%,rgba(186,230,253,.08) 100%);
+}
+/* ── SIDEBAR ── */
+nav{
+  position:fixed;left:0;top:0;width:200px;height:100vh;z-index:20;
+  background:linear-gradient(160deg,rgba(255,255,255,.55) 0%,rgba(224,242,254,.45) 100%);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-right:1px solid rgba(147,197,253,.35);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+nav::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(99,179,237,.08) 0%,transparent 100%);
+  pointer-events:none;
+}
+.nav-header{
+  padding:20px 16px 12px;
+  border-bottom:1px solid rgba(147,197,253,.25);
+  display:flex;align-items:center;gap:10px;
+}
+.nav-logo{font-size:18px}
+.nav-title{font-size:12px;font-weight:700;color:#1e40af;letter-spacing:.04em;text-transform:uppercase}
+.nav-links{flex:1;overflow-y:auto;padding:12px 0}
+.nav-links a{
+  display:block;padding:9px 16px;
+  font-size:12px;color:#374151;text-decoration:none;
+  border-left:3px solid transparent;
+  transition:all .2s;line-height:1.4;
+}
+.nav-links a:hover{background:rgba(99,179,237,.12);color:#1e40af}
+.nav-links a.active{
+  border-left-color:#3b82f6;background:rgba(59,130,246,.1);
+  color:#1d4ed8;font-weight:600;
+}
+.nav-badge{
+  display:inline-block;margin-left:6px;padding:1px 6px;border-radius:9px;
+  font-size:10px;font-weight:700;vertical-align:middle;
+}
+.badge-bug{background:#fee2e2;color:#991b1b}
+.badge-fix{background:#dcfce7;color:#166534}
+.collapse-btn{
+  margin:12px 16px;padding:7px 12px;border:none;border-radius:8px;
+  background:rgba(99,179,237,.15);color:#1e40af;font-size:12px;
+  cursor:pointer;text-align:left;transition:background .2s;
+  position:relative;overflow:hidden;
+}
+.collapse-btn:hover{background:rgba(99,179,237,.25)}
+/* ── MAIN ── */
+main{
+  margin-left:200px;padding:40px 48px 80px;
+  position:relative;z-index:1;
+  max-width:calc(100vw - 200px);
+}
+h1{font-size:22px;font-weight:800;color:#1e3a5f;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:32px}
+h2{font-size:15px;font-weight:700;color:#1e40af;margin:40px 0 8px;display:flex;align-items:center;gap:8px}
+p.desc{
+  font-size:13px;color:#374151;line-height:1.65;
+  max-width:680px;margin-bottom:20px;
+  background:rgba(255,255,255,.5);padding:12px 16px;border-radius:10px;
+  border-left:3px solid #93c5fd;
+}
+/* ── DIAGRAM CARD ── */
+.diagram-box{
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(147,197,253,.4);border-radius:16px;
+  padding:24px;margin-bottom:32px;overflow-x:auto;
+  box-shadow:0 4px 24px rgba(99,179,237,.12);
+}
+svg.seq{width:100%;max-width:720px;height:auto;display:block;margin:0 auto}
+/* lifeline styles */
+.ll-existing{fill:#4f46e5}
+.ll-new{fill:#059669}
+.ll-fail{fill:#ea580c}
+/* message label — ALWAYS VISIBLE */
+.msg{opacity:.82;transition:opacity .3s,filter .3s}
+.msg.active{opacity:1;filter:drop-shadow(0 0 4px rgba(59,130,246,.5))}
+.msg rect{fill:rgba(255,255,255,.85);stroke:rgba(147,197,253,.6);stroke-width:1}
+.msg text{fill:#1e293b;font-size:10px;font-family:-apple-system,sans-serif}
+.arrow{stroke:#64748b;stroke-width:1.5;fill:none;marker-end:url(#arr)}
+.arrow.ok{stroke:#059669}
+.arrow.err{stroke:#ea580c}
+.arrow.lock{stroke:#7c3aed}
+.lifeline{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4 4}
+.actor rect{fill:rgba(255,255,255,.8);stroke:rgba(147,197,253,.5);stroke-width:1.5;rx:6}
+.actor text{font-size:11px;font-weight:600;fill:#1e3a5f;font-family:-apple-system,sans-serif}
+.phase-label{fill:#6b7280;font-size:9px;font-style:italic;font-family:-apple-system,sans-serif}
+/* step highlight bar */
+.step-bar{fill:rgba(59,130,246,.06);rx:4}
+.step-bar.active{fill:rgba(59,130,246,.13)}
+/* ── STATUS CHIPS ── */
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.chip{
+  padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.6);border:1px solid rgba(147,197,253,.4);color:#374151;
+}
+.chip.bug{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+.chip.fix{background:#dcfce7;border-color:#86efac;color:#166534}
+.chip.file{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6}
+</style>
+</head>
+<body>
+<div class="orb"></div>
+
+<nav id="sidebar">
+  <div class="nav-header">
+    <span class="nav-logo">📊</span>
+    <div class="nav-title">220626 Trending Fix</div>
+  </div>
+  <div class="nav-links">
+    <a href="#root-cause">Root cause</a>
+    <a href="#t1">Task 1 <span class="nav-badge badge-fix">lock</span></a>
+    <a href="#t2">Task 2 <span class="nav-badge badge-fix">guard</span></a>
+    <a href="#result">Kết quả</a>
+  </div>
+  <button class="collapse-btn" onclick="toggleSidebar()">☰ Thu gọn</button>
+</nav>
+
+<main>
+  <h1>Trending AI Dedup &amp; Lock</h1>
+  <p class="subtitle">220626 · Bug fix · backend/internal/enricher/aitrends.go</p>
+
+  <div class="chips">
+    <span class="chip bug">Bug: 3 pod concurrent</span>
+    <span class="chip bug">Bug: no today-check</span>
+    <span class="chip fix">Fix: pg_advisory_lock</span>
+    <span class="chip fix">Fix: early-exit guard</span>
+    <span class="chip file">aitrends.go ±15 dòng</span>
+  </div>
+
+  <!-- ROOT CAUSE -->
+  <section id="root-cause">
+    <h2>⚡ Root Cause — Tại sao pending &amp; over quota</h2>
+    <p class="desc">
+      3 k8s pod mỗi pod spawn goroutine riêng khi startup, gọi thẳng <code>enricher.EnrichWithAI()</code> — bỏ qua <code>TrendingHandlers.running</code> (atomic.Bool chỉ bảo vệ HTTP endpoint). Ba goroutine fire đồng thời, dùng chung Gemini key → cạn daily quota 3× nhanh hơn. Không có mechanism nào detect "hôm nay pod khác đã chạy rồi".
+    </p>
+    <div class="diagram-box">
+      <svg class="seq" viewBox="0 0 700 280" id="svg-root">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+          </marker>
+          <marker id="arr-err" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#ea580c"/>
+          </marker>
+          <marker id="arr-lock" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed"/>
+          </marker>
+        </defs>
+
+        <!-- actors -->
+        <g class="actor"><rect x="20" y="10" width="80" height="28" rx="6"/><text x="60" y="28" text-anchor="middle">Pod A</text></g>
+        <g class="actor"><rect x="130" y="10" width="80" height="28" rx="6"/><text x="170" y="28" text-anchor="middle">Pod B</text></g>
+        <g class="actor"><rect x="240" y="10" width="80" height="28" rx="6"/><text x="280" y="28" text-anchor="middle">Pod C</text></g>
+        <g class="actor"><rect x="400" y="10" width="100" height="28" rx="6" fill="rgba(254,226,226,.8)" stroke="rgba(252,165,165,.6)"/><text x="450" y="28" text-anchor="middle" fill="#991b1b">Gemini API</text></g>
+        <g class="actor"><rect x="560" y="10" width="120" height="28" rx="6" fill="rgba(255,237,213,.8)" stroke="rgba(253,186,116,.6)"/><text x="620" y="28" text-anchor="middle" fill="#9a3412">Daily quota</text></g>
+
+        <!-- lifelines -->
+        <line class="lifeline" x1="60" y1="38" x2="60" y2="270"/>
+        <line class="lifeline" x1="170" y1="38" x2="170" y2="270"/>
+        <line class="lifeline" x1="280" y1="38" x2="280" y2="270"/>
+        <line class="lifeline" x1="450" y1="38" x2="450" y2="270"/>
+        <line class="lifeline" x1="620" y1="38" x2="620" y2="270"/>
+
+        <!-- phase labels -->
+        <text class="phase-label" x="8" y="68">startup</text>
+        <text class="phase-label" x="8" y="130">cron fire</text>
+        <text class="phase-label" x="8" y="200">API call</text>
+        <text class="phase-label" x="8" y="255">result</text>
+
+        <!-- step bars -->
+        <rect class="step-bar" x="0" y="70" width="700" height="24"/>
+        <rect class="step-bar" x="0" y="130" width="700" height="24"/>
+        <rect class="step-bar" x="0" y="190" width="700" height="24"/>
+
+        <!-- messages: all 3 pods spawn goroutine -->
+        <g class="msg" id="rm0">
+          <rect x="62" y="74" width="96" height="16" rx="3"/>
+          <text x="110" y="85">spawn goroutine</text>
+          <line class="arrow" x1="60" y1="82" x2="158" y2="82"/>
+        </g>
+        <g class="msg" id="rm1">
+          <rect x="172" y="74" width="96" height="16" rx="3"/>
+          <text x="220" y="85">spawn goroutine</text>
+          <line class="arrow" x1="170" y1="82" x2="268" y2="82"/>
+        </g>
+
+        <!-- all 3 call Gemini simultaneously -->
+        <g class="msg" id="rm2">
+          <rect x="62" y="134" width="108" height="16" rx="3"/>
+          <text x="116" y="145">EnrichWithAI(key1)</text>
+          <line class="arrow err" x1="60" y1="142" x2="438" y2="142" marker-end="url(#arr-err)"/>
+        </g>
+        <g class="msg" id="rm3">
+          <rect x="172" y="148" width="108" height="16" rx="3"/>
+          <text x="226" y="159">EnrichWithAI(key1)</text>
+          <line class="arrow err" x1="170" y1="156" x2="438" y2="156" marker-end="url(#arr-err)"/>
+        </g>
+        <g class="msg" id="rm4">
+          <rect x="282" y="162" width="108" height="16" rx="3"/>
+          <text x="336" y="173">EnrichWithAI(key1)</text>
+          <line class="arrow err" x1="280" y1="170" x2="438" y2="170" marker-end="url(#arr-err)"/>
+        </g>
+
+        <!-- quota exhausted -->
+        <g class="msg" id="rm5">
+          <rect x="452" y="194" width="100" height="16" rx="3" fill="rgba(254,226,226,.9)" stroke="rgba(252,165,165,.5)"/>
+          <text x="502" y="205" fill="#991b1b">429 quota ×3</text>
+          <line class="arrow err" x1="450" y1="202" x2="530" y2="202" marker-end="url(#arr-err)"/>
+        </g>
+        <g class="msg" id="rm6">
+          <rect x="62" y="248" width="108" height="16" rx="3" fill="rgba(254,226,226,.9)" stroke="rgba(252,165,165,.5)"/>
+          <text x="116" y="259" fill="#991b1b">all providers exhausted</text>
+          <line class="arrow err" x1="438" y1="256" x2="72" y2="256" marker-end="url(#arr-err)"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- TASK 1: ADVISORY LOCK -->
+  <section id="t1">
+    <h2>🔒 Task 1 — PostgreSQL Advisory Lock</h2>
+    <p class="desc">
+      Thêm <code>pg_try_advisory_lock(hashtext('ai-enrich'))</code> vào đầu <code>EnrichWithAI()</code>. Lock này là session-level — nếu pod crash, PostgreSQL tự release. Khi 3 pod cùng chạy: pod đầu tiên acquire lock, pod 2 và 3 thấy <em>false</em> → log và return ngay, không gọi API. Thêm ~4 dòng Go, 0 schema change.
+    </p>
+    <div class="diagram-box">
+      <svg class="seq" viewBox="0 0 700 300" id="svg-t1">
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+          </marker>
+          <marker id="arr2-ok" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#059669"/>
+          </marker>
+          <marker id="arr2-lock" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#7c3aed"/>
+          </marker>
+        </defs>
+
+        <g class="actor"><rect x="20" y="10" width="80" height="28" rx="6"/><text x="60" y="28" text-anchor="middle">Pod A</text></g>
+        <g class="actor"><rect x="130" y="10" width="80" height="28" rx="6"/><text x="170" y="28" text-anchor="middle">Pod B</text></g>
+        <g class="actor"><rect x="240" y="10" width="80" height="28" rx="6"/><text x="280" y="28" text-anchor="middle">Pod C</text></g>
+        <g class="actor"><rect x="380" y="10" width="120" height="28" rx="6" fill="rgba(237,233,254,.8)" stroke="rgba(196,181,253,.6)"/><text x="440" y="28" text-anchor="middle" fill="#5b21b6">PostgreSQL</text></g>
+        <g class="actor"><rect x="560" y="10" width="120" height="28" rx="6" fill="rgba(220,252,231,.8)" stroke="rgba(134,239,172,.6)"/><text x="620" y="28" text-anchor="middle" fill="#166534">Gemini API</text></g>
+
+        <line class="lifeline" x1="60" y1="38" x2="60" y2="290"/>
+        <line class="lifeline" x1="170" y1="38" x2="170" y2="290"/>
+        <line class="lifeline" x1="280" y1="38" x2="280" y2="290"/>
+        <line class="lifeline" x1="440" y1="38" x2="440" y2="290"/>
+        <line class="lifeline" x1="620" y1="38" x2="620" y2="290"/>
+
+        <text class="phase-label" x="2" y="65">try lock</text>
+        <text class="phase-label" x="2" y="120">acquire</text>
+        <text class="phase-label" x="2" y="180">B&amp;C skip</text>
+        <text class="phase-label" x="2" y="240">A runs</text>
+        <text class="phase-label" x="2" y="285">release</text>
+
+        <rect class="step-bar" x="0" y="54" width="700" height="26"/>
+        <rect class="step-bar" x="0" y="108" width="700" height="26"/>
+        <rect class="step-bar" x="0" y="168" width="700" height="26"/>
+
+        <!-- all 3 try lock -->
+        <g class="msg" id="t1m0">
+          <rect x="62" y="58" width="120" height="18" rx="3" fill="rgba(237,233,254,.9)" stroke="rgba(196,181,253,.5)"/>
+          <text x="122" y="70" fill="#5b21b6">pg_try_advisory_lock</text>
+          <line class="arrow lock" x1="60" y1="67" x2="368" y2="67" marker-end="url(#arr2-lock)"/>
+        </g>
+        <g class="msg" id="t1m1">
+          <rect x="172" y="76" width="120" height="18" rx="3" fill="rgba(237,233,254,.9)" stroke="rgba(196,181,253,.5)"/>
+          <text x="232" y="88" fill="#5b21b6">pg_try_advisory_lock</text>
+          <line class="arrow lock" x1="170" y1="85" x2="368" y2="85" marker-end="url(#arr2-lock)"/>
+        </g>
+        <g class="msg" id="t1m2">
+          <rect x="282" y="94" width="120" height="18" rx="3" fill="rgba(237,233,254,.9)" stroke="rgba(196,181,253,.5)"/>
+          <text x="342" y="106" fill="#5b21b6">pg_try_advisory_lock</text>
+          <line class="arrow lock" x1="280" y1="103" x2="368" y2="103" marker-end="url(#arr2-lock)"/>
+        </g>
+
+        <!-- A gets true, B&C get false -->
+        <g class="msg" id="t1m3">
+          <rect x="62" y="112" width="60" height="18" rx="3" fill="rgba(220,252,231,.9)" stroke="rgba(134,239,172,.5)"/>
+          <text x="92" y="124" fill="#166534">true → run</text>
+          <line class="arrow ok" x1="368" y1="121" x2="72" y2="121" marker-end="url(#arr2-ok)"/>
+        </g>
+        <g class="msg" id="t1m4">
+          <rect x="172" y="174" width="70" height="18" rx="3" fill="rgba(254,226,226,.9)" stroke="rgba(252,165,165,.5)"/>
+          <text x="207" y="186" fill="#991b1b">false → skip</text>
+          <line style="stroke:#ea580c;stroke-width:1.5;fill:none;marker-end:url(#arr2)" x1="368" y1="183" x2="182" y2="183"/>
+        </g>
+        <g class="msg" id="t1m5">
+          <rect x="282" y="192" width="70" height="18" rx="3" fill="rgba(254,226,226,.9)" stroke="rgba(252,165,165,.5)"/>
+          <text x="317" y="204" fill="#991b1b">false → skip</text>
+          <line style="stroke:#ea580c;stroke-width:1.5;fill:none;marker-end:url(#arr2)" x1="368" y1="201" x2="292" y2="201"/>
+        </g>
+
+        <!-- A calls Gemini successfully -->
+        <g class="msg" id="t1m6">
+          <rect x="62" y="236" width="100" height="18" rx="3" fill="rgba(220,252,231,.9)" stroke="rgba(134,239,172,.5)"/>
+          <text x="112" y="248" fill="#166534">EnrichWithAI ✓</text>
+          <line class="arrow ok" x1="60" y1="245" x2="548" y2="245" marker-end="url(#arr2-ok)"/>
+        </g>
+        <g class="msg" id="t1m7">
+          <rect x="382" y="270" width="100" height="18" rx="3" fill="rgba(237,233,254,.9)" stroke="rgba(196,181,253,.5)"/>
+          <text x="432" y="282" fill="#5b21b6">pg_advisory_unlock</text>
+          <line class="arrow lock" x1="60" y1="279" x2="368" y2="279" marker-end="url(#arr2-lock)"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- TASK 2: EARLY EXIT -->
+  <section id="t2">
+    <h2>🛡️ Task 2 — Early-Exit "Today Already Done"</h2>
+    <p class="desc">
+      Ngay sau khi lấy <code>today</code>, thêm 1 query: <code>SELECT COUNT(*) FROM trending_daily WHERE date=$1 AND problem_solved IS NULL</code>. Nếu count = 0 → log "all enriched, skipping" và return. Điều này hoạt động độc lập với Task 1 — ngay cả khi chỉ 1 pod chạy (ví dụ 12h sau khi lock đã release), pod đó cũng tự skip thay vì chạy lại toàn bộ. Thêm ~5 dòng Go.
+    </p>
+    <div class="diagram-box">
+      <svg class="seq" viewBox="0 0 660 260" id="svg-t2">
+        <defs>
+          <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+          </marker>
+          <marker id="arr3-ok" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#059669"/>
+          </marker>
+        </defs>
+
+        <g class="actor"><rect x="20" y="10" width="120" height="28" rx="6"/><text x="80" y="28" text-anchor="middle">EnrichWithAI()</text></g>
+        <g class="actor"><rect x="220" y="10" width="120" height="28" rx="6" fill="rgba(237,233,254,.8)" stroke="rgba(196,181,253,.6)"/><text x="280" y="28" text-anchor="middle" fill="#5b21b6">PostgreSQL</text></g>
+        <g class="actor"><rect x="440" y="10" width="120" height="28" rx="6" fill="rgba(220,252,231,.8)" stroke="rgba(134,239,172,.6)"/><text x="500" y="28" text-anchor="middle" fill="#166534">Gemini API</text></g>
+
+        <line class="lifeline" x1="80" y1="38" x2="80" y2="250"/>
+        <line class="lifeline" x1="280" y1="38" x2="280" y2="250"/>
+        <line class="lifeline" x1="500" y1="38" x2="500" y2="250"/>
+
+        <text class="phase-label" x="2" y="65">query</text>
+        <text class="phase-label" x="2" y="120">branch</text>
+        <text class="phase-label" x="2" y="200">run ok</text>
+
+        <rect class="step-bar" x="0" y="52" width="660" height="26"/>
+        <rect class="step-bar" x="0" y="108" width="660" height="26"/>
+        <rect class="step-bar" x="0" y="168" width="660" height="26"/>
+
+        <!-- query count -->
+        <g class="msg" id="t2m0">
+          <rect x="82" y="56" width="160" height="18" rx="3" fill="rgba(237,233,254,.9)" stroke="rgba(196,181,253,.5)"/>
+          <text x="162" y="68" fill="#5b21b6">COUNT(*) WHERE date=today AND IS NULL</text>
+          <line style="stroke:#7c3aed;stroke-width:1.5;fill:none;marker-end:url(#arr3)" x1="80" y1="65" x2="208" y2="65"/>
+        </g>
+
+        <!-- branch: 0 → skip -->
+        <g class="msg" id="t2m1">
+          <rect x="82" y="112" width="96" height="18" rx="3" fill="rgba(254,226,226,.9)" stroke="rgba(252,165,165,.5)"/>
+          <text x="130" y="124" fill="#991b1b">count=0 → return early</text>
+          <line style="stroke:#ea580c;stroke-width:1.5;fill:none;marker-end:url(#arr3)" x1="208" y1="121" x2="92" y2="121"/>
+        </g>
+
+        <!-- branch: N → proceed -->
+        <g class="msg" id="t2m2">
+          <rect x="82" y="144" width="96" height="18" rx="3" fill="rgba(220,252,231,.9)" stroke="rgba(134,239,172,.5)"/>
+          <text x="130" y="156" fill="#166534">count=N → continue</text>
+          <line class="arrow ok" x1="208" y1="153" x2="92" y2="153" marker-end="url(#arr3-ok)"/>
+        </g>
+
+        <!-- proceed to gemini -->
+        <g class="msg" id="t2m3">
+          <rect x="82" y="176" width="120" height="18" rx="3" fill="rgba(220,252,231,.9)" stroke="rgba(134,239,172,.5)"/>
+          <text x="142" y="188" fill="#166534">enrich N repos ✓</text>
+          <line class="arrow ok" x1="80" y1="185" x2="428" y2="185" marker-end="url(#arr3-ok)"/>
+        </g>
+        <g class="msg" id="t2m4">
+          <rect x="82" y="210" width="130" height="18" rx="3" fill="rgba(220,252,231,.9)" stroke="rgba(134,239,172,.5)"/>
+          <text x="147" y="222" fill="#166534">UPDATE problem_solved ✓</text>
+          <line class="arrow ok" x1="428" y1="219" x2="92" y2="219" marker-end="url(#arr3-ok)"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result">
+    <h2>✅ Kết quả mong đợi</h2>
+    <p class="desc">
+      Sau fix: (1) chỉ 1 pod chạy <code>EnrichWithAI</code> tại một thời điểm — key Gemini không bị đốt 3×. (2) Lần chạy tiếp theo trong ngày (cron 12h) sẽ thấy count=0 và tự skip — không re-run thừa. Pending workers sẽ về 0 sau khi pod đầu tiên hoàn thành.
+    </p>
+    <div class="diagram-box">
+      <p style="font-size:13px;color:#374151;line-height:1.8;padding:4px 0">
+        <strong>Files thay đổi:</strong><br>
+        &nbsp;&nbsp;📄 <code>backend/internal/enricher/aitrends.go</code> — thêm ~9 dòng (advisory lock + early-exit)<br>
+        <br>
+        <strong>Không thay đổi:</strong><br>
+        &nbsp;&nbsp;Schema DB, env vars, HTTP handler, cron interval, slot rotation logic
+      </p>
+    </div>
+  </section>
+</main>
+
+<script>
+function toggleSidebar(){
+  var nav=document.getElementById('sidebar');
+  var collapsed=nav.style.width==='48px';
+  nav.style.width=collapsed?'200px':'48px';
+  nav.style.overflow=collapsed?'':'hidden';
+}
+
+// scroll-spy
+var sections=document.querySelectorAll('section[id]');
+var navLinks=document.querySelectorAll('nav a[href^="#"]');
+var obs=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      var id=e.target.id;
+      navLinks.forEach(function(a){
+        a.classList.toggle('active',a.getAttribute('href')==='#'+id);
+      });
+    }
+  });
+},{threshold:.4});
+sections.forEach(function(s){obs.observe(s);});
+
+// animation: auto-loop highlight active step
+var diagrams=[
+  {svg:'svg-root',msgs:['rm0','rm1','rm2','rm3','rm4','rm5','rm6']},
+  {svg:'svg-t1',msgs:['t1m0','t1m1','t1m2','t1m3','t1m4','t1m5','t1m6','t1m7']},
+  {svg:'svg-t2',msgs:['t2m0','t2m1','t2m2','t2m3','t2m4']}
+];
+
+diagrams.forEach(function(d){
+  var idx=0;var paused=false;
+  var svgEl=document.getElementById(d.svg);
+  svgEl.style.cursor='pointer';
+  svgEl.addEventListener('click',function(){paused=!paused;});
+  function step(){
+    d.msgs.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el)el.classList.remove('active');
+    });
+    var cur=document.getElementById(d.msgs[idx]);
+    if(cur)cur.classList.add('active');
+    idx=(idx+1)%d.msgs.length;
+    if(!paused)setTimeout(step,900);
+    else svgEl.addEventListener('click',function once(){paused=false;step();svgEl.removeEventListener('click',once);},{once:true});
+  }
+  setTimeout(step, Math.random()*400);
+});
+</script>
+</body>
+</html>

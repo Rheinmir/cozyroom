@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: k8s-yt-downloads
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes: [ReadWriteOnce]
+  hostPath:
+    path: /var/lib/k8s-yt-downloads
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [rhein-13700hxes-4070-64-4t]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: yt-downloads
+  namespace: cozyroom-k8s
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ""
+  volumeName: k8s-yt-downloads
+  resources:
+    requests:
+      storage: 20Gi

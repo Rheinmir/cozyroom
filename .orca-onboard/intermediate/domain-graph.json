@@ -1,0 +1,340 @@
+{
+  "version": "1.0",
+  "project": "cozyroom",
+  "generatedAt": "2026-06-19",
+  "generatedBy": "Claude Sonnet (Phase 2 — domain enrichment)",
+
+  "domains": [
+    {
+      "id": "domain:music-library",
+      "name": "Music Library",
+      "description": "Local file scanning, metadata extraction, Postgres upsert, cover art management",
+      "flows": [
+        {
+          "id": "flow:scan",
+          "name": "Library Scan",
+          "trigger": {"type": "http", "method": "POST", "path": "/api/scan"},
+          "also_triggered_by": [
+            {"type": "startup", "note": "background goroutine in main.go"},
+            {"type": "cron", "schedule": "daily", "note": "enrichment cron also rescans"}
+          ],
+          "steps": [
+            {"order": 1, "actor": "scanner.go", "action": "Walk musicPath recursively"},
+            {"order": 2, "actor": "scanner.go", "action": "Read audio tags via dhowden/tag (artist, album, title, year, genre, cover)"},
+            {"order": 3, "actor": "scanner.go", "action": "Derive IDs: artistID=id8(artist), albumID=id8(artistID+albumTitle), trackID=id8(albumID+filename)"},
+            {"order": 4, "actor": "scanner.go", "action": "Extract embedded cover art → write coversDir/<albumID>.jpg"},
+            {"order": 5, "actor": "scanner.go", "action": "Upsert artist, album, track to Postgres (ON CONFLICT DO NOTHING for albums/artists)"},
+            {"order": 6, "actor": "scanner.go", "action": "Detect YouTube files (baseName len==11) → if cover missing: go downloadYTThumbnail(baseName, dest)"},
+            {"order": 7, "actor": "downloadYTThumbnail", "action": "Async: try maxresdefault → hqdefault → mqdefault from img.youtube.com/vi/<ytid>/<size>.jpg"}
+          ],
+          "outputs": ["DB: artists/albums/tracks rows", "covers/<albumID>.jpg"],
+          "errors": ["YT thumbnail fetch fails silently (goroutine) → cover remains missing", "Read-only musicPath → yt-dlp can't write thumbnails during download"]
+        },
+        {
+          "id": "flow:cover-serve",
+          "name": "Cover Serving",
+          "trigger": {"type": "http", "method": "GET", "path": "/api/covers/:id"},
+          "steps": [
+            {"order": 1, "actor": "handler.go:cover()", "action": "Validate id: hex16 or yt:<ytid> prefix"},
+            {"order": 2a, "actor": "handler.go", "action": "If yt: prefix → singleflight fetch from i.ytimg.com (maxres→hq→mq fallback) → return JPEG or HTTP 503"},
+            {"order": 2b, "actor": "handler.go", "action": "If hex16 → serveResizedImage(coversDir, id): resize to 400px if >800px, Cache-Control: max-age=31536000"},
+            {"order": 3, "actor": "frontend:PlayerBar", "action": "On HTTP 503: retry up to 4× with 2/4/6/8s backoff"}
+          ],
+          "errors": ["HTTP 503 returned (not 200+placeholder) so onError fires → retry"]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:audio-playback",
+      "name": "Audio Playback",
+      "description": "Music streaming, transcoding, gapless playback, progress tracking",
+      "flows": [
+        {
+          "id": "flow:stream",
+          "name": "Audio Stream",
+          "trigger": {"type": "http", "method": "GET", "path": "/api/stream/:id"},
+          "steps": [
+            {"order": 1, "actor": "handler.go:stream()", "action": "Look up track.filePath in DB"},
+            {"order": 2, "actor": "handler.go", "action": "Detect format: MP3/AAC/OGG → serve byte-range directly"},
+            {"order": 3, "actor": "transcode.go:TranscodeToOpus()", "action": "FLAC/WAV/AIFF → ffmpeg pipe → opus/webm stream"},
+            {"order": 4, "actor": "nginx sidecar", "action": "proxy_buffering off ensures audio passes through without OOMKill"}
+          ],
+          "errors": ["nginx buffering audio → OOMKill at 32Mi (fixed: proxy_buffering off + 128Mi limit)"]
+        },
+        {
+          "id": "flow:gapless-playback",
+          "name": "Gapless Playback",
+          "trigger": {"type": "user-action", "note": "User clicks track or queue advances"},
+          "steps": [
+            {"order": 1, "actor": "PlayerContext:startTrack()", "action": "trackRef.current = track (SYNC, before setTrack)"},
+            {"order": 2, "actor": "PlayerContext:startTrack()", "action": "setTrack(track) → audioRef.src = /api/stream/<trackID>"},
+            {"order": 3, "actor": "PlayerContext:onTimeUpdate()", "action": "At 90% duration: preload nextAudioRef.src = next track URL"},
+            {"order": 4, "actor": "PlayerContext", "action": "At track end: swap audioRef ↔ nextAudioRef → gapless transition"}
+          ],
+          "invariants": ["trackRef.current MUST sync before setTrack — async useEffect causes stale closure → 0:00 display bug"]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:youtube",
+      "name": "YouTube Integration",
+      "description": "YT search, live stream proxy, download to local library, cover backfill",
+      "flows": [
+        {
+          "id": "flow:yt-search",
+          "name": "YouTube Search",
+          "trigger": {"type": "http", "method": "GET", "path": "/api/youtube/search"},
+          "steps": [
+            {"order": 1, "actor": "youtube.go:search()", "action": "Run yt-dlp --flat-playlist -j <ytsearch:<q>>"},
+            {"order": 2, "actor": "youtube.go", "action": "Parse JSON output → [{id, title, uploader, duration, thumbnail}]"},
+            {"order": 3, "actor": "youtube.go", "action": "Return array to frontend"}
+          ]
+        },
+        {
+          "id": "flow:yt-stream",
+          "name": "YouTube Stream Proxy",
+          "trigger": {"type": "http", "method": "GET", "path": "/api/youtube/stream/:id"},
+          "steps": [
+            {"order": 1, "actor": "youtube.go:stream()", "action": "Check 4h signed-URL cache"},
+            {"order": 2, "actor": "youtube.go", "action": "If cache miss: yt-dlp --get-url → extract direct stream URL"},
+            {"order": 3, "actor": "youtube.go", "action": "Wrap through cloak-proxy (evades YT bot detection)"},
+            {"order": 4, "actor": "youtube.go", "action": "Return {streamURL, coverURL} to frontend"}
+          ]
+        },
+        {
+          "id": "flow:yt-download",
+          "name": "YouTube Download",
+          "trigger": {"type": "http", "method": "POST", "path": "/api/youtube/download"},
+          "body": {"id": "string (11-char YT ID)", "title": "string", "uploader": "string"},
+          "steps": [
+            {"order": 1, "actor": "youtube.go:download()", "action": "dlPath = h.ytDownloadPath (fallback: h.musicPath)"},
+            {"order": 2, "actor": "youtube.go", "action": "yt-dlp --write-thumbnail --format bestaudio -o dlPath/<id>.%(ext)s <url>"},
+            {"order": 3, "actor": "youtube.go", "action": "albumID = id8hex(id8hex(uploader) + title)"},
+            {"order": 4, "actor": "youtube.go", "action": "Copy dlPath/<id>.jpg → coversDir/<albumID>.jpg; remove source"},
+            {"order": 5, "actor": "youtube.go", "action": "IndexFileWithMetadata(dlPath/<id>.<ext>) → registers in DB"}
+          ],
+          "errors": ["If dlPath == musicPath and musicPath is read-only → yt-dlp can't write thumbnail → cover never copied"]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:ai-assistant",
+      "name": "AI Assistant",
+      "description": "Agentic chat, MCP tool dispatch, memory, token tracking",
+      "flows": [
+        {
+          "id": "flow:ai-chat",
+          "name": "AI Chat Agentic Loop",
+          "trigger": {"type": "http", "method": "POST", "path": "/api/ai/chat"},
+          "body": {"messages": "array", "model": "string (Claude/OpenRouter)", "tools": "optional array"},
+          "steps": [
+            {"order": 1, "actor": "ai.go:chat()", "action": "Prepend system prompt (personality, tool list, memory context)"},
+            {"order": 2, "actor": "ai.go", "action": "Call LLM API (Claude 3.5 Sonnet or OpenRouter model)"},
+            {"order": 3, "actor": "ai.go", "action": "If response.tool_calls: dispatch each to mcp/registry.go"},
+            {"order": 4, "actor": "mcp/registry.go", "action": "Match tool_name → execute one of 23 tools (play_track, search_library, web_search, browse_url, get_lyrics, read_memory, write_memory, ...)"},
+            {"order": 5, "actor": "ai.go", "action": "Append tool_result to messages → loop (max 12 rounds)"},
+            {"order": 6, "actor": "ai.go", "action": "Return final text + usage stats → write to ai_usage table"}
+          ],
+          "mcp_tools": [
+            "play_track", "pause", "skip", "queue_track",
+            "search_library", "get_now_playing", "get_lyrics",
+            "web_search", "browse_url",
+            "get_trending", "get_ai_stats",
+            "get_track_info", "get_artist_info", "get_album_info",
+            "create_playlist", "add_to_playlist", "list_playlists", "get_playlist",
+            "read_memory", "write_memory",
+            "get_recommendations", "scrobble", "get_stats"
+          ]
+        },
+        {
+          "id": "flow:ai-stats",
+          "name": "AI Token Usage Stats",
+          "trigger": {"type": "http", "method": "GET", "path": "/api/ai/stats"},
+          "steps": [
+            {"order": 1, "actor": "handler.go", "action": "Query ai_usage table grouped by model + date"},
+            {"order": 2, "actor": "AIStatsPage.tsx", "action": "Render recharts BarChart per model, cost estimate"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:video-media",
+      "name": "Video & Media",
+      "description": "HLS video streaming, ebook PDF reader, comics page reader",
+      "flows": [
+        {
+          "id": "flow:hls-video",
+          "name": "HLS Video Stream",
+          "trigger": {"type": "http", "method": "GET", "path": "/api/video/:id/playlist.m3u8"},
+          "steps": [
+            {"order": 1, "actor": "hls/", "action": "Generate .m3u8 playlist for video file"},
+            {"order": 2, "actor": "hls/", "action": "Serve .ts segments on GET /api/video/:id/segment/:n"},
+            {"order": 3, "actor": "VideoPlayerPage.tsx", "action": "hls.js loads .m3u8, auto-selects quality, plays"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:enrichment",
+      "name": "Metadata Enrichment",
+      "description": "Deezer, TMDb, GitHub trending — scheduled enrichment of artist/album/video metadata",
+      "flows": [
+        {
+          "id": "flow:deezer-enrich",
+          "name": "Deezer Album Art Enrichment",
+          "trigger": {"type": "cron", "schedule": "daily"},
+          "steps": [
+            {"order": 1, "actor": "cron/cron.go", "action": "Trigger enricher/deezer.go"},
+            {"order": 2, "actor": "enricher/deezer.go", "action": "For albums without high-res cover: search Deezer API → download cover"},
+            {"order": 3, "actor": "enricher/deezer.go", "action": "Write to coversDir/<albumID>.jpg"}
+          ]
+        },
+        {
+          "id": "flow:github-trending",
+          "name": "GitHub Trending Fetch",
+          "trigger": {"type": "cron", "schedule": "daily"},
+          "steps": [
+            {"order": 1, "actor": "enricher/github.go", "action": "Scrape github.com/trending (chromedp headless)"},
+            {"order": 2, "actor": "enricher/github.go", "action": "AI-score each repo (stars, description, language)"},
+            {"order": 3, "actor": "DB", "action": "Upsert trending_repos table"},
+            {"order": 4, "actor": "TrendingChartMode.tsx", "action": "GET /api/trending → Nightingale rose chart"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:bots",
+      "name": "Chat Bots",
+      "description": "Telegram, Discord, Microsoft Teams — playback control via chat",
+      "flows": [
+        {
+          "id": "flow:telegram-bot",
+          "name": "Telegram Bot Commands",
+          "trigger": {"type": "external", "note": "Telegram webhook → backend"},
+          "commands": ["/play <query>", "/skip", "/queue <query>", "/np (now playing)", "/lyrics"],
+          "steps": [
+            {"order": 1, "actor": "telegram/bot.go", "action": "Receive update from Telegram API"},
+            {"order": 2, "actor": "telegram/bot.go", "action": "Parse command → call internal usecase (search, play, skip)"},
+            {"order": 3, "actor": "telegram/bot.go", "action": "Reply with track info / cover image"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "domain:infrastructure",
+      "name": "Infrastructure",
+      "description": "K8s deployment, Cloudflare Tunnel, Postgres HA, Prometheus metrics",
+      "flows": [
+        {
+          "id": "flow:cf-tunnel",
+          "name": "Cloudflare Tunnel Request Path",
+          "trigger": {"type": "external", "note": "HTTPS request to music.giatbh.io.vn"},
+          "steps": [
+            {"order": 1, "actor": "Cloudflare edge", "action": "TLS termination → forward to cloudflared"},
+            {"order": 2, "actor": "cloudflared pod", "action": "Connect to localhost:18080 (nginx sidecar, HARDCODED in CF remote config)"},
+            {"order": 3, "actor": "nginx sidecar", "action": "proxy_pass to frontend.cozyroom-k8s.svc.cluster.local:80 (proxy_buffering off)"},
+            {"order": 4, "actor": "frontend service", "action": "Serve React SPA or proxy /api/* to backend service"}
+          ],
+          "invariants": [
+            "CF remote config hardcodes localhost:18080 — nginx sidecar MUST exist",
+            "proxy_buffering off required — audio streams cause OOMKill without it",
+            "Memory limit: 128Mi (was 32Mi — OOMKilled)"
+          ]
+        },
+        {
+          "id": "flow:frontend-deploy",
+          "name": "Frontend Deploy",
+          "trigger": {"type": "manual", "skill": "deploy-k8s-frontend"},
+          "steps": [
+            {"order": 1, "actor": "WSL2 docker", "action": "docker build -t 100.88.197.64:5000/cozyroom-frontend:k8s -f Dockerfile.frontend ."},
+            {"order": 2, "actor": "WSL2 docker", "action": "docker push 100.88.197.64:5000/cozyroom-frontend:k8s"},
+            {"order": 3, "actor": "kubectl", "action": "kubectl rollout restart deployment/frontend -n cozyroom-k8s"},
+            {"order": 4, "actor": "kubectl", "action": "kubectl rollout status --timeout=90s (verify)"}
+          ]
+        }
+      ]
+    }
+  ],
+
+  "events": [
+    {"id": "event:startup-scan", "type": "startup", "actor": "main.go", "triggers": "flow:scan"},
+    {"id": "event:daily-enrich", "type": "cron", "schedule": "0 3 * * *", "actor": "cron.go", "triggers": ["flow:deezer-enrich", "flow:github-trending"]},
+    {"id": "event:cf-request", "type": "external", "actor": "Cloudflare", "triggers": "flow:cf-tunnel"},
+    {"id": "event:tg-message", "type": "webhook", "actor": "Telegram API", "triggers": "flow:telegram-bot"}
+  ],
+
+  "entities": [
+    {"id": "entity:artist", "table": "artists", "idDerivation": "SHA256(lowercase(trim(name)))[:8]hex", "fields": ["id", "name", "cover_path", "enriched_at"]},
+    {"id": "entity:album", "table": "albums", "idDerivation": "SHA256(lowercase(trim(artistID+title)))[:8]hex", "fields": ["id", "title", "artist_id", "year", "genre", "cover_path"]},
+    {"id": "entity:track", "table": "tracks", "idDerivation": "SHA256(lowercase(trim(albumID+filename)))[:8]hex", "fields": ["id", "title", "album_id", "file_path", "duration", "track_number"]},
+    {"id": "entity:playlist", "table": "playlists", "fields": ["id", "name", "created_at"]},
+    {"id": "entity:playlist_track", "table": "playlist_tracks", "fields": ["playlist_id", "track_id", "position"]},
+    {"id": "entity:ai_usage", "table": "ai_usage", "fields": ["id", "model", "input_tokens", "output_tokens", "cost", "created_at"]},
+    {"id": "entity:ai_memory", "table": "ai_memory", "fields": ["key", "value", "updated_at"]},
+    {"id": "entity:trending_repo", "table": "trending_repos", "fields": ["id", "name", "url", "description", "language", "stars", "ai_score", "fetched_at"]}
+  ],
+
+  "http_surface": {
+    "music_library": [
+      "GET /api/artists",
+      "GET /api/artists/:id",
+      "GET /api/albums",
+      "GET /api/albums/:id",
+      "GET /api/tracks",
+      "GET /api/tracks/:id",
+      "GET /api/stream/:id",
+      "GET /api/covers/:id",
+      "GET /api/lyrics/:id",
+      "POST /api/scan",
+      "GET /api/stats",
+      "GET /api/search"
+    ],
+    "youtube": [
+      "GET /api/youtube/search",
+      "GET /api/youtube/stream/:id",
+      "POST /api/youtube/download"
+    ],
+    "ai": [
+      "POST /api/ai/chat",
+      "GET /api/ai/stats",
+      "GET /api/ai/models"
+    ],
+    "playlists": [
+      "GET /api/playlists",
+      "POST /api/playlists",
+      "GET /api/playlists/:id",
+      "DELETE /api/playlists/:id",
+      "POST /api/playlists/:id/tracks",
+      "DELETE /api/playlists/:id/tracks/:trackId"
+    ],
+    "video": [
+      "GET /api/video",
+      "GET /api/video/:id",
+      "GET /api/video/:id/playlist.m3u8",
+      "GET /api/video/:id/segment/:n"
+    ],
+    "trending": [
+      "GET /api/trending"
+    ],
+    "ebook": [
+      "GET /api/ebooks",
+      "GET /api/ebooks/:id",
+      "GET /api/ebooks/:id/page/:n"
+    ],
+    "comics": [
+      "GET /api/comics",
+      "GET /api/comics/:id",
+      "GET /api/comics/:id/page/:n"
+    ],
+    "metrics": [
+      "GET /metrics"
+    ]
+  }
+}

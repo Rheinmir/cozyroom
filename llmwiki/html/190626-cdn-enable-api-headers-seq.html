@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CDN API Headers — 190626</title>
+<style>
+:root{--glass-2:rgba(255,255,255,.70);--blur-2:8px;--edge-hi:inset 0 1px 0 rgba(255,255,255,.85);--border:rgba(30,90,170,.14);--text-1:#0f0f12;--text-2:#4a4a55;--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;--mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:thin;scrollbar-color:transparent transparent;background:#e9f0fb}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+::-webkit-scrollbar{width:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+html.scrolling::-webkit-scrollbar-thumb{background-color:rgba(10,132,255,.32)}
+body{font-family:var(--font);color:var(--text-1);padding-left:200px;background:radial-gradient(900px 500px at 12% -10%,rgba(10,132,255,.10),transparent 60%),radial-gradient(700px 420px at 95% 15%,rgba(90,162,232,.08),transparent 55%),linear-gradient(180deg,#eef4fd,#e6eefb);transition:padding-left .28s cubic-bezier(.4,0,.2,1);min-height:100vh}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;background:radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.12),transparent 60%),radial-gradient(560px 420px at 44% 55%,rgba(10,132,255,.10),transparent 60%);animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);background-size:22px 22px;mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+@media(prefers-reduced-motion:reduce){body::before{animation:none}}
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;display:flex;flex-direction:column;gap:2px;padding:18px 12px;overflow-y:auto;background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);-webkit-backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);border-right:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav>*{position:relative}
+.logo{margin:0 0 16px;padding:6px 10px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-label{font-size:10px;font-weight:600;color:#8a8a99;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px 4px;margin-top:4px}
+nav a{display:block;padding:8px 12px;border-radius:10px;font-size:13px;color:var(--text-2);text-decoration:none;overflow:hidden;transition:background .15s,color .15s}
+nav a:hover{background:rgba(10,132,255,.06);color:var(--text-1)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.10);font-weight:600}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);-webkit-backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);border:1px solid transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;background:rgba(0,0,0,.04);border:none;overflow:hidden}
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+section{padding:56px 24px 64px;max-width:1060px;margin:0 auto}
+.hero{padding:64px 24px 32px;max-width:1060px;margin:0 auto}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#0a84ff;margin-bottom:10px}
+h1{font-size:clamp(26px,4vw,44px);font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#0a84ff,#5aa2e8,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px}
+.sub{font-size:15px;color:var(--text-2);max-width:580px;line-height:1.7}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;margin-bottom:10px}
+#sec-0 .tag{background:rgba(255,45,85,.08);color:#e0264b}
+#sec-1 .tag{background:rgba(10,132,255,.10);color:#0a84ff}
+#sec-2 .tag{background:rgba(52,199,89,.10);color:#28a745}
+h2{font-size:clamp(18px,2.5vw,26px);font-weight:700;letter-spacing:-.02em;color:#1d1d1f;margin-bottom:6px}
+.desc{font-size:14px;color:var(--text-2);max-width:680px;line-height:1.7;margin-bottom:20px}
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);-webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:20px;margin:16px 0}
+.dt-wrap{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);overflow:hidden;margin:16px 0}
+.dt-wrap table{width:100%;border-collapse:collapse}
+.dt-wrap th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.dt-wrap td{font-size:13px;padding:10px 16px;border-bottom:1px solid rgba(30,90,170,.06);color:var(--text-1)}
+.dt-wrap tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:2px 8px}
+.b-g{background:rgba(52,199,89,.12);color:#28a745}
+.b-r{background:rgba(255,45,85,.10);color:#e0264b}
+.b-b{background:rgba(10,132,255,.10);color:#0a84ff}
+.mono{font-family:var(--mono);font-size:11px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:700px){.g2{grid-template-columns:1fr}}
+.info-box{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--text-2);line-height:1.7}
+.info-box strong{color:var(--text-1)}
+footer{padding:32px 24px;max-width:1060px;margin:0 auto;border-top:1px solid var(--border);font-size:12px;color:var(--text-2)}
+@media(max-width:640px){body{padding-left:0}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">CDN API Headers</div>
+  <span class="nav-label">Mục lục</span>
+  <a href="#sec-0">Hiện trạng (thiếu)</a>
+  <a href="#sec-1">TTL Plan (7 endpoints)</a>
+  <a href="#sec-2">Risks &amp; Checklist</a>
+</nav>
+<div class="hero">
+  <div class="eyebrow">Cozyroom · CDN API Cache-Control · 2026-06-19</div>
+  <h1>Enable CF Cache cho Library API</h1>
+  <p class="sub">7 GET library endpoints chưa có <span class="mono">Cache-Control: public</span> → CF không cache JSON → mỗi request đều tunnel về homelab. Fix: thêm header vào <span class="mono">handler.go</span>.</p>
+</div>
+
+<section id="sec-0">
+  <div class="tag">01 · Hiện trạng</div>
+  <h2>Đã có cache — nhưng thiếu JSON API</h2>
+  <p class="desc">Images và audio đã được CF cache. Library JSON endpoints (artists, albums, tracks, stats, search) chưa có Cache-Control → CF relay, không cache.</p>
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#28a745;margin-bottom:10px">Đã có Cache-Control ✅</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text-2)">
+        <li><span class="badge b-g">7d</span> <span class="mono">/assets/*</span> — nginx immutable</li>
+        <li><span class="badge b-g">7d</span> <span class="mono">/api/covers/{id}</span> — backend</li>
+        <li><span class="badge b-g">7d</span> <span class="mono">/api/artist-images</span> — backend</li>
+        <li><span class="badge b-g">1h</span> <span class="mono">/stream/{id}</span> lossless — backend</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#e0264b;margin-bottom:10px">Chưa có Cache-Control ❌</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text-2)">
+        <li><span class="badge b-r">miss</span> <span class="mono">/api/artists</span>, <span class="mono">/api/artists/{id}</span></li>
+        <li><span class="badge b-r">miss</span> <span class="mono">/api/albums</span>, <span class="mono">/api/albums/{id}</span></li>
+        <li><span class="badge b-r">miss</span> <span class="mono">/api/tracks</span></li>
+        <li><span class="badge b-r">miss</span> <span class="mono">/api/stats</span></li>
+        <li><span class="badge b-r">miss</span> <span class="mono">/api/search?q=...</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="sec-1">
+  <div class="tag">02 · TTL Plan</div>
+  <h2>Cache-Control: public cho 7 endpoints</h2>
+  <p class="desc">TTL khác nhau theo tần suất thay đổi. Search an toàn vì CF cache theo full URL kể cả <span class="mono">?q=</span>.</p>
+  <div class="dt-wrap">
+    <table>
+      <thead><tr><th>Endpoint</th><th>Handler</th><th>TTL</th><th>Lý do</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">/api/artists</td><td class="mono">listArtists</td><td><span class="badge b-b">300s</span></td><td>Library chỉ đổi sau scan</td></tr>
+        <tr><td class="mono">/api/artists/{id}</td><td class="mono">artistDetail</td><td><span class="badge b-b">300s</span></td><td>Same as above</td></tr>
+        <tr><td class="mono">/api/albums</td><td class="mono">listAlbums</td><td><span class="badge b-b">300s</span></td><td>Same as above</td></tr>
+        <tr><td class="mono">/api/albums/{id}</td><td class="mono">getAlbum</td><td><span class="badge b-b">300s</span></td><td>Same as above</td></tr>
+        <tr><td class="mono">/api/tracks</td><td class="mono">listTracks</td><td><span class="badge b-b">300s</span></td><td>Same as above</td></tr>
+        <tr><td class="mono">/api/stats</td><td class="mono">stats</td><td><span class="badge" style="background:rgba(255,149,0,.10);color:#f08c00">60s</span></td><td>Counter thay đổi thường xuyên hơn</td></tr>
+        <tr><td class="mono">/api/search?q=...</td><td class="mono">search</td><td><span class="badge" style="background:rgba(255,45,85,.08);color:#e0264b">30s</span></td><td>Query-specific; CF cache theo full URL</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="info-box">
+    <strong>Thực hiện:</strong> Thêm <span class="mono">w.Header().Set("Cache-Control", "public, max-age=300")</span> vào đầu mỗi handler trong <span class="mono">backend/internal/api/handler.go</span>. Không đổi logic, không đổi schema.
+  </div>
+</section>
+
+<section id="sec-2">
+  <div class="tag">03 · Risks &amp; Checklist</div>
+  <h2>Điều cần verify trước khi deploy</h2>
+  <p class="desc">CF caching chỉ hoạt động khi zone ở chế độ Proxied (orange cloud) và không có Bypass Cache Page Rule.</p>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:#f08c00;margin-bottom:10px">Risks</div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-2)">
+      <li>⚠ <strong>Scan invalidation:</strong> Sau <span class="mono">POST /api/scan</span>, cached responses stale tối đa 300s — acceptable với homelab</li>
+      <li>⚠ <strong>CF Proxied:</strong> CF zone phải ở chế độ "Proxied" (orange cloud) — cần user verify trên CF dashboard</li>
+      <li>⚠ <strong>Page Rules:</strong> Nếu CF zone có "Bypass Cache" Page Rule → headers không có tác dụng — cần user check</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:#28a745;margin-bottom:10px">Checklist deploy</div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-2)">
+      <li>☐ Verify CF zone: orange cloud (Proxied) cho <span class="mono">music.giatbh.io.vn</span></li>
+      <li>☐ Check CF Page Rules: không có "Bypass Cache" cho <span class="mono">/api/*</span></li>
+      <li>☐ Add headers vào <span class="mono">handler.go</span></li>
+      <li>☐ Build + deploy backend</li>
+      <li>☐ Check CF Cache Analytics: cache hit rate tăng sau 5 phút</li>
+    </ul>
+  </div>
+</section>
+<footer>Cozyroom · CDN API Cache-Control · 2026-06-19 · Draft: wiki/draft/orca/190626-cdn-enable-api-headers.md</footer>
+<script>
+(function(){const f=el=>{let t;return()=>{el.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>el.classList.remove('scrolling'),900);}};window.addEventListener('scroll',f(document.documentElement),{passive:true});})();
+(function(){const nav=document.querySelector('nav');if(!nav)return;const btn=document.createElement('button');btn.className='nav-toggle';btn.textContent='☰';document.body.appendChild(btn);const close=document.createElement('button');close.className='nav-close';close.textContent='✕';nav.appendChild(close);const apply=c=>{document.body.classList.toggle('nav-collapsed',c);try{localStorage.setItem('navCollapsed',c?'1':'0');}catch(e){}};btn.addEventListener('click',()=>apply(false));close.addEventListener('click',()=>apply(true));try{const s=localStorage.getItem('navCollapsed');if(s==='1'||(s!=='0'&&matchMedia('(max-width:640px)').matches))apply(true);}catch(e){}})();
+(function(){function attach(el){el.addEventListener('pointerdown',function(e){const r=el.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;const rad=Math.hypot(Math.max(x,r.width-x),Math.max(y,r.height-y));const ink=document.createElement('span');ink.className='ripple-ink';ink.style.width=ink.style.height=rad*2+'px';ink.style.left=(x-rad)+'px';ink.style.top=(y-rad)+'px';el.appendChild(ink);ink.addEventListener('animationend',()=>ink.remove());});}document.querySelectorAll('nav a,.nav-toggle,.nav-close').forEach(attach);})();
+(function(){const links=[...document.querySelectorAll('nav a[href^="#"]')];const sections=[...document.querySelectorAll('section[id]')];const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});},{rootMargin:'-40% 0px -55% 0px'});sections.forEach(s=>obs.observe(s));})();
+</script>
+</body>
+</html>

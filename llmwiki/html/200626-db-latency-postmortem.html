@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sao Nó Mượt Lại Rồi — DB Postmortem</title>
+<style>
+:root{
+  --glass-1:rgba(255,255,255,.55);
+  --glass-2:rgba(255,255,255,.7);
+  --glass-3:rgba(255,255,255,.88);
+  --blur-1:24px;--blur-2:8px;--blur-3:4px;
+  --edge-hi:inset 0 1px 0 rgba(255,255,255,.85);
+  --border:rgba(30,90,170,.14);
+  --text-1:#0f0f12;--text-2:#4a4a55;
+  --font-text:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue','Roboto','Segoe UI',sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Roboto','Segoe UI',sans-serif;
+  --font-mono:'SF Mono',ui-monospace,'SFMono-Regular',Menlo,'Roboto Mono',Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:thin;scrollbar-color:transparent transparent;background:#e9f0fb}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+::-webkit-scrollbar{width:11px;height:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box;transition:background-color .25s ease}
+html.scrolling::-webkit-scrollbar-thumb,nav.scrolling::-webkit-scrollbar-thumb,::-webkit-scrollbar-thumb:hover{background-color:rgba(10,132,255,.32)}
+::-webkit-scrollbar-thumb:active{background-color:rgba(10,132,255,.6)}
+
+body{
+  font-family:var(--font-text);color:var(--text-1);
+  padding-left:200px;min-height:100vh;
+  background:
+    radial-gradient(900px 500px at 12% -10%,rgba(10,132,255,.10),transparent 60%),
+    radial-gradient(700px 420px at 95% 15%,rgba(90,162,232,.08),transparent 55%),
+    linear-gradient(180deg,#eef4fd 0%,#e6eefb 100%);
+  transition:padding-left .28s cubic-bezier(.4,0,.2,1);
+}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),
+    radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),
+    radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),
+    radial-gradient(480px 380px at 44% 55%,rgba(10,132,255,.10),transparent 60%),
+    radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.13),transparent 65%),
+    radial-gradient(480px 380px at 16% 86%,rgba(255,149,0,.12),transparent 60%);
+  animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);
+  background-size:22px 22px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+@media(prefers-reduced-motion:reduce){body::before{animation:none}}
+
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:18px 12px;
+  background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border-right:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);
+  transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),
+    linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav>*{position:relative}
+.logo{margin:0 0 16px;padding:6px 10px;font-size:15px;font-weight:700;font-family:var(--font-display);
+  background:linear-gradient(135deg,#0a84ff,#64b5f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav a{padding:8px 12px;border-radius:10px;font-size:13px;color:var(--text-2);text-decoration:none;
+  display:block;position:relative;overflow:hidden;transition:background .15s,color .15s}
+nav a:hover{color:var(--text-1);background:rgba(10,132,255,.06)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.08);font-weight:600}
+.nav-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+  color:#94a3b8;padding:14px 12px 4px;position:relative}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;
+  background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));
+  backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  -webkit-backdrop-filter:blur(var(--blur-1)) saturate(1.7) brightness(1.04);
+  border:1px solid transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);
+  transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;
+  background:rgba(0,0,0,.04);border:none;overflow:hidden;position:relative}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+
+.hero{padding:72px 24px 56px;max-width:1100px;margin:0 auto;text-align:center}
+.eyebrow{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
+  color:#0a84ff;background:rgba(10,132,255,.10);padding:4px 14px;border-radius:20px;margin-bottom:18px}
+.hero h1{font-family:var(--font-display);font-size:clamp(32px,5vw,56px);font-weight:700;letter-spacing:-.025em;
+  background:linear-gradient(135deg,#0a84ff,#5aa2e8,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:16px;line-height:1.1}
+.hero p{font-size:17px;color:var(--text-2);max-width:600px;margin:0 auto;line-height:1.6}
+
+.section-bg{position:relative;overflow:visible}
+.section-bg::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);pointer-events:none}
+section{padding:64px 24px 72px;max-width:1100px;margin:0 auto}
+
+.section-header{margin-bottom:32px}
+.tag{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+  padding:3px 12px;border-radius:20px;margin-bottom:12px}
+.section-header h2{font-family:var(--font-display);font-size:clamp(24px,3vw,36px);font-weight:700;
+  color:#1d1d1f;letter-spacing:-.02em;margin-bottom:8px}
+.section-header p{font-size:15px;color:var(--text-2);max-width:680px;line-height:1.6}
+
+/* Section color cycle */
+#sec-0 .tag{background:rgba(10,132,255,.10);color:#0a84ff}
+#sec-0 .card h4{color:#0a84ff}
+#sec-0 .card li::before{color:#0a84ff}
+.s-bg0::before{background:linear-gradient(180deg,rgba(10,132,255,.05) 0%,transparent 60%)}
+
+#sec-1 .tag{background:rgba(48,176,199,.12);color:#30b0c7}
+#sec-1 .card h4{color:#30b0c7}
+#sec-1 .card li::before{color:#30b0c7}
+.s-bg1::before{background:linear-gradient(180deg,rgba(48,176,199,.05) 0%,transparent 60%)}
+
+#sec-2 .tag{background:rgba(88,86,214,.10);color:#5856d6}
+#sec-2 .card h4{color:#5856d6}
+#sec-2 .card li::before{color:#5856d6}
+.s-bg2::before{background:linear-gradient(180deg,rgba(88,86,214,.05) 0%,transparent 60%)}
+
+#sec-3 .tag{background:rgba(52,199,89,.10);color:#28a745}
+#sec-3 .card h4{color:#28a745}
+#sec-3 .card li::before{color:#28a745}
+.s-bg3::before{background:linear-gradient(180deg,rgba(52,199,89,.05) 0%,transparent 60%)}
+
+#sec-4 .tag{background:rgba(255,149,0,.10);color:#f08c00}
+#sec-4 .card h4{color:#f08c00}
+#sec-4 .card li::before{color:#f08c00}
+.s-bg4::before{background:linear-gradient(180deg,rgba(255,149,0,.06) 0%,transparent 60%)}
+
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+@media(max-width:700px){.content-grid{grid-template-columns:1fr}}
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:20px}
+.card h4{font-size:14px;font-weight:600;margin-bottom:10px}
+.card ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.card li{font-size:13px;color:var(--text-2);display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.card li::before{content:'›';font-weight:700;flex-shrink:0;margin-top:1px}
+.card p{font-size:13px;color:var(--text-2);line-height:1.6;margin-top:6px}
+
+.diagram-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);
+  padding:24px;margin:24px 0;
+  position:relative;overflow:hidden;display:flex;flex-direction:column;
+  resize:vertical;min-height:160px;transition:box-shadow .2s ease}
+.diagram-box:hover{box-shadow:0 6px 28px rgba(0,0,0,.1)}
+.diagram-viewport{position:relative;flex:1 1 auto;width:100%;overflow:hidden;cursor:grab;touch-action:none}
+.diagram-viewport.grabbing{cursor:grabbing}
+.diagram-viewport svg{width:100%;height:auto;display:block;overflow:visible;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-select:none}
+.dnode{cursor:move}
+.dnode>rect{transition:filter .15s ease}
+.dnode:hover>rect:first-of-type{filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.diagram-hint{position:absolute;top:8px;right:12px;z-index:5;font-size:10px;color:#4a4a55;
+  background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.05);border-radius:20px;
+  padding:3px 10px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.diagram-box:hover .diagram-hint{opacity:.9}
+.diagram-reset{position:absolute;bottom:8px;right:10px;z-index:5;font-size:11px;
+  background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.08);border-radius:8px;
+  padding:3px 9px;cursor:pointer;color:#4a4a55;opacity:0;transition:opacity .2s}
+.diagram-box:hover .diagram-reset{opacity:1}
+.diagram-reset:hover{background:#fff;color:#0f0f12}
+.diagram-box::after{content:'';position:absolute;right:5px;bottom:5px;width:16px;height:16px;
+  pointer-events:none;opacity:0;transition:opacity .25s ease;
+  clip-path:polygon(100% 0,100% 100%,0 100%);
+  background:repeating-linear-gradient(135deg,transparent 0 3.5px,rgba(10,132,255,.45) 3.5px 5px)}
+.diagram-box:hover::after{opacity:.85}
+.diagram-box::-webkit-resizer{display:none}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:16px;margin-top:20px}
+.t-item{display:flex;gap:16px;align-items:flex-start}
+.t-dot{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;
+  background:var(--glass-2);backdrop-filter:blur(var(--blur-2));border:1px solid var(--border);
+  box-shadow:var(--edge-hi),0 2px 8px rgba(0,0,0,.06)}
+.t-body{background:var(--glass-2);backdrop-filter:blur(var(--blur-2));border:1px solid var(--border);
+  border-radius:12px;box-shadow:var(--edge-hi),0 2px 8px rgba(0,0,0,.05);padding:14px 18px;flex:1}
+.t-body strong{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+.t-body p{font-size:13px;color:var(--text-2);line-height:1.5}
+.t-body code{font-family:var(--font-mono);font-size:11px;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:4px}
+
+/* Fix cards */
+.fix-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+@media(max-width:700px){.fix-grid{grid-template-columns:1fr}}
+.fix-card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2));
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:20px}
+.fix-card .fix-num{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:#28a745;margin-bottom:8px}
+.fix-card h4{font-size:15px;font-weight:600;color:#1d1d1f;margin-bottom:10px}
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ba-col{border-radius:8px;padding:10px 12px}
+.ba-col.before{background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.2)}
+.ba-col.after{background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.2)}
+.ba-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.ba-col.before .ba-label{color:#e0264b}
+.ba-col.after .ba-label{color:#28a745}
+.ba-col p{font-size:12px;color:var(--text-2);font-family:var(--font-mono);line-height:1.5}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px}
+@media(max-width:700px){.kpi-row{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--glass-2);backdrop-filter:blur(var(--blur-2));
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 16px rgba(0,0,0,.06);
+  padding:20px;text-align:center}
+.kpi-num{font-family:var(--font-display);font-size:32px;font-weight:700;letter-spacing:-.03em;color:#1d1d1f}
+.kpi-label{font-size:12px;color:var(--text-2);margin-top:4px}
+
+/* Code block */
+pre.code-block{background:rgba(15,15,20,.88);color:#e2e8f0;border-radius:12px;padding:16px;
+  font-family:var(--font-mono);font-size:12px;line-height:1.6;overflow-x:auto;margin-top:12px;
+  border:1px solid rgba(255,255,255,.06)}
+.code-wrap{position:relative}
+.code-copy{position:absolute;top:8px;right:8px;z-index:2;font-size:11px;font-family:inherit;font-weight:500;
+  background:rgba(255,255,255,.1);color:#cbd5e1;border:1px solid rgba(255,255,255,.15);
+  border-radius:6px;padding:3px 10px;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s}
+.code-wrap:hover .code-copy{opacity:1}
+.code-copy:hover{background:rgba(255,255,255,.2);color:#fff}
+.code-copy.copied{background:rgba(16,185,129,.25);color:#6ee7b7;border-color:rgba(16,185,129,.45);opacity:1}
+
+/* SVG animations */
+@keyframes flowArrow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes errBlink{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes slideRight{0%{stroke-dashoffset:300}100%{stroke-dashoffset:0}}
+.flow{stroke-dasharray:6 4;animation:flowArrow .8s linear infinite}
+.flow-ok{stroke-dasharray:8 4;animation:flowArrow .7s linear infinite}
+.pulse-node{animation:pulse 2.4s ease-in-out infinite}
+.float-badge{animation:float 3s ease-in-out infinite}
+.err-blink{animation:errBlink 1.2s ease-in-out infinite}
+
+/* Pod status table */
+.pod-table{width:100%;border-collapse:collapse;margin-top:20px}
+.pod-table th,.pod-table td{padding:10px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--border)}
+.pod-table th{font-weight:600;color:var(--text-2);background:rgba(255,255,255,.4)}
+.pod-table td:first-child{font-family:var(--font-mono);font-size:11px}
+.status-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status-running{background:rgba(52,199,89,.12);color:#28a745}
+.status-crash{background:rgba(255,45,85,.12);color:#e0264b}
+.status-completed{background:rgba(10,132,255,.10);color:#0a84ff}
+.table-wrap{background:var(--glass-3);backdrop-filter:blur(var(--blur-3)) saturate(1.1);
+  border:1px solid var(--border);border-radius:16px;
+  box-shadow:var(--edge-hi),0 4px 16px rgba(0,0,0,.05);overflow:hidden;margin-top:24px}
+
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);opacity:.9;
+  background:radial-gradient(circle,rgba(255,255,255,.6) 0%,rgba(10,132,255,.22) 35%,transparent 70%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.45);
+  animation:rippleWave .65s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes rippleWave{to{transform:scale(2.8);opacity:0}}
+
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -10px 20px rgba(10,132,255,.12),0 0 14px rgba(10,132,255,.10);
+  backdrop-filter:blur(2px) saturate(1.25);-webkit-backdrop-filter:blur(2px) saturate(1.25);
+  transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+
+footer{padding:40px 24px;max-width:1100px;margin:0 auto;text-align:center;
+  font-size:12px;color:var(--text-2);border-top:1px solid var(--border)}
+
+@media(max-width:640px){body{padding-left:0}nav{box-shadow:0 8px 30px rgba(0,0,0,.14)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🔍 Postmortem</div>
+  <a href="#sec-0" class="nav-link active">Triệu chứng</a>
+  <a href="#sec-1" class="nav-link">Root cause</a>
+  <a href="#sec-2" class="nav-link">Chuỗi sự kiện</a>
+  <a href="#sec-3" class="nav-link">4 bản vá</a>
+  <a href="#sec-4" class="nav-link">Kết quả</a>
+</nav>
+
+<div class="hero">
+  <span class="eyebrow">Postmortem · 2026-06-20</span>
+  <h1>Sao nó mượt lại rồi nhỉ?</h1>
+  <p>HAProxy routing DB connections qua Tailscale IP bị broken — mỗi query timeout 60s → site đứng → down hoàn toàn. Fixed bằng 4 patches không restart DB.</p>
+</div>
+
+<!-- SECTION 0: Triệu chứng -->
+<div class="section-bg s-bg0">
+<section id="sec-0">
+  <div class="section-header">
+    <span class="tag">01 · Triệu chứng</span>
+    <h2>Từ "loading lâu" tới "down luôn r"</h2>
+    <p>Ba giai đoạn suy giảm — từ chậm đến đứng đến tắt hoàn toàn trong vài giờ.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="t-item">
+      <div class="t-dot">🐢</div>
+      <div class="t-body">
+        <strong>Giai đoạn 1 — Loading lâu</strong>
+        <p>Chữ (artists, albums) tải chậm hơn hồi xưa dùng replica. Spinner hiện nhưng rồi data xuất hiện. Backend logs bình thường.</p>
+      </div>
+    </div>
+    <div class="t-item">
+      <div class="t-dot">⏳</div>
+      <div class="t-body">
+        <strong>Giai đoạn 2 — Kẹt ở đang tải</strong>
+        <p>Spinner mãi không tắt. Network tab thấy request tới <code>/api/artists</code> pending &gt;30s. DB timeout bắt đầu xuất hiện trong logs.</p>
+      </div>
+    </div>
+    <div class="t-item">
+      <div class="t-dot">💀</div>
+      <div class="t-body">
+        <strong>Giai đoạn 3 — Down luôn r</strong>
+        <p>Mọi API call fail. Logs liên tục: <code>dial tcp 10.43.187.77:5432: connect: connection timed out</code>. DB hoàn toàn không accessible từ backend.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-box" style="margin-top:28px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 140">
+      <defs>
+        <marker id="a0" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#ef4444"/>
+        </marker>
+        <marker id="a0ok" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#94a3b8"/>
+        </marker>
+      </defs>
+      <!-- Timeline bar -->
+      <line x1="50" y1="70" x2="840" y2="70" stroke="#e2e8f0" stroke-width="2"/>
+      <!-- Phase 1 -->
+      <rect x="60" y="40" width="180" height="60" rx="8" fill="rgba(255,149,0,.12)" stroke="rgba(255,149,0,.4)" stroke-width="1.5"/>
+      <text x="150" y="64" text-anchor="middle" font-size="11" font-weight="600" fill="#f08c00" font-family="-apple-system,sans-serif">Giai đoạn 1</text>
+      <text x="150" y="80" text-anchor="middle" font-size="10" fill="#78716c" font-family="-apple-system,sans-serif">Loading lâu</text>
+      <text x="150" y="94" text-anchor="middle" font-size="9" fill="#a8a29e" font-family="-apple-system,sans-serif">~30-60s per request</text>
+      <!-- Phase 2 -->
+      <rect x="280" y="32" width="180" height="76" rx="8" fill="rgba(255,45,85,.08)" stroke="rgba(255,45,85,.35)" stroke-width="1.5"/>
+      <text x="370" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="#e0264b" font-family="-apple-system,sans-serif">Giai đoạn 2</text>
+      <text x="370" y="74" text-anchor="middle" font-size="10" fill="#78716c" font-family="-apple-system,sans-serif">Kẹt ở đang tải</text>
+      <text x="370" y="90" text-anchor="middle" font-size="9" fill="#a8a29e" font-family="-apple-system,sans-serif">Spinner mãi không tắt</text>
+      <!-- Phase 3 -->
+      <rect x="500" y="24" width="200" height="92" rx="8" fill="rgba(88,86,214,.1)" stroke="rgba(88,86,214,.4)" stroke-width="1.5" class="err-blink"/>
+      <text x="600" y="52" text-anchor="middle" font-size="11" font-weight="600" fill="#5856d6" font-family="-apple-system,sans-serif">Giai đoạn 3</text>
+      <text x="600" y="68" text-anchor="middle" font-size="10" fill="#78716c" font-family="-apple-system,sans-serif">Down luôn r 💀</text>
+      <text x="600" y="84" text-anchor="middle" font-size="9" fill="#a8a29e" font-family="-apple-system,sans-serif">connection timed out</text>
+      <text x="600" y="98" text-anchor="middle" font-size="9" fill="#a8a29e" font-family="-apple-system,sans-serif">mọi API fail</text>
+      <!-- Fixed -->
+      <rect x="740" y="40" width="120" height="60" rx="8" fill="rgba(52,199,89,.12)" stroke="rgba(52,199,89,.4)" stroke-width="1.5"/>
+      <text x="800" y="64" text-anchor="middle" font-size="11" font-weight="600" fill="#28a745" font-family="-apple-system,sans-serif">Fixed ✓</text>
+      <text x="800" y="80" text-anchor="middle" font-size="10" fill="#78716c" font-family="-apple-system,sans-serif">4 patches</text>
+      <!-- Arrow phase 3→fixed -->
+      <line x1="700" y1="70" x2="736" y2="70" stroke="#ef4444" stroke-width="1.5" marker-end="url(#a0)" class="flow"/>
+      <!-- time markers -->
+      <text x="150" y="118" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">t = 0h</text>
+      <text x="370" y="118" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">t = +2h</text>
+      <text x="600" y="118" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="-apple-system,sans-serif">t = +4h</text>
+      <text x="800" y="118" text-anchor="middle" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">t = +4.5h</text>
+    </svg>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 1: Root Cause -->
+<div class="section-bg s-bg1">
+<section id="sec-1">
+  <div class="section-header">
+    <span class="tag">02 · Root Cause</span>
+    <h2>HAProxy routing qua Tailscale IP bị broken</h2>
+    <p>db-adapter HAProxy cố kết nối tới <code>100.88.197.64:5432</code> (Tailscale IP) — nhưng Tailscale connectivity từ K8s pod tới IP đó bị broken. Postgres chỉ accessible qua K8s service DNS <code>postgres:5432</code>.</p>
+  </div>
+
+  <div class="diagram-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240">
+      <defs>
+        <marker id="a1r" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#ef4444"/>
+        </marker>
+        <marker id="a1g" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#22c55e"/>
+        </marker>
+        <marker id="a1b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#30b0c7"/>
+        </marker>
+      </defs>
+      <!-- BROKEN PATH (top) -->
+      <text x="20" y="24" font-size="10" font-weight="700" fill="#e0264b" font-family="-apple-system,sans-serif">❌ TRƯỚC (broken)</text>
+      <!-- Browser -->
+      <rect x="20" y="36" width="100" height="44" rx="8" fill="rgba(255,255,255,.75)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="70" y="56" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Browser</text>
+      <text x="70" y="70" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">máy khách</text>
+      <!-- Backend -->
+      <rect x="180" y="36" width="110" height="44" rx="8" fill="rgba(255,255,255,.75)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="235" y="56" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend</text>
+      <text x="235" y="70" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">Go server</text>
+      <!-- HAProxy -->
+      <rect x="350" y="36" width="120" height="44" rx="8" fill="rgba(255,255,255,.75)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="410" y="56" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">HAProxy</text>
+      <text x="410" y="70" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">db-adapter pod</text>
+      <!-- Tailscale cloud -->
+      <rect x="530" y="28" width="130" height="60" rx="12" fill="rgba(88,86,214,.08)" stroke="rgba(88,86,214,.35)" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <text x="595" y="52" text-anchor="middle" font-size="10" font-weight="600" fill="#5856d6" font-family="-apple-system,sans-serif">Tailscale</text>
+      <text x="595" y="66" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">100.88.197.64</text>
+      <text x="595" y="78" text-anchor="middle" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">BROKEN ❌</text>
+      <!-- Error box -->
+      <rect x="715" y="36" width="160" height="44" rx="8" fill="rgba(255,45,85,.08)" stroke="rgba(255,45,85,.4)" stroke-width="1.5" class="err-blink"/>
+      <text x="795" y="54" text-anchor="middle" font-size="10" font-weight="600" fill="#e0264b" font-family="-apple-system,sans-serif">TIMEOUT</text>
+      <text x="795" y="68" text-anchor="middle" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">connection timed out</text>
+      <!-- Arrows broken path -->
+      <line x1="120" y1="58" x2="176" y2="58" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a1b)"/>
+      <line x1="290" y1="58" x2="346" y2="58" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a1b)"/>
+      <line x1="470" y1="58" x2="526" y2="58" stroke="#ef4444" stroke-width="2" marker-end="url(#a1r)" class="flow"/>
+      <line x1="660" y1="58" x2="711" y2="58" stroke="#ef4444" stroke-width="2" marker-end="url(#a1r)" class="err-blink"/>
+
+      <!-- FIXED PATH (bottom) -->
+      <text x="20" y="140" font-size="10" font-weight="700" fill="#28a745" font-family="-apple-system,sans-serif">✅ SAU (fixed)</text>
+      <!-- Browser -->
+      <rect x="20" y="152" width="100" height="44" rx="8" fill="rgba(255,255,255,.75)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="70" y="172" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Browser</text>
+      <text x="70" y="186" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">máy khách</text>
+      <!-- Backend -->
+      <rect x="180" y="152" width="110" height="44" rx="8" fill="rgba(255,255,255,.75)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="235" y="172" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend</text>
+      <text x="235" y="186" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">Go server</text>
+      <!-- HAProxy fixed -->
+      <rect x="350" y="152" width="120" height="44" rx="8" fill="rgba(255,255,255,.75)" stroke="rgba(30,90,170,.2)" stroke-width="1.5"/>
+      <text x="410" y="172" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">HAProxy</text>
+      <text x="410" y="186" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">db-adapter pod</text>
+      <!-- K8s DNS -->
+      <rect x="530" y="148" width="130" height="52" rx="8" fill="rgba(48,176,199,.10)" stroke="rgba(48,176,199,.4)" stroke-width="1.5"/>
+      <text x="595" y="168" text-anchor="middle" font-size="10" font-weight="600" fill="#30b0c7" font-family="-apple-system,sans-serif">K8s DNS</text>
+      <text x="595" y="182" text-anchor="middle" font-size="9" fill="#0f0f12" font-family="-apple-system,sans-serif">postgres:5432</text>
+      <text x="595" y="194" text-anchor="middle" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">✓ ClusterIP</text>
+      <!-- Postgres pod -->
+      <rect x="715" y="152" width="120" height="44" rx="8" fill="rgba(52,199,89,.12)" stroke="rgba(52,199,89,.4)" stroke-width="1.5"/>
+      <text x="775" y="172" text-anchor="middle" font-size="10" font-weight="600" fill="#28a745" font-family="-apple-system,sans-serif">Postgres</text>
+      <text x="775" y="186" text-anchor="middle" font-size="9" fill="#6b7280" font-family="-apple-system,sans-serif">postgres-0 pod</text>
+      <!-- Arrows fixed path -->
+      <line x1="120" y1="174" x2="176" y2="174" stroke="#22c55e" stroke-width="1.5" marker-end="url(#a1g)"/>
+      <line x1="290" y1="174" x2="346" y2="174" stroke="#22c55e" stroke-width="1.5" marker-end="url(#a1g)"/>
+      <line x1="470" y1="174" x2="526" y2="174" stroke="#22c55e" stroke-width="2" marker-end="url(#a1g)" class="flow-ok"/>
+      <line x1="660" y1="174" x2="711" y2="174" stroke="#22c55e" stroke-width="2" marker-end="url(#a1g)" class="flow-ok"/>
+    </svg>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h4>Tại sao Tailscale IP bị broken?</h4>
+      <ul>
+        <li>Postgres chạy trong K8s pod, KHÔNG expose qua hostPort hay NodePort</li>
+        <li>ClusterIP chỉ accessible nội bộ cluster — không qua Tailscale</li>
+        <li>HAProxy pod gọi <code>100.88.197.64:5432</code> → Tailscale route nhưng không có service lắng nghe</li>
+        <li>TCP connect timeout sau 60s → cả request chain bị block</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Tại sao postgres:5432 hoạt động?</h4>
+      <ul>
+        <li>K8s Service <code>postgres</code> có ClusterIP nội bộ cluster</li>
+        <li>HAProxy pod cùng namespace <code>cozyroom-k8s</code> → DNS short name <code>postgres</code> resolve được</li>
+        <li>CoreDNS resolve <code>postgres</code> → <code>postgres.cozyroom-k8s.svc.cluster.local</code></li>
+        <li>Traffic đi trong K8s network, không cần Tailscale</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 2: Chuỗi sự kiện -->
+<div class="section-bg s-bg2">
+<section id="sec-2">
+  <div class="section-header">
+    <span class="tag">03 · Chuỗi sự kiện</span>
+    <h2>Chẩn đoán từ log ra root cause</h2>
+    <p>Từ lúc user report đến khi tìm ra nguyên nhân chỉ cần đọc 30 dòng log.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="t-item">
+      <div class="t-dot">1</div>
+      <div class="t-body">
+        <strong>kubectl get pods — tất cả Running</strong>
+        <p>Backend, frontend, db-adapter, postgres — tất cả <code>1/1 Running</code>. Vấn đề không phải pod crash.</p>
+      </div>
+    </div>
+    <div class="t-item">
+      <div class="t-dot">2</div>
+      <div class="t-body">
+        <strong>kubectl logs deployment/backend — lỗi rõ ràng</strong>
+        <p>3 dòng lỗi liên tiếp: <code>failed to connect to 10.43.187.77:5432 (db-adapter): dial error: timeout</code>. db-adapter service ClusterIP <code>10.43.187.77</code> reach được nhưng HAProxy không connect được tới backend của nó.</p>
+      </div>
+    </div>
+    <div class="t-item">
+      <div class="t-dot">3</div>
+      <div class="t-body">
+        <strong>Đọc db-adapter configmap — tìm ra Tailscale IP</strong>
+        <p>HAProxy config: <code>server primary 100.88.197.64:5432</code>. Đây là Tailscale IP — không phải K8s service. Postgres pod không expose port này.</p>
+      </div>
+    </div>
+    <div class="t-item">
+      <div class="t-dot">4</div>
+      <div class="t-body">
+        <strong>Apply fix: postgres:5432 → 1 pod crash</strong>
+        <p>Pod mới crash trên node <code>rhein-e2144g</code> (broken networking). Node này không được thêm vào node affinity exclusion như frontend/cloudflared.</p>
+      </div>
+    </div>
+    <div class="t-item">
+      <div class="t-dot" style="background:rgba(52,199,89,.15);border-color:rgba(52,199,89,.4)">✓</div>
+      <div class="t-body" style="border-color:rgba(52,199,89,.3);background:rgba(52,199,89,.05)">
+        <strong>Add node affinity + delete old pod → 2/2 Running</strong>
+        <p>Cả 2 db-adapter pods Running trên node tốt. Backend restart → connect DB thành công. <code>trending: saved 15 repos</code> — không còn timeout.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-grid" style="margin-top:24px">
+    <div class="card">
+      <h4>Log error chính</h4>
+      <p style="font-family:var(--font-mono);font-size:11px;color:#e0264b;background:rgba(255,45,85,.06);padding:10px;border-radius:8px;margin-top:8px;line-height:1.7">
+        failed to connect to<br>
+        `user=cozyroom database=cozyroom`:<br>
+        10.43.187.77:5432 (db-adapter):<br>
+        dial error: timeout:<br>
+        <strong>dial tcp 10.43.187.77:5432:</strong><br>
+        <strong>connect: connection timed out</strong>
+      </p>
+    </div>
+    <div class="card">
+      <h4>Log sau fix</h4>
+      <p style="font-family:var(--font-mono);font-size:11px;color:#28a745;background:rgba(52,199,89,.06);padding:10px;border-radius:8px;margin-top:8px;line-height:1.7">
+        trending: saved 15 repos ✓<br>
+        aitrends: enriching 15 repos...<br>
+        aitrends: ok DeusData/codebase<br>
+        enricher: done<br>
+        ebook scanner: scan finished<br>
+        <strong>// Không còn timeout ✓</strong>
+      </p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 3: 4 bản vá -->
+<div class="section-bg s-bg3">
+<section id="sec-3">
+  <div class="section-header">
+    <span class="tag">04 · 4 Bản Vá</span>
+    <h2>Fixes được apply trong session</h2>
+    <p>Theo thứ tự ưu tiên — infra fix trước, query optimization sau, tất cả không restart DB.</p>
+  </div>
+
+  <div class="fix-grid">
+    <div class="fix-card">
+      <div class="fix-num">Fix #1 — Critical</div>
+      <h4>HAProxy route: Tailscale IP → K8s DNS</h4>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px">Root cause chính. Đổi backend server trong HAProxy config từ hardcoded Tailscale IP sang K8s service name.</p>
+      <div class="before-after">
+        <div class="ba-col before">
+          <div class="ba-label">Trước</div>
+          <p>server primary<br>100.88.197.64:5432<br>(Tailscale — broken)</p>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">Sau</div>
+          <p>server primary<br>postgres:5432<br>(K8s DNS ✓)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-num">Fix #2 — Stability</div>
+      <h4>db-adapter node affinity</h4>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px">Tránh pod schedule lên <code>rhein-e2144g</code> (broken networking). Khớp pattern của cloudflared + frontend.</p>
+      <div class="before-after">
+        <div class="ba-col before">
+          <div class="ba-label">Trước</div>
+          <p>Không có node affinity → random schedule → CrashLoop trên e2144g</p>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">Sau</div>
+          <p>NotIn: [rhein-e2144g] → chỉ schedule trên node healthy</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-num">Fix #3 — Performance</div>
+      <h4>stats: 3 queries → 1 subquery</h4>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px"><code>/api/stats</code> chạy 3 COUNT(*) riêng lẻ = 3 round-trips. Với Tailscale latency ~20ms/round-trip = 60ms chỉ để đếm 3 bảng.</p>
+      <div class="before-after">
+        <div class="ba-col before">
+          <div class="ba-label">Trước · 3 queries</div>
+          <p>COUNT(*) FROM artists<br>COUNT(*) FROM albums<br>COUNT(*) FROM tracks</p>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">Sau · 1 query</div>
+          <p>SELECT<br>(SELECT COUNT(*) FROM artists),<br>(SELECT COUNT(*) FROM albums),<br>(SELECT COUNT(*) FROM tracks)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-num">Fix #4 — Performance</div>
+      <h4>artistDetail: 3 queries → 1 LEFT JOIN</h4>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px"><code>/api/artists/{id}</code> chạy 3 queries: lấy tên, đếm albums, đếm tracks. Merge thành 1 LEFT JOIN.</p>
+      <div class="before-after">
+        <div class="ba-col before">
+          <div class="ba-label">Trước · 3 queries</div>
+          <p>SELECT name FROM artists<br>SELECT COUNT(*) FROM albums<br>SELECT COUNT(*) FROM tracks JOIN...</p>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">Sau · 1 query</div>
+          <p>SELECT a.name,<br>COUNT(DISTINCT al.id),<br>COUNT(DISTINCT t.id)<br>FROM artists a<br>LEFT JOIN albums...<br>LEFT JOIN tracks...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-box" style="margin-top:28px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200">
+      <defs>
+        <marker id="a3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#0a84ff"/>
+        </marker>
+        <marker id="a3g" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L7,3.5z" fill="#28a745"/>
+        </marker>
+      </defs>
+      <!-- Before: 3 separate queries -->
+      <text x="20" y="20" font-size="11" font-weight="700" fill="#e0264b" font-family="-apple-system,sans-serif">❌ Trước: 3 round-trips × latency</text>
+      <rect x="20" y="32" width="90" height="36" rx="6" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.25)" stroke-width="1.5"/>
+      <text x="65" y="52" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend</text>
+      <!-- 3 arrow paths -->
+      <line x1="110" y1="40" x2="200" y2="40" stroke="#0a84ff" stroke-width="1.5" marker-end="url(#a3)" class="flow"/>
+      <line x1="110" y1="50" x2="200" y2="70" stroke="#0a84ff" stroke-width="1.5" marker-end="url(#a3)" class="flow"/>
+      <line x1="110" y1="60" x2="200" y2="100" stroke="#0a84ff" stroke-width="1.5" marker-end="url(#a3)" class="flow"/>
+      <!-- DB boxes -->
+      <rect x="200" y="26" width="130" height="26" rx="6" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1"/>
+      <text x="265" y="43" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">SELECT COUNT(*) FROM artists</text>
+      <rect x="200" y="58" width="130" height="26" rx="6" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1"/>
+      <text x="265" y="75" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">SELECT COUNT(*) FROM albums</text>
+      <rect x="200" y="90" width="130" height="26" rx="6" fill="rgba(255,255,255,.8)" stroke="rgba(30,90,170,.2)" stroke-width="1"/>
+      <text x="265" y="107" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">SELECT COUNT(*) FROM tracks</text>
+      <text x="350" y="60" font-size="12" fill="#e0264b" font-family="-apple-system,sans-serif">×3</text>
+      <text x="365" y="60" font-size="9" fill="#e0264b" font-family="-apple-system,sans-serif">latency</text>
+
+      <!-- After: 1 query -->
+      <text x="20" y="150" font-size="11" font-weight="700" fill="#28a745" font-family="-apple-system,sans-serif">✅ Sau: 1 round-trip</text>
+      <rect x="20" y="162" width="90" height="36" rx="6" fill="rgba(255,255,255,.8)" stroke="rgba(52,199,89,.4)" stroke-width="1.5"/>
+      <text x="65" y="182" text-anchor="middle" font-size="10" font-weight="600" fill="#0f0f12" font-family="-apple-system,sans-serif">Backend</text>
+      <line x1="110" y1="180" x2="200" y2="180" stroke="#28a745" stroke-width="2" marker-end="url(#a3g)" class="flow-ok"/>
+      <rect x="200" y="158" width="220" height="44" rx="6" fill="rgba(52,199,89,.08)" stroke="rgba(52,199,89,.35)" stroke-width="1.5"/>
+      <text x="310" y="175" text-anchor="middle" font-size="9" fill="#0f0f12" font-family="-apple-system,sans-serif">SELECT (SELECT COUNT(*) FROM artists),</text>
+      <text x="310" y="189" text-anchor="middle" font-size="9" fill="#0f0f12" font-family="-apple-system,sans-serif">(SELECT COUNT(*) FROM albums), ...</text>
+      <text x="440" y="185" font-size="11" fill="#28a745" font-family="-apple-system,sans-serif">×1</text>
+    </svg>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 4: Kết quả -->
+<div class="section-bg s-bg4">
+<section id="sec-4">
+  <div class="section-header">
+    <span class="tag">05 · Kết Quả</span>
+    <h2>Sao nó mượt lại rồi nhỉ</h2>
+    <p>4 commits, 0 DB restart, site trở lại bình thường trong 30 phút từ lúc chẩn đoán.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-num" style="color:#28a745">2/2</div>
+      <div class="kpi-label">db-adapter pods Running</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#28a745">0</div>
+      <div class="kpi-label">DB timeout errors</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#0a84ff">3→1</div>
+      <div class="kpi-label">round-trips / stats call</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-num" style="color:#30b0c7">4</div>
+      <div class="kpi-label">commits deployed</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="pod-table">
+      <thead>
+        <tr>
+          <th>Pod</th>
+          <th>Status</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>db-adapter-757884b76c-b2hgf</td>
+          <td><span class="status-badge status-running">Running</span></td>
+          <td style="font-size:13px;color:var(--text-2)">postgres:5432 (K8s DNS) ✓</td>
+        </tr>
+        <tr>
+          <td>db-adapter-757884b76c-wqlqs</td>
+          <td><span class="status-badge status-running">Running</span></td>
+          <td style="font-size:13px;color:var(--text-2)">postgres:5432 (K8s DNS) ✓</td>
+        </tr>
+        <tr>
+          <td>backend-* (new image)</td>
+          <td><span class="status-badge status-running">Running</span></td>
+          <td style="font-size:13px;color:var(--text-2)">Cache-Control + merged queries deployed</td>
+        </tr>
+        <tr>
+          <td>postgres-0</td>
+          <td><span class="status-badge status-running">Running</span></td>
+          <td style="font-size:13px;color:var(--text-2)">Không restart — data safe ✓</td>
+        </tr>
+        <tr>
+          <td>frontend-* (×3)</td>
+          <td><span class="status-badge status-running">Running</span></td>
+          <td style="font-size:13px;color:var(--text-2)">Không thay đổi</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-grid" style="margin-top:24px">
+    <div class="card">
+      <h4>Commits trong session</h4>
+      <ul>
+        <li><strong>731c79b</strong> — Cache-Control public: 7 API endpoints</li>
+        <li><strong>7271417</strong> — HAProxy K8s DNS + merged queries</li>
+        <li><strong>7c9cc5c</strong> — db-adapter node affinity fix</li>
+        <li>Backend image rebuilt + pushed + deployed</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Bài học</h4>
+      <ul>
+        <li>Postgres trong K8s pod KHÔNG expose qua Tailscale — dùng K8s DNS</li>
+        <li>Mọi deployment cần node affinity tránh <code>rhein-e2144g</code></li>
+        <li>N sequential queries = N × latency — merge thành 1 khi có thể</li>
+        <li>Log 30 dòng đủ chẩn đoán — không cần Grafana</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<footer>
+  <p>Postmortem · Cozyroom · 2026-06-20 · <a href="../wiki/draft/orca/200626-db-latency-postmortem.md" style="color:#0a84ff">Chi tiết draft</a></p>
+</footer>
+
+<script>
+// Sidebar collapse
+(function(){
+  const nav = document.querySelector('nav'); if(!nav) return;
+  const btn = document.createElement('button'); btn.className='nav-toggle'; btn.textContent='☰';
+  document.body.appendChild(btn);
+  const close = document.createElement('button'); close.className='nav-close'; close.textContent='✕';
+  nav.appendChild(close);
+  const apply = c => { document.body.classList.toggle('nav-collapsed',c);
+    try{localStorage.setItem('navCollapsed',c?'1':'0')}catch(e){} };
+  btn.addEventListener('click',()=>apply(false));
+  close.addEventListener('click',()=>apply(true));
+  try{const s=localStorage.getItem('navCollapsed');
+    if(s==='1'||(s!=='0'&&matchMedia('(max-width:640px)').matches))apply(true);
+  }catch(e){}
+  // Ripple on nav links + toggle
+  function attachRipple(el){
+    el.addEventListener('pointerdown',function(e){
+      const r=el.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+      const rad=Math.hypot(Math.max(x,r.width-x),Math.max(y,r.height-y));
+      const ink=document.createElement('span'); ink.className='ripple-ink';
+      ink.style.width=ink.style.height=rad*2+'px';
+      ink.style.left=(x-rad)+'px'; ink.style.top=(y-rad)+'px';
+      el.appendChild(ink); ink.addEventListener('animationend',()=>ink.remove());
+    });
+  }
+  document.querySelectorAll('nav a,.nav-toggle,.nav-close').forEach(attachRipple);
+})();
+
+// Scrollbar flash
+(function(){
+  const flash=el=>{let t;return()=>{el.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>el.classList.remove('scrolling'),900);}};
+  window.addEventListener('scroll',flash(document.documentElement),{passive:true});
+  const nav=document.querySelector('nav');
+  if(nav) nav.addEventListener('scroll',flash(nav),{passive:true});
+})();
+
+// Scroll spy
+(function(){
+  const links=[...document.querySelectorAll('nav a')];
+  const sections=[...document.querySelectorAll('section[id]')];
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id))});
+  },{rootMargin:'-40% 0px -55% 0px'});
+  sections.forEach(s=>obs.observe(s));
+})();
+
+// Draggable diagrams
+function initDraggableDiagrams(){
+  const NS='http://www.w3.org/2000/svg';
+  const nearest=(nodes,x,y)=>{let best=null,bd=1e9;nodes.forEach(n=>{const cx=Math.max(n.x,Math.min(x,n.x+n.w)),cy=Math.max(n.y,Math.min(y,n.y+n.h));const d=Math.hypot(x-cx,y-cy);if(d<bd){bd=d;best=n;}});return bd<=42?best:null;};
+  document.querySelectorAll('.diagram-box').forEach(box=>{
+    const svg=box.querySelector('svg');
+    if(!svg||box.dataset.draggable) return;
+    box.dataset.draggable='1';
+    const vp=document.createElement('div'); vp.className='diagram-viewport';
+    box.insertBefore(vp,svg); vp.appendChild(svg);
+    const hint=document.createElement('div'); hint.className='diagram-hint';
+    hint.textContent='✥ kéo từng ô · kéo nền để pan · cuộn để zoom · kéo mép dưới để mở rộng';
+    box.appendChild(hint);
+    const reset=document.createElement('button'); reset.className='diagram-reset'; reset.textContent='⟲ reset';
+    box.appendChild(reset);
+    const allRects=[...svg.querySelectorAll('rect')];
+    const nodes=allRects.filter(r=>(+r.getAttribute('width'))>=70&&(+r.getAttribute('height'))>=30)
+      .map(r=>({rect:r,x:+r.getAttribute('x'),y:+r.getAttribute('y'),w:+r.getAttribute('width'),h:+r.getAttribute('height'),els:[r],tx:0,ty:0}));
+    const inNode=(px,py)=>nodes.find(n=>px>=n.x-1&&px<=n.x+n.w+1&&py>=n.y-1&&py<=n.y+n.h+1);
+    [...svg.querySelectorAll('text')].forEach(t=>{const x=parseFloat(t.getAttribute('x')),y=parseFloat(t.getAttribute('y'));if(isNaN(x)||isNaN(y))return;const n=inNode(x,y);if(n)n.els.push(t);});
+    allRects.forEach(r=>{if(nodes.some(n=>n.rect===r))return;const x=+r.getAttribute('x'),y=+r.getAttribute('y'),w=+r.getAttribute('width')||0,h=+r.getAttribute('height')||0;const n=inNode(x+w/2,y+h/2);if(n)n.els.push(r);});
+    nodes.forEach(n=>{const g=document.createElementNS(NS,'g');g.setAttribute('class','dnode');n.rect.parentNode.insertBefore(g,n.rect);n.els.forEach(el=>g.appendChild(el));n.g=g;});
+    const links=[...svg.querySelectorAll('line')].filter(l=>l.hasAttribute('x1')&&l.hasAttribute('x2'));
+    links.forEach(l=>{l._x1=+l.getAttribute('x1');l._y1=+l.getAttribute('y1');l._x2=+l.getAttribute('x2');l._y2=+l.getAttribute('y2');l._n1=nearest(nodes,l._x1,l._y1);l._n2=nearest(nodes,l._x2,l._y2);});
+    const reroute=()=>links.forEach(l=>{if(l._n1){l.setAttribute('x1',l._x1+l._n1.tx);l.setAttribute('y1',l._y1+l._n1.ty);}if(l._n2){l.setAttribute('x2',l._x2+l._n2.tx);l.setAttribute('y2',l._y2+l._n2.ty);}});
+    const vbBase=(svg.getAttribute('viewBox')||'0 0 900 200').split(/\s+/).map(Number);
+    const fitViewBox=()=>{const pad=16;let minX=vbBase[0],minY=vbBase[1],maxX=vbBase[0]+vbBase[2],maxY=vbBase[1]+vbBase[3];nodes.forEach(n=>{minX=Math.min(minX,n.x+n.tx-pad);minY=Math.min(minY,n.y+n.ty-pad);maxX=Math.max(maxX,n.x+n.w+n.tx+pad);maxY=Math.max(maxY,n.y+n.h+n.ty+pad);});svg.setAttribute('viewBox',`${minX} ${minY} ${maxX-minX} ${maxY-minY}`);};
+    let ptx=0,pty=0,scale=1;
+    const applyCanvas=()=>{svg.style.transform=`translate(${ptx}px,${pty}px) scale(${scale})`;};
+    const toSvg=(cx,cy)=>{const p=svg.createSVGPoint();p.x=cx;p.y=cy;return p.matrixTransform(svg.getScreenCTM().inverse());};
+    let mode=null,node=null,start=null,t0=null,p0=null;
+    vp.addEventListener('pointerdown',e=>{vp.setPointerCapture(e.pointerId);const g=e.target.closest&&e.target.closest('g.dnode');if(g){mode='node';node=nodes.find(n=>n.g===g);start=toSvg(e.clientX,e.clientY);t0={x:node.tx,y:node.ty};}else{mode='pan';p0={x:e.clientX-ptx,y:e.clientY-pty};vp.classList.add('grabbing');}});
+    vp.addEventListener('pointermove',e=>{if(mode==='node'){const c=toSvg(e.clientX,e.clientY);node.tx=t0.x+(c.x-start.x);node.ty=t0.y+(c.y-start.y);node.g.setAttribute('transform',`translate(${node.tx},${node.ty})`);reroute();}else if(mode==='pan'){ptx=e.clientX-p0.x;pty=e.clientY-p0.y;applyCanvas();}});
+    const end=()=>{if(mode==='node')fitViewBox();mode=null;node=null;vp.classList.remove('grabbing');};
+    vp.addEventListener('pointerup',end);vp.addEventListener('pointercancel',end);
+    vp.addEventListener('wheel',e=>{e.preventDefault();const r=vp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;const ns=Math.min(4,Math.max(0.5,scale*(e.deltaY<0?1.1:0.9)));ptx=mx-(mx-ptx)*(ns/scale);pty=my-(my-pty)*(ns/scale);scale=ns;applyCanvas();},{passive:false});
+    const doReset=()=>{ptx=0;pty=0;scale=1;svg.style.transition='transform .3s cubic-bezier(.4,0,.2,1)';applyCanvas();setTimeout(()=>{svg.style.transition='';},320);nodes.forEach(n=>{n.tx=0;n.ty=0;n.g.setAttribute('transform','translate(0,0)');});reroute();fitViewBox();};
+    reset.addEventListener('click',doReset);vp.addEventListener('dblclick',doReset);
+  });
+}
+initDraggableDiagrams();
+
+// Global water ripple
+function initRipple(){
+  document.addEventListener('pointerdown',e=>{
+    const el=e.target.closest('button,.nav-link,.collapse-toggle');
+    if(!el||el.dataset.noRipple) return;
+    const r=el.getBoundingClientRect(),d=Math.max(r.width,r.height)*1.2;
+    const s=document.createElement('span'); s.className='ripple';
+    s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+    if(getComputedStyle(el).position==='static') el.style.position='relative';
+    el.style.overflow='hidden'; el.appendChild(s);
+    s.addEventListener('animationend',()=>s.remove());
+  });
+}
+initRipple();
+</script>
+</body>
+</html>

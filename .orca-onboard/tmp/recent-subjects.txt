@@ -1,0 +1,25 @@
+fix: rename sw.js → sw2.js to force SW re-registration + fix nginx pattern
+fix: frontend deployment — remove hardcoded nodeSelector, add anti-affinity spread, imagePullPolicy Always
+feat: album card mirror effect + sync hover/radius to standalone design
+fix: no-cache index.html, immutable cache for hashed assets
+feat: add mirror reflection effect to artist avatars
+feat: refine purple theme — white play buttons, purple AI bubbles, purple avatar placeholders
+feat: apply purple/glassmorphism theme + fix cloudflared tunnel routing
+chore: snapshot frontend state pre-Figma redesign
+fix: cover image race conditions via singleflight + compile fixes from Postgres migration
+fix: sync trackRef immediately in startTrack to prevent 0:00 display
+feat: deploy Cozyroom on K3S cluster with Postgres streaming replication
+fix: reduce audio stuttering — preload, stall recovery, transcode buffer
+feat: MCP Tool Gallery, slash autocomplete, library consistency, YouTube cover fix
+chore: PostgreSQL migration cleanup — db layer, cron, docker, sqlite repos
+feat: track duration via ffprobe, vinyl redesign, AI UX improvements
+fix: migrate SQLite→PostgreSQL; fix AI tools, scanner, stats charts; improve AI UX
+feat: cached token tracking, OCR local tesseract, AI tool cache, search optimization
+Merge branch 'main' of https://github.com/Rheinmir/cozyroom
+fix: increase AI agent loop to 12 iterations; fix cron time format; wire dbPath; filter price chart by used models
+fix: pin data volume to absolute path; use env var substitution for API keys
+chore: add DB protection notice to CLAUDE.md
+fix: add AI provider selection logging and debug infrastructure
+feat: migrate SQLite → PostgreSQL; clean up duplicate skills
+docs: update README with project status and full API reference
+Initial commit: Cozyroom - personal media streaming platform

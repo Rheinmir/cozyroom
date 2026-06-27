@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>250626 — MCP Ambient Sounds</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#e8f4fd 0%,#f0f8ff 40%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:200px;height:100vh;z-index:100;overflow:hidden}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:200px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:40px}
+section{margin-bottom:64px;scroll-margin-top:80px}
+h2{font-size:16px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:13px;color:#374151;line-height:1.6;margin-bottom:20px;max-width:680px}
+.diagram{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:0 2px 16px rgba(99,102,241,.08)}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.5px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.orange{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.orange{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.orange{fill:#f59e0b}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">MCP Ambient</div>
+    <a href="#t1">T1 · Go tools</a>
+    <a href="#t2">T2 · React handler</a>
+  </div>
+</nav>
+<main>
+<h1>250626 — MCP Ambient Sounds Tools</h1>
+<p class="subtitle">3 MCP tools để agent điều khiển background sounds qua chat</p>
+
+<section id="t1">
+<h2>T1 · Go backend — 3 MCP tools <span class="badge">Claude main</span></h2>
+<p class="desc">Tạo <code>registry_ambient.go</code>: <code>list_ambient_sounds</code> đọc thư mục <code>AMBIENT_SOUNDS_DIR</code>, <code>play_ambient_sound</code> và <code>stop_ambient_sound</code> trả <code>_frontend_action</code>. Đăng ký 3 tools trong <code>NewRegistry()</code>.</p>
+<div class="diagram">
+<svg class="seq" width="560" height="220" viewBox="0 0 560 220">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Agent</text>
+  <text x="250" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">MCP registry</text>
+  <text x="440" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">AMBIENT_SOUNDS_DIR</text>
+  <line x1="80" y1="32" x2="80" y2="215" class="lifeline-line"/>
+  <line x1="250" y1="32" x2="250" y2="215" class="lifeline-line"/>
+  <line x1="440" y1="32" x2="440" y2="215" class="lifeline-line"/>
+
+  <rect x="30" y="48" width="510" height="26" class="step-box emerald" id="t1s1b"/>
+  <line x1="80" y1="61" x2="240" y2="61" class="arr emerald"/>
+  <polygon points="240,57 250,61 240,65" class="arr-head emerald"/>
+  <text x="165" y="56" class="msg" text-anchor="middle" fill="#065f46" id="t1s1m">list_ambient_sounds()</text>
+
+  <rect x="30" y="84" width="510" height="26" class="step-box emerald" id="t1s2b"/>
+  <line x1="250" y1="97" x2="430" y2="97" class="arr emerald"/>
+  <polygon points="430,93 440,97 430,101" class="arr-head emerald"/>
+  <text x="345" y="92" class="msg" text-anchor="middle" fill="#065f46" id="t1s2m">os.ReadDir(ambientDir())</text>
+
+  <rect x="30" y="120" width="510" height="26" class="step-box indigo" id="t1s3b"/>
+  <line x1="440" y1="133" x2="90" y2="133" class="arr indigo"/>
+  <polygon points="90,129 80,133 90,137" class="arr-head indigo"/>
+  <text x="265" y="128" class="msg" text-anchor="middle" fill="#312e81" id="t1s3m">[{name:"rain",label:"Rain"}, ...]</text>
+
+  <rect x="30" y="156" width="510" height="26" class="step-box emerald" id="t1s4b"/>
+  <line x1="80" y1="169" x2="240" y2="169" class="arr emerald"/>
+  <polygon points="240,165 250,169 240,173" class="arr-head emerald"/>
+  <text x="165" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t1s4m">play_ambient_sound(name="rain", volume=0.4)</text>
+
+  <rect x="30" y="192" width="510" height="22" class="step-box indigo" id="t1s5b"/>
+  <text x="280" y="207" class="msg" text-anchor="middle" fill="#312e81" id="t1s5m">{_frontend_action:"play_ambient_sound", name:"rain", volume:0.4}</text>
+</svg>
+</div>
+</section>
+
+<section id="t2">
+<h2>T2 · React — executeAction + mcpTools <span class="badge">Claude main</span></h2>
+<p class="desc"><code>executeAction</code> trong <code>AIAssistantPage</code> thêm 3 case: <code>play_ambient_sound</code> → <code>bgSounds.setActive(name) + setVolume(volume)</code>; <code>stop_ambient_sound</code> → <code>setActive(null)</code>. <code>mcpTools.ts</code> thêm 3 entry cho slash suggestion.</p>
+<div class="diagram">
+<svg class="seq" width="560" height="190" viewBox="0 0 560 190">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">executeAction</text>
+  <text x="280" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">BgSoundsContext</text>
+  <text x="460" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">audio element</text>
+  <line x1="80" y1="32" x2="80" y2="185" class="lifeline-line"/>
+  <line x1="280" y1="32" x2="280" y2="185" class="lifeline-line"/>
+  <line x1="460" y1="32" x2="460" y2="185" class="lifeline-line"/>
+
+  <rect x="30" y="48" width="510" height="26" class="step-box indigo" id="t2s1b"/>
+  <text x="280" y="64" class="msg" text-anchor="middle" fill="#312e81" id="t2s1m">action.type === "play_ambient_sound"</text>
+
+  <rect x="30" y="84" width="510" height="26" class="step-box emerald" id="t2s2b"/>
+  <line x1="80" y1="97" x2="270" y2="97" class="arr emerald"/>
+  <polygon points="270,93 280,97 270,101" class="arr-head emerald"/>
+  <text x="180" y="92" class="msg" text-anchor="middle" fill="#065f46" id="t2s2m">setActive("rain") + setVolume(0.4)</text>
+
+  <rect x="30" y="120" width="510" height="26" class="step-box emerald" id="t2s3b"/>
+  <line x1="280" y1="133" x2="450" y2="133" class="arr emerald"/>
+  <polygon points="450,129 460,133 450,137" class="arr-head emerald"/>
+  <text x="370" y="128" class="msg" text-anchor="middle" fill="#065f46" id="t2s3m">audio.src = /api/ambient-sounds/rain</text>
+
+  <rect x="30" y="156" width="510" height="26" class="step-box indigo" id="t2s4b"/>
+  <line x1="460" y1="169" x2="90" y2="169" class="arr indigo"/>
+  <polygon points="90,165 80,169 90,173" class="arr-head indigo"/>
+  <text x="275" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t2s4m">🌧 rain streams, loop ✓</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const sections=document.querySelectorAll('section[id]'),links=document.querySelectorAll('nav a[href^="#"]')
+new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(document.getElementById('t1'))
+new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(document.getElementById('t2'))
+const stepsMap={t1:['t1s1','t1s2','t1s3','t1s4','t1s5'],t2:['t2s1','t2s2','t2s3','t2s4']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+backend/cmd/dump_tags/main.go
+backend/cmd/mcp-server/main.go
+backend/cmd/server/main.go
+backend/mxm_test.go

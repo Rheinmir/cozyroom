@@ -1,0 +1,92 @@
+# Postgres Monitor — chạy mỗi 2 phút, kiểm tra primary health
+# Nếu primary down: tự promote standby + gửi Telegram alert
+# Requires secret keys: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (optional — monitor vẫn chạy nếu thiếu)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-monitor
+  namespace: cozyroom-k8s
+spec:
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 90
+      template:
+        spec:
+          nodeSelector:
+            kubernetes.io/hostname: rhein-13700hxes-4070-64-4t
+          restartPolicy: Never
+          containers:
+            - name: monitor
+              image: postgres:16-alpine
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: cozyroom-secret
+                      key: POSTGRES_PASSWORD
+                - name: TELEGRAM_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cozyroom-secret
+                      key: TELEGRAM_BOT_TOKEN
+                      optional: true
+                - name: TELEGRAM_CHAT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cozyroom-secret
+                      key: TELEGRAM_CHAT_ID
+                      optional: true
+              command:
+                - sh
+                - -c
+                - |
+                  alert() {
+                    echo "[postgres-monitor] $1"
+                    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+                      wget -q -O/dev/null \
+                        "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        --post-data="chat_id=${TELEGRAM_CHAT_ID}&text=$(echo "$1" | sed 's/ /%20/g')" || true
+                    fi
+                  }
+
+                  # Check primary
+                  if pg_isready -h postgres -U cozyroom -t 5 -q; then
+                    echo "[postgres-monitor] Primary OK"
+                    exit 0
+                  fi
+
+                  alert "🚨 Cozyroom Postgres PRIMARY DOWN — attempting standby promote"
+
+                  # Check if standby is reachable
+                  if ! pg_isready -h postgres-standby -U cozyroom -t 5 -q; then
+                    alert "💀 Cozyroom BOTH Postgres nodes unreachable — service is DOWN"
+                    exit 1
+                  fi
+
+                  # Check if standby is already primary (already promoted)
+                  IS_STANDBY=$(psql -h postgres-standby -U cozyroom -d cozyroom \
+                    -tAc "SELECT pg_is_in_recovery();" 2>/dev/null || echo "error")
+
+                  if [ "$IS_STANDBY" = "f" ]; then
+                    alert "ℹ️ Standby already promoted to primary — no action needed"
+                    exit 0
+                  fi
+
+                  # Promote standby
+                  psql -h postgres-standby -U cozyroom -d cozyroom \
+                    -c "SELECT pg_promote();" 2>/dev/null
+
+                  if [ $? -eq 0 ]; then
+                    alert "✅ Standby promoted to Primary successfully — db-adapter will route there automatically"
+                  else
+                    alert "❌ pg_promote() failed — manual intervention required on rhein-k8s-s2"
+                  fi
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  cpu: 50m
+                  memory: 32Mi

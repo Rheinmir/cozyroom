@@ -37,7 +37,7 @@ interface LogEntry {
   tokens_cached_in: number
 }
 
-const COLORS = ['#6366f1','#22d3ee','#f59e0b','#10b981','#f87171','#a78bfa','#fb923c','#34d399']
+const COLORS = ['#a855f7','#2dd4bf','#818cf8','#f59e0b','#f87171','#34d399','#fb923c','#a78bfa']
 const fmtMs = (ms: number) => ms >= 1000 ? `${(ms/1000).toFixed(1)}s` : `${Math.round(ms)}ms`
 const fmtNum = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n)
 

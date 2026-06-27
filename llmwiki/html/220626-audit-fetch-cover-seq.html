@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Audit: Cover Art Fetch Flow — Cozyroom</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ind:#6366f1;--ind-d:#4f46e5;--ind-l:#e0e7ff;
+  --glass:rgba(255,255,255,.65);--border:rgba(255,255,255,.85);
+  --nav-w:210px;--text:#1e293b;--muted:#64748b;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#dbeafe 0%,#eff6ff 40%,#e0f2fe 70%,#bfdbfe 100%);
+  min-height:100vh;color:var(--text);
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle,rgba(59,130,246,.13) 1px,transparent 1px);
+  background-size:24px 24px;pointer-events:none;z-index:0;
+}
+/* ── Left sidebar ─────────────────────────────────────────────────────── */
+nav{
+  position:fixed;left:0;top:0;bottom:0;width:var(--nav-w);
+  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(219,234,254,.72));
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border-right:1px solid var(--border);z-index:100;
+  display:flex;flex-direction:column;padding:24px 0;overflow:hidden;
+}
+/* orb on left edge */
+nav::before{
+  content:'';position:absolute;left:-70px;top:50%;transform:translateY(-50%);
+  width:140px;height:360px;
+  background:radial-gradient(ellipse,rgba(99,102,241,.2),transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+/* sheen */
+nav::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.26),transparent 55%);
+  pointer-events:none;
+}
+.nav-brand{
+  padding:0 18px 20px;font-size:10px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ind-d);
+  opacity:.75;position:relative;z-index:1;
+}
+nav a{
+  display:block;padding:9px 18px;font-size:12.5px;color:var(--muted);
+  text-decoration:none;border-left:3px solid transparent;
+  transition:all .18s;position:relative;z-index:1;
+}
+nav a:hover{color:var(--ind-d);background:rgba(99,102,241,.07)}
+nav a.active{
+  color:var(--ind-d);border-left-color:var(--ind);
+  background:rgba(99,102,241,.1);font-weight:600;
+}
+/* ── Main ─────────────────────────────────────────────────────────────── */
+main{margin-left:var(--nav-w);padding:40px 48px 60px;position:relative;z-index:1}
+.page-hd{margin-bottom:32px}
+.page-hd h1{font-size:26px;font-weight:800;color:var(--ind-d);margin-bottom:5px}
+.page-hd p{font-size:13px;color:var(--muted)}
+/* glass card */
+section{
+  background:var(--glass);
+  backdrop-filter:blur(16px) saturate(1.5);
+  -webkit-backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid var(--border);border-radius:16px;
+  padding:28px 32px;margin-bottom:28px;
+  box-shadow:0 4px 24px rgba(59,130,246,.07),0 1px 3px rgba(0,0,0,.05);
+}
+section h2{
+  font-size:17px;font-weight:700;color:var(--ind-d);
+  margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+p.desc{font-size:13.5px;color:var(--muted);line-height:1.72;margin-bottom:18px}
+p.desc strong{color:var(--text)}
+.diagram-box{
+  background:rgba(255,255,255,.52);border:1px solid #dbeafe;
+  border-radius:10px;padding:16px 8px 12px;overflow-x:auto;margin-bottom:6px;
+}
+.diagram-hint{font-size:11px;color:#94a3b8;text-align:center;margin-bottom:0}
+/* badges */
+.badge{font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
+.badge-red{background:#fee2e2;color:#dc2626}
+.badge-yellow{background:#fef9c3;color:#b45309}
+.badge-green{background:#d1fae5;color:#047857}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+th{text-align:left;padding:9px 12px;background:rgba(99,102,241,.08);
+   color:var(--ind-d);font-weight:600;border-bottom:2px solid #dbeafe}
+td{padding:8px 12px;border-bottom:1px solid #dbeafe;vertical-align:top;line-height:1.55}
+tr:last-child td{border-bottom:none}
+code{font-family:'SF Mono',Consolas,monospace;font-size:11.5px;
+     background:rgba(99,102,241,.08);padding:1px 6px;border-radius:4px;color:var(--ind-d)}
+/* mobile */
+.nav-toggle{
+  position:fixed;top:12px;left:12px;z-index:200;display:none;
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:8px;padding:6px 11px;cursor:pointer;font-size:16px;
+  backdrop-filter:blur(12px);
+}
+@media(max-width:720px){
+  .nav-toggle{display:block}
+  nav{transform:translateX(-100%);transition:transform .22s}
+  nav.open{transform:translateX(0)}
+  main{margin-left:0;padding:58px 18px 40px}
+  .page-hd h1{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<button class="nav-toggle" id="navBtn"
+  onclick="var n=document.getElementById('nav');n.classList.toggle('open');this.textContent=n.classList.contains('open')?'✕':'☰'">☰</button>
+
+<nav id="nav">
+  <div class="nav-brand">Cover Art Audit</div>
+  <a href="#overview">Overview</a>
+  <a href="#t1">1. Luồng Chính</a>
+  <a href="#t2">2. YouTube Flow</a>
+  <a href="#t3">3. Color Extraction</a>
+  <a href="#t4">4. Risk Summary</a>
+</nav>
+
+<main>
+
+  <!-- Overview -->
+  <div class="page-hd" id="overview">
+    <h1>Audit: Cover Art Fetch Flow</h1>
+    <p>Cozyroom · 2026-06-22 · Bug: nhạc có nhưng không có hình ảnh phía client</p>
+  </div>
+
+  <section>
+    <p class="desc" style="margin-bottom:0">
+      Audit tìm <strong>7 điểm silent fail</strong> ở backend và <strong>4 điểm</strong> ở frontend.
+      Root cause chính: backend không có fallback image khi <code>cover_path</code> rỗng hoặc file bị mất trên disk.
+      Frontend không đồng nhất về error handling — AlbumPage/ArtistPage có <code>onError → ♪</code>,
+      nhưng SearchPage và PlayerBar background thì không.
+      Case nghiêm trọng nhất: <code>useDominantColor</code> trong PlaylistsPage không set <code>crossOrigin</code>,
+      dẫn đến CORS fail im lặng → màu gradient playlist không bao giờ update.
+    </p>
+  </section>
+
+  <!-- T1: Main flow -->
+  <section id="t1">
+    <h2>1. Luồng Cover Chính <span class="badge badge-yellow">MEDIUM</span></h2>
+    <p class="desc">
+      Backend tra <code>cover_path</code> từ DB (<code>albums.cover_path</code>) rồi gọi
+      <code>http.ServeFile()</code> để serve file JPEG từ disk.
+      Khi <code>cover_path = ""</code> (ID3 tag không có ảnh, PDF extract fail, v.v.)
+      hoặc file không tồn tại trên disk, API trả <strong>HTTP 404 im lặng</strong> —
+      không log, không fallback image. Frontend mỗi component xử lý khác nhau:
+      AlbumPage/ArtistPage show ♪, SearchPage show broken image icon, PlayerBar background blank.
+    </p>
+    <div class="diagram-box"><div id="d1"></div></div>
+    <p class="diagram-hint">Click để pause/resume · indigo = ok · đỏ = fail · cam = warning</p>
+  </section>
+
+  <!-- T2: YouTube -->
+  <section id="t2">
+    <h2>2. YouTube Cover Flow <span class="badge badge-yellow">MEDIUM</span></h2>
+    <p class="desc">
+      Album ID có prefix <code>yt:</code> được xử lý riêng: backend fetch thumbnail từ YouTube CDN
+      qua 4 quality tiers (maxresdefault → sddefault → hqdefault → mqdefault),
+      cache 7 ngày trên disk, validate JPEG magic bytes (<code>0xFF 0xD8</code>) để detect trường hợp
+      YouTube trả JSON error thay vì ảnh (bug cũ đã fix).
+      Nếu <strong>tất cả URLs fail</strong> → HTTP 503 — frontend không có handler riêng,
+      browser chỉ thấy broken image; log.Printf có nhưng client không nhận được thông tin lý do.
+    </p>
+    <div class="diagram-box"><div id="d2"></div></div>
+    <p class="diagram-hint">Click để pause/resume</p>
+  </section>
+
+  <!-- T3: Color extraction bug -->
+  <section id="t3">
+    <h2>3. Frontend Color Extraction Bug <span class="badge badge-red">HIGH</span></h2>
+    <p class="desc">
+      <strong>PlayerBar.tsx</strong> (canvas extract màu dominant để tạo gradient):
+      set <code>crossOrigin="anonymous"</code> trên Image object → canvas.getImageData() hoạt động đúng.
+      Nhưng <strong>PlaylistsPage.tsx</strong> (<code>useDominantColor</code>):
+      không set <code>crossOrigin</code> và không có <code>onerror</code> handler.
+      Khi cover trả 404 hoặc bị CORS block → <code>canvas.getImageData()</code> throw SecurityError →
+      uncaught exception → state màu <strong>đứng yên ở default <code>#282837</code> mãi mãi</strong>.
+      Không có console warning → rất khó debug, dễ bị bỏ qua.
+    </p>
+    <div class="diagram-box"><div id="d3"></div></div>
+    <p class="diagram-hint">Click để pause/resume · xanh lá = đúng (PlayerBar) · đỏ = bug (PlaylistsPage)</p>
+  </section>
+
+  <!-- T4: Risk table -->
+  <section id="t4">
+    <h2>4. Tổng hợp rủi ro &amp; Đề xuất Fix</h2>
+    <p class="desc">
+      7 điểm silent fail backend + 4 điểm frontend. Fix theo thứ tự severity:
+      F-1 (HIGH) trước, sau đó gộp F-2/F-3/B-1/B-2 vào một PR nhỏ, logging B-3/B-4 là bonus.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:48px">#</th>
+          <th style="width:88px">Severity</th>
+          <th>Vấn đề</th>
+          <th style="width:185px">File</th>
+          <th>Fix đề xuất</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>F-1</td>
+          <td><span class="badge badge-red">HIGH</span></td>
+          <td><code>useDominantColor</code>: no crossOrigin + no onerror → CORS fail → default color forever</td>
+          <td><code>PlaylistsPage.tsx:~20</code></td>
+          <td>Set <code>img.crossOrigin='anonymous'</code> + add <code>onerror</code> callback với fallback color</td>
+        </tr>
+        <tr>
+          <td>F-2</td>
+          <td><span class="badge badge-yellow">MEDIUM</span></td>
+          <td><code>npo-bg</code> img: no onError → blank blurred background im lặng</td>
+          <td><code>PlayerBar.tsx:~238</code></td>
+          <td>Add <code>onError={e =&gt; (e.currentTarget.style.opacity='0')}</code></td>
+        </tr>
+        <tr>
+          <td>F-3</td>
+          <td><span class="badge badge-yellow">MEDIUM</span></td>
+          <td>Search album grid: no onError → broken image icon</td>
+          <td><code>SearchPage.tsx:~413</code></td>
+          <td>Add <code>err</code> state + <code>onError</code> handler như AlbumPage</td>
+        </tr>
+        <tr>
+          <td>B-1</td>
+          <td><span class="badge badge-yellow">MEDIUM</span></td>
+          <td>No fallback image khi <code>cover_path=""</code> → HTTP 404 im lặng</td>
+          <td><code>handler.go:~125</code></td>
+          <td>Serve <code>placeholder.jpg</code> khi <code>http.ServeFile</code> trả 404</td>
+        </tr>
+        <tr>
+          <td>B-2</td>
+          <td><span class="badge badge-yellow">MEDIUM</span></td>
+          <td>YouTube: tất cả URLs fail → HTTP 503, không fallback</td>
+          <td><code>handler.go:~188</code></td>
+          <td>Serve placeholder thay vì 503 khi all YouTube URLs fail</td>
+        </tr>
+        <tr>
+          <td>B-3</td>
+          <td><span class="badge badge-green">LOW</span></td>
+          <td><code>extractPdfCover</code>: pdftoppm crash → <code>cover_path=""</code>, no log</td>
+          <td><code>ebook_scanner.go:~86</code></td>
+          <td>Add <code>log.Printf</code> khi extract fail</td>
+        </tr>
+        <tr>
+          <td>B-4</td>
+          <td><span class="badge badge-green">LOW</span></td>
+          <td><code>indexFile</code>: ID3 Picture()=nil → <code>cover_path=""</code>, no log</td>
+          <td><code>scanner.go:~284</code></td>
+          <td>Add <code>log.Printf</code> khi track không có embedded cover</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<script>
+// ── SVG Sequence Diagram Renderer ──────────────────────────────────────────
+(function() {
+  var NS = 'http://www.w3.org/2000/svg';
+  var COLORS = {
+    ok:   { line:'#6366f1', text:'#4f46e5' },
+    fail: { line:'#ef4444', text:'#dc2626' },
+    warn: { line:'#f97316', text:'#c2410c' },
+    fix:  { line:'#10b981', text:'#047857' }
+  };
+  var LW = 158, HH = 62, SH = 60, PAD = 10;
+
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    if (attrs) Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+
+  function buildDiagram(cid, lifelines, steps) {
+    var n = lifelines.length;
+    var W = PAD * 2 + n * LW;
+    var H = HH + steps.length * SH + 28;
+    var lx = lifelines.map(function(_, i){ return PAD + i * LW + LW / 2; });
+
+    var svg = svgEl('svg', { viewBox:'0 0 '+W+' '+H, width:'100%' });
+    svg.style.maxWidth = W + 'px';
+    svg.style.cursor = 'pointer';
+    svg.setAttribute('title', 'Click để pause');
+
+    // Arrow markers (one per type, prefixed with cid)
+    var defs = svgEl('defs');
+    Object.keys(COLORS).forEach(function(type) {
+      var c = COLORS[type];
+      var mk = svgEl('marker', {
+        id: cid+'-ah-'+type,
+        markerWidth:'7', markerHeight:'5',
+        refX:'6.5', refY:'2.5', orient:'auto'
+      });
+      var p = svgEl('path', { d:'M0,0 L7,2.5 L0,5 Z', fill:c.line });
+      mk.appendChild(p);
+      defs.appendChild(mk);
+    });
+    svg.appendChild(defs);
+
+    // Lifeline headers + vertical dashed lines
+    lifelines.forEach(function(name, i) {
+      var x = lx[i];
+      svg.appendChild(svgEl('rect', {
+        x: x-54, y:4, width:108, height:38, rx:8,
+        fill:'rgba(99,102,241,.1)', stroke:'rgba(99,102,241,.25)', 'stroke-width':'1.5'
+      }));
+      var t = svgEl('text', {
+        x:x, y:28, 'text-anchor':'middle',
+        'font-size':'10.5', 'font-weight':'700',
+        'font-family':'-apple-system,BlinkMacSystemFont,sans-serif', fill:'#4f46e5'
+      });
+      t.textContent = name;
+      svg.appendChild(t);
+      svg.appendChild(svgEl('line', {
+        x1:x, y1:42, x2:x, y2:H-6,
+        stroke:'rgba(99,102,241,.16)', 'stroke-width':'1.5', 'stroke-dasharray':'5,4'
+      }));
+    });
+
+    // Steps
+    var gs = steps.map(function(step, i) {
+      var y  = HH + i * SH + SH / 2;
+      var c  = COLORS[step.type] || COLORS.ok;
+      var x1 = lx[step.from];
+      var x2 = lx[step.to];
+      var gap = 7;
+      var ex  = x2 > x1 ? x2 - gap : x2 + gap;
+      var mid = (x1 + x2) / 2;
+
+      var g = svgEl('g');
+      g.setAttribute('opacity', '0.82');
+
+      var line = svgEl('line', {
+        x1:x1, y1:y, x2:ex, y2:y,
+        stroke:c.line, 'stroke-width':'2',
+        'marker-end':'url(#'+cid+'-ah-'+step.type+')'
+      });
+      g.appendChild(line);
+
+      var lbl = svgEl('text', {
+        x:mid, y:y-8, 'text-anchor':'middle',
+        'font-size':'9.5', 'font-weight':'500',
+        'font-family':'-apple-system,sans-serif', fill:c.text
+      });
+      lbl.textContent = step.label;
+      g.appendChild(lbl);
+
+      svg.appendChild(g);
+      return { g:g, line:line };
+    });
+
+    document.getElementById(cid).appendChild(svg);
+
+    // Auto-loop animation
+    var cur = 0, paused = false;
+    var tick = function() {
+      if (!paused) {
+        gs.forEach(function(item, i) {
+          var active = (i === cur);
+          item.g.setAttribute('opacity', active ? '1' : '0.52');
+          item.line.setAttribute('stroke-width', active ? '3' : '2');
+        });
+        cur = (cur + 1) % gs.length;
+      }
+      setTimeout(tick, 1150);
+    };
+    svg.addEventListener('click', function() { paused = !paused; });
+    setTimeout(tick, 500);
+  }
+
+  // ── Diagram 1: Main cover flow ───────────────────────────────────────────
+  buildDiagram('d1',
+    ['Browser', 'PlayerBar', 'API /covers', 'Database', 'Disk'],
+    [
+      { from:0, to:1, label:'track thay đổi', type:'ok' },
+      { from:1, to:2, label:'GET /api/covers/{id}?w=512', type:'ok' },
+      { from:2, to:3, label:'SELECT cover_path FROM albums', type:'ok' },
+      { from:3, to:2, label:"cover_path = ''  ← empty", type:'fail' },
+      { from:2, to:1, label:'HTTP 404 — no server log', type:'fail' },
+      { from:1, to:0, label:'onError → show ♪ (AlbumPage ✓)', type:'ok' },
+      { from:1, to:0, label:'no handler → broken img (Search ✗)', type:'warn' },
+      { from:3, to:2, label:'cover_path = /api/covers/X  ← filled', type:'ok' },
+      { from:2, to:4, label:'http.ServeFile(resizedPath)', type:'ok' },
+      { from:4, to:2, label:'JPEG bytes', type:'ok' },
+      { from:2, to:1, label:'HTTP 200 + JPEG', type:'ok' },
+      { from:1, to:0, label:'onLoad → opacity=1 → cover shown', type:'ok' }
+    ]
+  );
+
+  // ── Diagram 2: YouTube thumbnail flow ────────────────────────────────────
+  buildDiagram('d2',
+    ['Frontend', 'API /covers', 'Disk Cache', 'YouTube CDN'],
+    [
+      { from:0, to:1, label:'GET /api/covers/yt:{videoId}', type:'ok' },
+      { from:1, to:2, label:'check yt_{id}.jpg exists?', type:'ok' },
+      { from:2, to:1, label:'cache miss', type:'warn' },
+      { from:1, to:3, label:'GET maxresdefault.jpg', type:'ok' },
+      { from:3, to:1, label:'404 — not found, try next', type:'fail' },
+      { from:1, to:3, label:'GET hqdefault.jpg', type:'ok' },
+      { from:3, to:1, label:'200 + image bytes', type:'ok' },
+      { from:1, to:2, label:'validate 0xFF 0xD8 magic', type:'ok' },
+      { from:2, to:0, label:'HTTP 200, Cache-Control 7d', type:'ok' }
+    ]
+  );
+
+  // ── Diagram 3: Color extraction bug ──────────────────────────────────────
+  buildDiagram('d3',
+    ['PlayerBar', 'PlaylistsPage', 'Image()', 'Canvas', 'State'],
+    [
+      { from:0, to:2, label:'new Image() + crossOrigin ✓', type:'fix' },
+      { from:2, to:3, label:'drawImage() — OK (CORS valid)', type:'fix' },
+      { from:3, to:4, label:'setCoverColors() ✓', type:'fix' },
+      { from:1, to:2, label:'new Image() — NO crossOrigin!', type:'fail' },
+      { from:2, to:3, label:'drawImage() attempt', type:'warn' },
+      { from:3, to:1, label:'getImageData() throws SecurityError', type:'fail' },
+      { from:1, to:4, label:'state stuck → default #282837', type:'warn' }
+    ]
+  );
+})();
+
+// ── Scroll-spy ──────────────────────────────────────────────────────────────
+(function() {
+  var ids   = ['overview','t1','t2','t3','t4'];
+  var links = Array.from(document.querySelectorAll('nav a'));
+  var hrefs = links.map(function(a){ return a.getAttribute('href').slice(1); });
+
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        var id = e.target.id;
+        links.forEach(function(a, i){ a.classList.toggle('active', hrefs[i]===id); });
+      }
+    });
+  }, { threshold: 0.25, rootMargin: '-50px 0px -45% 0px' });
+
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+})();
+</script>
+</body>
+</html>

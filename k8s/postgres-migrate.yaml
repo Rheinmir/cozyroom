@@ -1,0 +1,89 @@
+# One-shot migration: copy Postgres data from /tmp/ → /var/lib/ on each node
+# Run BEFORE applying updated postgres.yaml:
+#   kubectl apply -f k8s/postgres-migrate.yaml
+#   kubectl wait --for=condition=complete job/postgres-migrate-primary job/postgres-migrate-standby -n cozyroom-k8s --timeout=120s
+#   kubectl apply -f k8s/postgres.yaml -f k8s/postgres-standby.yaml
+#   kubectl delete -f k8s/postgres-migrate.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-migrate-primary
+  namespace: cozyroom-k8s
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: rhein-13700hxes-4070-64-4t
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Migrating /tmp/k8s-pgdata → /var/lib/k8s-pgdata ..."
+              mkdir -p /dst
+              if [ -z "$(ls -A /src 2>/dev/null)" ]; then
+                echo "Source /tmp/k8s-pgdata is empty — nothing to migrate"
+                exit 0
+              fi
+              cp -a /src/. /dst/
+              echo "Done. $(du -sh /dst | cut -f1) copied."
+          volumeMounts:
+            - name: src
+              mountPath: /src
+            - name: dst
+              mountPath: /dst
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits:   { cpu: 200m, memory: 128Mi }
+      volumes:
+        - name: src
+          hostPath:
+            path: /tmp/k8s-pgdata
+        - name: dst
+          hostPath:
+            path: /var/lib/k8s-pgdata
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-migrate-standby
+  namespace: cozyroom-k8s
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: rhein-k8s-s2-2698bv3-k620-8-128
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Migrating /tmp/k8s-pgdata-standby → /var/lib/k8s-pgdata-standby ..."
+              mkdir -p /dst
+              if [ -z "$(ls -A /src 2>/dev/null)" ]; then
+                echo "Source /tmp/k8s-pgdata-standby is empty — nothing to migrate"
+                exit 0
+              fi
+              cp -a /src/. /dst/
+              echo "Done. $(du -sh /dst | cut -f1) copied."
+          volumeMounts:
+            - name: src
+              mountPath: /src
+            - name: dst
+              mountPath: /dst
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits:   { cpu: 200m, memory: 128Mi }
+      volumes:
+        - name: src
+          hostPath:
+            path: /tmp/k8s-pgdata-standby
+        - name: dst
+          hostPath:
+            path: /var/lib/k8s-pgdata-standby

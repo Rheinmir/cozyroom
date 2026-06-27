@@ -1,5 +1,11 @@
 # Operation Log
 
+## 2026-06-25 — orca-workflow — mcp-ambient-sounds
+
+- T1: `backend/internal/mcp/registry_ambient.go` — 3 tools: list_ambient_sounds, play_ambient_sound, stop_ambient_sound
+- T2: `frontend/src/pages/AIAssistantPage.tsx` — useBgSounds() + executeAction handlers; `mcpTools.ts` — 3 entries
+- Deploy: backend + frontend rebuilt và rolled out thành công
+
 ## 2026-06-23 — harness-update — migrate/update xong, nợ đã backfill: 1 file
 
 - Mode: migrate (project chính là bundle)
@@ -1148,3 +1154,4 @@
 - PlayerContext.used_by: 1 → 9 sau fix; api.ts.used_by: 1 → 17
 - Wire R8 frontend-map-verify vào .pre-commit-config.yaml
 
+- 2026-06-25 20:01 — session `ec3461d1` — 12 tool calls — files: 250626-mcp-ambient-sounds-seq.html, 250626-mcp-ambient-sounds.md, AIAssistantPage.tsx, index.md, log.md, mcpTools.ts, registry.go, registry_ambient.go

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Distributed DB — Citus 180626</title>
+<style>
+:root{--glass-2:rgba(255,255,255,.70);--blur-2:8px;--edge-hi:inset 0 1px 0 rgba(255,255,255,.85);--border:rgba(30,90,170,.14);--text-1:#0f0f12;--text-2:#4a4a55;--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;--mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:thin;scrollbar-color:transparent transparent;background:#e9f0fb}
+html.scrolling{scrollbar-color:rgba(10,132,255,.32) transparent}
+::-webkit-scrollbar{width:11px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-track-piece,::-webkit-scrollbar-corner,::-webkit-scrollbar-button{background:transparent;border:0;box-shadow:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+html.scrolling::-webkit-scrollbar-thumb{background-color:rgba(10,132,255,.32)}
+body{font-family:var(--font);color:var(--text-1);padding-left:200px;background:radial-gradient(900px 500px at 12% -10%,rgba(10,132,255,.10),transparent 60%),radial-gradient(700px 420px at 95% 15%,rgba(90,162,232,.08),transparent 55%),linear-gradient(180deg,#eef4fd,#e6eefb);transition:padding-left .28s cubic-bezier(.4,0,.2,1);min-height:100vh}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;background:radial-gradient(640px 440px at 10% 14%,rgba(10,132,255,.22),transparent 65%),radial-gradient(380px 460px at 4% 52%,rgba(48,176,199,.18),transparent 65%),radial-gradient(540px 400px at 88% 10%,rgba(88,86,214,.13),transparent 60%),radial-gradient(480px 380px at 16% 86%,rgba(52,199,89,.12),transparent 60%),radial-gradient(560px 420px at 44% 55%,rgba(10,132,255,.10),transparent 60%),radial-gradient(720px 500px at 74% 76%,rgba(48,176,199,.13),transparent 65%);animation:orbDrift 46s ease-in-out infinite alternate}
+@keyframes orbDrift{100%{transform:translate(2.2%,1.6%) scale(1.045)}}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(rgba(30,90,170,.11) 1px,transparent 1.3px);background-size:22px 22px;mask-image:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.22))}
+@media(prefers-reduced-motion:reduce){body::before{animation:none}}
+nav{position:fixed;top:0;left:0;bottom:0;width:200px;z-index:100;display:flex;flex-direction:column;gap:2px;padding:18px 12px;overflow-y:auto;background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.22) 48%,rgba(240,248,255,.34) 100%);backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);-webkit-backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);border-right:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5),inset -1px 0 0 rgba(30,90,170,.10),4px 0 24px rgba(30,90,170,.08);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+nav::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(220px 160px at 18% 4%,rgba(255,255,255,.55),transparent 70%),linear-gradient(115deg,rgba(255,255,255,.28) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.14) 100%)}
+nav>*{position:relative}
+.logo{margin:0 0 16px;padding:6px 10px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#0a84ff,#30b0c7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-label{font-size:10px;font-weight:600;color:#8a8a99;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px 4px;margin-top:4px}
+nav a{display:block;padding:8px 12px;border-radius:10px;font-size:13px;color:var(--text-2);text-decoration:none;overflow:hidden;transition:background .15s,color .15s}
+nav a:hover{background:rgba(10,132,255,.06);color:var(--text-1)}
+nav a.active{color:#0a84ff;background:rgba(10,132,255,.10);font-weight:600}
+body.nav-collapsed nav{transform:translateX(-100%)}
+body.nav-collapsed{padding-left:0}
+.nav-toggle{position:fixed;top:12px;left:12px;z-index:120;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4a4a55;cursor:pointer;background:linear-gradient(165deg,rgba(255,255,255,.5),rgba(255,255,255,.24));backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);-webkit-backdrop-filter:blur(24px) saturate(1.7) brightness(1.04);border:1px solid transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 1px rgba(30,90,170,.08),0 2px 10px rgba(30,90,170,.12);transition:opacity .2s,transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.nav-toggle:hover{color:#0a84ff}
+body:not(.nav-collapsed) .nav-toggle{opacity:0;pointer-events:none;transform:translateX(-6px)}
+.nav-close{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#4a4a55;cursor:pointer;background:rgba(0,0,0,.04);border:none;overflow:hidden}
+.nav-close:hover{color:#0a84ff;background:rgba(10,132,255,.10)}
+.ripple-ink{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.28) 38%,rgba(10,132,255,.20) 72%,transparent 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);transform:scale(0);opacity:1;animation:rippleGrow .6s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes rippleGrow{55%{transform:scale(1);opacity:.75}100%{transform:scale(1.04);opacity:0}}
+section{padding:56px 24px 64px;max-width:1060px;margin:0 auto}
+.hero{padding:64px 24px 32px;max-width:1060px;margin:0 auto}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#0a84ff;margin-bottom:10px}
+h1{font-size:clamp(26px,4vw,44px);font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#0a84ff,#30b0c7,#cfe3fb);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px}
+.sub{font-size:15px;color:var(--text-2);max-width:580px;line-height:1.7}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;margin-bottom:10px}
+#sec-0 .tag{background:rgba(255,45,85,.08);color:#e0264b}
+#sec-1 .tag{background:rgba(10,132,255,.10);color:#0a84ff}
+#sec-2 .tag{background:rgba(48,176,199,.12);color:#30b0c7}
+#sec-3 .tag{background:rgba(52,199,89,.10);color:#28a745}
+h2{font-size:clamp(18px,2.5vw,26px);font-weight:700;letter-spacing:-.02em;color:#1d1d1f;margin-bottom:6px}
+.desc{font-size:14px;color:var(--text-2);max-width:680px;line-height:1.7;margin-bottom:20px}
+.card{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);-webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:20px;margin:16px 0}
+.chart-box{background:var(--glass-2);backdrop-filter:blur(var(--blur-2)) saturate(1.1);-webkit-backdrop-filter:blur(var(--blur-2)) saturate(1.1);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);padding:24px;margin:16px 0;overflow-x:auto}
+.dt-wrap{background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border:1px solid var(--border);border-radius:16px;box-shadow:var(--edge-hi),0 4px 20px rgba(0,0,0,.06);overflow:hidden;margin:16px 0}
+.dt-wrap table{width:100%;border-collapse:collapse}
+.dt-wrap th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.dt-wrap td{font-size:13px;padding:10px 16px;border-bottom:1px solid rgba(30,90,170,.06);color:var(--text-1)}
+.dt-wrap tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:2px 8px}
+.b-g{background:rgba(52,199,89,.12);color:#28a745}
+.b-r{background:rgba(255,45,85,.10);color:#e0264b}
+.b-o{background:rgba(255,149,0,.10);color:#f08c00}
+.b-b{background:rgba(10,132,255,.10);color:#0a84ff}
+.mono{font-family:var(--mono);font-size:11px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:700px){.g2{grid-template-columns:1fr}}
+pre{font-family:var(--mono);font-size:12px;background:rgba(30,90,170,.05);border:1px solid var(--border);border-radius:10px;padding:14px 16px;overflow-x:auto;line-height:1.6;color:var(--text-1)}
+footer{padding:32px 24px;max-width:1060px;margin:0 auto;border-top:1px solid var(--border);font-size:12px;color:var(--text-2)}
+@media(max-width:640px){body{padding-left:0}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">Citus Distributed DB</div>
+  <span class="nav-label">Mục lục</span>
+  <a href="#sec-0">Tiếp cận sai</a>
+  <a href="#sec-1">Kiến trúc Citus</a>
+  <a href="#sec-2">Phân loại bảng</a>
+  <a href="#sec-3">Plan &amp; Status</a>
+</nav>
+<div class="hero">
+  <div class="eyebrow">Cozyroom · Distributed DB · 2026-06-18 · ✅ Implemented</div>
+  <h1>Citus Distributed Postgres</h1>
+  <p class="sub">Thay thế Postgres StatefulSet trong K8s bằng Citus trên 3 physical nodes. Coordinator + 2 workers. Backend kết nối coordinator, thấy 1 DB duy nhất. 2655 tracks migrated.</p>
+</div>
+
+<section id="sec-0">
+  <div class="tag">01 · Tiếp cận sai</div>
+  <h2>6 tiếp cận bị loại trừ</h2>
+  <p class="desc">Trước khi chọn Citus, 6 hướng khác được đánh giá và loại vì không đáp ứng yêu cầu distributed thực sự.</p>
+  <div class="dt-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Tiếp cận</th><th>Lý do loại</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge b-r">❌1</span></td><td>Streaming replication</td><td>Copy toàn bộ data — nhân bản không phải phân tán</td></tr>
+        <tr><td><span class="badge b-r">❌2</span></td><td>Separate DB per service</td><td>Data split, không có unified view</td></tr>
+        <tr><td><span class="badge b-r">❌3</span></td><td>DB trong K8s pod</td><td>User reject</td></tr>
+        <tr><td><span class="badge b-r">❌4</span></td><td>Single centralized Postgres</td><td>Không distributed, SPOF</td></tr>
+        <tr><td><span class="badge b-r">❌5</span></td><td>Manual routing trong app code</td><td>Coupling cứng, app phải biết topology</td></tr>
+        <tr><td><span class="badge b-r">❌6</span></td><td>FDW thuần</td><td>Query planning kém, không true sharding</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="sec-1">
+  <div class="tag">02 · Kiến trúc</div>
+  <h2>Citus trên 3 physical nodes</h2>
+  <p class="desc">Coordinator nhận mọi query từ Backend, phân phối sang workers qua Tailscale. Backend không đổi gì ngoài <span class="mono">DB_URL</span>.</p>
+  <div class="chart-box">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 200" style="width:100%;height:auto">
+      <defs><marker id="ac" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#0a84ff"/></marker></defs>
+      <rect x="10" y="70" width="130" height="60" rx="10" fill="rgba(255,255,255,.85)" stroke="#0a84ff" stroke-width="1.5"/>
+      <text x="75" y="96" text-anchor="middle" font-size="11" font-weight="700" fill="#0a84ff" font-family="-apple-system,sans-serif">K8s Backend ×N</text>
+      <text x="75" y="112" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">DB_URL → Node1:5432</text>
+      <line x1="142" y1="100" x2="178" y2="100" stroke="#0a84ff" stroke-width="1.5" marker-end="url(#ac)"/>
+      <rect x="180" y="52" width="160" height="96" rx="10" fill="rgba(255,255,255,.85)" stroke="#30b0c7" stroke-width="2"/>
+      <text x="260" y="82" text-anchor="middle" font-size="12" font-weight="700" fill="#30b0c7" font-family="-apple-system,sans-serif">Citus Coordinator</text>
+      <text x="260" y="98" text-anchor="middle" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">Node-1 · Docker</text>
+      <text x="260" y="114" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">citus-coordinator + worker-1</text>
+      <text x="260" y="130" text-anchor="middle" font-size="9" fill="#28a745" font-family="-apple-system,sans-serif">port 5432 exposed on host</text>
+      <line x1="342" y1="82" x2="398" y2="52" stroke="#8a8a99" stroke-width="1.5" marker-end="url(#ac)"/>
+      <line x1="342" y1="118" x2="398" y2="148" stroke="#8a8a99" stroke-width="1.5" marker-end="url(#ac)"/>
+      <text x="370" y="96" text-anchor="middle" font-size="9" fill="#8a8a99" font-family="-apple-system,sans-serif">Tailscale</text>
+      <rect x="400" y="22" width="160" height="60" rx="10" fill="rgba(255,255,255,.85)" stroke="#5856d6" stroke-width="1.5"/>
+      <text x="480" y="48" text-anchor="middle" font-size="11" font-weight="700" fill="#5856d6" font-family="-apple-system,sans-serif">Citus Worker-2</text>
+      <text x="480" y="64" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">Node-2 · Docker</text>
+      <text x="480" y="78" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">port 5432 on host</text>
+      <rect x="400" y="118" width="160" height="60" rx="10" fill="rgba(255,255,255,.85)" stroke="#5856d6" stroke-width="1.5"/>
+      <text x="480" y="144" text-anchor="middle" font-size="11" font-weight="700" fill="#5856d6" font-family="-apple-system,sans-serif">Citus Worker-3</text>
+      <text x="480" y="160" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">Node-3 · Docker</text>
+      <text x="480" y="174" text-anchor="middle" font-size="9" fill="#4a4a55" font-family="-apple-system,sans-serif">port 5432 on host</text>
+      <text x="620" y="50" font-size="11" font-weight="600" fill="#28a745" font-family="-apple-system,sans-serif">✅ Implemented</text>
+      <text x="620" y="68" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">2655 tracks migrated</text>
+      <text x="620" y="84" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">App live on Citus</text>
+      <text x="620" y="100" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">Distribution key: id</text>
+      <text x="620" y="116" font-size="10" fill="#4a4a55" font-family="-apple-system,sans-serif">Sharding: hash-based</text>
+    </svg>
+  </div>
+</section>
+
+<section id="sec-2">
+  <div class="tag">03 · Phân loại bảng</div>
+  <h2>Distributed vs Reference tables</h2>
+  <p class="desc">Distributed tables được sharded theo <span class="mono">id</span> (hash). Reference tables được replicated xuống tất cả nodes để join nhanh.</p>
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#0a84ff;margin-bottom:10px">Distributed (sharded by hash id)</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2)">
+        <div><span class="badge b-b">shard</span> <span class="mono">tracks</span></div>
+        <div><span class="badge b-b">shard</span> <span class="mono">albums</span></div>
+        <div><span class="badge b-b">shard</span> <span class="mono">lyrics</span></div>
+        <div><span class="badge b-b">shard</span> <span class="mono">ebooks</span></div>
+        <div><span class="badge b-b">shard</span> <span class="mono">comics</span></div>
+        <div><span class="badge b-b">shard</span> <span class="mono">playback_progress</span></div>
+        <div style="font-size:11px;color:#8a8a99;margin-top:4px">Data lớn → phân tải across workers</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#30b0c7;margin-bottom:10px">Reference (replicated to all nodes)</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2)">
+        <div><span class="badge" style="background:rgba(48,176,199,.12);color:#30b0c7">ref</span> <span class="mono">playlists</span></div>
+        <div><span class="badge" style="background:rgba(48,176,199,.12);color:#30b0c7">ref</span> <span class="mono">playlist_tracks</span></div>
+        <div><span class="badge" style="background:rgba(48,176,199,.12);color:#30b0c7">ref</span> <span class="mono">settings</span></div>
+        <div><span class="badge" style="background:rgba(48,176,199,.12);color:#30b0c7">ref</span> <span class="mono">artists</span></div>
+        <div><span class="badge" style="background:rgba(48,176,199,.12);color:#30b0c7">ref</span> <span class="mono">lyrics_cache</span></div>
+        <div style="font-size:11px;color:#8a8a99;margin-top:4px">Data nhỏ, join thường xuyên → replicate tất cả</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sec-3">
+  <div class="tag">04 · Plan &amp; Status</div>
+  <h2>7 tasks — tất cả done ✅</h2>
+  <p class="desc">Migrate hoàn thành 2026-06-18. 2655 tracks trong Citus, app live, unified view verified.</p>
+  <div class="dt-wrap">
+    <table>
+      <thead><tr><th>Task</th><th>Mô tả</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Task 1</td><td>Xác định IP/hostname 3 physical nodes</td><td><span class="badge b-g">done</span></td></tr>
+        <tr><td>Task 2</td><td>Deploy Citus coordinator trên Node-1</td><td><span class="badge b-g">done</span></td></tr>
+        <tr><td>Task 3</td><td>Deploy Citus workers trên Node-2 và Node-3</td><td><span class="badge b-g">done</span></td></tr>
+        <tr><td>Task 4</td><td>Tạo schema (distributed + reference tables)</td><td><span class="badge b-g">done</span></td></tr>
+        <tr><td>Task 5</td><td>Migrate 2655 tracks từ K8s Postgres → Citus</td><td><span class="badge b-g">done</span></td></tr>
+        <tr><td>Task 6</td><td>Update K8s backend DB_URL → coordinator</td><td><span class="badge b-g">done</span></td></tr>
+        <tr><td>Task 7</td><td>Verify unified view — query từ 2 backend khác nhau</td><td><span class="badge b-g">done</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:#f08c00;margin-bottom:8px">Risks còn lại</div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2)">
+      <li>⚠ <strong>Coordinator SPOF:</strong> Node-1 down → all queries fail. Mitigaton: Citus HA coordinator — có thể add sau</li>
+      <li>⚠ <strong>Cross-shard joins:</strong> Queries join distributed tables chậm hơn local joins. Mitigation: reference tables đã giảm thiểu</li>
+      <li>⚠ <strong>Tailscale latency:</strong> Cross-node queries thêm ~1-2ms. Acceptable cho music app</li>
+    </ul>
+  </div>
+</section>
+<footer>Cozyroom · Citus Distributed DB · 2026-06-18 · Draft: wiki/sources/draft/180626-distributed-db-citus.md</footer>
+<script>
+(function(){const f=el=>{let t;return()=>{el.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>el.classList.remove('scrolling'),900);}};window.addEventListener('scroll',f(document.documentElement),{passive:true});const nav=document.querySelector('nav');if(nav)nav.addEventListener('scroll',f(nav),{passive:true});})();
+(function(){const nav=document.querySelector('nav');if(!nav)return;const btn=document.createElement('button');btn.className='nav-toggle';btn.textContent='☰';document.body.appendChild(btn);const close=document.createElement('button');close.className='nav-close';close.textContent='✕';nav.appendChild(close);const apply=c=>{document.body.classList.toggle('nav-collapsed',c);try{localStorage.setItem('navCollapsed',c?'1':'0');}catch(e){}};btn.addEventListener('click',()=>apply(false));close.addEventListener('click',()=>apply(true));try{const s=localStorage.getItem('navCollapsed');if(s==='1'||(s!=='0'&&matchMedia('(max-width:640px)').matches))apply(true);}catch(e){}})();
+(function(){function attach(el){el.addEventListener('pointerdown',function(e){const r=el.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;const rad=Math.hypot(Math.max(x,r.width-x),Math.max(y,r.height-y));const ink=document.createElement('span');ink.className='ripple-ink';ink.style.width=ink.style.height=rad*2+'px';ink.style.left=(x-rad)+'px';ink.style.top=(y-rad)+'px';el.appendChild(ink);ink.addEventListener('animationend',()=>ink.remove());});}document.querySelectorAll('nav a,.nav-toggle,.nav-close').forEach(attach);})();
+(function(){const links=[...document.querySelectorAll('nav a[href^="#"]')];const sections=[...document.querySelectorAll('section[id]')];const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});},{rootMargin:'-40% 0px -55% 0px'});sections.forEach(s=>obs.observe(s));})();
+</script>
+</body>
+</html>

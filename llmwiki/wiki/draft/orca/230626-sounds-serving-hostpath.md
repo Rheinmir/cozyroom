@@ -1,6 +1,6 @@
 # 230626-sounds-serving-hostpath
 
-**Status:** proposed
+**Status:** done
 **Sequence diagram:** [html/230626-sounds-serving-hostpath-seq.html](../../../html/230626-sounds-serving-hostpath-seq.html)
 
 ## Context
@@ -14,19 +14,19 @@ Mục tiêu: move sounds ra khỏi image + git, dùng hostPath giống music/fil
 
 ## Plan
 
-- [ ] T1: Copy `.m4a` files lên k8s node hostPath `/mnt/f/sounds/ambient/`
-- [ ] T2: Thêm volume mount trong backend k8s Deployment + `AMBIENT_SOUNDS_DIR` env var
-- [ ] T3: Xoá sounds khỏi git + gitignore + bỏ `COPY sounds` khỏi Dockerfile
-- [ ] T4: Verify `GET /api/ambient-sounds` list + stream qua hostPath
+- [x] T1: Copy `.m4a` files lên k8s node hostPath `/mnt/f/sounds/ambient/`
+- [x] T2: Thêm volume mount trong backend k8s Deployment + `AMBIENT_SOUNDS_DIR` env var
+- [x] T3: Xoá sounds khỏi git + gitignore + bỏ `COPY sounds` khỏi Dockerfile
+- [x] T4: Verify `GET /api/ambient-sounds` list + stream qua hostPath
 
 ## Agent Task Assignment
 
 | Task | Agent | Model | Status |
 |------|-------|-------|--------|
-| T1: Copy files to hostPath | Claude main | claude-sonnet-4-6 | pending |
-| T2: k8s volume mount + env var | Claude main | claude-sonnet-4-6 | pending |
-| T3: Untrack git + gitignore + Dockerfile | Claude main | claude-sonnet-4-6 | pending |
-| T4: Verify end-to-end | Claude main | claude-sonnet-4-6 | pending |
+| T1: Copy files to hostPath | Claude main | claude-sonnet-4-6 | done |
+| T2: k8s volume mount + env var | Claude main | claude-sonnet-4-6 | done |
+| T3: Untrack git + gitignore + Dockerfile | Claude main | claude-sonnet-4-6 | done |
+| T4: Verify end-to-end | Claude main | claude-sonnet-4-6 | done |
 
 ## Files sẽ tạo/sửa
 
@@ -46,5 +46,5 @@ Mục tiêu: move sounds ra khỏi image + git, dùng hostPath giống music/fil
 ## Origin
 
 - **Draft:** `wiki/draft/orca/230626-sounds-serving-hostpath.md`
-- **Commit:** _(filled by verify-before-commit)_
-- **Date promoted:** _(filled by verify-before-commit)_
+- **Commit:** `9f61ccf` — feat: sounds hostPath — move 220MB Apple audio out of git and Docker image
+- **Date promoted:** 2026-06-23

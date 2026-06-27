@@ -1,0 +1,144 @@
+# policy.yaml — NGUỒN CHÂN LÝ DUY NHẤT (PoC vendor-neutral).
+# Lõi `bin/llmwiki-validate.py` và `gen-converters.py` đều đọc file này.
+# Mirror R1/R2 của harness/policy.yaml nhưng ở dạng máy đọc được (glob, layer).
+#
+# enforce_at: 'session' = lúc agent định ghi (hook/CLI chặn ngay).
+#             'repo'    = lúc commit/PR (pre-commit + CI).
+# Đây là chỗ DÀY tùy ý — thêm luật ở đây, KHÔNG sửa code adapter.
+
+version: 1
+
+rules:
+  no_write_raw:
+    id: R1
+    name: no-write-raw
+    kind: deny_write
+    statement: "raw/ là inbox của con người — agent chỉ được đọc, không ghi."
+    enforce_at: [session]          # KHÔNG repo: con người commit file raw/ là hợp lệ
+    deny_write_globs:
+      - "**/raw/**"
+      - "raw/**"
+
+  require_origin:
+    id: R2
+    name: origin-required
+    kind: require_section
+    statement: "Mọi wiki content file phải có section '## Origin' để truy được nguồn gốc."
+    enforce_at: [session, repo]
+    require_section: "## Origin"
+    target_globs:                          # khớp global origin_required CONTENT_DIRS (6 dir)
+      - "**/wiki/concepts/**/*.md"
+      - "**/wiki/entities/**/*.md"
+      - "**/wiki/sources/**/*.md"
+      - "**/wiki/draft/**/*.md"
+      - "**/wiki/architecture/**/*.md"
+      - "**/wiki/tours/**/*.md"
+    exclude_basenames: ["README.md", "_template.md", "index.md", "log.md"]
+
+  folder_structure:
+    id: R5
+    name: folder-structure
+    kind: forbid_root
+    statement: "File wiki phải nằm trong concepts/entities/sources/draft/architecture/tours — KHÔNG ở wiki/ root."
+    enforce_at: [session, repo]
+    root_globs: ["**/wiki/*.md"]               # file .md trực tiếp dưới wiki/ (1 segment) → chặn
+    allow_basenames: ["index.md", "log.md", "README.md", "active-context.md", "decisions.md"]
+    allow_subdirs: ["concepts", "entities", "sources", "draft", "architecture", "tours"]  # khớp global: subdir NGOÀI set này cũng chặn (wiki/junk/x.md)
+
+  proposal_complete:
+    id: R7
+    name: proposal-complete
+    kind: conditional_require
+    statement: "Proposal (có '## Plan' + còn 'proposed') phải khai '## Agent Task Assignment' + link Sequence diagram."
+    enforce_at: [session, repo]
+    target_globs: ["**/wiki/sources/draft/**/*.md", "**/wiki/draft/**/*.md"]
+    when_contains: ["## Plan", "proposed"]
+    need_contains: ["## Agent Task Assignment", "Sequence diagram"]
+
+  okf_frontmatter:
+    id: R9
+    name: okf-frontmatter
+    kind: require_frontmatter
+    statement: "Wiki content (concepts/entities/sources/draft/architecture/tours — KỂ CẢ nháp) phải có YAML frontmatter + 'type' không rỗng (OKF v0.1). Scope khớp global production: siết frontmatter ngay từ nháp."
+    enforce_at: [session, repo]
+    target_globs: ["**/wiki/concepts/**/*.md", "**/wiki/entities/**/*.md", "**/wiki/sources/**/*.md", "**/wiki/draft/**/*.md", "**/wiki/architecture/**/*.md", "**/wiki/tours/**/*.md"]
+    exclude_basenames: ["README.md", "_template.md", "index.md", "log.md", "decisions.md", "active-context.md"]
+    require_key: type
+
+  seq_html_glass:
+    id: R11
+    name: seq-html-glass-style
+    kind: conditional_require
+    statement: "Seq diagram HTML (*-seq.html) PHẢI theo style docs-site-macos liquid-glass — KHÔNG theme flat/tối tự chế (bài học 250626 'sao xấu thế'). Bắt buộc: backdrop-filter glass + nền sáng linear-gradient(180deg,#f7fbff…) + edge-highlight inset."
+    enforce_at: [session, repo]            # 2026-06-27: ĐÃ migrate 8 seq html cũ → glass → bật repo-tier (pre-commit/CI). Lịch sử giờ sạch.
+    target_globs:
+      - "**/llmwiki/html/*-seq.html"
+      - "**/html/*-seq.html"
+    when_contains: ["diagram-box"]         # là 1 seq diagram theo template chuẩn
+    need_contains:                          # 3 dấu hiệu glass mà flat theme không bao giờ có
+      - "backdrop-filter"
+      - "linear-gradient(180deg,#f7fbff"
+      - "inset 0 1px 0 rgba(255,255,255"
+
+  pull_before_change:
+    id: R12
+    name: pull-before-change
+    kind: process_gate                     # git-state gate — KHÔNG phải content-check → llmwiki-validate bỏ qua. CHỈ 2 điểm enforce phủ được mọi vendor.
+    statement: "(B) TRƯỚC khi bắt đầu việc / fan-out đa-agent: orchestrator chạy pull-gate sweep 1 lần (base tươi cho cả đàn agent). (C) TRƯỚC khi push: pre-push hook git-level chặn nếu local SAU remote. KHÔNG có hook chặn từng-edit (per-edit PreToolUse) — cố tình bỏ: cost cao, lệch vendor, đã được (B) phủ."
+    enforce_at: [session, repo]            # session = (B) pre-work sweep do orchestrator chạy ở workflow Step 0 · repo = (C) gate2 pre-push (vendor-neutral floor)
+    prework_sweep_cmd: "harness/poc-vendor-neutral/bin/pull-gate.sh gate1"   # (B) — orchestrator gọi 1 lần trước khi làm/dispatch; KHÔNG gắn vào PreToolUse
+    prepush_cmd: "harness/poc-vendor-neutral/bin/pull-gate.sh gate2"          # (C) — .git/hooks/pre-push + .pre-commit stage pre-push
+
+  # ── Hook-event rules (R3/R4/R8/R10) — T1 reconcile 2026-06-27 ────────────────
+  # Enforce bằng HOOK SỰ KIỆN (không phải content-check) → kind `hook_event`,
+  # llmwiki-validate bỏ qua an toàn. Wiring thật vẫn HARDCODE ở gen-converters.py →
+  # harness-events.py / production hooks; ghi vào đây để policy.yaml LIỆT KÊ ĐỦ luật
+  # (hết rò "nguồn chân lý"). Làm policy DRIVE wiring là bước sau. Xem [[rule-registry]].
+  index_sync:
+    id: R3
+    name: index-sync
+    kind: hook_event
+    statement: "wiki/index.md phải liệt kê đúng tập file wiki tồn tại; phiên có sửa wiki mà index lệch → chặn kết thúc lượt."
+    enforce_at: [session, repo]            # session = Stop hook · repo = pre-commit (index_sync.py)
+    event: Stop
+    event_action: stop                     # arg cho harness-events.py (gen-converters SINH hook từ đây)
+    timeout: 15
+    handler: "harness/validators/index_sync.py · harness-events.py stop · llmwiki/.claude/hooks/stop.py"
+    blocking: true
+
+  audit_log:
+    id: R4
+    name: audit-log
+    kind: hook_event
+    statement: "Mọi tool-call ghi .claude/audit/audit.jsonl (timestamp) + sinh log.md người-đọc-được. Không chặn."
+    enforce_at: [session]
+    event: PostToolUse
+    event_action: audit
+    matcher: "Write|Edit|MultiEdit"
+    timeout: 10
+    handler: "harness-events.py audit · llmwiki/.claude/hooks/post_tool_use.py"
+    blocking: false
+
+  session_health:
+    id: R8
+    name: session-health
+    kind: hook_event
+    statement: "Đầu phiên: báo số rule đang gác + CHECK DRIFT policy/version vs remote (cảnh báo nếu lệch → /sync-template). Không chặn."
+    enforce_at: [session]
+    event: SessionStart
+    event_action: session
+    timeout: 10
+    handler: "harness-events.py session · llmwiki/.claude/hooks/session_start.py (health-check.py)"
+    blocking: false
+
+  docs_gate:
+    id: R10
+    name: docs-gate
+    kind: hook_event
+    statement: "Mỗi N prompt (default 5) chưa dùng /docs-site-macos hay /orca-workflow → inject directive đề nghị bổ sung docs. Báo cáo, không chặn."
+    enforce_at: [session]
+    event: UserPromptSubmit
+    event_action: docs
+    timeout: 10
+    handler: "harness-events.py docs · llmwiki/.claude/hooks/user_prompt_submit.py"
+    blocking: false

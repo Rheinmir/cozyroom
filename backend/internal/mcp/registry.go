@@ -72,6 +72,9 @@ func NewRegistry(d ToolDeps) []Tool {
 		scheduleAgentTaskTool(d),
 		getScheduledTasksTool(d),
 		deleteScheduledTaskTool(d),
+		listAmbientSoundsTool(d),
+		playAmbientSoundTool(d),
+		stopAmbientSoundTool(d),
 	}
 }
 

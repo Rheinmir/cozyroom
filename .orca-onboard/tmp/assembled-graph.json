@@ -1,0 +1,3912 @@
+{
+  "nodes": [
+    {
+      "id": "file:.claude/.gitignore",
+      "type": "file",
+      "name": ".gitignore",
+      "filePath": ".claude/.gitignore",
+      "summary": ".gitignore ( file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:.claude/settings.json",
+      "type": "config",
+      "name": "settings.json",
+      "filePath": ".claude/settings.json",
+      "summary": "settings (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:.claude/skills/deploy-k8s-frontend/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": ".claude/skills/deploy-k8s-frontend/SKILL.md",
+      "summary": "Skill: deploy-k8s-frontend",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:.dockerignore",
+      "type": "file",
+      "name": ".dockerignore",
+      "filePath": ".dockerignore",
+      "summary": ".dockerignore ( file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:.gitignore",
+      "type": "file",
+      "name": ".gitignore",
+      "filePath": ".gitignore",
+      "summary": "credentials",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:.pre-commit-config.yaml",
+      "type": "config",
+      "name": ".pre-commit-config.yaml",
+      "filePath": ".pre-commit-config.yaml",
+      "summary": "L2 REPO BACKSTOP \u2014 vendor-neutral: agent/CLI n\u00e0o commit c\u0169ng b\u1ecb gate.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:.template-manifest.json",
+      "type": "config",
+      "name": ".template-manifest.json",
+      "filePath": ".template-manifest.json",
+      "summary": ".template-manifest (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:01-Project-Kickoff.md",
+      "type": "document",
+      "name": "01-Project-Kickoff.md",
+      "filePath": "01-Project-Kickoff.md",
+      "summary": "ROLE & SYSTEM PROMPT",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:02-Setup-Knowledge-Base.md",
+      "type": "document",
+      "name": "02-Setup-Knowledge-Base.md",
+      "filePath": "02-Setup-Knowledge-Base.md",
+      "summary": "CONTEXT",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:03-Cognee-MCP-Setup-Check.md",
+      "type": "document",
+      "name": "03-Cognee-MCP-Setup-Check.md",
+      "filePath": "03-Cognee-MCP-Setup-Check.md",
+      "summary": "CONTEXT",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:04-Scaffold-Application.md",
+      "type": "document",
+      "name": "04-Scaffold-Application.md",
+      "filePath": "04-Scaffold-Application.md",
+      "summary": "CONTEXT",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:AGENT.md",
+      "type": "document",
+      "name": "AGENT.md",
+      "filePath": "AGENT.md",
+      "summary": "AGENT (md file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:CLAUDE.md",
+      "type": "document",
+      "name": "CLAUDE.md",
+      "filePath": "CLAUDE.md",
+      "summary": "\u26a0\ufe0f TUY\u1ec6T \u0110\u1ed0I KH\u00d4NG \u0110\u01af\u1ee2C \u0110\u1ee4NG V\u00c0O DATABASE \u26a0\ufe0f",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:Cozyroom (standalone).html",
+      "type": "file",
+      "name": "Cozyroom (standalone).html",
+      "filePath": "Cozyroom (standalone).html",
+      "summary": "__bundler_loading { position: fixed; bottom: 20px; right: 20px; font: 13px/1.4 -apple-system, BlinkMacSystemFont, sans-s",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "Dockerfile",
+      "summary": "Dockerfile ( file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:Dockerfile.frontend",
+      "type": "file",
+      "name": "Dockerfile.frontend",
+      "filePath": "Dockerfile.frontend",
+      "summary": "Dockerfile (frontend file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Cozyroom",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/album.go",
+      "type": "file",
+      "name": "album.go",
+      "filePath": "_archive/sqlite-repo/album.go",
+      "summary": "AlbumRepo implements domain.AlbumRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/artist.go",
+      "type": "file",
+      "name": "artist.go",
+      "filePath": "_archive/sqlite-repo/artist.go",
+      "summary": "ArtistRepo implements domain.ArtistRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/comics_cache.go",
+      "type": "file",
+      "name": "comics_cache.go",
+      "filePath": "_archive/sqlite-repo/comics_cache.go",
+      "summary": "comics_cache (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/comics_downloads.go",
+      "type": "file",
+      "name": "comics_downloads.go",
+      "filePath": "_archive/sqlite-repo/comics_downloads.go",
+      "summary": "ComicsDownload tracks a discovered or downloaded comic/gallery.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/ebook.go",
+      "type": "file",
+      "name": "ebook.go",
+      "filePath": "_archive/sqlite-repo/ebook.go",
+      "summary": "ebook (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/lyrics_cache.go",
+      "type": "file",
+      "name": "lyrics_cache.go",
+      "filePath": "_archive/sqlite-repo/lyrics_cache.go",
+      "summary": "LyricsCacheRepo implements domain.LyricsCacheRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/playback.go",
+      "type": "file",
+      "name": "playback.go",
+      "filePath": "_archive/sqlite-repo/playback.go",
+      "summary": "playback (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/rollback.sh",
+      "type": "script",
+      "name": "rollback.sh",
+      "filePath": "_archive/sqlite-repo/rollback.sh",
+      "summary": "!/usr/bin/env bash",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/search.go",
+      "type": "file",
+      "name": "search.go",
+      "filePath": "_archive/sqlite-repo/search.go",
+      "summary": "search (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/settings.go",
+      "type": "file",
+      "name": "settings.go",
+      "filePath": "_archive/sqlite-repo/settings.go",
+      "summary": "SettingsRepo implements domain.SettingsRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/sqlite.go",
+      "type": "file",
+      "name": "sqlite.go",
+      "filePath": "_archive/sqlite-repo/sqlite.go",
+      "summary": "Package sqlite implements the domain repository interfaces on top of",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/stats.go",
+      "type": "file",
+      "name": "stats.go",
+      "filePath": "_archive/sqlite-repo/stats.go",
+      "summary": "StatsRepo implements domain.StatsRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/track.go",
+      "type": "file",
+      "name": "track.go",
+      "filePath": "_archive/sqlite-repo/track.go",
+      "summary": "TrackRepo implements domain.TrackRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:_archive/sqlite-repo/video.go",
+      "type": "file",
+      "name": "video.go",
+      "filePath": "_archive/sqlite-repo/video.go",
+      "summary": "video (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:auto_transcribe.py",
+      "type": "file",
+      "name": "auto_transcribe.py",
+      "filePath": "auto_transcribe.py",
+      "summary": "Force stdout/stderr to use UTF-8 to prevent encoding crashes on Windows terminal",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/cmd/dump_tags/main.go",
+      "type": "file",
+      "name": "main.go",
+      "filePath": "backend/cmd/dump_tags/main.go",
+      "summary": "main (go file)",
+      "tags": [
+        "recent",
+        "entrypoint"
+      ]
+    },
+    {
+      "id": "file:backend/cmd/mcp-server/main.go",
+      "type": "file",
+      "name": "main.go",
+      "filePath": "backend/cmd/mcp-server/main.go",
+      "summary": "mcp-server exposes Cozyroom's MCP tools over stdio.",
+      "tags": [
+        "recent",
+        "entrypoint"
+      ]
+    },
+    {
+      "id": "file:backend/cmd/server/main.go",
+      "type": "file",
+      "name": "main.go",
+      "filePath": "backend/cmd/server/main.go",
+      "summary": "main (go file)",
+      "tags": [
+        "hot",
+        "recent",
+        "entrypoint"
+      ]
+    },
+    {
+      "id": "file:backend/go.mod",
+      "type": "file",
+      "name": "go.mod",
+      "filePath": "backend/go.mod",
+      "summary": "go (mod file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/ai.go",
+      "type": "file",
+      "name": "ai.go",
+      "filePath": "backend/internal/api/ai.go",
+      "summary": "ai (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/ai_providers.go",
+      "type": "file",
+      "name": "ai_providers.go",
+      "filePath": "backend/internal/api/ai_providers.go",
+      "summary": "\u2500\u2500 Anthropic \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/bundle.js",
+      "type": "file",
+      "name": "bundle.js",
+      "filePath": "backend/internal/api/bundle.js",
+      "summary": "bundle (js file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/comics_downloader.go",
+      "type": "file",
+      "name": "comics_downloader.go",
+      "filePath": "backend/internal/api/comics_downloader.go",
+      "summary": "ComicsDownloader discovers EH/MD covers every 6h, and downloads galleries/chapters",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/db_handlers.go",
+      "type": "file",
+      "name": "db_handlers.go",
+      "filePath": "backend/internal/api/db_handlers.go",
+      "summary": "db_handlers (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/ebook.go",
+      "type": "file",
+      "name": "ebook.go",
+      "filePath": "backend/internal/api/ebook.go",
+      "summary": "ebook (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/ebook_pages.go",
+      "type": "file",
+      "name": "ebook_pages.go",
+      "filePath": "backend/internal/api/ebook_pages.go",
+      "summary": "ebook_pages (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/eh_cached.go",
+      "type": "file",
+      "name": "eh_cached.go",
+      "filePath": "backend/internal/api/eh_cached.go",
+      "summary": "eh_cached (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/handler.go",
+      "type": "file",
+      "name": "handler.go",
+      "filePath": "backend/internal/api/handler.go",
+      "summary": "handler (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/headless_eh.go",
+      "type": "file",
+      "name": "headless_eh.go",
+      "filePath": "backend/internal/api/headless_eh.go",
+      "summary": "headless_eh (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/lastfm.go",
+      "type": "file",
+      "name": "lastfm.go",
+      "filePath": "backend/internal/api/lastfm.go",
+      "summary": "lastfmLogin authenticates via auth.getMobileSession (username + password, no redirect needed).",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/latest_cache.go",
+      "type": "file",
+      "name": "latest_cache.go",
+      "filePath": "backend/internal/api/latest_cache.go",
+      "summary": "latestCache is a single-value cache with:",
+      "tags": [
+        "recent",
+        "test"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/lyrics.go",
+      "type": "file",
+      "name": "lyrics.go",
+      "filePath": "backend/internal/api/lyrics.go",
+      "summary": "lyrics (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/playback.go",
+      "type": "file",
+      "name": "playback.go",
+      "filePath": "backend/internal/api/playback.go",
+      "summary": "playback (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/playlists.go",
+      "type": "file",
+      "name": "playlists.go",
+      "filePath": "backend/internal/api/playlists.go",
+      "summary": "playlists (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/routes.go",
+      "type": "file",
+      "name": "routes.go",
+      "filePath": "backend/internal/api/routes.go",
+      "summary": "routes (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/scan.go",
+      "type": "file",
+      "name": "scan.go",
+      "filePath": "backend/internal/api/scan.go",
+      "summary": "scanLibrary triggers a library scan using the handler's config.",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/scraper.go",
+      "type": "file",
+      "name": "scraper.go",
+      "filePath": "backend/internal/api/scraper.go",
+      "summary": "scraper (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/spa.go",
+      "type": "file",
+      "name": "spa.go",
+      "filePath": "backend/internal/api/spa.go",
+      "summary": "spa (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/trending.go",
+      "type": "file",
+      "name": "trending.go",
+      "filePath": "backend/internal/api/trending.go",
+      "summary": "trending (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/trickplay.go",
+      "type": "file",
+      "name": "trickplay.go",
+      "filePath": "backend/internal/api/trickplay.go",
+      "summary": "trickplay (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/video.go",
+      "type": "file",
+      "name": "video.go",
+      "filePath": "backend/internal/api/video.go",
+      "summary": "video (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/api/youtube.go",
+      "type": "file",
+      "name": "youtube.go",
+      "filePath": "backend/internal/api/youtube.go",
+      "summary": "youtube (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/cron/cron.go",
+      "type": "file",
+      "name": "cron.go",
+      "filePath": "backend/internal/cron/cron.go",
+      "summary": "cron (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/db/backup.go",
+      "type": "file",
+      "name": "backup.go",
+      "filePath": "backend/internal/db/backup.go",
+      "summary": "GetBackupsDir returns the directory path for database backups.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/db/backup_test.go",
+      "type": "file",
+      "name": "backup_test.go",
+      "filePath": "backend/internal/db/backup_test.go",
+      "summary": "backup_test (go file)",
+      "tags": [
+        "recent",
+        "test"
+      ]
+    },
+    {
+      "id": "file:backend/internal/db/db.go",
+      "type": "file",
+      "name": "db.go",
+      "filePath": "backend/internal/db/db.go",
+      "summary": "db (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/db/rebind.go",
+      "type": "file",
+      "name": "rebind.go",
+      "filePath": "backend/internal/db/rebind.go",
+      "summary": "RDB wraps *sql.DB and auto-converts ? placeholders to $1,$2,... for PostgreSQL.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/discord/discord.go",
+      "type": "file",
+      "name": "discord.go",
+      "filePath": "backend/internal/discord/discord.go",
+      "summary": "discord (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/domain/entity.go",
+      "type": "file",
+      "name": "entity.go",
+      "filePath": "backend/internal/domain/entity.go",
+      "summary": "Package domain defines the core business entities and repository contracts.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/domain/repository.go",
+      "type": "file",
+      "name": "repository.go",
+      "filePath": "backend/internal/domain/repository.go",
+      "summary": "---- Repository contracts (port interfaces) ----",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/enricher/aitrends.go",
+      "type": "file",
+      "name": "aitrends.go",
+      "filePath": "backend/internal/enricher/aitrends.go",
+      "summary": "aitrends (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/enricher/deezer.go",
+      "type": "file",
+      "name": "deezer.go",
+      "filePath": "backend/internal/enricher/deezer.go",
+      "summary": "deezer (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/enricher/github.go",
+      "type": "file",
+      "name": "github.go",
+      "filePath": "backend/internal/enricher/github.go",
+      "summary": "github (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/enricher/provider.go",
+      "type": "file",
+      "name": "provider.go",
+      "filePath": "backend/internal/enricher/provider.go",
+      "summary": "ArtistImageProvider fetches a remote image URL for an artist.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/enricher/tmdb.go",
+      "type": "file",
+      "name": "tmdb.go",
+      "filePath": "backend/internal/enricher/tmdb.go",
+      "summary": "TMDbProvider implements VideoPosterProvider via The Movie Database API.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/hls/manager.go",
+      "type": "file",
+      "name": "manager.go",
+      "filePath": "backend/internal/hls/manager.go",
+      "summary": "ValidFile matches the only filenames this package serves.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/library/ebook_scanner.go",
+      "type": "file",
+      "name": "ebook_scanner.go",
+      "filePath": "backend/internal/library/ebook_scanner.go",
+      "summary": "ebook_scanner (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/library/scanner.go",
+      "type": "file",
+      "name": "scanner.go",
+      "filePath": "backend/internal/library/scanner.go",
+      "summary": "scanner (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/library/video_scanner.go",
+      "type": "file",
+      "name": "video_scanner.go",
+      "filePath": "backend/internal/library/video_scanner.go",
+      "summary": "ensure id8 can be shared or redefine locally",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/mcp/compress.go",
+      "type": "file",
+      "name": "compress.go",
+      "filePath": "backend/internal/mcp/compress.go",
+      "summary": "TrimTrack strips a Track to minimal fields for AI context.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/mcp/registry.go",
+      "type": "file",
+      "name": "registry.go",
+      "filePath": "backend/internal/mcp/registry.go",
+      "summary": "registry (go file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/mcp/server.go",
+      "type": "file",
+      "name": "server.go",
+      "filePath": "backend/internal/mcp/server.go",
+      "summary": "jsonRPCRequest is a JSON-RPC 2.0 request.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/mcp/stdio.go",
+      "type": "file",
+      "name": "stdio.go",
+      "filePath": "backend/internal/mcp/stdio.go",
+      "summary": "RunStdio runs the MCP stdio transport, reading JSON-RPC from stdin and writing to stdout.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/mcp/tool.go",
+      "type": "file",
+      "name": "tool.go",
+      "filePath": "backend/internal/mcp/tool.go",
+      "summary": "Tool is a single MCP tool definition.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/metrics/metrics.go",
+      "type": "file",
+      "name": "metrics.go",
+      "filePath": "backend/internal/metrics/metrics.go",
+      "summary": "metrics (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/album.go",
+      "type": "file",
+      "name": "album.go",
+      "filePath": "backend/internal/repository/postgres/album.go",
+      "summary": "album (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/artist.go",
+      "type": "file",
+      "name": "artist.go",
+      "filePath": "backend/internal/repository/postgres/artist.go",
+      "summary": "artist (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/comics_cache.go",
+      "type": "file",
+      "name": "comics_cache.go",
+      "filePath": "backend/internal/repository/postgres/comics_cache.go",
+      "summary": "comics_cache (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/comics_downloads.go",
+      "type": "file",
+      "name": "comics_downloads.go",
+      "filePath": "backend/internal/repository/postgres/comics_downloads.go",
+      "summary": "comics_downloads (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/ebook.go",
+      "type": "file",
+      "name": "ebook.go",
+      "filePath": "backend/internal/repository/postgres/ebook.go",
+      "summary": "ebook (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/lyrics_cache.go",
+      "type": "file",
+      "name": "lyrics_cache.go",
+      "filePath": "backend/internal/repository/postgres/lyrics_cache.go",
+      "summary": "lyrics_cache (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/playback.go",
+      "type": "file",
+      "name": "playback.go",
+      "filePath": "backend/internal/repository/postgres/playback.go",
+      "summary": "playback (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/postgres.go",
+      "type": "file",
+      "name": "postgres.go",
+      "filePath": "backend/internal/repository/postgres/postgres.go",
+      "summary": "database/sql with the pgx/v5 driver.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/search.go",
+      "type": "file",
+      "name": "search.go",
+      "filePath": "backend/internal/repository/postgres/search.go",
+      "summary": "Artists",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/settings.go",
+      "type": "file",
+      "name": "settings.go",
+      "filePath": "backend/internal/repository/postgres/settings.go",
+      "summary": "settings (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/stats.go",
+      "type": "file",
+      "name": "stats.go",
+      "filePath": "backend/internal/repository/postgres/stats.go",
+      "summary": "stats (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/track.go",
+      "type": "file",
+      "name": "track.go",
+      "filePath": "backend/internal/repository/postgres/track.go",
+      "summary": "track (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/postgres/video.go",
+      "type": "file",
+      "name": "video.go",
+      "filePath": "backend/internal/repository/postgres/video.go",
+      "summary": "video (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/sqlite/lyrics_cache.go",
+      "type": "file",
+      "name": "lyrics_cache.go",
+      "filePath": "backend/internal/repository/sqlite/lyrics_cache.go",
+      "summary": "LyricsCacheRepo implements domain.LyricsCacheRepository.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/repository/sqlite/playback.go",
+      "type": "file",
+      "name": "playback.go",
+      "filePath": "backend/internal/repository/sqlite/playback.go",
+      "summary": "playback (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/teams/teams.go",
+      "type": "file",
+      "name": "teams.go",
+      "filePath": "backend/internal/teams/teams.go",
+      "summary": "TeamsBot handles Microsoft Teams bot webhook activities.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/telegram/telegram.go",
+      "type": "file",
+      "name": "telegram.go",
+      "filePath": "backend/internal/telegram/telegram.go",
+      "summary": "telegram (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/transcode/device.go",
+      "type": "file",
+      "name": "device.go",
+      "filePath": "backend/internal/transcode/device.go",
+      "summary": "CanDirectPlay returns true when the client's User-Agent suggests it can",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/transcode/transcode.go",
+      "type": "file",
+      "name": "transcode.go",
+      "filePath": "backend/internal/transcode/transcode.go",
+      "summary": "IsLossless returns true when the file is a lossless audio format.",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/transcode/trickplay.go",
+      "type": "file",
+      "name": "trickplay.go",
+      "filePath": "backend/internal/transcode/trickplay.go",
+      "summary": "TrickplayCols is the number of columns in the generated sprite sheet.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/usecase/ebook.go",
+      "type": "file",
+      "name": "ebook.go",
+      "filePath": "backend/internal/usecase/ebook.go",
+      "summary": "ebook (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/usecase/library.go",
+      "type": "file",
+      "name": "library.go",
+      "filePath": "backend/internal/usecase/library.go",
+      "summary": "Package usecase contains application-level business logic.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/usecase/lyrics.go",
+      "type": "file",
+      "name": "lyrics.go",
+      "filePath": "backend/internal/usecase/lyrics.go",
+      "summary": "LyricsUsecase provides lyrics cache management.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/usecase/playback.go",
+      "type": "file",
+      "name": "playback.go",
+      "filePath": "backend/internal/usecase/playback.go",
+      "summary": "playback (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/usecase/settings.go",
+      "type": "file",
+      "name": "settings.go",
+      "filePath": "backend/internal/usecase/settings.go",
+      "summary": "SettingsUsecase manages key-value settings (e.g. Last.fm credentials).",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/internal/usecase/video.go",
+      "type": "file",
+      "name": "video.go",
+      "filePath": "backend/internal/usecase/video.go",
+      "summary": "video (go file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:backend/mxm_test.go",
+      "type": "file",
+      "name": "mxm_test.go",
+      "filePath": "backend/mxm_test.go",
+      "summary": "Placeholder test file \u2014 add real tests here.",
+      "tags": [
+        "recent",
+        "test"
+      ]
+    },
+    {
+      "id": "file:cloak-proxy/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "cloak-proxy/Dockerfile",
+      "summary": "Dockerfile ( file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:cloak-proxy/requirements.txt",
+      "type": "document",
+      "name": "requirements.txt",
+      "filePath": "cloak-proxy/requirements.txt",
+      "summary": "requirements (txt file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:cloak-proxy/server.py",
+      "type": "file",
+      "name": "server.py",
+      "filePath": "cloak-proxy/server.py",
+      "summary": "All Playwright calls happen in this dedicated thread.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:commands/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "commands/README.md",
+      "summary": "commands/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/.gitkeep",
+      "type": "file",
+      "name": ".gitkeep",
+      "filePath": "data/.gitkeep",
+      "summary": ".gitkeep ( file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/1f0680740dc7144f.lrc",
+      "type": "file",
+      "name": "1f0680740dc7144f.lrc",
+      "filePath": "data/lyrics/1f0680740dc7144f.lrc",
+      "summary": "1f0680740dc7144f (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/3c25c6b5f1b7c8ef.lrc",
+      "type": "file",
+      "name": "3c25c6b5f1b7c8ef.lrc",
+      "filePath": "data/lyrics/3c25c6b5f1b7c8ef.lrc",
+      "summary": "3c25c6b5f1b7c8ef (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/7e71d9104d7f7cdc.lrc",
+      "type": "file",
+      "name": "7e71d9104d7f7cdc.lrc",
+      "filePath": "data/lyrics/7e71d9104d7f7cdc.lrc",
+      "summary": "7e71d9104d7f7cdc (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/93c098d14375a6e5.lrc",
+      "type": "file",
+      "name": "93c098d14375a6e5.lrc",
+      "filePath": "data/lyrics/93c098d14375a6e5.lrc",
+      "summary": "93c098d14375a6e5 (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/b7fb56e36c288dd4.lrc",
+      "type": "file",
+      "name": "b7fb56e36c288dd4.lrc",
+      "filePath": "data/lyrics/b7fb56e36c288dd4.lrc",
+      "summary": "b7fb56e36c288dd4 (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/ca4f1f555f4b336e.lrc",
+      "type": "file",
+      "name": "ca4f1f555f4b336e.lrc",
+      "filePath": "data/lyrics/ca4f1f555f4b336e.lrc",
+      "summary": "ca4f1f555f4b336e (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:data/lyrics/d8edd3df9c46ea64.lrc",
+      "type": "file",
+      "name": "d8edd3df9c46ea64.lrc",
+      "filePath": "data/lyrics/d8edd3df9c46ea64.lrc",
+      "summary": "d8edd3df9c46ea64 (lrc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:docker-compose.yml",
+      "type": "config",
+      "name": "docker-compose.yml",
+      "filePath": "docker-compose.yml",
+      "summary": "docker-compose (yml file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:docs/hermes.html",
+      "type": "file",
+      "name": "hermes.html",
+      "filePath": "docs/hermes.html",
+      "summary": "Reset & Base System */",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "frontend/index.html",
+      "summary": "index (html file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/package-lock.json",
+      "type": "config",
+      "name": "package-lock.json",
+      "filePath": "frontend/package-lock.json",
+      "summary": "package-lock (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "frontend/package.json",
+      "summary": "package (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/App.tsx",
+      "type": "file",
+      "name": "App.tsx",
+      "filePath": "frontend/src/App.tsx",
+      "summary": "Exports: App",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/AppRoutes.tsx",
+      "type": "file",
+      "name": "AppRoutes.tsx",
+      "filePath": "frontend/src/AppRoutes.tsx",
+      "summary": "Exports: AppRoutes",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/PlayerContext.tsx",
+      "type": "file",
+      "name": "PlayerContext.tsx",
+      "filePath": "frontend/src/PlayerContext.tsx",
+      "summary": "PlayerContext (tsx file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/api.ts",
+      "type": "file",
+      "name": "api.ts",
+      "filePath": "frontend/src/api.ts",
+      "summary": "Exports: imgSrc, fetchStats, fetchArtistDetail, fetchArtists, fetchAlbums",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/Equalizer.tsx",
+      "type": "file",
+      "name": "Equalizer.tsx",
+      "filePath": "frontend/src/components/Equalizer.tsx",
+      "summary": "Exports: Equalizer",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "file",
+      "name": "FavoritePill.tsx",
+      "filePath": "frontend/src/components/FavoritePill.tsx",
+      "summary": "Helper for session password storage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/Header.tsx",
+      "type": "file",
+      "name": "Header.tsx",
+      "filePath": "frontend/src/components/Header.tsx",
+      "summary": "Exports: Header",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/InstallBanner.tsx",
+      "type": "file",
+      "name": "InstallBanner.tsx",
+      "filePath": "frontend/src/components/InstallBanner.tsx",
+      "summary": "Exports: InstallBanner",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/LyricsView.tsx",
+      "type": "file",
+      "name": "LyricsView.tsx",
+      "filePath": "frontend/src/components/LyricsView.tsx",
+      "summary": "LyricsView (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/MobileNav.tsx",
+      "type": "file",
+      "name": "MobileNav.tsx",
+      "filePath": "frontend/src/components/MobileNav.tsx",
+      "summary": "MobileNav (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/PlayerBar.tsx",
+      "type": "file",
+      "name": "PlayerBar.tsx",
+      "filePath": "frontend/src/components/PlayerBar.tsx",
+      "summary": "PlayerBar (tsx file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/RadialNav.tsx",
+      "type": "file",
+      "name": "RadialNav.tsx",
+      "filePath": "frontend/src/components/RadialNav.tsx",
+      "summary": "\u2500\u2500 Icons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/Sidebar.tsx",
+      "type": "file",
+      "name": "Sidebar.tsx",
+      "filePath": "frontend/src/components/Sidebar.tsx",
+      "summary": "Exports: Sidebar",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/components/TrendingRepoCard.tsx",
+      "type": "file",
+      "name": "TrendingRepoCard.tsx",
+      "filePath": "frontend/src/components/TrendingRepoCard.tsx",
+      "summary": "Exports: getTier, TIER_META, Sparkline, RepoCard",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/data/mcpTools.ts",
+      "type": "file",
+      "name": "mcpTools.ts",
+      "filePath": "frontend/src/data/mcpTools.ts",
+      "summary": "Exports: MCP_TOOLS",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/i18n/en.json",
+      "type": "config",
+      "name": "en.json",
+      "filePath": "frontend/src/i18n/en.json",
+      "summary": "en (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/i18n/i18n.ts",
+      "type": "file",
+      "name": "i18n.ts",
+      "filePath": "frontend/src/i18n/i18n.ts",
+      "summary": "i18n (ts file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/i18n/vi.json",
+      "type": "config",
+      "name": "vi.json",
+      "filePath": "frontend/src/i18n/vi.json",
+      "summary": "vi (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/index.css",
+      "type": "file",
+      "name": "index.css",
+      "filePath": "frontend/src/index.css",
+      "summary": "\u2500\u2500 Slash command autocomplete \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/main.tsx",
+      "type": "file",
+      "name": "main.tsx",
+      "filePath": "frontend/src/main.tsx",
+      "summary": "main (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "type": "file",
+      "name": "AIAssistantPage.tsx",
+      "filePath": "frontend/src/pages/AIAssistantPage.tsx",
+      "summary": "AIAssistantPage (tsx file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/AIStatsPage.tsx",
+      "type": "file",
+      "name": "AIStatsPage.tsx",
+      "filePath": "frontend/src/pages/AIStatsPage.tsx",
+      "summary": "AIStatsPage (tsx file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/AlbumPage.tsx",
+      "type": "file",
+      "name": "AlbumPage.tsx",
+      "filePath": "frontend/src/pages/AlbumPage.tsx",
+      "summary": "Exports: AlbumPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/ArtistPage.tsx",
+      "type": "file",
+      "name": "ArtistPage.tsx",
+      "filePath": "frontend/src/pages/ArtistPage.tsx",
+      "summary": "Exports: ArtistPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/ArtistsPage.tsx",
+      "type": "file",
+      "name": "ArtistsPage.tsx",
+      "filePath": "frontend/src/pages/ArtistsPage.tsx",
+      "summary": "Exports: ArtistsPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/ComicsPage.tsx",
+      "type": "file",
+      "name": "ComicsPage.tsx",
+      "filePath": "frontend/src/pages/ComicsPage.tsx",
+      "summary": "ComicsPage (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/ComicsPageMobile.tsx",
+      "type": "file",
+      "name": "ComicsPageMobile.tsx",
+      "filePath": "frontend/src/pages/ComicsPageMobile.tsx",
+      "summary": "Exports: ComicsPageMobile",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/EbookReaderPage.tsx",
+      "type": "file",
+      "name": "EbookReaderPage.tsx",
+      "filePath": "frontend/src/pages/EbookReaderPage.tsx",
+      "summary": "Exports: EbookReaderPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/EbooksPage.tsx",
+      "type": "file",
+      "name": "EbooksPage.tsx",
+      "filePath": "frontend/src/pages/EbooksPage.tsx",
+      "summary": "EbooksPage (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/PlaylistsPage.tsx",
+      "type": "file",
+      "name": "PlaylistsPage.tsx",
+      "filePath": "frontend/src/pages/PlaylistsPage.tsx",
+      "summary": "PlaylistsPage (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/SearchPage.tsx",
+      "type": "file",
+      "name": "SearchPage.tsx",
+      "filePath": "frontend/src/pages/SearchPage.tsx",
+      "summary": "SearchPage (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/ToolsPage.tsx",
+      "type": "file",
+      "name": "ToolsPage.tsx",
+      "filePath": "frontend/src/pages/ToolsPage.tsx",
+      "summary": "ToolsPage (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/TrendingChartMode.tsx",
+      "type": "file",
+      "name": "TrendingChartMode.tsx",
+      "filePath": "frontend/src/pages/TrendingChartMode.tsx",
+      "summary": "TrendingChartMode (tsx file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/TrendingPage.tsx",
+      "type": "file",
+      "name": "TrendingPage.tsx",
+      "filePath": "frontend/src/pages/TrendingPage.tsx",
+      "summary": "Exports: TrendingPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/VideoPlayerPage.tsx",
+      "type": "file",
+      "name": "VideoPlayerPage.tsx",
+      "filePath": "frontend/src/pages/VideoPlayerPage.tsx",
+      "summary": "Exports: VideoPlayerPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/pages/VideosPage.tsx",
+      "type": "file",
+      "name": "VideosPage.tsx",
+      "filePath": "frontend/src/pages/VideosPage.tsx",
+      "summary": "Exports: VideosPage",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/types.ts",
+      "type": "file",
+      "name": "types.ts",
+      "filePath": "frontend/src/types.ts",
+      "summary": "types (ts file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/src/vite-env.d.ts",
+      "type": "file",
+      "name": "vite-env.d.ts",
+      "filePath": "frontend/src/vite-env.d.ts",
+      "summary": "<reference types=\"vite/client\" />",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/tsconfig.json",
+      "type": "config",
+      "name": "tsconfig.json",
+      "filePath": "frontend/tsconfig.json",
+      "summary": "tsconfig (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:frontend/vite.config.ts",
+      "type": "file",
+      "name": "vite.config.ts",
+      "filePath": "frontend/vite.config.ts",
+      "summary": "Cover images \u2014 rarely change, cache aggressively",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/evals/promptfooconfig.yaml",
+      "type": "config",
+      "name": "promptfooconfig.yaml",
+      "filePath": "harness/evals/promptfooconfig.yaml",
+      "summary": "L4 evals LLM \u2014 golden-question regression: wiki c\u00f3 th\u1eadt s\u1ef1 gi\u00fap agent tr\u1ea3 l\u1eddi \u0111\u00fang?",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/metrics/baseline-2026-06-11.json",
+      "type": "config",
+      "name": "baseline-2026-06-11.json",
+      "filePath": "harness/metrics/baseline-2026-06-11.json",
+      "summary": "baseline-2026-06-11 (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/metrics/wiki-health.csv",
+      "type": "file",
+      "name": "wiki-health.csv",
+      "filePath": "harness/metrics/wiki-health.csv",
+      "summary": "wiki-health (csv file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/policy.yaml",
+      "type": "config",
+      "name": "policy.yaml",
+      "filePath": "harness/policy.yaml",
+      "summary": "L0 POLICY \u2014 b\u1ea5t bi\u1ebfn c\u1ee7a llmwiki, thu\u1ea7n khai b\u00e1o, kh\u00f4ng d\u00ednh vendor.",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/recipe.md",
+      "type": "document",
+      "name": "recipe.md",
+      "filePath": "harness/recipe.md",
+      "summary": "Harness Recipe \u2014 ki\u1ebfn tr\u00fac 5 l\u1edbp, vendor-agnostic",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/scripts/install-harness.sh",
+      "type": "script",
+      "name": "install-harness.sh",
+      "filePath": "harness/scripts/install-harness.sh",
+      "summary": "!/usr/bin/env bash",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/scripts/wiki-health.py",
+      "type": "file",
+      "name": "wiki-health.py",
+      "filePath": "harness/scripts/wiki-health.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/validators/folder_structure.py",
+      "type": "file",
+      "name": "folder_structure.py",
+      "filePath": "harness/validators/folder_structure.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/validators/index_sync.py",
+      "type": "file",
+      "name": "index_sync.py",
+      "filePath": "harness/validators/index_sync.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/validators/no_write_raw.py",
+      "type": "file",
+      "name": "no_write_raw.py",
+      "filePath": "harness/validators/no_write_raw.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:harness/validators/origin_required.py",
+      "type": "file",
+      "name": "origin_required.py",
+      "filePath": "harness/validators/origin_required.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/backend.yaml",
+      "type": "config",
+      "name": "backend.yaml",
+      "filePath": "k8s/backend.yaml",
+      "summary": "backend (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/cloak-proxy.yaml",
+      "type": "config",
+      "name": "cloak-proxy.yaml",
+      "filePath": "k8s/cloak-proxy.yaml",
+      "summary": "cloak-proxy (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/cloudflared.yaml",
+      "type": "config",
+      "name": "cloudflared.yaml",
+      "filePath": "k8s/cloudflared.yaml",
+      "summary": "Secret ch\u1ee9a tunnel credentials \u2014 t\u1ea1o 1 l\u1ea7n:",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/dashboard-admin.yaml",
+      "type": "config",
+      "name": "dashboard-admin.yaml",
+      "filePath": "k8s/dashboard-admin.yaml",
+      "summary": "dashboard-admin (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/frontend.yaml",
+      "type": "config",
+      "name": "frontend.yaml",
+      "filePath": "k8s/frontend.yaml",
+      "summary": "frontend (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/headlamp.yaml",
+      "type": "config",
+      "name": "headlamp.yaml",
+      "filePath": "k8s/headlamp.yaml",
+      "summary": "headlamp (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/namespace.yaml",
+      "type": "config",
+      "name": "namespace.yaml",
+      "filePath": "k8s/namespace.yaml",
+      "summary": "namespace (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/postgres-config.yaml",
+      "type": "config",
+      "name": "postgres-config.yaml",
+      "filePath": "k8s/postgres-config.yaml",
+      "summary": "!/bin/bash",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/postgres-standby.yaml",
+      "type": "config",
+      "name": "postgres-standby.yaml",
+      "filePath": "k8s/postgres-standby.yaml",
+      "summary": "postgres-standby (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/postgres.yaml",
+      "type": "config",
+      "name": "postgres.yaml",
+      "filePath": "k8s/postgres.yaml",
+      "summary": "postgres (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:k8s/secret.yaml",
+      "type": "config",
+      "name": "secret.yaml",
+      "filePath": "k8s/secret.yaml",
+      "summary": "secret (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/.gitignore",
+      "type": "file",
+      "name": ".gitignore",
+      "filePath": "llmwiki/.claude/.gitignore",
+      "summary": "runtime data \u2014 khong commit",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/__pycache__/hooklib.cpython-310.pyc",
+      "type": "file",
+      "name": "hooklib.cpython-310.pyc",
+      "filePath": "llmwiki/.claude/hooks/__pycache__/hooklib.cpython-310.pyc",
+      "summary": "hooklib.cpython-310 (pyc file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/hooklib.py",
+      "type": "file",
+      "name": "hooklib.py",
+      "filePath": "llmwiki/.claude/hooks/hooklib.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/post_tool_use.py",
+      "type": "file",
+      "name": "post_tool_use.py",
+      "filePath": "llmwiki/.claude/hooks/post_tool_use.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/pre_tool_use.py",
+      "type": "file",
+      "name": "pre_tool_use.py",
+      "filePath": "llmwiki/.claude/hooks/pre_tool_use.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/session_end.py",
+      "type": "file",
+      "name": "session_end.py",
+      "filePath": "llmwiki/.claude/hooks/session_end.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/stop.py",
+      "type": "file",
+      "name": "stop.py",
+      "filePath": "llmwiki/.claude/hooks/stop.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/validators/folder_structure.py",
+      "type": "file",
+      "name": "folder_structure.py",
+      "filePath": "llmwiki/.claude/hooks/validators/folder_structure.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/validators/index_sync.py",
+      "type": "file",
+      "name": "index_sync.py",
+      "filePath": "llmwiki/.claude/hooks/validators/index_sync.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/validators/no_write_raw.py",
+      "type": "file",
+      "name": "no_write_raw.py",
+      "filePath": "llmwiki/.claude/hooks/validators/no_write_raw.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/hooks/validators/origin_required.py",
+      "type": "file",
+      "name": "origin_required.py",
+      "filePath": "llmwiki/.claude/hooks/validators/origin_required.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/settings.json",
+      "type": "config",
+      "name": "settings.json",
+      "filePath": "llmwiki/.claude/settings.json",
+      "summary": "settings (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/settings.json.bak.1781115400",
+      "type": "file",
+      "name": "settings.json.bak.1781115400",
+      "filePath": "llmwiki/.claude/settings.json.bak.1781115400",
+      "summary": "settings.json.bak (1781115400 file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/settings.json.bak.1781115540",
+      "type": "file",
+      "name": "settings.json.bak.1781115540",
+      "filePath": "llmwiki/.claude/settings.json.bak.1781115540",
+      "summary": "settings.json.bak (1781115540 file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/settings.json.bak.1781115599",
+      "type": "file",
+      "name": "settings.json.bak.1781115599",
+      "filePath": "llmwiki/.claude/settings.json.bak.1781115599",
+      "summary": "settings.json.bak (1781115599 file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/settings.json.bak.1781115731",
+      "type": "file",
+      "name": "settings.json.bak.1781115731",
+      "filePath": "llmwiki/.claude/settings.json.bak.1781115731",
+      "summary": "settings.json.bak (1781115731 file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.claude/settings.json.bak.1781167836",
+      "type": "file",
+      "name": "settings.json.bak.1781167836",
+      "filePath": "llmwiki/.claude/settings.json.bak.1781167836",
+      "summary": "settings.json.bak (1781167836 file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.llmwiki/knowledge-graph.json",
+      "type": "config",
+      "name": "knowledge-graph.json",
+      "filePath": "llmwiki/.llmwiki/knowledge-graph.json",
+      "summary": "knowledge-graph (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/.llmwiki/meta.json",
+      "type": "config",
+      "name": "meta.json",
+      "filePath": "llmwiki/.llmwiki/meta.json",
+      "summary": "meta (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/html/100626-cover-race-k8s-deploy.html",
+      "type": "file",
+      "name": "100626-cover-race-k8s-deploy.html",
+      "filePath": "llmwiki/html/100626-cover-race-k8s-deploy.html",
+      "summary": "NAV */",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/raw/.gitkeep",
+      "type": "file",
+      "name": ".gitkeep",
+      "filePath": "llmwiki/raw/.gitkeep",
+      "summary": ".gitkeep ( file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/raw/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/raw/README.md",
+      "summary": "raw/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/skills/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/skills/README.md",
+      "summary": "skills/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/skills/deploy/k8s-frontend.md",
+      "type": "document",
+      "name": "k8s-frontend.md",
+      "filePath": "llmwiki/skills/deploy/k8s-frontend.md",
+      "summary": "Skill: k8s-frontend-deploy",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/skills/orchestrate/orca-workflow.md",
+      "type": "document",
+      "name": "orca-workflow.md",
+      "filePath": "llmwiki/skills/orchestrate/orca-workflow.md",
+      "summary": "Skill: orca-workflow",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/tools/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/tools/README.md",
+      "summary": "Detect changed files and update meta.json",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/tools/add_complexity.py",
+      "type": "file",
+      "name": "add_complexity.py",
+      "filePath": "llmwiki/tools/add_complexity.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/tools/incremental_analyze.py",
+      "type": "file",
+      "name": "incremental_analyze.py",
+      "filePath": "llmwiki/tools/incremental_analyze.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/tools/parse_with_treesitter.py",
+      "type": "file",
+      "name": "parse_with_treesitter.py",
+      "filePath": "llmwiki/tools/parse_with_treesitter.py",
+      "summary": "!/usr/bin/env python3",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/wiki/README.md",
+      "summary": "wiki/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/AIAgentRuntime.md",
+      "type": "document",
+      "name": "AIAgentRuntime.md",
+      "filePath": "llmwiki/wiki/concepts/AIAgentRuntime.md",
+      "summary": "AI Agent Runtime",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/AIAnalytics.md",
+      "type": "document",
+      "name": "AIAnalytics.md",
+      "filePath": "llmwiki/wiki/concepts/AIAnalytics.md",
+      "summary": "AI Analytics",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/AIChatSessions.md",
+      "type": "document",
+      "name": "AIChatSessions.md",
+      "filePath": "llmwiki/wiki/concepts/AIChatSessions.md",
+      "summary": "AI Chat Sessions / Rooms",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/AIDatetimeInjection.md",
+      "type": "document",
+      "name": "AIDatetimeInjection.md",
+      "filePath": "llmwiki/wiki/concepts/AIDatetimeInjection.md",
+      "summary": "AI Datetime Injection in System Prompt",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/AIMarkdownRendering.md",
+      "type": "document",
+      "name": "AIMarkdownRendering.md",
+      "filePath": "llmwiki/wiki/concepts/AIMarkdownRendering.md",
+      "summary": "AI Markdown + GFM Rendering",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/APIReference.md",
+      "type": "document",
+      "name": "APIReference.md",
+      "filePath": "llmwiki/wiki/concepts/APIReference.md",
+      "summary": "API Reference",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/Architecture.md",
+      "type": "document",
+      "name": "Architecture.md",
+      "filePath": "llmwiki/wiki/concepts/Architecture.md",
+      "summary": "Architecture",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/AudioReliability.md",
+      "type": "document",
+      "name": "AudioReliability.md",
+      "filePath": "llmwiki/wiki/concepts/AudioReliability.md",
+      "summary": "Proposal: Fix Audio Interruption During Playback",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/CleanArchitecture.md",
+      "type": "document",
+      "name": "CleanArchitecture.md",
+      "filePath": "llmwiki/wiki/concepts/CleanArchitecture.md",
+      "summary": "Architecture: Clean Architecture & ACID Backend",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/ComicsDownloader.md",
+      "type": "document",
+      "name": "ComicsDownloader.md",
+      "filePath": "llmwiki/wiki/concepts/ComicsDownloader.md",
+      "summary": "Summary",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/DeezerEnricher.md",
+      "type": "document",
+      "name": "DeezerEnricher.md",
+      "filePath": "llmwiki/wiki/concepts/DeezerEnricher.md",
+      "summary": "Deezer Artist Image Enricher",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/EbookEnhancements.md",
+      "type": "document",
+      "name": "EbookEnhancements.md",
+      "filePath": "llmwiki/wiki/concepts/EbookEnhancements.md",
+      "summary": "Proposal: Ebook NSFW Tagging & PDF Cover Extraction",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/EbookThemes.md",
+      "type": "document",
+      "name": "EbookThemes.md",
+      "filePath": "llmwiki/wiki/concepts/EbookThemes.md",
+      "summary": "Proposal: Fix Ebook Blank Screen via Themes & Style Normalization",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/EccHarness.md",
+      "type": "document",
+      "name": "EccHarness.md",
+      "filePath": "llmwiki/wiki/concepts/EccHarness.md",
+      "summary": "Everything Claude Code (ECC) Harness: Agent Orchestration System",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/FavoritePlaylistPill.md",
+      "type": "document",
+      "name": "FavoritePlaylistPill.md",
+      "filePath": "llmwiki/wiki/concepts/FavoritePlaylistPill.md",
+      "summary": "FavoritePlaylistPill",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/GaplessPlayback.md",
+      "type": "document",
+      "name": "GaplessPlayback.md",
+      "filePath": "llmwiki/wiki/concepts/GaplessPlayback.md",
+      "summary": "Proposal: Gapless Playback & Early Preloading",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/I18n.md",
+      "type": "document",
+      "name": "I18n.md",
+      "filePath": "llmwiki/wiki/concepts/I18n.md",
+      "summary": "I18n \u2014 Bilingual EN/VI",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/JellyfinFeatures.md",
+      "type": "document",
+      "name": "JellyfinFeatures.md",
+      "filePath": "llmwiki/wiki/concepts/JellyfinFeatures.md",
+      "summary": "Jellyfin-Inspired Features",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/LlmwikiSetupFlow.md",
+      "type": "document",
+      "name": "LlmwikiSetupFlow.md",
+      "filePath": "llmwiki/wiki/concepts/LlmwikiSetupFlow.md",
+      "summary": "LlmwikiSetupFlow",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/Lyrics.md",
+      "type": "document",
+      "name": "Lyrics.md",
+      "filePath": "llmwiki/wiki/concepts/Lyrics.md",
+      "summary": "Lyrics",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/LyricsReliability.md",
+      "type": "document",
+      "name": "LyricsReliability.md",
+      "filePath": "llmwiki/wiki/concepts/LyricsReliability.md",
+      "summary": "Summary",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/LyricsUI.md",
+      "type": "document",
+      "name": "LyricsUI.md",
+      "filePath": "llmwiki/wiki/concepts/LyricsUI.md",
+      "summary": "Proposal: Lyrics UI Improvements (Auto-scroll & Fade-out)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/MCPServer.md",
+      "type": "document",
+      "name": "MCPServer.md",
+      "filePath": "llmwiki/wiki/concepts/MCPServer.md",
+      "summary": "MCP Server + AI Assistant",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/MCPToolsCheatsheet.md",
+      "type": "document",
+      "name": "MCPToolsCheatsheet.md",
+      "filePath": "llmwiki/wiki/concepts/MCPToolsCheatsheet.md",
+      "summary": "MCP Tools Cheatsheet",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/MCPWebSearch.md",
+      "type": "document",
+      "name": "MCPWebSearch.md",
+      "filePath": "llmwiki/wiki/concepts/MCPWebSearch.md",
+      "summary": "MCP Web Search + Browse URL",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/MobileUI.md",
+      "type": "document",
+      "name": "MobileUI.md",
+      "filePath": "llmwiki/wiki/concepts/MobileUI.md",
+      "summary": "Mobile UI",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/NowPlayingUI.md",
+      "type": "document",
+      "name": "NowPlayingUI.md",
+      "filePath": "llmwiki/wiki/concepts/NowPlayingUI.md",
+      "summary": "Concept: Now Playing UI (Modernized)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/PlayTrackAlbumIDFix.md",
+      "type": "document",
+      "name": "PlayTrackAlbumIDFix.md",
+      "filePath": "llmwiki/wiki/concepts/PlayTrackAlbumIDFix.md",
+      "summary": "Play Track Album ID Fix",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/PlayerBugfixes190526.md",
+      "type": "document",
+      "name": "PlayerBugfixes190526.md",
+      "filePath": "llmwiki/wiki/concepts/PlayerBugfixes190526.md",
+      "summary": "Player Bugfixes \u2014 Rapid Skip & Progress Bar (2026-05-19)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/ProgressRestoreReload.md",
+      "type": "document",
+      "name": "ProgressRestoreReload.md",
+      "filePath": "llmwiki/wiki/concepts/ProgressRestoreReload.md",
+      "summary": "Progress Restore on Page Reload",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/QueueLocking.md",
+      "type": "document",
+      "name": "QueueLocking.md",
+      "filePath": "llmwiki/wiki/concepts/QueueLocking.md",
+      "summary": "Queue Locking (lockedQueueRef)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/wiki/concepts/README.md",
+      "summary": "wiki/concepts/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/RTK.md",
+      "type": "document",
+      "name": "RTK.md",
+      "filePath": "llmwiki/wiki/concepts/RTK.md",
+      "summary": "RTK \u2014 Rust Token Killer",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/Scanner.md",
+      "type": "document",
+      "name": "Scanner.md",
+      "filePath": "llmwiki/wiki/concepts/Scanner.md",
+      "summary": "Scanner",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/SmartRadio.md",
+      "type": "document",
+      "name": "SmartRadio.md",
+      "filePath": "llmwiki/wiki/concepts/SmartRadio.md",
+      "summary": "Smart Radio",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/TrendingChartMode.md",
+      "type": "document",
+      "name": "TrendingChartMode.md",
+      "filePath": "llmwiki/wiki/concepts/TrendingChartMode.md",
+      "summary": "TrendingChartMode",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/TrendingInsights.md",
+      "type": "document",
+      "name": "TrendingInsights.md",
+      "filePath": "llmwiki/wiki/concepts/TrendingInsights.md",
+      "summary": "Trending Insights \u2014 AI Industry Impact Dashboard",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/TrendingRadialMenuControls.md",
+      "type": "document",
+      "name": "TrendingRadialMenuControls.md",
+      "filePath": "llmwiki/wiki/concepts/TrendingRadialMenuControls.md",
+      "summary": "TrendingRadialMenuControls",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/UnderstandAnything-LlmwikiIntegration.md",
+      "type": "document",
+      "name": "UnderstandAnything-LlmwikiIntegration.md",
+      "filePath": "llmwiki/wiki/concepts/UnderstandAnything-LlmwikiIntegration.md",
+      "summary": "Integration Roadmap: ECC + Understand-Anything + LLMWiki",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/UnderstandAnything.md",
+      "type": "document",
+      "name": "UnderstandAnything.md",
+      "filePath": "llmwiki/wiki/concepts/UnderstandAnything.md",
+      "summary": "Understand-Anything: Code Analysis & Knowledge Graph Platform",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/VideoStreaming.md",
+      "type": "document",
+      "name": "VideoStreaming.md",
+      "filePath": "llmwiki/wiki/concepts/VideoStreaming.md",
+      "summary": "Video Streaming",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/YouTubeIntegration.md",
+      "type": "document",
+      "name": "YouTubeIntegration.md",
+      "filePath": "llmwiki/wiki/concepts/YouTubeIntegration.md",
+      "summary": "YouTube Integration",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/concepts/_template.md",
+      "type": "document",
+      "name": "_template.md",
+      "filePath": "llmwiki/wiki/concepts/_template.md",
+      "summary": "<Concept Title>",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/draft/cave/050626-playlist-play-btn-fix-fe.md",
+      "type": "document",
+      "name": "050626-playlist-play-btn-fix-fe.md",
+      "filePath": "llmwiki/wiki/draft/cave/050626-playlist-play-btn-fix-fe.md",
+      "summary": "050626-playlist-play-btn-fix-fe",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/draft/orca/050626-fix-playback-sql-bugs.md",
+      "type": "document",
+      "name": "050626-fix-playback-sql-bugs.md",
+      "filePath": "llmwiki/wiki/draft/orca/050626-fix-playback-sql-bugs.md",
+      "summary": "050626-fix-playback-sql-bugs",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/draft/orca/060626-ai-build-jenkins-deploy.md",
+      "type": "document",
+      "name": "060626-ai-build-jenkins-deploy.md",
+      "filePath": "llmwiki/wiki/draft/orca/060626-ai-build-jenkins-deploy.md",
+      "summary": "060626-ai-build-jenkins-deploy",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/draft/orca/060626-ansible-k8s-cozyroom-deploy.md",
+      "type": "document",
+      "name": "060626-ansible-k8s-cozyroom-deploy.md",
+      "filePath": "llmwiki/wiki/draft/orca/060626-ansible-k8s-cozyroom-deploy.md",
+      "summary": "060626-ansible-k8s-cozyroom-deploy",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/draft/orca/100626-cover-fetch-race-fix.md",
+      "type": "document",
+      "name": "100626-cover-fetch-race-fix.md",
+      "filePath": "llmwiki/wiki/draft/orca/100626-cover-fetch-race-fix.md",
+      "summary": "100626-cover-fetch-race-fix",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/draft/orca/100626-player-progress-time-stale-fix.md",
+      "type": "document",
+      "name": "100626-player-progress-time-stale-fix.md",
+      "filePath": "llmwiki/wiki/draft/orca/100626-player-progress-time-stale-fix.md",
+      "summary": "100626-player-progress-time-stale-fix",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/ebook_migration_task.md",
+      "type": "document",
+      "name": "ebook_migration_task.md",
+      "filePath": "llmwiki/wiki/ebook_migration_task.md",
+      "summary": "Ebook Migration Continuation",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/entities/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/wiki/entities/README.md",
+      "summary": "wiki/entities/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/entities/_template.md",
+      "type": "document",
+      "name": "_template.md",
+      "filePath": "llmwiki/wiki/entities/_template.md",
+      "summary": "<Entity Name>",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/index.md",
+      "type": "document",
+      "name": "index.md",
+      "filePath": "llmwiki/wiki/index.md",
+      "summary": "Wiki Index",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/log.md",
+      "type": "document",
+      "name": "log.md",
+      "filePath": "llmwiki/wiki/log.md",
+      "summary": "Operation Log",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/080626-grafana-dashboard-best-practices.md",
+      "type": "document",
+      "name": "080626-grafana-dashboard-best-practices.md",
+      "filePath": "llmwiki/wiki/sources/080626-grafana-dashboard-best-practices.md",
+      "summary": "Grafana Dashboard Best Practices: Lessons Learned",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/080626-k3s-install-best-practices.md",
+      "type": "document",
+      "name": "080626-k3s-install-best-practices.md",
+      "filePath": "llmwiki/wiki/sources/080626-k3s-install-best-practices.md",
+      "summary": "K3S Cluster Install: Best Practices & Lessons Learned",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/080626-wsl2-ssh-autostart.md",
+      "type": "document",
+      "name": "080626-wsl2-ssh-autostart.md",
+      "filePath": "llmwiki/wiki/sources/080626-wsl2-ssh-autostart.md",
+      "summary": "WSL2 SSH & Service Auto-Start: Best Practices",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/190526-translate-shortcut-overlay.md",
+      "type": "document",
+      "name": "190526-translate-shortcut-overlay.md",
+      "filePath": "llmwiki/wiki/sources/190526-translate-shortcut-overlay.md",
+      "summary": "Request",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/270526-playlist-tool-bugs-postmortem.md",
+      "type": "document",
+      "name": "270526-playlist-tool-bugs-postmortem.md",
+      "filePath": "llmwiki/wiki/sources/270526-playlist-tool-bugs-postmortem.md",
+      "summary": "Playlist Tool Bugs Post-mortem (2026-05-27)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/wiki/sources/README.md",
+      "summary": "wiki/sources/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/_template.md",
+      "type": "document",
+      "name": "_template.md",
+      "filePath": "llmwiki/wiki/sources/_template.md",
+      "summary": "<Source Title>",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/020626-reliability-fixes-streaming-be.md",
+      "type": "document",
+      "name": "020626-reliability-fixes-streaming-be.md",
+      "filePath": "llmwiki/wiki/sources/draft/020626-reliability-fixes-streaming-be.md",
+      "summary": "020626-reliability-fixes-streaming-be",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/050626-smart-queue-yt-injection-fe.md",
+      "type": "document",
+      "name": "050626-smart-queue-yt-injection-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/050626-smart-queue-yt-injection-fe.md",
+      "summary": "050626-smart-queue-yt-injection-fe",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/050626-yt-discovery-trending-be-fe.md",
+      "type": "document",
+      "name": "050626-yt-discovery-trending-be-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/050626-yt-discovery-trending-be-fe.md",
+      "summary": "050626-yt-discovery-trending-be-fe",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/070626-k3s-cozyroom-master-control-plane.md",
+      "type": "document",
+      "name": "070626-k3s-cozyroom-master-control-plane.md",
+      "filePath": "llmwiki/wiki/sources/draft/070626-k3s-cozyroom-master-control-plane.md",
+      "summary": "070626-k3s-cozyroom-master-control-plane",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/080626-k8s-dashboard-headlamp.md",
+      "type": "document",
+      "name": "080626-k8s-dashboard-headlamp.md",
+      "filePath": "llmwiki/wiki/sources/draft/080626-k8s-dashboard-headlamp.md",
+      "summary": "080626-k8s-dashboard-headlamp",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/120526-hardcoded-login-screen.html",
+      "type": "file",
+      "name": "120526-hardcoded-login-screen.html",
+      "filePath": "llmwiki/wiki/sources/draft/120526-hardcoded-login-screen.html",
+      "summary": "120526-hardcoded-login-screen (html file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/190526-lyrics-stale-fetch-race-fix-fe.md",
+      "type": "document",
+      "name": "190526-lyrics-stale-fetch-race-fix-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/190526-lyrics-stale-fetch-race-fix-fe.md",
+      "summary": "Proposal: Fix Rapid-Skip Bugs (Lyrics Race + Progress Bar)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/190526-remove-tab-toast-lyrics-back-fe.md",
+      "type": "document",
+      "name": "190526-remove-tab-toast-lyrics-back-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/190526-remove-tab-toast-lyrics-back-fe.md",
+      "summary": "Proposal: Remove Tab Toast \u2014 Left-Zone Tap Returns to Now Playing",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/230526-4-issues-wiki-search-lyrics-cover-fe.md",
+      "type": "document",
+      "name": "230526-4-issues-wiki-search-lyrics-cover-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/230526-4-issues-wiki-search-lyrics-cover-fe.md",
+      "summary": "Proposal: 4 Issues \u2014 Wiki Migration, Search Bar, Lyrics Sync, Cover Image",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/230526-llmwiki-setup-join-skills.md",
+      "type": "document",
+      "name": "230526-llmwiki-setup-join-skills.md",
+      "filePath": "llmwiki/wiki/sources/draft/230526-llmwiki-setup-join-skills.md",
+      "summary": "Proposal: llmwiki Setup & Join Skills",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/230526-trending-impact-ui-fe.md",
+      "type": "document",
+      "name": "230526-trending-impact-ui-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/230526-trending-impact-ui-fe.md",
+      "summary": "Proposal: Trending \u2014 AI Industry Impact Score + Visual Tiers",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-drawer-ai-stardelta-fix-fe-be.md",
+      "type": "document",
+      "name": "240526-drawer-ai-stardelta-fix-fe-be.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-drawer-ai-stardelta-fix-fe-be.md",
+      "summary": "Proposal: Drawer AI cards + Star Delta fix + Date Picker",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-ecc-ua-repo-integration.md",
+      "type": "document",
+      "name": "240526-ecc-ua-repo-integration.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-ecc-ua-repo-integration.md",
+      "summary": "Proposal: Research ECC Harness & Understand-Anything Integration",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-i18n-en-vi-fe.md",
+      "type": "document",
+      "name": "240526-i18n-en-vi-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-i18n-en-vi-fe.md",
+      "summary": "Proposal: Bilingual EN/VI i18n",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-survey-downie-youtube-320kbps.md",
+      "type": "document",
+      "name": "240526-survey-downie-youtube-320kbps.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-survey-downie-youtube-320kbps.md",
+      "summary": "Kh\u1ea3o s\u00e1t: T\u1ea3i nh\u1ea1c 320kbps t\u1eeb YouTube b\u1eb1ng Downie",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-trending-chart-mode-fe.md",
+      "type": "document",
+      "name": "240526-trending-chart-mode-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-trending-chart-mode-fe.md",
+      "summary": "Proposal: Trending Chart Mode",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-youtube-downloads-consolidation.md",
+      "type": "document",
+      "name": "240526-youtube-downloads-consolidation.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-youtube-downloads-consolidation.md",
+      "summary": "Proposal: Maintain YouTube Downloads as Separate Albums per Uploader and Fix Scanner Metadata Overwrite",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/240526-youtube-search-stream-download.md",
+      "type": "document",
+      "name": "240526-youtube-search-stream-download.md",
+      "filePath": "llmwiki/wiki/sources/draft/240526-youtube-search-stream-download.md",
+      "summary": "Proposal: YouTube Search, Direct Stream, and High-Quality Download",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/250525-radial-nav-bubble.md",
+      "type": "document",
+      "name": "250525-radial-nav-bubble.md",
+      "filePath": "llmwiki/wiki/sources/draft/250525-radial-nav-bubble.md",
+      "summary": "Proposal: Radial Navigation Bubble",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/260525-favorite-playlist-pill.md",
+      "type": "document",
+      "name": "260525-favorite-playlist-pill.md",
+      "filePath": "llmwiki/wiki/sources/draft/260525-favorite-playlist-pill.md",
+      "summary": "Proposal: Favorite Playlist Pill with Local & Permanent Storage",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/260525-trending-radial-menu-controls-fe.md",
+      "type": "document",
+      "name": "260525-trending-radial-menu-controls-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/260525-trending-radial-menu-controls-fe.md",
+      "summary": "Proposal: T\u00edch h\u1ee3p b\u1ed9 n\u00fat \u0111i\u1ec1u h\u01b0\u1edbng Trending v\u00e0o L\u1edbp th\u1ee9 3 c\u1ee7a Radial Menu (Nightingale Rose)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/260526-ai-agent-upgrade-be-fe.md",
+      "type": "document",
+      "name": "260526-ai-agent-upgrade-be-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/260526-ai-agent-upgrade-be-fe.md",
+      "summary": "Proposal: AI Agent Upgrade \u2014 Memory + Token Display",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/260526-mcp-server-ai-chat-tab-be-fe.md",
+      "type": "document",
+      "name": "260526-mcp-server-ai-chat-tab-be-fe.md",
+      "filePath": "llmwiki/wiki/sources/draft/260526-mcp-server-ai-chat-tab-be-fe.md",
+      "summary": "Proposal: MCP Server + AI Assistant Chat Tab",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/270526-ai-chat-sessions-rooms.md",
+      "type": "document",
+      "name": "270526-ai-chat-sessions-rooms.md",
+      "filePath": "llmwiki/wiki/sources/draft/270526-ai-chat-sessions-rooms.md",
+      "summary": "Proposal: AI Chat Sessions (Rooms)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/270526-ai-media-card-playlist-covers.md",
+      "type": "document",
+      "name": "270526-ai-media-card-playlist-covers.md",
+      "filePath": "llmwiki/wiki/sources/draft/270526-ai-media-card-playlist-covers.md",
+      "summary": "Proposal: AI Media Cards + Playlist Cover Gallery",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/270526-ai-stats-cost-calculator.md",
+      "type": "document",
+      "name": "270526-ai-stats-cost-calculator.md",
+      "filePath": "llmwiki/wiki/sources/draft/270526-ai-stats-cost-calculator.md",
+      "summary": "Proposal: AI Stats \u2014 Cost Calculator + Image OCR Pricing",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/280526-hermes-research-distillation.md",
+      "type": "document",
+      "name": "280526-hermes-research-distillation.md",
+      "filePath": "llmwiki/wiki/sources/draft/280526-hermes-research-distillation.md",
+      "summary": "Proposal: Hermes Agent Research & Distillation for Cozyroom",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/280526-mcp-web-search-browse.md",
+      "type": "document",
+      "name": "280526-mcp-web-search-browse.md",
+      "filePath": "llmwiki/wiki/sources/draft/280526-mcp-web-search-browse.md",
+      "summary": "Proposal: MCP Web Search + Browse Tools via Cloak Proxy",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/280526-sqlite-to-postgres.md",
+      "type": "document",
+      "name": "280526-sqlite-to-postgres.md",
+      "filePath": "llmwiki/wiki/sources/draft/280526-sqlite-to-postgres.md",
+      "summary": "Proposal: Migrate SQLite \u2192 PostgreSQL (separate container)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "llmwiki/wiki/sources/draft/README.md",
+      "summary": "wiki/sources/draft/",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/_template.md",
+      "type": "document",
+      "name": "_template.md",
+      "filePath": "llmwiki/wiki/sources/draft/_template.md",
+      "summary": "<DDMMYY-feature-name-module>",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/adk-distill.md",
+      "type": "document",
+      "name": "adk-distill.md",
+      "filePath": "llmwiki/wiki/sources/draft/adk-distill.md",
+      "summary": "ADK (Agent Development Kit) \u2014 Distilled",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/draft/propose-adk-cozyroom.md",
+      "type": "document",
+      "name": "propose-adk-cozyroom.md",
+      "filePath": "llmwiki/wiki/sources/draft/propose-adk-cozyroom.md",
+      "summary": "Proposal: \u00c1p d\u1ee5ng ADK Concepts v\u00e0o Cozyroom",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/homelab-music-brainstorm.md",
+      "type": "document",
+      "name": "homelab-music-brainstorm.md",
+      "filePath": "llmwiki/wiki/sources/homelab-music-brainstorm.md",
+      "summary": "Homelab Music Setup \u2014 Brainstorm Notes",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/music-giatbh-io-vn-evaluation.md",
+      "type": "document",
+      "name": "music-giatbh-io-vn-evaluation.md",
+      "filePath": "llmwiki/wiki/sources/music-giatbh-io-vn-evaluation.md",
+      "summary": "\u0110\u00e1nh gi\u00e1 UI/UX \u2014 music.giatbh.io.vn",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/project-requirements.md",
+      "type": "document",
+      "name": "project-requirements.md",
+      "filePath": "llmwiki/wiki/sources/project-requirements.md",
+      "summary": "Project Requirements \u2014 Cozyroom",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/prometheus-standalone-container-infra.md",
+      "type": "document",
+      "name": "prometheus-standalone-container-infra.md",
+      "filePath": "llmwiki/wiki/sources/prometheus-standalone-container-infra.md",
+      "summary": "Proposal: Prometheus + Grafana as Standalone Docker Stack",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/rtk-ai-rtk.md",
+      "type": "document",
+      "name": "rtk-ai-rtk.md",
+      "filePath": "llmwiki/wiki/sources/rtk-ai-rtk.md",
+      "summary": "Source: rtk-ai/rtk",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/skill-propose.md",
+      "type": "document",
+      "name": "skill-propose.md",
+      "filePath": "llmwiki/wiki/sources/skill-propose.md",
+      "summary": "Skill: propose",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/skill-verify-before-commit.md",
+      "type": "document",
+      "name": "skill-verify-before-commit.md",
+      "filePath": "llmwiki/wiki/sources/skill-verify-before-commit.md",
+      "summary": "Skill: verify-before-commit",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:llmwiki/wiki/sources/tech-stack-decisions.md",
+      "type": "document",
+      "name": "tech-stack-decisions.md",
+      "filePath": "llmwiki/wiki/sources/tech-stack-decisions.md",
+      "summary": "Tech Stack Decisions \u2014 Cozyroom",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:musixmatch.cpp",
+      "type": "file",
+      "name": "musixmatch.cpp",
+      "filePath": "musixmatch.cpp",
+      "summary": "include \"stdafx.h\"",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:nginx.conf",
+      "type": "file",
+      "name": "nginx.conf",
+      "filePath": "nginx.conf",
+      "summary": "index.html \u2014 never cache (always get latest hashed asset references)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:observability/docker-compose.yml",
+      "type": "config",
+      "name": "docker-compose.yml",
+      "filePath": "observability/docker-compose.yml",
+      "summary": "docker-compose (yml file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:observability/grafana-provisioning/dashboards/cloudflared.json",
+      "type": "config",
+      "name": "cloudflared.json",
+      "filePath": "observability/grafana-provisioning/dashboards/cloudflared.json",
+      "summary": "cloudflared (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:observability/grafana-provisioning/dashboards/dashboard.yaml",
+      "type": "config",
+      "name": "dashboard.yaml",
+      "filePath": "observability/grafana-provisioning/dashboards/dashboard.yaml",
+      "summary": "dashboard (yaml file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:observability/prometheus.yml",
+      "type": "config",
+      "name": "prometheus.yml",
+      "filePath": "observability/prometheus.yml",
+      "summary": "prometheus (yml file)",
+      "tags": [
+        "hot",
+        "recent"
+      ]
+    },
+    {
+      "id": "file:skills-lock.json",
+      "type": "config",
+      "name": "skills-lock.json",
+      "filePath": "skills-lock.json",
+      "summary": "skills-lock (json file)",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:teams-app/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "teams-app/README.md",
+      "summary": "Teams App Package",
+      "tags": [
+        "recent"
+      ]
+    },
+    {
+      "id": "file:teams-app/manifest.json",
+      "type": "config",
+      "name": "manifest.json",
+      "filePath": "teams-app/manifest.json",
+      "summary": "manifest (json file)",
+      "tags": [
+        "recent"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend/src/App.tsx",
+      "target": "file:frontend/src/AppRoutes.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/components/Sidebar.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/components/Header.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/components/PlayerBar.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/components/MobileNav.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/components/RadialNav.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/components/InstallBanner.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/ArtistsPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/ArtistPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/AlbumPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/SearchPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/VideosPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/VideoPlayerPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/TrendingPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/EbooksPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/EbookReaderPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/ComicsPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/ComicsPageMobile.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/PlaylistsPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/AIStatsPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/AppRoutes.tsx",
+      "target": "file:frontend/src/pages/ToolsPage.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/PlayerContext.tsx",
+      "target": "file:frontend/src/types.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/PlayerContext.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/PlayerContext.tsx",
+      "target": "file:frontend/package.json",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/api.ts",
+      "target": "file:frontend/src/types.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/Equalizer.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/FavoritePill.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/LyricsView.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/LyricsView.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/PlayerBar.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/PlayerBar.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/PlayerBar.tsx",
+      "target": "file:frontend/src/components/Equalizer.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/PlayerBar.tsx",
+      "target": "file:frontend/src/components/LyricsView.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/PlayerBar.tsx",
+      "target": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/RadialNav.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/RadialNav.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/RadialNav.tsx",
+      "target": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/Sidebar.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/components/TrendingRepoCard.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/i18n/i18n.ts",
+      "target": "file:frontend/src/i18n/en.json",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/i18n/i18n.ts",
+      "target": "file:frontend/src/i18n/vi.json",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/main.tsx",
+      "target": "file:frontend/src/App.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/main.tsx",
+      "target": "file:frontend/src/index.css",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/main.tsx",
+      "target": "file:frontend/src/i18n/i18n.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "target": "file:frontend/src/types.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "target": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "target": "file:frontend/src/data/mcpTools.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AlbumPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AlbumPage.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/AlbumPage.tsx",
+      "target": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/ArtistPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/ArtistsPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/ComicsPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/ComicsPageMobile.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/EbooksPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/PlaylistsPage.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/PlaylistsPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/PlaylistsPage.tsx",
+      "target": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/PlaylistsPage.tsx",
+      "target": "file:frontend/src/types.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/SearchPage.tsx",
+      "target": "file:frontend/src/PlayerContext.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/SearchPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/SearchPage.tsx",
+      "target": "file:frontend/src/types.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/SearchPage.tsx",
+      "target": "file:frontend/src/components/FavoritePill.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/ToolsPage.tsx",
+      "target": "file:frontend/src/data/mcpTools.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/TrendingChartMode.tsx",
+      "target": "file:frontend/src/components/TrendingRepoCard.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/TrendingChartMode.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/TrendingPage.tsx",
+      "target": "file:frontend/src/api.ts",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/TrendingPage.tsx",
+      "target": "file:frontend/src/pages/TrendingChartMode.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/src/pages/TrendingPage.tsx",
+      "target": "file:frontend/src/components/TrendingRepoCard.tsx",
+      "type": "imports",
+      "weight": 0.7
+    },
+    {
+      "source": "file:backend/internal/api/ai.go",
+      "target": "file:backend/internal/api/routes.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/ai.go",
+      "target": "file:backend/internal/api/handler.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/handler.go",
+      "target": "file:backend/internal/api/routes.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/ai.go",
+      "target": "file:backend/internal/api/youtube.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/ai.go",
+      "target": "file:backend/internal/mcp/registry.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/ai.go",
+      "target": "file:frontend/src/index.css",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/handler.go",
+      "target": "file:backend/internal/api/youtube.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/handler.go",
+      "target": "file:frontend/src/index.css",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/routes.go",
+      "target": "file:backend/internal/api/youtube.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/routes.go",
+      "target": "file:backend/internal/db/db.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/routes.go",
+      "target": "file:backend/internal/mcp/registry.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/routes.go",
+      "target": "file:frontend/src/index.css",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/youtube.go",
+      "target": "file:frontend/src/index.css",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/cmd/server/main.go",
+      "target": "file:backend/internal/api/handler.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/cmd/server/main.go",
+      "target": "file:backend/internal/library/scanner.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/db_handlers.go",
+      "target": "file:backend/internal/api/handler.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/handler.go",
+      "target": "file:backend/internal/api/scan.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/handler.go",
+      "target": "file:backend/internal/library/scanner.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/api/scan.go",
+      "target": "file:backend/internal/library/scanner.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/cmd/server/main.go",
+      "target": "file:backend/internal/api/routes.go",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/library/scanner.go",
+      "target": "file:frontend/src/index.css",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:backend/internal/library/scanner.go",
+      "target": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/src/index.css",
+      "target": "file:frontend/src/pages/AIAssistantPage.tsx",
+      "type": "related",
+      "weight": 0.5
+    }
+  ]
+}
