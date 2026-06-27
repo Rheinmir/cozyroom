@@ -1155,3 +1155,6 @@
 - Wire R8 frontend-map-verify vào .pre-commit-config.yaml
 
 - 2026-06-25 20:01 — session `ec3461d1` — 12 tool calls — files: 250626-mcp-ambient-sounds-seq.html, 250626-mcp-ambient-sounds.md, AIAssistantPage.tsx, index.md, log.md, mcpTools.ts, registry.go, registry_ambient.go
+- 2026-06-27 16:54 — session `a3a895ec` — 2 tool calls — files: CapConsistency.md, index.md
+- 2026-06-27 17:12 — session `a3a895ec` — 2 tool calls — files: CapConsistency.md, index.md
+2026-06-27T10:24:45Z | ingest | sources/270626-missing-design-skills-postmortem.md | Postmortem design skills thiếu — bootstrap sai cú pháp + plugin chỉ cover Caveman
