@@ -1,5 +1,14 @@
 # Operation Log
 
+## 2026-06-28 — redesign-existing-projects — redesign-audit-ux
+
+- Ran full design audit via `/redesign-existing-projects` skill
+- `frontend/src/index.css` — 13 targeted fixes: 100vh→100dvh (5x), Geist font consistency, stale green fallback, nav radius+transition, search transition, page-title letter-spacing, back-btn motion, body orbs opacity, tabular-nums, transition:all → specific props
+- `frontend/src/pages/TrendingChartMode.tsx` — B&W completion: TIER_COLORS, COLORS arrays, delta tspan, cell fills
+- `frontend/src/data/mcpTools.ts` — 8 categoryColor values converted to greyscale
+- Deploy: K3S rollout successful, commit `9777db8`
+- Draft: `wiki/draft/uiux/280626-redesign-audit-ux.md`
+
 ## 2026-06-25 — orca-workflow — mcp-ambient-sounds
 
 - T1: `backend/internal/mcp/registry_ambient.go` — 3 tools: list_ambient_sounds, play_ambient_sound, stop_ambient_sound

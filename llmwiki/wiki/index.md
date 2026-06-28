@@ -133,3 +133,4 @@
 | [concepts/CapConsistency.md](concepts/CapConsistency.md) | concept | CAP trade-off: P bắt buộc, chọn A (Availability) cho FE |
 | [sources/270626-missing-design-skills-postmortem.md](sources/270626-missing-design-skills-postmortem.md) | source | Postmortem: design skills thiếu — bootstrap sai cú pháp + plugin chỉ cover Caveman category |
 | [draft/uiux/280626-bw-color-refactor.md](draft/uiux/280626-bw-color-refactor.md) | draft | B&W color refactor: 36 components, SW CacheFirst→StaleWhileRevalidate, K3S deploy — 2026-06-28 |
+| [draft/uiux/280626-redesign-audit-ux.md](draft/uiux/280626-redesign-audit-ux.md) | draft | 2026-06-28 |
