@@ -132,3 +132,4 @@
 | [draft/orca/250626-mcp-ambient-sounds.md](draft/orca/250626-mcp-ambient-sounds.md) | draft | 3 MCP tools để agent điều khiển ambient sounds: list/play/stop via _frontend_action |
 | [concepts/CapConsistency.md](concepts/CapConsistency.md) | concept | CAP trade-off: P bắt buộc, chọn A (Availability) cho FE |
 | [sources/270626-missing-design-skills-postmortem.md](sources/270626-missing-design-skills-postmortem.md) | source | Postmortem: design skills thiếu — bootstrap sai cú pháp + plugin chỉ cover Caveman category |
+| [draft/uiux/280626-bw-color-refactor.md](draft/uiux/280626-bw-color-refactor.md) | draft | B&W color refactor: 36 components, SW CacheFirst→StaleWhileRevalidate, K3S deploy — 2026-06-28 |

@@ -1158,3 +1158,12 @@
 - 2026-06-27 16:54 — session `a3a895ec` — 2 tool calls — files: CapConsistency.md, index.md
 - 2026-06-27 17:12 — session `a3a895ec` — 2 tool calls — files: CapConsistency.md, index.md
 2026-06-27T10:24:45Z | ingest | sources/270626-missing-design-skills-postmortem.md | Postmortem design skills thiếu — bootstrap sai cú pháp + plugin chỉ cover Caveman
+
+## 2026-06-28 — high-end-visual-design — bw-color-refactor + sw-cache-fix
+
+- Refactor toàn bộ 36 frontend components sang B&W palette: `--green`/`--purple` → #ffffff, body orbs, tất cả rgba tím/teal/indigo → trắng
+- AI avatar fix: white-on-white → linear-gradient(140deg,#2a2a2a,#555555)
+- `vite.config.ts`: SW CacheFirst → StaleWhileRevalidate + cacheableResponse:{statuses:[200]} cho covers + artist-images (fix cover display:none sau rollout)
+- K3S deploy: build → push 100.88.197.64:5000 → kubectl rollout restart → rolled out thành công
+- Commit: `4c36e87` — feat: B&W color refactor + fix SW CacheFirst image caching
+- Draft: `wiki/draft/uiux/280626-bw-color-refactor.md`
