@@ -18,10 +18,10 @@ type DrawerState = { title: string; repos: TrendingRepo[] }
 
 const TIER_ORDER: Tier[] = ['transformative', 'significant', 'incremental', 'niche']
 const TIER_COLORS: Record<Tier, string> = {
-  transformative: '#e8e8e8',
-  significant: '#aaaaaa',
-  incremental: '#666666',
-  niche: '#3a3a3a',
+  transformative: '#f59e0b',
+  significant:    '#10b981',
+  incremental:    '#0ea5e9',
+  niche:          '#64748b',
 }
 
 const LANG_COLORS: Record<string, string> = {
@@ -86,7 +86,7 @@ const CustomCrosshairCursor = (props: any) => {
   const chartWidth = width ?? 0
   const chartHeight = height ?? 0
 
-  const s = 'rgba(34,197,94,0.85)'
+  const s = 'rgba(248,250,252,0.65)'
   const sw = 1.2
 
   return (
@@ -208,9 +208,9 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
   const { t } = useTranslation()
   const buckets = [
     { name: '<100',    min: 0,    max: 99,       color: '#64748b' },
-    { name: '100–500', min: 100,  max: 499,      color: '#3b82f6' },
-    { name: '500–2k',  min: 500,  max: 1999,     color: '#eab308' },
-    { name: '2k+',     min: 2000, max: Infinity, color: '#f97316' },
+    { name: '100–500', min: 100,  max: 499,      color: '#0ea5e9' },
+    { name: '500–2k',  min: 500,  max: 1999,     color: '#10b981' },
+    { name: '2k+',     min: 2000, max: Infinity, color: '#f59e0b' },
   ]
   
   const data = buckets.map(b => {
@@ -413,10 +413,10 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
 function ChartHistogram({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilter }) {
   const { t } = useTranslation()
   const buckets = [
-    { name: '1–3',     min: 1, max: 3,  filter: (r: TrendingRepo) => r.impact_score >= 1 && r.impact_score <= 3,  color: '#a78bfa' },
-    { name: '4–6',     min: 4, max: 6,  filter: (r: TrendingRepo) => r.impact_score >= 4 && r.impact_score <= 6,  color: '#3b82f6' },
-    { name: '7–8',     min: 7, max: 8,  filter: (r: TrendingRepo) => r.impact_score >= 7 && r.impact_score <= 8,  color: '#eab308' },
-    { name: '9–10',    min: 9, max: 10, filter: (r: TrendingRepo) => r.impact_score >= 9,                          color: '#f97316' },
+    { name: '1–3',     min: 1, max: 3,  filter: (r: TrendingRepo) => r.impact_score >= 1 && r.impact_score <= 3,  color: '#64748b' },
+    { name: '4–6',     min: 4, max: 6,  filter: (r: TrendingRepo) => r.impact_score >= 4 && r.impact_score <= 6,  color: '#0ea5e9' },
+    { name: '7–8',     min: 7, max: 8,  filter: (r: TrendingRepo) => r.impact_score >= 7 && r.impact_score <= 8,  color: '#10b981' },
+    { name: '9–10',    min: 9, max: 10, filter: (r: TrendingRepo) => r.impact_score >= 9,                          color: '#f59e0b' },
     { name: 'Pending', min: 0, max: 0,  filter: (r: TrendingRepo) => r.impact_score === 0,                         color: '#374151' },
   ]
   const data = buckets.map(b => ({ name: b.name, color: b.color, count: repos.filter(b.filter).length, filter: b.filter }))
@@ -500,7 +500,7 @@ function ChartLines({ repos, history, loading, onFilter }: { repos: TrendingRepo
     })
     return row
   })
-  const COLORS = ['#e8e8e8', '#aaaaaa', '#777777', '#555555', '#333333']
+  const COLORS = ['#f59e0b', '#10b981', '#0ea5e9', '#8b5cf6', '#f43f5e']
   return (
     <ResponsiveContainer width="100%" height={ch(300, 200)}>
       <LineChart data={data} margin={{ top: 10, right: 8, bottom: 16, left: ch(40, 28) }}>
@@ -579,7 +579,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
   const { t } = useTranslation()
   if (data.length < 5) return <div className="tc-empty">{t('charts.no_topics')}</div>
 
-  const COLORS = ['#e8e8e8', '#cccccc', '#aaaaaa', '#888888', '#666666', '#4a4a4a', '#333333', '#1e1e1e']
+  const COLORS = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#f43f5e', '#64748b', '#94a3b8', '#475569']
   return (
     <ResponsiveContainer width="100%" height={ch(280, 220)}>
       <Treemap data={data} dataKey="size" aspectRatio={isMobile() ? 4 / 3 : 16 / 5}
