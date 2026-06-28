@@ -3944,6 +3944,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   user-select: none;
   line-height: 1.1;
 }
+.radial-petal-content svg {
+  width: 20px;
+  height: 20px;
+}
+.radial-petal-group {
+  cursor: pointer;
+}
 .radial-petal-group:hover .radial-petal-content {
   color: var(--text);
 }
@@ -3952,11 +3959,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .radial-petal-label {
-  font-size: 7px;
+  font-size: 9px;
   line-height: 1.1;
   color: inherit;
   margin-top: 2px;
-  max-width: 52px;
+  max-width: 56px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
