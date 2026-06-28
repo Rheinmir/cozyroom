@@ -187,10 +187,10 @@ function ChartBar({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilt
     .reverse()
   return (
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: ch(100, 80) }}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid {...GR} horizontal={false} />
         <XAxis type="number" tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }} />
-        <YAxis type="category" dataKey="name" tick={{ fill: '#ccc', fontSize: 11 }} width={96} />
+        <YAxis type="category" dataKey="name" tick={{ fill: '#ccc', fontSize: 11 }} width={168} />
         <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Star Delta']} contentStyle={TT} cursor={false} />
         <Bar dataKey="delta" radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
@@ -540,10 +540,10 @@ function ChartSlope({ repos, history, loading, onFilter }: { repos: TrendingRepo
 
   return (
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: ch(48, 16), bottom: 4, left: ch(100, 80) }}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: ch(48, 16), bottom: 4, left: 4 }}>
         <CartesianGrid {...GR} horizontal={false} />
         <XAxis type="number" tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }} />
-        <YAxis type="category" dataKey="name" tick={{ fill: '#ccc', fontSize: 11 }} width={96} />
+        <YAxis type="category" dataKey="name" tick={{ fill: '#ccc', fontSize: 11 }} width={168} />
         <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Net Growth']} contentStyle={TT} cursor={false} />
         <Bar dataKey="delta" radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
