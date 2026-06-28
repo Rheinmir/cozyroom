@@ -18,10 +18,10 @@ type DrawerState = { title: string; repos: TrendingRepo[] }
 
 const TIER_ORDER: Tier[] = ['transformative', 'significant', 'incremental', 'niche']
 const TIER_COLORS: Record<Tier, string> = {
-  transformative: '#f97316',
-  significant: '#eab308',
-  incremental: '#3b82f6',
-  niche: '#a78bfa',
+  transformative: '#e8e8e8',
+  significant: '#aaaaaa',
+  incremental: '#666666',
+  niche: '#3a3a3a',
 }
 
 const LANG_COLORS: Record<string, string> = {
@@ -390,8 +390,8 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
                 return (
                   <div style={{ ...TT, padding: '8px 12px', lineHeight: 1.6 }}>
                     <div style={{ fontWeight: 700, color: d.color, marginBottom: 4 }}>Nhóm {d.name} stars/tuần</div>
-                    <div>Tăng thêm (Inner): <span style={{ color: '#4ade80', fontWeight: 600 }}>+{fmtK(d.starDeltaSum)} ★</span></div>
-                    <div>Tích lũy (Outer): <span style={{ color: '#60a5fa', fontWeight: 600 }}>{fmtK(d.starsSum)} ★</span></div>
+                    <div>Tăng thêm (Inner): <span style={{ color: '#cccccc', fontWeight: 600 }}>+{fmtK(d.starDeltaSum)} ★</span></div>
+                    <div>Tích lũy (Outer): <span style={{ color: '#aaaaaa', fontWeight: 600 }}>{fmtK(d.starsSum)} ★</span></div>
                   </div>
                 )
               }}
@@ -500,7 +500,7 @@ function ChartLines({ repos, history, loading, onFilter }: { repos: TrendingRepo
     })
     return row
   })
-  const COLORS = ['#f97316', '#3b82f6', '#eab308', '#a78bfa', '#4ade80']
+  const COLORS = ['#e8e8e8', '#aaaaaa', '#777777', '#555555', '#333333']
   return (
     <ResponsiveContainer width="100%" height={ch(300, 200)}>
       <LineChart data={data} margin={{ top: 10, right: 8, bottom: 16, left: ch(40, 28) }}>
@@ -550,7 +550,7 @@ function ChartSlope({ repos, history, loading, onFilter }: { repos: TrendingRepo
             const found = repos.filter(r => r.name === d.fullName)
             if (found.length) onFilter(d.fullName, found)
           }}>
-          {data.map((d, i) => <Cell key={i} fill={d.delta >= 0 ? '#4ade80' : '#f87171'} />)}
+          {data.map((d, i) => <Cell key={i} fill={d.delta >= 0 ? '#cccccc' : '#555555'} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -579,7 +579,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
   const { t } = useTranslation()
   if (data.length < 5) return <div className="tc-empty">{t('charts.no_topics')}</div>
 
-  const COLORS = ['#f97316', '#eab308', '#3b82f6', '#a78bfa', '#4ade80', '#06b6d4', '#ec4899', '#14b8a6']
+  const COLORS = ['#e8e8e8', '#cccccc', '#aaaaaa', '#888888', '#666666', '#4a4a4a', '#333333', '#1e1e1e']
   return (
     <ResponsiveContainer width="100%" height={ch(280, 220)}>
       <Treemap data={data} dataKey="size" aspectRatio={isMobile() ? 4 / 3 : 16 / 5}
@@ -638,7 +638,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       >
                         <tspan fill="#fff">{pct}</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaPct > 0 ? '#4ade80' : (deltaPct < 0 ? '#f87171' : '#fbbf24')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaPct > 0 ? '#cccccc' : (deltaPct < 0 ? '#666666' : '#aaaaaa')} dx={4} fontWeight="bold">
                             ({deltaPct > 0 ? '+' : (deltaPct < 0 ? '' : '+')}{deltaPct.toFixed(0)}%)
                           </tspan>
                         )}
@@ -652,7 +652,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       >
                         <tspan fill="#fff">{size} repos</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaSize > 0 ? '#4ade80' : (deltaSize < 0 ? '#f87171' : '#fbbf24')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaSize > 0 ? '#cccccc' : (deltaSize < 0 ? '#666666' : '#aaaaaa')} dx={4} fontWeight="bold">
                             ({deltaSize > 0 ? '+' : (deltaSize < 0 ? '' : '+')}{deltaSize})
                           </tspan>
                         )}
