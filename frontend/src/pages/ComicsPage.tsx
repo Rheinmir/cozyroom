@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import {
   searchMangaDex, searchEHentai,
   fetchMangaChapters, fetchMangaPages,
@@ -57,14 +57,14 @@ function DownloadCard({ dl, onRead, onDelete, onRetry, onDownload }: {
           />
         )}
         {dl.source === 'eh' && (
-          <div style={{ position: 'absolute', top: 6, left: 6, background: '#e74c3c', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3 }}>NSFW</div>
+          <div style={{ position: 'absolute', top: 6, left: 6, background: '#888888', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3 }}>NSFW</div>
         )}
         {!isIdle && dl.status !== 'done' && (
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', padding: 8 }}>
             <div style={{
               width: '100%', fontSize: 10, fontWeight: 700,
               padding: '3px 6px', borderRadius: 4, textAlign: 'center',
-              background: dl.status === 'failed' ? '#e74c3c' : dl.status === 'downloading' ? 'var(--accent)' : '#666',
+              background: dl.status === 'failed' ? '#888888' : dl.status === 'downloading' ? 'rgba(255,255,255,0.6)' : '#666',
               color: dl.status === 'downloading' ? '#000' : '#fff',
             }}>
               {dl.status === 'downloading' && dl.page_count > 0 ? `${pct}%` : dl.status.toUpperCase()}
@@ -397,7 +397,7 @@ export default function ComicsPage() {
                 style={{
                   padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 600,
-                  background: source === s ? 'var(--accent)' : 'var(--elevated)',
+                  background: source === s ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
                   color: source === s ? '#000' : 'var(--text)',
                 }}
               >
@@ -407,7 +407,7 @@ export default function ComicsPage() {
             {searchActive && (
               <button
                 onClick={handleBackToDownloads}
-                style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, marginLeft: 4 }}
+                style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, marginLeft: 4 }}
               >
                 ← Downloads
               </button>
@@ -425,7 +425,7 @@ export default function ComicsPage() {
                     style={{
                       padding: '4px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
                       fontSize: 11, fontWeight: 600,
-                      background: dlFilter === f ? 'var(--accent)' : 'var(--elevated)',
+                      background: dlFilter === f ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
                       color: dlFilter === f ? '#000' : 'var(--text-muted)',
                     }}
                   >
@@ -453,7 +453,7 @@ export default function ComicsPage() {
               disabled={loading}
               style={{
                 padding: '8px 20px', borderRadius: 999, border: 'none',
-                background: 'var(--accent)', color: '#000', fontWeight: 600, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.6)', color: '#000', fontWeight: 600, cursor: 'pointer',
               }}
             >
               Search
@@ -467,14 +467,14 @@ export default function ComicsPage() {
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
               <div style={{
                 width: 32, height: 32, border: '3px solid var(--border)',
-                borderTopColor: 'var(--accent)', borderRadius: '50%',
+                borderTopColor: 'rgba(255,255,255,0.6)', borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite', margin: '0 auto 16px',
               }} />
               Loading...
             </div>
           )}
           {!loading && loadError && (
-            <div style={{ textAlign: 'center', padding: 40, color: '#e74c3c' }}>{loadError}</div>
+            <div style={{ textAlign: 'center', padding: 40, color: '#888888' }}>{loadError}</div>
           )}
 
           {/* Downloads view */}
@@ -522,7 +522,7 @@ export default function ComicsPage() {
                       />
                     )}
                     {source === 'eh' && (
-                      <div style={{ position: 'absolute', top: 8, right: 8, background: '#e74c3c', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
+                      <div style={{ position: 'absolute', top: 8, right: 8, background: '#888888', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
                         NSFW
                       </div>
                     )}
@@ -574,7 +574,7 @@ export default function ComicsPage() {
               <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
                 <button
                   onClick={() => handleChapter(chapterList[0], 0)}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
+                  style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.6)', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
                 >
                   ▶ Start Reading
                 </button>
@@ -669,7 +669,7 @@ export default function ComicsPage() {
                   style={{
                     padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
                     fontSize: 11, fontWeight: 600,
-                    background: viewMode === m ? 'var(--accent)' : 'var(--elevated)',
+                    background: viewMode === m ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
                     color: viewMode === m ? '#000' : 'var(--text)',
                   }}
                 >
@@ -686,7 +686,7 @@ export default function ComicsPage() {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 12, gap: 8 }}>
               {loading && <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>Loading...</div>}
               {pages.length > 0 && imgErrors >= pages.length && (
-                <div style={{ padding: 40, color: '#e74c3c', textAlign: 'center' }}>
+                <div style={{ padding: 40, color: '#888888', textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>⚠</div>
                   Không load được ảnh — thử tải về trước để đọc offline
                 </div>
@@ -717,7 +717,7 @@ export default function ComicsPage() {
                   onError={() => setImgErrors(n => n + 1)}
                 />
               ) : (
-                <div style={{ color: '#e74c3c', textAlign: 'center' }}>
+                <div style={{ color: '#888888', textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 8 }}>⚠</div>
                   Không load được ảnh
                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import {
   searchMangaDex, searchEHentai,
   fetchMangaChapters, fetchMangaPages,
@@ -266,7 +266,7 @@ export default function ComicsPageMobile() {
             <button key={s} onClick={() => handleSourceChange(s)} style={{
               padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: 600,
-              background: source === s ? 'var(--accent)' : 'var(--elevated)',
+              background: source === s ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
               color: source === s ? '#000' : 'var(--text)',
             }}>
               {s === 'md' ? 'MangaDex' : 'E-Hentai'}
@@ -275,7 +275,7 @@ export default function ComicsPageMobile() {
           {searchActive && (
             <button
               onClick={() => { setSearchActive(false); setQuery(''); setResults([]); setSelected(null) }}
-              style={{ fontSize: 11, color: 'var(--accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             >
               ← Downloads
             </button>
@@ -293,7 +293,7 @@ export default function ComicsPageMobile() {
                   style={{
                     padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer',
                     fontSize: 11, fontWeight: 600,
-                    background: dlFilter === f ? 'var(--accent)' : 'var(--elevated)',
+                    background: dlFilter === f ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
                     color: dlFilter === f ? '#000' : 'var(--text-muted)',
                   }}
                 >
@@ -317,7 +317,7 @@ export default function ComicsPageMobile() {
           />
           <button onClick={handleSearch} disabled={loading} style={{
             padding: '8px 16px', borderRadius: 20, border: 'none',
-            background: 'var(--accent)', color: '#000', fontWeight: 600, fontSize: 13,
+            background: 'rgba(255,255,255,0.6)', color: '#000', fontWeight: 600, fontSize: 13,
           }}>
             Search
           </button>
@@ -330,14 +330,14 @@ export default function ComicsPageMobile() {
           <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
             <div style={{
               width: 28, height: 28, border: '3px solid var(--border)',
-              borderTopColor: 'var(--accent)', borderRadius: '50%',
+              borderTopColor: 'rgba(255,255,255,0.6)', borderRadius: '50%',
               animation: 'spin 0.8s linear infinite', margin: '0 auto 12px',
             }} />
             Loading...
           </div>
         )}
         {!loading && loadError && (
-          <div style={{ textAlign: 'center', padding: 40, color: '#e74c3c' }}>{loadError}</div>
+          <div style={{ textAlign: 'center', padding: 40, color: '#888888' }}>{loadError}</div>
         )}
 
         {/* Downloads grid */}
@@ -368,14 +368,14 @@ export default function ComicsPageMobile() {
                         />
                       )}
                       {dl.source === 'eh' && (
-                        <div style={{ position: 'absolute', top: 4, left: 4, background: '#e74c3c', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 3 }}>NSFW</div>
+                        <div style={{ position: 'absolute', top: 4, left: 4, background: '#888888', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 3 }}>NSFW</div>
                       )}
                       {!isIdle && dl.status !== 'done' && (
                         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', padding: 4 }}>
                           <div style={{
                             width: '100%', fontSize: 9, fontWeight: 700, textAlign: 'center',
                             padding: '2px 4px', borderRadius: 3,
-                            background: dl.status === 'failed' ? '#e74c3c' : dl.status === 'downloading' ? 'var(--accent)' : '#666',
+                            background: dl.status === 'failed' ? '#888888' : dl.status === 'downloading' ? 'rgba(255,255,255,0.6)' : '#666',
                             color: dl.status === 'downloading' ? '#000' : '#fff',
                           }}>
                             {dl.status === 'downloading' && dl.page_count > 0 ? `${pct}%` : dl.status.toUpperCase()}
@@ -444,7 +444,7 @@ export default function ComicsPageMobile() {
                     />
                   )}
                   {source === 'eh' && (
-                    <div style={{ position: 'absolute', top: 4, right: 4, background: '#e74c3c', color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 4px', borderRadius: 3 }}>
+                    <div style={{ position: 'absolute', top: 4, right: 4, background: '#888888', color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 4px', borderRadius: 3 }}>
                       NSFW
                     </div>
                   )}
@@ -493,7 +493,7 @@ export default function ComicsPageMobile() {
             <div style={{ padding: '0 16px 12px', flexShrink: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={() => handleChapter(chapterList[0], 0)} style={{
                 flex: 1, padding: '12px', borderRadius: 12, border: 'none',
-                background: 'var(--accent)', color: '#000', fontWeight: 700, fontSize: 15,
+                background: 'rgba(255,255,255,0.6)', color: '#000', fontWeight: 700, fontSize: 15,
               }}>
                 ▶ Start Reading
               </button>
@@ -522,7 +522,7 @@ export default function ComicsPageMobile() {
           )}
 
           {loading && <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 13 }}>Loading…</div>}
-          {loadError && <div style={{ padding: '0 16px', color: '#e74c3c', fontSize: 13 }}>{loadError}</div>}
+          {loadError && <div style={{ padding: '0 16px', color: '#888888', fontSize: 13 }}>{loadError}</div>}
 
           {chapterList.length > 0 && (
             <div style={{ flex: 1, padding: '0 16px 16px' }}>
@@ -577,7 +577,7 @@ export default function ComicsPageMobile() {
               {(['scroll', 'page'] as ViewMode[]).map(m => (
                 <button key={m} onClick={() => setViewMode(m)} style={{
                   padding: '4px 10px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600,
-                  background: viewMode === m ? 'var(--accent)' : 'var(--elevated)',
+                  background: viewMode === m ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
                   color: viewMode === m ? '#000' : 'var(--text)',
                 }}>
                   {m === 'scroll' ? 'Scroll' : 'Page'}
@@ -593,7 +593,7 @@ export default function ComicsPageMobile() {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 4, gap: 4 }}>
               {loading && <div style={{ padding: 40, color: '#888', fontSize: 13 }}>Loading...</div>}
               {pages.length > 0 && imgErrors >= pages.length && (
-                <div style={{ padding: 40, color: '#e74c3c', textAlign: 'center', fontSize: 13 }}>
+                <div style={{ padding: 40, color: '#888888', textAlign: 'center', fontSize: 13 }}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>⚠</div>
                   Không load được ảnh — thử tải về trước
                 </div>
@@ -618,7 +618,7 @@ export default function ComicsPageMobile() {
                   onError={() => setImgErrors(n => n + 1)}
                 />
               ) : (
-                <div style={{ color: '#e74c3c', textAlign: 'center', fontSize: 13 }}>
+                <div style={{ color: '#888888', textAlign: 'center', fontSize: 13 }}>
                   <div style={{ fontSize: 24, marginBottom: 8 }}>⚠</div>
                   Không load được ảnh
                 </div>

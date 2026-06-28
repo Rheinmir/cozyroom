@@ -15,21 +15,23 @@ export default defineConfig({
         clientsClaim: true,
         runtimeCaching: [
           {
-            // Cover images — rarely change, cache aggressively
+            // Cover images — cache aggressively, but fall back to network if cache miss
             urlPattern: /\/api\/covers\//,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'covers',
               expiration: { maxEntries: 1000, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
             },
           },
           {
             // Artist images — same
             urlPattern: /\/api\/artist-images\//,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'artist-images',
               expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
             },
           },
           {

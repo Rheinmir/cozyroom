@@ -50,7 +50,7 @@ function RepeatIcon({ mode }: { mode: RepeatMode }) {
 function ShuffleModeIcon({ mode }: { mode: ShuffleMode }) {
   if (mode === 'smart') {
     return (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--purple, #a855f7)">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--purple, #ffffff)">
         <path d="M12 2 L13.5 8.5 L20 10 L13.5 11.5 L12 18 L10.5 11.5 L4 10 L10.5 8.5 Z"/>
         <circle cx="19" cy="4"  r="1.2"/>
         <circle cx="5"  cy="18" r="1.2"/>

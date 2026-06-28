@@ -37,7 +37,7 @@ interface LogEntry {
   tokens_cached_in: number
 }
 
-const COLORS = ['#a855f7','#2dd4bf','#818cf8','#f59e0b','#f87171','#34d399','#fb923c','#a78bfa']
+const COLORS = ['#ffffff','#cccccc','#999999','#777777','#555555','#dddddd','#aaaaaa','#888888']
 const fmtMs = (ms: number) => ms >= 1000 ? `${(ms/1000).toFixed(1)}s` : `${Math.round(ms)}ms`
 const fmtNum = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n)
 
@@ -441,7 +441,7 @@ export default function AIStatsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.6 }}>Giá ($/1M tokens)</span>
               <input ref={ocrInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleOcrUpload} />
-              <button onClick={handleOcrClick} disabled={ocrLoading} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showOcrPanel ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)', color: '#fff', opacity: ocrLoading ? 0.5 : 1 }}>
+              <button onClick={handleOcrClick} disabled={ocrLoading} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showOcrPanel ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', color: '#fff', opacity: ocrLoading ? 0.5 : 1 }}>
                 📷 OCR từ ảnh
               </button>
             </div>
@@ -450,7 +450,7 @@ export default function AIStatsPage() {
                 <button onClick={() => { ocrInputRef.current?.click() }} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.12)', color: '#fff' }}>
                   📁 Chọn file
                 </button>
-                <button onClick={handleOcrPaste} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(99,102,241,0.5)', color: '#fff' }}>
+                <button onClick={handleOcrPaste} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.15)', color: '#fff' }}>
                   📋 Dán từ clipboard
                 </button>
                 <span style={{ fontSize: 10, opacity: 0.4 }}>hoặc Ctrl+V</span>
@@ -547,8 +547,8 @@ export default function AIStatsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} />
-              <Bar dataKey="success" stackId="a" fill="#6366f1" name="Thành công" />
-              <Bar dataKey="failed"  stackId="a" fill="#f87171" name="Thất bại" radius={[3,3,0,0]} />
+              <Bar dataKey="success" stackId="a" fill="#cccccc" name="Thành công" />
+              <Bar dataKey="failed"  stackId="a" fill="#555555" name="Thất bại" radius={[3,3,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>

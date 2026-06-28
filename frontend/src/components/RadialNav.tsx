@@ -637,8 +637,8 @@ export default function RadialNav() {
   const n4 = layer4Items.length
   const n5 = layer5Items.length
 
-  const color1 = coverColors && coverColors[0] ? coverColors[0] : '#a855f7'
-  const color2 = coverColors && coverColors[1] ? coverColors[1] : '#1DB954'
+  const color1 = coverColors && coverColors[0] ? coverColors[0] : '#ffffff'
+  const color2 = coverColors && coverColors[1] ? coverColors[1] : '#aaaaaa'
 
   return (
     <>
@@ -671,8 +671,8 @@ export default function RadialNav() {
             top:  -auraOffset,
             width: auraSize,
             height: auraSize,
-            background: `radial-gradient(circle at 35% 35%, ${track ? color1 : '#a855f7'}55 0%, ${track ? color2 : '#1DB954'}18 45%, transparent 70%),
-                         radial-gradient(circle at 65% 65%, ${track ? color1 : '#a855f7'}25 0%, ${track ? color2 : '#1DB954'}08 50%, transparent 80%)`
+            background: `radial-gradient(circle at 35% 35%, ${track ? color1 : '#ffffff'}40 0%, ${track ? color2 : '#aaaaaa'}14 45%, transparent 70%),
+                         radial-gradient(circle at 65% 65%, ${track ? color1 : '#ffffff'}20 0%, ${track ? color2 : '#aaaaaa'}08 50%, transparent 80%)`
           }}
         />
 
@@ -996,7 +996,7 @@ export default function RadialNav() {
                   <path
                     className="radial-sector radial-sector--optional"
                     d={getSectorPath(CX, CY, rInner, rOuter, startDeg, endDeg)}
-                    style={{ stroke: inList ? 'rgba(168,85,247,0.44)' : undefined }}
+                    style={{ stroke: inList ? 'rgba(255,255,255,0.44)' : undefined }}
                   />
                   <foreignObject x={mx - 25} y={my - 20} width={50} height={40} className="radial-petal-fo">
                     <div className="radial-petal-content">
@@ -1286,7 +1286,7 @@ export default function RadialNav() {
                     className="radial-sector radial-sector--optional radial-sector--tier"
                     d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
                     style={{
-                      stroke: isActive ? 'rgba(168, 85, 247, 0.44)' : undefined,
+                      stroke: isActive ? 'rgba(255, 255, 255, 0.44)' : undefined,
                     }}
                   />
                   <foreignObject
