@@ -41,7 +41,7 @@ spec:
             - containerPort: 5432
           env:
             - name: DATABASES_HOST
-              value: "postgres"
+              value: "postgres.cozyroom-k8s.svc.cluster.local"
             - name: DATABASES_PORT
               value: "5432"
             - name: DATABASES_DBNAME

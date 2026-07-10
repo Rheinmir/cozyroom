@@ -1176,3 +1176,82 @@
 - K3S deploy: build → push 100.88.197.64:5000 → kubectl rollout restart → rolled out thành công
 - Commit: `4c36e87` — feat: B&W color refactor + fix SW CacheFirst image caching
 - Draft: `wiki/draft/uiux/280626-bw-color-refactor.md`
+
+## 2026-07-10 — propose — base-architecture-be-fe
+
+- Proposal chuyển Cozyroom sang kiến trúc BASE (Basically Available, Soft state, Eventually consistent) — hiện thực hoá quyết định [[CapConsistency]] (chọn A thay C)
+- 4 tasks: T1 softstate read cache (serve-stale + X-Data-Freshness), T2 outbox write-behind JSONL /data (202 + flusher), T3 FE freshness badge (không đụng sw2.js), T4 chaos verify trên K3s
+- Draft: `wiki/sources/draft/100726-base-architecture-be-fe.md` + seq HTML: `html/100726-base-architecture-seq.html` (glass R11 pass)
+- Status: proposed — CHỜ USER DUYỆT, chưa viết code
+
+## 2026-07-10 — propose — cockroachdb-migration-db
+
+- Redirect từ proposal BASE cùng ngày: user muốn migrate DB sang CockroachDB (multi-active Raft, xoá master-slave)
+- Audit compat code thật: chỉ 1 điểm không tương thích cứng — pg_try_advisory_lock/hashtext trong enricher/aitrends.go → thay bằng lease table; ILIKE search + schema migrate() tương thích đủ
+- 5 tasks: T1 code compat, T2 cluster 3 node (precondition: hồi sinh rhein-e2144g + time-sync WSL2), T3 migrate data copy-không-move, T4 switch db-adapter PgBouncer→HAProxy, T5 chaos verify kill node
+- 2 quyết định chờ user: topology bare-metal vs K8s StatefulSet; isolation retry-40001 vs READ COMMITTED
+- Draft BASE [[100726-base-architecture-be-fe]] tạm park chờ user quyết
+- Draft: `wiki/sources/draft/100726-cockroachdb-migration-db.md` + seq HTML: `html/100726-cockroachdb-migration-seq.html` (glass R11 pass)
+- Status: proposed — CHỜ USER DUYỆT, chưa viết code
+
+## 2026-07-10 — propose — db-health-websocket-be-fe
+
+- Yêu cầu user (nối tiếp CRDB migration): WebSocket đẩy trạng thái DB xuống FE — node down thì bài hát shard trên node đó down realtime
+- Audit: gorilla/websocket ĐÃ có trong go.mod (indirect); SSE đã chạy production (ai.go:293 chatStream) — nêu làm Quyết định 4 (WS vs SSE)
+- Surface mâu thuẫn kỹ thuật: CRDB RF=3 mất 1 node KHÔNG mất metadata → Quyết định 3: (I1) RF=1 sharding thật (vứt HA) vs (I2) media locality (khuyến nghị)
+- 5 tasks: T1 health watcher (ngưỡng 2-fail), T2 WS hub + Upgrade headers 2 lớp nginx, T3 shard mapping media_hosts, T4 FE hook + PlayerContext skip (frontend-index/impact-check bắt buộc), T5 verify kill node thật
+- Draft: `wiki/sources/draft/100726-db-health-websocket-be-fe.md` + seq HTML: `html/100726-db-health-websocket-seq.html` (glass R11 pass)
+- Status: proposed — CHỜ USER DUYỆT (kèm Quyết định 3 + 4), chưa viết code
+
+## 2026-07-10 — propose (update) — db-health-websocket: Quyết định 3 chốt
+
+- User chốt: I2 + ẨN — "vẫn giữ [dữ liệu] nhưng FE không hiển thị vì ấn vào không có gì được phát ra"
+- Draft + seq HTML cập nhật: T4 đổi gray-out → filter ẩn (khuyến nghị filter backend query, cascade ẩn album/artist rỗng, banner đếm N bài ẩn), risks thêm SW-cache-vài-giây-đầu + playlist lệch số
+- Còn chờ: Quyết định 1 (topology), 2 (isolation), 4 (WS/SSE)
+
+## 2026-07-10 — propose (update) — db-health-websocket: media multi-node xác nhận
+
+- User xác nhận kịch bản: nhạc tải từ YouTube đặt vào folder ở node khác → media multi-node là mục tiêu thật
+- Thêm Quyết định 5: backend đọc file cross-node — (A) NFS soft-mount chéo (khuyến nghị, có tiền lệ /music NFS) vs (B) backend pod per-node + shard routing
+- T3 cập nhật: scanner ghi prefix mount vào media_hosts; risks thêm NFS hang + liveness 2 tầng (DB node ≠ media host)
+- Còn chờ: Quyết định 1 (topology), 2 (isolation), 4 (WS/SSE), 5 (NFS/per-node backend)
+
+## 2026-07-10 — propose (update) — thực tế vận hành: máy nghỉ vài ngày hàng tuần
+
+- User: "cả 3 máy hàng tuần vẫn có thể restart vài ngày — không down toàn bộ, down vài máy" → HA là yêu cầu thường trực
+- Phát hiện khi audit k8s: backend replicas=1 + nodeSelector khoá node 1 → SPOF số 1 là BACKEND chứ không phải DB; cloudflared ×2 ổn
+- CRDB draft thêm section "Thực tế vận hành": fix backend (NFS 5A → gỡ nodeSelector → replicas ≥2), restart so le, un-park BASE
+- BASE draft un-park: vai trò mới = lớp đỡ mất quorum (2/3 máy nghỉ), phase sau CRDB migration
+
+## 2026-07-10 — analysis — ha-decisions-proscons
+
+- User yêu cầu phân tích mạnh/yếu chi tiết trước khi chốt 4 quyết định treo
+- Tạo `wiki/sources/draft/100726-ha-decisions-proscons.md`: pros/cons đầy đủ cho QĐ1 (bare-metal vs K8s StatefulSet), QĐ2 (READ COMMITTED vs serializable+retry), QĐ4 (SSE vs WebSocket), QĐ5 (NFS chéo vs backend-per-node) + section tương tác giữa các quyết định
+- Đề xuất của Claude: 1A + 2A + 4A + 5A (chuỗi khởi động ngắn nhất cho máy restart hàng tuần, ít code nhất, tận dụng tiền lệ /music NFS + chatStream SSE)
+- Chờ user chốt từng quyết định
+
+## 2026-07-10 — decision — user chốt 4 quyết định HA: 1A 2B 4B 5A
+
+- QĐ1 ✅ 1A bare metal + Tailscale (theo khuyến nghị) — CRDB systemd 3 host
+- QĐ2 ✅ 2B serializable + retry helper (NGƯỢC khuyến nghị 2A) — T1 mở rộng: db.WithRetry wrap toàn bộ write path
+- QĐ4 ✅ 4B WebSocket (NGƯỢC khuyến nghị 4A) — T2 thêm Upgrade headers 2 lớp nginx bắt buộc
+- QĐ5 ✅ 5A NFS soft-mount chéo (theo khuyến nghị) — mở khoá gỡ nodeSelector backend, fix SPOF số 1
+- Ghi vào: 100726-cockroachdb-migration-db.md (QĐ1+2, T1/T2 cập nhật scope), 100726-db-health-websocket-be-fe.md (QĐ4+5), 100726-ha-decisions-proscons.md (bảng kết quả + roadmap 5 phase)
+- Roadmap chốt: Phase 0 node 3 + time-sync → P1 CRDB → P2 backend un-lock → P3 health WS → P4 BASE
+- Trạng thái: toàn bộ quyết định thiết kế đã chốt — CHỜ LỆNH BẮT ĐẦU IMPLEMENT (Phase 0 cần user: hồi sinh rhein-e2144g)
+
+## 2026-07-10 — implement — CRDB migration T1 code compat HOÀN TẤT
+
+- db/retry.go MỚI: IsRetryable (40001), WithRetry (5 attempts, backoff+jitter), Transact; rebind.go: RDB.Exec/ExecContext auto-retry
+- aitrends.go: pg_try_advisory_lock/hashtext → enrich_lease table (TTL 2h, release sớm khi xong); db.go migrate() thêm bảng
+- Wrap explicit txn: scanner.go ×3, github.go SaveTrendingSnapshot, ai.go memoryImport, ebook.go 3 write (u.write helper); backup.go SQLite-era bỏ qua (dead code, test đánh dấu Skip)
+- Verify CRDB v24.1.31 Docker: lease 4 bước pass; contention test 40001 retry PASS (v=2 đúng); backend smoke stats/artists/search 200, trending 14 repos, migrate sạch
+- go build + go vet + go test ./... toàn bộ pass; container test + server test đã dọn
+- CHƯA COMMIT — chờ verify-before-commit; Phase 0 (node 3 + time-sync) vẫn chờ user
+
+## 2026-07-10 — deploy-k8s-frontend — rollout frontend
+
+- Build Dockerfile.frontend (full cache hit — source không đổi từ lần build trước), push 100.88.197.64:5000/cozyroom-frontend:k8s (digest f8e4fcdd)
+- kubectl rollout restart deployment/frontend -n cozyroom-k8s → 3/3 replicas rolled out
+- Verify: https://music.giatbh.io.vn/ → 200 (0.23s)
+- Image chứa các thay đổi FE chưa commit từ phiên trước (RequestLogPage, api.ts, Sidebar, AppRoutes)

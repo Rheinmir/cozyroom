@@ -134,3 +134,8 @@
 | [sources/270626-missing-design-skills-postmortem.md](sources/270626-missing-design-skills-postmortem.md) | source | Postmortem: design skills thiếu — bootstrap sai cú pháp + plugin chỉ cover Caveman category |
 | [draft/uiux/280626-bw-color-refactor.md](draft/uiux/280626-bw-color-refactor.md) | draft | B&W color refactor: 36 components, SW CacheFirst→StaleWhileRevalidate, K3S deploy — 2026-06-28 |
 | [draft/uiux/280626-redesign-audit-ux.md](draft/uiux/280626-redesign-audit-ux.md) | draft | 2026-06-28 |
+| [sources/draft/100726-base-architecture-be-fe.md](sources/draft/100726-base-architecture-be-fe.md) | draft | Proposal: chuyển Cozyroom sang kiến trúc BASE — softstate read cache, outbox write-behind, freshness badge, chaos verify |
+| [sources/draft/100726-cockroachdb-migration-db.md](sources/draft/100726-cockroachdb-migration-db.md) | draft | Proposal: migrate PostgreSQL → CockroachDB 3 node multi-active — lease table thay advisory lock, copy-không-move, chaos verify |
+| [sources/draft/100726-db-health-websocket-be-fe.md](sources/draft/100726-db-health-websocket-be-fe.md) | draft | Proposal: WebSocket cluster-health → FE realtime — node down thì bài hát shard trên node đó ẨN khỏi UI, PlayerContext skip |
+| [sources/draft/100726-ha-decisions-proscons.md](sources/draft/100726-ha-decisions-proscons.md) | draft | Pros/cons 4 quyết định HA — ✅ ĐÃ CHỐT 1A·2B·4B·5A + roadmap 5 phase (CRDB → un-lock backend → WS → BASE) |
+| [sources/draft/100726-argocd-gitops-k8s.md](sources/draft/100726-argocd-gitops-k8s.md) | draft | ArgoCD GitOps cho k8s/ — secret untrack, reconcile db-adapter drift, syncPolicy manual (postgres-standby drift chờ quyết định) |

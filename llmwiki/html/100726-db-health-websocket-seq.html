@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>100726 — DB Health WebSocket → Frontend</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:210px;height:100vh;z-index:100;overflow:hidden}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:210px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}
+section{margin-bottom:64px;scroll-margin-top:80px}
+h2{font-size:16px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:13px;color:#374151;line-height:1.65;margin-bottom:14px;max-width:720px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08)}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.5px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:12px;color:#4338ca}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">DB Health WS</div>
+    <a href="#t1">T1 · Health watcher</a>
+    <a href="#t2">T2 · WebSocket hub</a>
+    <a href="#t3">T3 · Shard mapping</a>
+    <a href="#t4">T4 · FE realtime UI</a>
+    <a href="#t5">T5 · Verify e2e</a>
+  </div>
+</nav>
+<main>
+<h1>100726 — DB Health WebSocket → Frontend</h1>
+<p class="subtitle">Node DB down → các bài hát shard trên node đó ẨN khỏi UI realtime (dữ liệu vẫn giữ trong DB), tự hiện lại khi node sống — quyết định user 10/07: "vẫn giữ nhưng FE không hiển thị, vì ấn vào không có gì được phát ra"</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng hiện có</span>
+  <span><span class="dot emerald"></span> thêm mới / thay đổi</span>
+  <span><span class="dot amber"></span> nhánh lỗi / node chết</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="t1">
+<h2>T1 · Backend — health watcher với ngưỡng chống nhấp nháy <span class="badge">Claude main</span></h2>
+<p class="desc">Package <code>internal/health</code> chạy trong mỗi backend pod, poll trạng thái sống của từng DB node mỗi 5 giây qua interface <code>LivenessSource</code> có hai implementation: với CockroachDB đọc <code>crdb_internal.gossip_liveness</code> (một query trả trạng thái mọi node), với Postgres hiện tại thì ping từng node — nhờ interface này feature chạy được ngay cả trước khi migration CRDB hoàn tất.</p>
+<p class="desc">Một network blip đơn lẻ không được phép làm UI nhấp nháy: watcher chỉ tuyên bố một node down sau <strong>2 lần poll fail liên tiếp</strong> (tức ~10 giây trễ tối đa), và tuyên bố sống lại ngay lần poll thành công đầu tiên. Khi trạng thái đổi, watcher phát event vào channel nội bộ để hub WebSocket (T2) broadcast — không có consumer nào tự poll lại DB.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="90" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">health.Watcher (5s)</text>
+  <text x="300" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">DB nodes (liveness)</text>
+  <text x="520" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">event channel</text>
+  <line x1="90" y1="32" x2="90" y2="235" class="lifeline-line"/>
+  <line x1="300" y1="32" x2="300" y2="235" class="lifeline-line"/>
+  <line x1="520" y1="32" x2="520" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t1s1b"/>
+  <line x1="90" y1="59" x2="290" y2="59" class="arr emerald"/>
+  <polygon points="290,55 300,59 290,63" class="arr-head emerald"/>
+  <text x="195" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t1s1m">poll: crdb_internal.gossip_liveness (CRDB) / ping (PG)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t1s2b"/>
+  <line x1="300" y1="93" x2="100" y2="93" class="arr amber"/>
+  <polygon points="100,89 90,93 100,97" class="arr-head amber"/>
+  <text x="200" y="88" class="msg" text-anchor="middle" fill="#92400e" id="t1s2m">node 2 không trả lời — fail lần 1 → CHƯA báo (ngưỡng)</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box amber" id="t1s3b"/>
+  <line x1="300" y1="127" x2="100" y2="127" class="arr amber"/>
+  <polygon points="100,123 90,127 100,131" class="arr-head amber"/>
+  <text x="200" y="122" class="msg" text-anchor="middle" fill="#92400e" id="t1s3m">fail lần 2 liên tiếp → node 2 = DOWN</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t1s4b"/>
+  <line x1="90" y1="161" x2="510" y2="161" class="arr emerald"/>
+  <polygon points="510,157 520,161 510,165" class="arr-head emerald"/>
+  <text x="300" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t1s4m">emit event {node2: down} → hub broadcast (T2)</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box emerald" id="t1s5b"/>
+  <line x1="90" y1="195" x2="510" y2="195" class="arr emerald"/>
+  <polygon points="510,191 520,195 510,199" class="arr-head emerald"/>
+  <text x="300" y="190" class="msg" text-anchor="middle" fill="#065f46" id="t1s5m">poll OK trở lại → emit {node2: live} ngay (không cần ngưỡng)</text>
+</svg>
+</div>
+</section>
+
+<section id="t2">
+<h2>T2 · Backend — WebSocket hub qua CF Tunnel 2 lớp nginx <span class="badge">Claude main</span></h2>
+<p class="desc">Endpoint <code>/api/ws/cluster-health</code> dùng gorilla/websocket — thư viện <strong>đã có sẵn trong go.mod</strong> (indirect, nâng thành direct). Hub giữ danh sách client, broadcast JSON <code>{nodes, unavailable_track_count, ts}</code> mỗi khi watcher phát event, kèm heartbeat 30 giây để giữ kết nối sống qua Cloudflare. Hub stateless: watcher chạy trong từng pod đọc cùng nguồn liveness, nên client nối vào pod nào cũng nhận đúng cùng trạng thái — không cần đồng bộ giữa các pod.</p>
+<p class="desc">Điểm rủi ro nhất không nằm ở Go mà ở hạ tầng: request đi qua cloudflared → nginx sidecar → frontend nginx → backend, và WebSocket handshake cần header <code>Upgrade</code>/<code>Connection</code> được forward đúng ở <strong>cả hai lớp nginx</strong> — thiếu một lớp là fail âm thầm. Đây là lý do draft nêu SSE làm phương án thay thế (Quyết định 4): SSE đã chạy production trong chatStream với zero config mới.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="70" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Browser</text>
+  <text x="230" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">cloudflared+nginx</text>
+  <text x="400" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">frontend nginx</text>
+  <text x="560" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">ws hub (backend)</text>
+  <line x1="70" y1="32" x2="70" y2="235" class="lifeline-line"/>
+  <line x1="230" y1="32" x2="230" y2="235" class="lifeline-line"/>
+  <line x1="400" y1="32" x2="400" y2="235" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t2s1b"/>
+  <line x1="70" y1="59" x2="220" y2="59" class="arr emerald"/>
+  <polygon points="220,55 230,59 220,63" class="arr-head emerald"/>
+  <text x="150" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t2s1m">wss://music.../api/ws/cluster-health (Upgrade)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t2s2b"/>
+  <line x1="230" y1="93" x2="390" y2="93" class="arr emerald"/>
+  <polygon points="390,89 400,93 390,97" class="arr-head emerald"/>
+  <text x="313" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t2s2m">nginx sidecar: +proxy_set_header Upgrade/Connection</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t2s3b"/>
+  <line x1="400" y1="127" x2="550" y2="127" class="arr emerald"/>
+  <polygon points="550,123 560,127 550,131" class="arr-head emerald"/>
+  <text x="478" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t2s3m">frontend nginx: +Upgrade headers → handshake OK</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t2s4b"/>
+  <line x1="560" y1="161" x2="80" y2="161" class="arr emerald"/>
+  <polygon points="80,157 70,161 80,165" class="arr-head emerald"/>
+  <text x="315" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t2s4m">broadcast {nodes:[...], unavailable_track_count, ts} + heartbeat 30s</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box amber" id="t2s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#92400e" id="t2s5m">Thiếu Upgrade header ở BẤT KỲ lớp nginx nào → handshake fail âm thầm (rủi ro chính)</text>
+</svg>
+</div>
+</section>
+
+<section id="t3">
+<h2>T3 · Shard mapping — bài hát nào thuộc node nào <span class="badge">Claude main</span></h2>
+<p class="desc">Đây là nơi Quyết định 3 (I1/I2) đổ vào code. Với <strong>I2 — media locality</strong> (khuyến nghị): bảng mới <code>media_hosts(host, path_prefix, node_name)</code> khai báo host nào giữ file dưới prefix nào; khi watcher báo node down, backend query <code>tracks WHERE file_path LIKE prefix || '%'</code> để ra danh sách bài unavailable. Metadata vẫn sống nhờ CRDB RF=3 — chỉ stream là chết. Hiện tại toàn bộ media nằm trên một host duy nhất nên hôm nay chỉ có một shard; bảng này đón sẵn ngày media rải ra nhiều node như hướng "partial library per node" đã ghi từ draft 160626.</p>
+<p class="desc">Với <strong>I1 — metadata sharding thật (RF=1)</strong>: phải đọc <code>crdb_internal.ranges</code> để biết range nào có lease trên node chết — phức tạp hơn đáng kể và vứt bỏ lợi ích HA của CRDB, chỉ hợp lý khi mục tiêu là dung lượng chứ không phải HA. Kèm theo task này là endpoint REST <code>GET /api/cluster/health</code> trả snapshot đầy đủ, để lần load trang đầu tiên FE có trạng thái ngay trước khi WebSocket kịp nối.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="220" viewBox="0 0 640 220">
+  <text x="90" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">health event</text>
+  <text x="290" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">media_hosts (I2)</text>
+  <text x="510" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">tracks (CRDB RF=3)</text>
+  <line x1="90" y1="32" x2="90" y2="215" class="lifeline-line"/>
+  <line x1="290" y1="32" x2="290" y2="215" class="lifeline-line"/>
+  <line x1="510" y1="32" x2="510" y2="215" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box amber" id="t3s1b"/>
+  <line x1="90" y1="59" x2="280" y2="59" class="arr amber"/>
+  <polygon points="280,55 290,59 280,63" class="arr-head amber"/>
+  <text x="185" y="54" class="msg" text-anchor="middle" fill="#92400e" id="t3s1m">event: host "rhein-k8s-s2" DOWN</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t3s2b"/>
+  <line x1="290" y1="93" x2="500" y2="93" class="arr emerald"/>
+  <polygon points="500,89 510,93 500,97" class="arr-head emerald"/>
+  <text x="398" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t3s2m">SELECT id FROM tracks WHERE file_path LIKE prefix || '%'</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t3s3b"/>
+  <line x1="510" y1="127" x2="100" y2="127" class="arr emerald"/>
+  <polygon points="100,123 90,127 100,131" class="arr-head emerald"/>
+  <text x="300" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t3s3m">unavailable_track_ids (metadata vẫn sống — RF=3)</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t3s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t3s4m">GET /api/cluster/health — snapshot REST cho lần load đầu (trước khi WS nối)</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box amber" id="t3s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#92400e" id="t3s5m">I1 (RF=1): đọc crdb_internal.ranges — mất luôn metadata, vứt bỏ HA → không khuyến nghị</text>
+</svg>
+</div>
+</section>
+
+<section id="t4">
+<h2>T4 · Frontend — ẨN track unavailable + PlayerContext skip <span class="badge">Claude main</span></h2>
+<p class="desc">Quyết định đã chốt của user: dữ liệu vẫn giữ nguyên trong DB, nhưng track thuộc host down bị <strong>ẩn hoàn toàn khỏi UI</strong> — không gray-out, vì bấm vào cũng không có gì phát ra. Khuyến nghị filter ngay ở backend query để mọi endpoint (list, search, album detail) nhất quán và FE không phải vá từng component; album/artist trống sau filter cũng ẩn theo (cascade). Hook mới <code>useClusterHealth</code> nối WebSocket với reconnect backoff + jitter (chống reconnect storm khi backend rollout 3 pod), seed trạng thái ban đầu từ snapshot REST của T3, và hiện banner "⏳ N bài tạm ẩn — node X down" để người dùng hiểu vì sao thư viện vơi đi thay vì tưởng mất dữ liệu.</p>
+<p class="desc">Phần nhạy cảm nhất là <code>PlayerContext.tsx</code> — shared core mà toàn bộ player phụ thuộc: queue và smart radio phải <strong>skip</strong> track unavailable để không nhét bài chết vào hàng đợi. Theo đúng rule CLAUDE.md, bước này chạy <code>frontend-index</code> trước để map chính xác component nào bị ảnh hưởng, rồi đi qua <code>impact-check</code> + <code>safe-change</code>. Service worker không liên quan (WebSocket không đi qua Workbox) — không có rủi ro sw2.js.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="90" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">useClusterHealth</text>
+  <text x="290" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">TrackList / banner</text>
+  <text x="510" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">PlayerContext</text>
+  <line x1="90" y1="32" x2="90" y2="235" class="lifeline-line"/>
+  <line x1="290" y1="32" x2="290" y2="235" class="lifeline-line"/>
+  <line x1="510" y1="32" x2="510" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t4s1b"/>
+  <text x="320" y="62" class="msg" text-anchor="middle" fill="#065f46" id="t4s1m">Load trang: seed từ GET /api/cluster/health → mở WS (backoff+jitter)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t4s2b"/>
+  <line x1="90" y1="93" x2="280" y2="93" class="arr amber"/>
+  <polygon points="280,89 290,93 280,97" class="arr-head amber"/>
+  <text x="185" y="88" class="msg" text-anchor="middle" fill="#92400e" id="t4s2m">WS: node down → ẨN N bài khỏi list + banner đếm</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t4s3b"/>
+  <line x1="90" y1="127" x2="500" y2="127" class="arr emerald"/>
+  <polygon points="500,123 510,127 500,131" class="arr-head emerald"/>
+  <text x="295" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t4s3m">unavailableTrackIds → queue/smart-radio skip bài chết</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t4s4b"/>
+  <line x1="90" y1="161" x2="280" y2="161" class="arr emerald"/>
+  <polygon points="280,157 290,161 280,165" class="arr-head emerald"/>
+  <text x="185" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t4s4m">WS: node live lại → bài hiện lại trong list, banner biến mất</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box indigo" id="t4s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#312e81" id="t4s5m">Trước khi code: frontend-index → impact-check → safe-change (PlayerContext = shared core)</text>
+</svg>
+</div>
+</section>
+
+<section id="t5">
+<h2>T5 · Verify end-to-end — kill node thật, UI tự phản ứng <span class="badge">Claude main + user</span></h2>
+<p class="desc">Bài nghiệm thu chạy trên cluster thật với user xác nhận trước: tắt một DB node khi site đang mở trong browser. Trong vòng tối đa 10 giây (2 chu kỳ poll), không cần reload, đúng danh sách bài thuộc shard đó phải biến khỏi mọi list/search (album rỗng ẩn theo) và banner hiện số bài đang ẩn — trong khi bài thuộc node khác vẫn browse và phát bình thường, smart radio không nhét bài chết vào queue. Bật node lại: UI tự phục hồi trong 10 giây, banner biến mất.</p>
+<p class="desc">Đồng thời kiểm tra chống reconnect storm: rollout lại backend 3 pod trong lúc có nhiều tab đang mở, các client phải reconnect rải rác (jitter) và nhận cùng trạng thái từ bất kỳ pod nào. Kết quả — timing, screenshot banner, log hub — ghi vào wiki làm bằng chứng.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="75" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="250" y="24" class="lifeline-label" fill="#f59e0b" text-anchor="middle">DB node 2</text>
+  <text x="430" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Backend watcher+hub</text>
+  <text x="580" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Browser</text>
+  <line x1="75" y1="32" x2="75" y2="235" class="lifeline-line"/>
+  <line x1="250" y1="32" x2="250" y2="235" class="lifeline-line"/>
+  <line x1="430" y1="32" x2="430" y2="235" class="lifeline-line"/>
+  <line x1="580" y1="32" x2="580" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box amber" id="t5s1b"/>
+  <line x1="75" y1="59" x2="240" y2="59" class="arr amber"/>
+  <polygon points="240,55 250,59 240,63" class="arr-head amber"/>
+  <text x="160" y="54" class="msg" text-anchor="middle" fill="#92400e" id="t5s1m">Tắt node 2 (user xác nhận, site đang mở)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t5s2b"/>
+  <line x1="430" y1="93" x2="570" y2="93" class="arr emerald"/>
+  <polygon points="570,89 580,93 570,97" class="arr-head emerald"/>
+  <text x="505" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t5s2m">≤10s: WS push → N bài biến khỏi list + banner</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t5s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#065f46" id="t5s3m">Bài node khác vẫn phát ✓ · smart radio không chọn bài chết ✓</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box indigo" id="t5s4b"/>
+  <line x1="75" y1="161" x2="240" y2="161" class="arr indigo"/>
+  <polygon points="240,157 250,161 240,165" class="arr-head indigo"/>
+  <text x="160" y="156" class="msg" text-anchor="middle" fill="#312e81" id="t5s4m">Bật lại node 2</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box emerald" id="t5s5b"/>
+  <line x1="430" y1="195" x2="570" y2="195" class="arr emerald"/>
+  <polygon points="570,191 580,195 570,199" class="arr-head emerald"/>
+  <text x="505" y="190" class="msg" text-anchor="middle" fill="#065f46" id="t5s5m">≤10s: UI tự phục hồi, banner ẩn ✓</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={t1:['t1s1','t1s2','t1s3','t1s4','t1s5'],t2:['t2s1','t2s2','t2s3','t2s4','t2s5'],t3:['t3s1','t3s2','t3s3','t3s4','t3s5'],t4:['t4s1','t4s2','t4s3','t4s4','t4s5'],t5:['t5s1','t5s2','t5s3','t5s4','t5s5']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

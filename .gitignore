@@ -6,6 +6,7 @@ s.txt
 .env*.local
 deepseek-api-key.md
 *.key
+k8s/secret.yaml
 
 # build artifacts
 backend/dist/

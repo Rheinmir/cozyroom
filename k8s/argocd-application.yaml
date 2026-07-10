@@ -1,0 +1,19 @@
+# ArgoCD Application — GitOps cho namespace cozyroom-k8s.
+# syncPolicy CỐ Ý để trống (manual sync) — audit 100726 phát hiện git/live có
+# drift thật (postgres-standby init container); automated.selfHeal sẽ tự áp lại
+# spec đó và trigger StatefulSet rebuild (rm -rf data + pg_basebackup) mà không hỏi.
+# Xem: llmwiki/wiki/sources/draft/100726-argocd-gitops-k8s.md
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cozyroom
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Rheinmir/cozyroom.git
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cozyroom-k8s

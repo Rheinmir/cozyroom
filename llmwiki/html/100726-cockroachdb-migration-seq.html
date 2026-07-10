@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>100726 — Migrate PostgreSQL → CockroachDB</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:210px;height:100vh;z-index:100;overflow:hidden}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:210px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}
+section{margin-bottom:64px;scroll-margin-top:80px}
+h2{font-size:16px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:13px;color:#374151;line-height:1.65;margin-bottom:14px;max-width:720px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08)}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.5px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:12px;color:#4338ca}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">CRDB Migration</div>
+    <a href="#t1">T1 · Code compat</a>
+    <a href="#t2">T2 · Cluster 3 node</a>
+    <a href="#t3">T3 · Migrate data</a>
+    <a href="#t4">T4 · Switch traffic</a>
+    <a href="#t5">T5 · Chaos verify</a>
+  </div>
+</nav>
+<main>
+<h1>100726 — Migrate PostgreSQL → CockroachDB</h1>
+<p class="subtitle">Multi-active qua Raft consensus — xoá master-slave, mất 1 node app vẫn sống, không cần promote tay</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng hiện có</span>
+  <span><span class="dot emerald"></span> thêm mới / thay đổi</span>
+  <span><span class="dot amber"></span> nhánh lỗi / node chết</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="t1">
+<h2>T1 · Code compat — lease table thay advisory lock <span class="badge">Claude main</span></h2>
+<p class="desc">Audit toàn bộ code backend cho thấy CockroachDB tương thích gần như hoàn toàn: driver là <code>database/sql</code> + pgx qua một <code>DATABASE_URL</code> duy nhất, search chỉ dùng <code>ILIKE</code> thuần (CRDB hỗ trợ native), schema trong <code>migrate()</code> là DDL chuẩn, và dòng <code>CREATE EXTENSION pg_trgm</code> đã tự tolerate lỗi từ trước. Điểm không tương thích cứng duy nhất là <code>enricher/aitrends.go</code>: hàm <code>pg_try_advisory_lock(hashtext('ai-enrich'))</code> — CockroachDB không hỗ trợ cả advisory lock lẫn <code>hashtext</code>.</p>
+<p class="desc">Giải pháp là một lease table: bảng <code>enrich_lease(key, holder, expires_at)</code>, pod nào INSERT ON CONFLICT thành công (hoặc UPDATE được dòng đã hết hạn) thì giữ quyền chạy EnrichWithAI — giữ nguyên mục đích chống 3 pod chạy trùng của fix 220626. Khác biệt ngữ nghĩa cần lưu ý: lock cũ nhả theo session, lease mới nhả theo TTL, nên TTL phải dài hơn thời gian enrich tối đa. Ngoài ra CRDB mặc định isolation serializable nên write có thể trả lỗi retry <code>40001</code>; khuyến nghị đặt <code>READ COMMITTED</code> (CRDB ≥23.2) vì app này gần như không có write contention — ít sửa code nhất.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="260" viewBox="0 0 640 260">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Pod A (cron)</text>
+  <text x="250" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Pod B (cron)</text>
+  <text x="450" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">enrich_lease (CRDB)</text>
+  <line x1="80" y1="32" x2="80" y2="255" class="lifeline-line"/>
+  <line x1="250" y1="32" x2="250" y2="255" class="lifeline-line"/>
+  <line x1="450" y1="32" x2="450" y2="255" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box amber" id="t1s1b"/>
+  <text x="320" y="62" class="msg" text-anchor="middle" fill="#92400e" id="t1s1m">CŨ: pg_try_advisory_lock(hashtext(...)) → CRDB không hỗ trợ ❌</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t1s2b"/>
+  <line x1="80" y1="93" x2="440" y2="93" class="arr emerald"/>
+  <polygon points="440,89 450,93 440,97" class="arr-head emerald"/>
+  <text x="260" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t1s2m">MỚI: INSERT lease ON CONFLICT WHERE expires_at &lt; now()</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t1s3b"/>
+  <line x1="450" y1="127" x2="90" y2="127" class="arr emerald"/>
+  <polygon points="90,123 80,127 90,131" class="arr-head emerald"/>
+  <text x="265" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t1s3m">Pod A thắng lease (TTL &gt; thời gian enrich) → chạy EnrichWithAI</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box amber" id="t1s4b"/>
+  <line x1="250" y1="161" x2="440" y2="161" class="arr amber"/>
+  <polygon points="440,157 450,161 440,165" class="arr-head amber"/>
+  <text x="345" y="156" class="msg" text-anchor="middle" fill="#92400e" id="t1s4m">Pod B cùng lúc → lease còn hạn → bỏ qua (không chạy trùng)</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box emerald" id="t1s5b"/>
+  <line x1="80" y1="195" x2="440" y2="195" class="arr emerald"/>
+  <polygon points="440,191 450,195 440,199" class="arr-head emerald"/>
+  <text x="260" y="190" class="msg" text-anchor="middle" fill="#065f46" id="t1s5m">Xong → UPDATE expires_at = now() (nhả lease sớm)</text>
+
+  <rect x="25" y="216" width="590" height="26" class="step-box emerald" id="t1s6b"/>
+  <text x="320" y="232" class="msg" text-anchor="middle" fill="#065f46" id="t1s6m">Verify: backend full smoke trên CRDB single-node local (docker)</text>
+</svg>
+</div>
+</section>
+
+<section id="t2">
+<h2>T2 · Dựng cluster 3 node — precondition: node 3 sống <span class="badge">Claude main + user</span></h2>
+<p class="desc">CockroachDB dùng Raft consensus nên cần quá bán số node để hoạt động: cluster 3 node chịu được mất 1 node, nhưng cluster 2 node thì mất bất kỳ node nào cũng sập — tệ hơn cả hiện tại. Vì <code>rhein-e2144g</code> đang NotReady, <strong>hồi sinh node 3 (hoặc thêm máy khác) là điều kiện tiên quyết cứng</strong> trước khi làm bước này. Topology khuyến nghị là bare metal trên 3 host WSL2 nối qua Tailscale, khớp triết lý đã ghi trong ADR: "DB nên chạy bare metal, stateless apps trong K8s"; K8s chỉ giữ một Service/Endpoints trỏ ra ngoài.</p>
+<p class="desc">Checklist bắt buộc trước khi <code>cockroach init</code>: bật time-sync trên cả 3 host — CRDB tự kill node khi clock lệch quá 500ms, và WSL2 nổi tiếng trôi clock sau khi máy sleep. Cấu hình homelab: <code>--cache .25 --max-sql-memory .25</code>, mỗi node cần tối thiểu ~2GB RAM. Verify của task này chính là bản chất của CRDB: tắt thử 1 node ngay sau khi dựng, cluster còn lại vẫn nhận query.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="260" viewBox="0 0 640 260">
+  <text x="75" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="250" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Host 1+2 (WSL2)</text>
+  <text x="450" y="24" class="lifeline-label" fill="#f59e0b" text-anchor="middle">Host 3 (NotReady!)</text>
+  <line x1="75" y1="32" x2="75" y2="255" class="lifeline-line"/>
+  <line x1="250" y1="32" x2="250" y2="255" class="lifeline-line"/>
+  <line x1="450" y1="32" x2="450" y2="255" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box amber" id="t2s1b"/>
+  <line x1="75" y1="59" x2="440" y2="59" class="arr amber"/>
+  <polygon points="440,55 450,59 440,63" class="arr-head amber"/>
+  <text x="260" y="54" class="msg" text-anchor="middle" fill="#92400e" id="t2s1m">Precondition: hồi sinh rhein-e2144g — 2 node = Raft không có quá bán</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t2s2b"/>
+  <line x1="75" y1="93" x2="240" y2="93" class="arr emerald"/>
+  <polygon points="240,89 250,93 240,97" class="arr-head emerald"/>
+  <text x="160" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t2s2m">Bật time-sync cả 3 host (CRDB kill node lệch &gt;500ms)</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t2s3b"/>
+  <line x1="75" y1="127" x2="240" y2="127" class="arr emerald"/>
+  <polygon points="240,123 250,127 240,131" class="arr-head emerald"/>
+  <text x="160" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t2s3m">cockroach start ×3 (bare metal, join qua Tailscale)</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t2s4b"/>
+  <line x1="75" y1="161" x2="240" y2="161" class="arr emerald"/>
+  <polygon points="240,157 250,161 240,165" class="arr-head emerald"/>
+  <text x="160" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t2s4m">cockroach init → dashboard 3 node xanh</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box amber" id="t2s5b"/>
+  <line x1="75" y1="195" x2="440" y2="195" class="arr amber"/>
+  <polygon points="440,191 450,195 440,199" class="arr-head amber"/>
+  <text x="260" y="190" class="msg" text-anchor="middle" fill="#92400e" id="t2s5m">Test: tắt 1 node → 2 node còn lại vẫn nhận query ✓</text>
+
+  <rect x="25" y="216" width="590" height="26" class="step-box emerald" id="t2s6b"/>
+  <text x="320" y="232" class="msg" text-anchor="middle" fill="#065f46" id="t2s6m">K8s giữ Service `crdb` (Endpoints trỏ 3 Tailscale IP) — app không biết gì khác</text>
+</svg>
+</div>
+</section>
+
+<section id="t3">
+<h2>T3 · Migrate data — copy, không move <span class="badge">Claude main + user giám sát</span></h2>
+<p class="desc">Nguyên tắc tối thượng của bước này lấy thẳng từ rule bảo vệ DB trong CLAUDE.md: <strong>Postgres không bị đụng vào</strong>. Schema không cần dump — backend tự tạo qua <code>migrate()</code> (CREATE TABLE IF NOT EXISTS) ngay lần đầu kết nối CRDB. Data thì <code>pg_dump --data-only</code> từ Postgres rồi import vào CRDB; dữ liệu metadata nhỏ (dưới 10GB PV, thực tế nhỏ hơn nhiều) nên import một lần là xong, không cần công cụ CDC phức tạp.</p>
+<p class="desc">Bằng chứng hoàn thành là phép đối chiếu máy móc: <code>SELECT count(*)</code> từng bảng trên cả hai phía phải khớp 100%, cộng vài spot-check nội dung (track bất kỳ, playlist bất kỳ). Chỉ khi khớp mới được sang T4. Trong suốt quá trình, app vẫn đang chạy trên Postgres — người dùng không thấy gì khác lạ, và nếu có gì sai thì đơn giản là xoá database CRDB làm lại, không có rủi ro nào chạm vào dữ liệu thật.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="75" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="250" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Postgres (nguyên vẹn)</text>
+  <text x="460" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">CRDB cluster</text>
+  <line x1="75" y1="32" x2="75" y2="235" class="lifeline-line"/>
+  <line x1="250" y1="32" x2="250" y2="235" class="lifeline-line"/>
+  <line x1="460" y1="32" x2="460" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t3s1b"/>
+  <line x1="75" y1="59" x2="450" y2="59" class="arr emerald"/>
+  <polygon points="450,55 460,59 450,63" class="arr-head emerald"/>
+  <text x="265" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t3s1m">Backend migrate() tự tạo schema trên CRDB</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box indigo" id="t3s2b"/>
+  <line x1="75" y1="93" x2="240" y2="93" class="arr indigo"/>
+  <polygon points="240,89 250,93 240,97" class="arr-head indigo"/>
+  <text x="160" y="88" class="msg" text-anchor="middle" fill="#312e81" id="t3s2m">pg_dump --data-only (READ ONLY — không đụng PVC)</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t3s3b"/>
+  <line x1="250" y1="127" x2="450" y2="127" class="arr emerald"/>
+  <polygon points="450,123 460,127 450,131" class="arr-head emerald"/>
+  <text x="355" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t3s3m">Import vào CRDB (app vẫn chạy trên Postgres)</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t3s4b"/>
+  <line x1="75" y1="161" x2="240" y2="161" class="arr emerald"/>
+  <polygon points="240,157 250,161 240,165" class="arr-head emerald"/>
+  <text x="160" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t3s4m">count(*) từng bảng 2 phía — phải khớp 100%</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box amber" id="t3s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#92400e" id="t3s5m">Lệch bất kỳ bảng nào → dừng, xoá DB CRDB, import lại — Postgres không sao</text>
+</svg>
+</div>
+</section>
+
+<section id="t4">
+<h2>T4 · Switch traffic — db-adapter đổi ruột, giữ tên <span class="badge">Claude main</span></h2>
+<p class="desc">Backend hiện kết nối <code>postgres://...@db-adapter:5432/cozyroom</code> — tên Service <code>db-adapter</code> chính là điểm switch đẹp nhất: giữ nguyên tên, đổi ruột từ PgBouncer (chỉ trỏ được 1 host) sang HAProxy round-robin qua 3 node CRDB. Backend <code>DATABASE_URL</code> gần như không đổi, chỉ rollout lại pod là ăn kết nối mới. CRDB không cần connection pooler kiểu PgBouncer vì mỗi node tự xử lý pool nội bộ tốt.</p>
+<p class="desc">Rollback là một lệnh duy nhất: trỏ db-adapter ngược về <code>postgres:5432</code> — vì Postgres vẫn đang chạy nguyên vẹn ở T3, cửa thoát hiểm luôn mở trong suốt quá trình cutover. Smoke test sau rollout chạy trên chính <code>music.giatbh.io.vn</code>: browse, search, play, playlist, AI chat, trending.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="75" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend ×3</text>
+  <text x="250" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">db-adapter (HAProxy mới)</text>
+  <text x="460" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">CRDB node 1·2·3</text>
+  <line x1="75" y1="32" x2="75" y2="235" class="lifeline-line"/>
+  <line x1="250" y1="32" x2="250" y2="235" class="lifeline-line"/>
+  <line x1="460" y1="32" x2="460" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box indigo" id="t4s1b"/>
+  <line x1="75" y1="59" x2="240" y2="59" class="arr indigo"/>
+  <polygon points="240,55 250,59 240,63" class="arr-head indigo"/>
+  <text x="160" y="54" class="msg" text-anchor="middle" fill="#312e81" id="t4s1m">DATABASE_URL @db-adapter — KHÔNG đổi host</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t4s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#065f46" id="t4s2m">db-adapter: PgBouncer → HAProxy (round-robin 3 node, health check)</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t4s3b"/>
+  <line x1="250" y1="127" x2="450" y2="127" class="arr emerald"/>
+  <polygon points="450,123 460,127 450,131" class="arr-head emerald"/>
+  <text x="355" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t4s3m">Query phân đều 3 node — node nào cũng đọc/ghi được</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t4s4b"/>
+  <line x1="75" y1="161" x2="240" y2="161" class="arr emerald"/>
+  <polygon points="240,157 250,161 240,165" class="arr-head emerald"/>
+  <text x="160" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t4s4m">kubectl rollout restart backend → smoke prod</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box amber" id="t4s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#92400e" id="t4s5m">Rollback 1 lệnh: db-adapter trỏ về postgres:5432 (Postgres vẫn sống)</text>
+</svg>
+</div>
+</section>
+
+<section id="t5">
+<h2>T5 · Chaos verify — HA thật, không thao tác tay <span class="badge">Claude main + user</span></h2>
+<p class="desc">Đây là bài kiểm tra mà kiến trúc Postgres primary/standby hiện tại chưa bao giờ vượt qua (Task 4 của draft 160626 vẫn pending): tắt hẳn một node database khi site đang chạy, và <strong>không ai phải làm gì cả</strong>. Với CRDB, Raft tự bầu leader mới cho các range nằm trên node chết trong vài giây; HAProxy health check loại node chết khỏi rotation; backend không thấy gì ngoài vài query retry.</p>
+<p class="desc">Kịch bản đo: tắt node → browse + search + write (tạo playlist, play track) phải hoạt động bình thường trong vòng 10 giây; bật node lại → tự rejoin, ranges rebalance, dashboard 3 node xanh trở lại. Kết quả (log HAProxy, screenshot dashboard, timing) ghi vào wiki làm bằng chứng đóng SPOF saga từ 160626.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="240" viewBox="0 0 640 240">
+  <text x="75" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="240" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">App (prod)</text>
+  <text x="430" y="24" class="lifeline-label" fill="#f59e0b" text-anchor="middle">CRDB node 2 (bị tắt)</text>
+  <text x="575" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Node 1+3</text>
+  <line x1="75" y1="32" x2="75" y2="235" class="lifeline-line"/>
+  <line x1="240" y1="32" x2="240" y2="235" class="lifeline-line"/>
+  <line x1="430" y1="32" x2="430" y2="235" class="lifeline-line"/>
+  <line x1="575" y1="32" x2="575" y2="235" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box amber" id="t5s1b"/>
+  <line x1="75" y1="59" x2="420" y2="59" class="arr amber"/>
+  <polygon points="420,55 430,59 420,63" class="arr-head amber"/>
+  <text x="250" y="54" class="msg" text-anchor="middle" fill="#92400e" id="t5s1m">Tắt node 2 (site đang chạy, user xác nhận trước)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t5s2b"/>
+  <line x1="430" y1="93" x2="565" y2="93" class="arr emerald"/>
+  <polygon points="565,89 575,93 565,97" class="arr-head emerald"/>
+  <text x="500" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t5s2m">Raft bầu leader mới (~vài giây)</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t5s3b"/>
+  <line x1="240" y1="127" x2="565" y2="127" class="arr emerald"/>
+  <polygon points="565,123 575,127 565,131" class="arr-head emerald"/>
+  <text x="405" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t5s3m">Browse + search + write vẫn OK ≤10s — KHÔNG thao tác tay</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box indigo" id="t5s4b"/>
+  <line x1="75" y1="161" x2="420" y2="161" class="arr indigo"/>
+  <polygon points="420,157 430,161 420,165" class="arr-head indigo"/>
+  <text x="250" y="156" class="msg" text-anchor="middle" fill="#312e81" id="t5s4m">Bật lại node 2</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box emerald" id="t5s5b"/>
+  <line x1="430" y1="195" x2="565" y2="195" class="arr emerald"/>
+  <polygon points="565,191 575,195 565,199" class="arr-head emerald"/>
+  <text x="500" y="190" class="msg" text-anchor="middle" fill="#065f46" id="t5s5m">Tự rejoin + rebalance → 3 node xanh ✓</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={t1:['t1s1','t1s2','t1s3','t1s4','t1s5','t1s6'],t2:['t2s1','t2s2','t2s3','t2s4','t2s5','t2s6'],t3:['t3s1','t3s2','t3s3','t3s4','t3s5'],t4:['t4s1','t4s2','t4s3','t4s4','t4s5'],t5:['t5s1','t5s2','t5s3','t5s4','t5s5']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>
