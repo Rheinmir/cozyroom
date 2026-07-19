@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>180726 — Real-time Observability cho Stream Nhạc qua K8s</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:220px;height:100vh;z-index:100;overflow:hidden}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:220px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px;max-width:760px;line-height:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}
+section{margin-bottom:64px;scroll-margin-top:80px}
+h2{font-size:16px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:13px;color:#374151;line-height:1.7;margin-bottom:14px;max-width:740px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08);margin-bottom:16px}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.5px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:12px;color:#4338ca}
+.callout{background:rgba(99,102,241,.06);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12.5px;color:#312e81;margin-bottom:16px;max-width:740px;line-height:1.6}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">Stream Observability</div>
+    <a href="#t1">T1 · Scrape backend</a>
+    <a href="#t2">T2 · kube-state-metrics</a>
+    <a href="#t3">T3 · Grafana panel</a>
+    <a href="#t4">T4 · Telegram alert</a>
+  </div>
+</nav>
+<main>
+<h1>180726 — Real-time Observability cho Stream Nhạc qua K8s</h1>
+<p class="subtitle">Nối app metrics đã có + kube-state-metrics còn thiếu + dashboard Grafana đã tồn tại thành một đường quan sát duy nhất — để chỉ ra bằng dữ liệu thật thay vì đoán từ code.</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng hiện có / không đổi</span>
+  <span><span class="dot emerald"></span> thêm mới / thay đổi</span>
+  <span><span class="dot amber"></span> nhánh cần thận trọng / chờ xác nhận</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="t1">
+<h2>T1 · Verify + wire Prometheus scrape cho backend <code>/metrics</code> <span class="badge">Claude Code</span></h2>
+<p class="desc">Trước khi thêm bất kỳ cấu hình mới nào, việc đầu tiên phải làm là xác minh xem con đường mạng ngắn nhất — Prometheus scrape thẳng ClusterIP của Service <code>backend</code> — có thực sự hoạt động hay không, vì Prometheus tuy chạy ngoài cụm K3s (dưới dạng container Docker Compose độc lập với <code>network_mode: host</code>) nhưng lại nằm trên đúng node đang giữ vai trò control-plane của K3s, nơi các luật iptables/ipvs của kube-proxy vẫn tồn tại và có thể cho phép truy cập ClusterIP trực tiếp từ chính host đó mà không cần mở thêm cổng nào ra ngoài.</p>
+<p class="desc">Đây là lý do việc "thử trước khi mở NodePort" là bước bắt buộc chứ không phải tùy chọn — mở NodePort là hành động khó đảo ngược êm ái (một khi ứng dụng hoặc script khác bắt đầu phụ thuộc vào cổng đó, đóng lại sẽ gây gián đoạn) và làm tăng bề mặt tấn công cho một endpoint vốn không có xác thực. Nếu route trực tiếp thất bại, nhánh dự phòng là thêm NodePort có kiểm soát, đi kèm khuyến nghị giới hạn bằng firewall theo dải Tailscale. Sau khi có đường truy cập, việc thêm job scrape vào <code>prometheus.yml</code> và nạp lại cấu hình bằng tín hiệu SIGHUP là thao tác đã có tiền lệ vận hành rõ ràng trong runbook K3s hiện tại, không cần dò lại từ đầu.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="680" height="230" viewBox="0 0 680 230">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="340" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Prometheus (host-network)</text>
+  <text x="600" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">backend Service (ClusterIP)</text>
+  <line x1="80" y1="32" x2="80" y2="215" class="lifeline-line"/>
+  <line x1="340" y1="32" x2="340" y2="215" class="lifeline-line"/>
+  <line x1="600" y1="32" x2="600" y2="215" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="630" height="26" class="step-box emerald" id="t1s1b"/>
+  <line x1="340" y1="59" x2="590" y2="59" class="arr emerald"/>
+  <polygon points="590,55 600,59 590,63" class="arr-head emerald"/>
+  <text x="470" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t1s1m">curl ClusterIP:8080/metrics từ chính host master (verify route)</text>
+
+  <rect x="25" y="80" width="630" height="26" class="step-box amber" id="t1s2b"/>
+  <text x="340" y="96" class="msg" text-anchor="middle" fill="#92400e" id="t1s2m">nếu route fail → thêm NodePort tạm cho cổng metrics (nhánh thận trọng)</text>
+
+  <rect x="25" y="114" width="630" height="26" class="step-box emerald" id="t1s3b"/>
+  <line x1="80" y1="127" x2="330" y2="127" class="arr emerald"/>
+  <polygon points="330,123 340,127 330,131" class="arr-head emerald"/>
+  <text x="205" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t1s3m">thêm job "backend" vào prometheus.yml (ClusterIP ưu tiên, NodePort dự phòng)</text>
+
+  <rect x="25" y="148" width="630" height="26" class="step-box emerald" id="t1s4b"/>
+  <text x="340" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t1s4m">docker kill -s HUP prometheus — reload không cần lifecycle API</text>
+
+  <rect x="25" y="182" width="630" height="26" class="step-box indigo" id="t1s5b"/>
+  <text x="600" y="198" class="msg" text-anchor="middle" fill="#312e81" id="t1s5m">backend vẫn phơi /metrics y hệt hiện tại — 0 dòng code Go đổi</text>
+</svg>
+</div>
+</section>
+
+<section id="t2">
+<h2>T2 · Triển khai kube-state-metrics — mảnh còn thiếu <span class="badge">OpenCode</span></h2>
+<p class="desc">Đây là mảnh ghép duy nhất thực sự còn thiếu trong toàn bộ chuỗi quan sát. Prometheus client trong code Go đã cho biết ứng dụng "nghĩ" nó đang chạy tốt ra sao (tầng app), và cAdvisor/node-exporter đã cho biết phần cứng vật lý đang chịu tải thế nào (tầng hạ tầng) — nhưng không có thành phần nào trong hai tầng đó biết được Kubernetes, ở tầng điều phối, đã làm gì với pod: có bị kubelet giết vì probe thất bại hay không, có đang chạy đúng số replica mong muốn hay không, đã restart bao nhiêu lần trong giờ qua.</p>
+<p class="desc"><code>kube-state-metrics</code> chuyển đổi chính xác trạng thái nội bộ của Kubernetes API server (<code>kube_pod_container_status_restarts_total</code>, <code>kube_deployment_status_replicas_available</code> so với <code>spec_replicas</code>) thành số liệu Prometheus có thể truy vấn được — đây là tín hiệu duy nhất có thể xác nhận hoặc bác bỏ trực tiếp giả thuyết "pod bị đá khỏi Service giữa lúc đang stream vì readiness probe thất bại do nghẽn CPU", thay vì phải suy luận gián tiếp từ log ứng dụng.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="680" height="196" viewBox="0 0 680 196">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="340" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">cluster (RBAC + pod mới)</text>
+  <text x="600" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Prometheus</text>
+  <line x1="80" y1="32" x2="80" y2="181" class="lifeline-line"/>
+  <line x1="340" y1="32" x2="340" y2="181" class="lifeline-line"/>
+  <line x1="600" y1="32" x2="600" y2="181" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="630" height="26" class="step-box emerald" id="t2s1b"/>
+  <line x1="80" y1="59" x2="330" y2="59" class="arr emerald"/>
+  <polygon points="330,55 340,59 330,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t2s1m">apply k8s/kube-state-metrics.yaml (Deployment + RBAC read-only + Service)</text>
+
+  <rect x="25" y="80" width="630" height="26" class="step-box emerald" id="t2s2b"/>
+  <text x="340" y="96" class="msg" text-anchor="middle" fill="#065f46" id="t2s2m">pod khởi động, phơi /metrics cổng 8080 trong cụm</text>
+
+  <rect x="25" y="114" width="630" height="26" class="step-box emerald" id="t2s3b"/>
+  <line x1="340" y1="127" x2="590" y2="127" class="arr emerald"/>
+  <polygon points="590,123 600,127 590,131" class="arr-head emerald"/>
+  <text x="470" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t2s3m">thêm job "kube-state-metrics" vào prometheus.yml</text>
+
+  <rect x="25" y="148" width="630" height="26" class="step-box indigo" id="t2s4b"/>
+  <text x="340" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t2s4m">namespace cozyroom-k8s production không bị đụng — chỉ đọc, không ghi</text>
+</svg>
+</div>
+</section>
+
+<section id="t3">
+<h2>T3 · Thêm panel real-time vào dashboard Grafana đã tồn tại <span class="badge">Claude Code</span></h2>
+<p class="desc">Ba tầng dữ liệu (app, pod, hạ tầng) chỉ thực sự trở thành công cụ chẩn đoán khi chúng được nhìn thấy cùng lúc, trên cùng một trục thời gian, tại cùng một nơi — nếu không, vẫn phải mở ba tab riêng biệt và tự khớp mắt các mốc thời gian lại với nhau, điều mà con người làm rất tệ khi so sánh nhiều đường biểu đồ cách xa nhau. Việc đặt cả ba panel mới vào chung một row của dashboard <code>Cozyroom Infra</code> (uid <code>cozyroom-infra-v2</code>) đã tồn tại, thay vì tạo một dashboard hoàn toàn mới, giữ cho toàn bộ ngữ cảnh vận hành sẵn có được tái sử dụng nguyên vẹn, đồng thời tránh nhân đôi công sức bảo trì hai dashboard song song về sau.</p>
+<div class="callout">Rủi ro lớn nhất của bước này không phải là kỹ thuật khó, mà là thao tác cẩu thả: Grafana 11 có hành vi im lặng khi patch sai định dạng — toàn bộ panel có thể chuyển sang "No data" mà không có bất kỳ thông báo lỗi rõ ràng nào, vì vậy bước backup trước khi sửa không phải là thủ tục hình thức mà là lưới an toàn thực sự cho một dashboard đang phục vụ vận hành thật.</div>
+<div class="diagram diagram-box">
+<svg class="seq" width="680" height="230" viewBox="0 0 680 230">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="340" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Grafana API</text>
+  <text x="600" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Dashboard cozyroom-infra-v2</text>
+  <line x1="80" y1="32" x2="80" y2="215" class="lifeline-line"/>
+  <line x1="340" y1="32" x2="340" y2="215" class="lifeline-line"/>
+  <line x1="600" y1="32" x2="600" y2="215" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="630" height="26" class="step-box emerald" id="t3s1b"/>
+  <line x1="80" y1="59" x2="330" y2="59" class="arr emerald"/>
+  <polygon points="330,55 340,59 330,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t3s1m">GET dashboard uid cozyroom-infra-v2 → backup JSON local trước khi sửa</text>
+
+  <rect x="25" y="80" width="630" height="26" class="step-box emerald" id="t3s2b"/>
+  <text x="340" y="96" class="msg" text-anchor="middle" fill="#065f46" id="t3s2m">thêm 3 panel: stream error rate · pod restarts · CPU throttled (datasource object)</text>
+
+  <rect x="25" y="114" width="630" height="26" class="step-box amber" id="t3s3b"/>
+  <text x="340" y="130" class="msg" text-anchor="middle" fill="#92400e" id="t3s3m">nếu "No data" → tra bảng gotcha (job sai / ds_prometheus unset) trước khi kết luận lỗi</text>
+
+  <rect x="25" y="148" width="630" height="26" class="step-box emerald" id="t3s4b"/>
+  <line x1="340" y1="161" x2="590" y2="161" class="arr emerald"/>
+  <polygon points="590,157 600,161 590,165" class="arr-head emerald"/>
+  <text x="470" y="156" class="msg" text-anchor="middle" fill="#065f46" id="t3s4m">POST dashboard đã patch, overwrite:true</text>
+
+  <rect x="25" y="182" width="630" height="26" class="step-box indigo" id="t3s5b"/>
+  <text x="600" y="198" class="msg" text-anchor="middle" fill="#312e81" id="t3s5m">40+ panel cũ (Node Exporter, Cadvisor, Postgres...) giữ nguyên không đổi</text>
+</svg>
+</div>
+</section>
+
+<section id="t4">
+<h2>T4 · CronJob cảnh báo Telegram tái dùng pattern có sẵn <span class="badge">OpenCode</span></h2>
+<p class="desc">Có một pattern cảnh báo đã chứng minh hoạt động tốt trong production — CronJob nhẹ, đọc secret Telegram tùy chọn, và một hàm <code>alert()</code> ngắn gọn gửi tin nhắn khi phát hiện bất thường — và việc tái sử dụng nguyên cấu trúc đó cho luồng streaming, chỉ thay câu truy vấn kiểm tra từ "Postgres có sẵn sàng không" sang "tỉ lệ lỗi stream và số replica sẵn sàng có bất thường không", là lựa chọn tận dụng tối đa những gì đã được kiểm chứng thay vì phát minh lại một cơ chế cảnh báo mới.</p>
+<p class="desc">Giới hạn tài nguyên nhỏ (<code>cpu: 5m</code>, <code>memory: 16Mi</code> yêu cầu) được giữ nguyên từ bản gốc, vì bản thân công cụ giám sát không được phép trở thành một nguồn tải CPU mới cạnh tranh với chính ứng dụng đang được theo dõi — đó sẽ là một nghịch lý làm hỏng toàn bộ mục đích của việc xây dựng bộ cảm biến này.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="680" height="196" viewBox="0 0 680 196">
+  <text x="70" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Operator</text>
+  <text x="270" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">CronJob stream-health-monitor</text>
+  <text x="490" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Prometheus API</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Telegram</text>
+  <line x1="70" y1="32" x2="70" y2="181" class="lifeline-line"/>
+  <line x1="270" y1="32" x2="270" y2="181" class="lifeline-line"/>
+  <line x1="490" y1="32" x2="490" y2="181" class="lifeline-line"/>
+  <line x1="630" y1="32" x2="630" y2="181" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="630" height="26" class="step-box emerald" id="t4s1b"/>
+  <line x1="70" y1="59" x2="260" y2="59" class="arr emerald"/>
+  <polygon points="260,55 270,59 260,63" class="arr-head emerald"/>
+  <text x="165" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t4s1m">tạo CronJob, copy cấu trúc alert() từ postgres-monitor.yaml</text>
+
+  <rect x="25" y="80" width="630" height="26" class="step-box emerald" id="t4s2b"/>
+  <line x1="270" y1="93" x2="480" y2="93" class="arr emerald"/>
+  <polygon points="480,89 490,93 480,97" class="arr-head emerald"/>
+  <text x="380" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t4s2m">query rate(stream_errors_total) + replicas available vs desired</text>
+
+  <rect x="25" y="114" width="630" height="26" class="step-box amber" id="t4s3b"/>
+  <line x1="270" y1="127" x2="620" y2="127" class="arr amber"/>
+  <polygon points="620,123 630,127 620,131" class="arr-head amber"/>
+  <text x="450" y="122" class="msg" text-anchor="middle" fill="#92400e" id="t4s3m">vượt ngưỡng → alert() gửi Telegram (nhánh bất thường)</text>
+
+  <rect x="25" y="148" width="630" height="26" class="step-box indigo" id="t4s4b"/>
+  <text x="270" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t4s4m">CronJob postgres-monitor hiện có chạy song song, không bị đụng</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={t1:['t1s1','t1s2','t1s3','t1s4','t1s5'],t2:['t2s1','t2s2','t2s3','t2s4'],t3:['t3s1','t3s2','t3s3','t3s4','t3s5'],t4:['t4s1','t4s2','t4s3','t4s4']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

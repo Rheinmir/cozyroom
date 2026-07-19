@@ -1,0 +1,73 @@
+# Stream Health Monitor — chạy mỗi 2 phút, query Prometheus thật cho
+# stream error rate + replicas available vs desired, gửi Telegram nếu bất thường.
+# Copy nguyên cấu trúc alert() từ k8s/postgres-monitor.yaml.
+# Xem: llmwiki/wiki/sources/draft/180726-stream-observability-infra.md
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: stream-health-monitor
+  namespace: cozyroom-k8s
+spec:
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 90
+      template:
+        spec:
+          nodeSelector:
+            kubernetes.io/hostname: rhein-13700hxes-4070-64-4t
+          restartPolicy: Never
+          containers:
+            - name: monitor
+              image: curlimages/curl:8.11.0
+              env:
+                - name: PROM_URL
+                  value: "http://100.114.107.68:9090"
+                - name: TELEGRAM_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cozyroom-secret
+                      key: TELEGRAM_BOT_TOKEN
+                      optional: true
+                - name: TELEGRAM_CHAT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cozyroom-secret
+                      key: TELEGRAM_CHAT_ID
+                      optional: true
+              command:
+                - sh
+                - -c
+                - |
+                  alert() {
+                    echo "[stream-health-monitor] $1"
+                    if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+                      curl -s -o /dev/null \
+                        "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                        --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+                        --data-urlencode "text=$1" || true
+                    fi
+                  }
+
+                  extract() { sed -n 's/.*"value":\[[^,]*,"\([^"]*\)"\].*/\1/p'; }
+                  ERR=$(curl -s -m 10 "${PROM_URL}/api/v1/query" --data-urlencode 'query=increase(music_stream_errors_total[10m])' | extract)
+                  ERR=${ERR:-0}
+                  AVAIL=$(curl -s -m 10 "${PROM_URL}/api/v1/query" --data-urlencode 'query=kube_deployment_status_replicas_available{namespace="cozyroom-k8s",deployment="backend"}' | extract)
+                  DESIRED=$(curl -s -m 10 "${PROM_URL}/api/v1/query" --data-urlencode 'query=kube_deployment_spec_replicas{namespace="cozyroom-k8s",deployment="backend"}' | extract)
+
+                  echo "[stream-health-monitor] stream_errors(10m)=${ERR} available=${AVAIL} desired=${DESIRED}"
+
+                  if [ -n "$ERR" ] && [ "$(echo "$ERR > 0" | awk '{print ($1>0)}')" = "1" ]; then
+                    alert "⚠️ Cozyroom stream errors trong 10 phút qua: ${ERR}"
+                  fi
+                  if [ -n "$AVAIL" ] && [ -n "$DESIRED" ] && [ "$AVAIL" != "$DESIRED" ]; then
+                    alert "🚨 Cozyroom backend replicas available (${AVAIL}) < desired (${DESIRED})"
+                  fi
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 16Mi
+                limits:
+                  cpu: 50m
+                  memory: 32Mi
