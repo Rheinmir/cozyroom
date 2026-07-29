@@ -19,9 +19,11 @@ import EbookReaderPage from './pages/EbookReaderPage'
 import ComicsPage from './pages/ComicsPage'
 import ComicsPageMobile from './pages/ComicsPageMobile'
 import PlaylistsPage from './pages/PlaylistsPage'
+import NotesPage from './pages/NotesPage'
 import AIAssistantPage from './pages/AIAssistantPage'
 import AIStatsPage from './pages/AIStatsPage'
 import ToolsPage from './pages/ToolsPage'
+import RequestLogPage from './pages/RequestLogPage'
 
 export default function AppRoutes() {
   return (
@@ -46,9 +48,11 @@ export default function AppRoutes() {
               <Route path="/comics"      element={<ComicsPage />} />
               <Route path="/comics-mobile" element={<ComicsPageMobile />} />
               <Route path="/playlists"   element={<PlaylistsPage />} />
+              <Route path="/notes"       element={<NotesPage />} />
               <Route path="/ai"          element={<AIAssistantPage />} />
               <Route path="/ai/stats"    element={<AIStatsPage />} />
               <Route path="/tools"       element={<ToolsPage />} />
+              <Route path="/debug"       element={<RequestLogPage />} />
             </Routes>
           </main>
         </div>

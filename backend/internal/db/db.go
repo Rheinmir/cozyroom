@@ -65,6 +65,20 @@ func migrate(db *sql.DB) error {
 	}
 
 	db.Exec(`ALTER TABLE tracks ADD COLUMN IF NOT EXISTS genre TEXT NOT NULL DEFAULT ''`)
+
+	// Search + SmartQueue indexes. pg_trgm (extension created above) lets
+	// Postgres use a GIN index for existing ILIKE '%...%' queries automatically —
+	// no query rewrite needed, this alone turns full-table scans into index
+	// scans. Auto-maintained by Postgres on every INSERT/UPDATE, so new tracks
+	// added by the scanner are indexed as part of the same write — no separate
+	// rebuild/refresh job needed.
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_artists_name_trgm ON artists USING GIN (name gin_trgm_ops)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_albums_title_trgm ON albums USING GIN (title gin_trgm_ops)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_title_trgm ON tracks USING GIN (title gin_trgm_ops)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_genre_trgm ON tracks USING GIN (genre gin_trgm_ops)`)
+	// SmartQueue tier lookups: same-artist (via albums.artist_id) and exact-genre.
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_albums_artist_id ON albums (artist_id)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_genre ON tracks (genre) WHERE genre != ''`)
 	db.Exec(`CREATE TABLE IF NOT EXISTS lyrics_cache (
 		track_id   TEXT PRIMARY KEY,
 		results    TEXT NOT NULL,
@@ -73,6 +87,13 @@ func migrate(db *sql.DB) error {
 	db.Exec(`CREATE TABLE IF NOT EXISTS settings (
 		key   TEXT PRIMARY KEY,
 		value TEXT NOT NULL
+	)`)
+	// CockroachDB has no advisory locks — enrich_lease replaces
+	// pg_try_advisory_lock for cross-pod mutual exclusion (see enricher/aitrends.go).
+	db.Exec(`CREATE TABLE IF NOT EXISTS enrich_lease (
+		key        TEXT PRIMARY KEY,
+		holder     TEXT NOT NULL,
+		expires_at TIMESTAMPTZ NOT NULL
 	)`)
 	db.Exec(`ALTER TABLE videos ADD COLUMN IF NOT EXISTS trickplay_ready INTEGER NOT NULL DEFAULT 0`)
 	db.Exec(`ALTER TABLE videos ADD COLUMN IF NOT EXISTS poster_path TEXT`)
@@ -168,6 +189,15 @@ func migrate(db *sql.DB) error {
 		position     INTEGER NOT NULL,
 		added_at     INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER),
 		PRIMARY KEY (playlist_id, track_id)
+	)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_notes (
+		id          TEXT PRIMARY KEY,
+		column_key  TEXT NOT NULL,
+		title       TEXT NOT NULL,
+		content     TEXT NOT NULL DEFAULT '',
+		position    INTEGER NOT NULL,
+		created_at  INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER),
+		updated_at  INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER)
 	)`)
 	db.Exec(`CREATE TABLE IF NOT EXISTS chat_logs (
 		id          TEXT PRIMARY KEY,

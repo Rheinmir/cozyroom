@@ -1327,3 +1327,64 @@
 - Verify cuối: `backend` vẫn 0 restart, cluster sạch (dọn hết debug pod/test job), dashboard chỉ +3 panel so với backup
 - Files: `k8s/kube-state-metrics.yaml` (mới), `k8s/stream-health-monitor.yaml` (mới), `wiki/sources/draft/180726-stream-observability-infra.md` (cập nhật done)
 - CHƯA COMMIT git — chỉ áp dụng lên cluster qua kubectl; user cần xác nhận trước khi commit các file k8s mới vào repo
+- Cập nhật 2026-07-19 (sau "xử hết đi"): fix 13 panel dashboard dùng job name cũ, xoá job cozyroom-prod (blocked, filesystem quirk), commit `3e9aa50` — xem chi tiết trong hội thoại, chưa kịp ghi log riêng lúc đó
+
+## 2026-07-23 — orca-workflow (query → propose) — kanban-quick-note-be-fe
+
+- User yêu cầu: thêm Kanban Quick Note cho 1 user, gate bằng mật khẩu `owner712002` trước khi vào màn hình note
+- `/query`: tìm thấy tiền lệ `verifyOwnerPassword`/`OwnerPassword` có sẵn trong `backend/internal/api/playlists.go` (dòng 19-27) và password modal pattern trong `frontend/src/components/FavoritePill.tsx` (dòng ~178-190) — tái dùng thay vì làm mới
+- Khác biệt quan trọng surface trong proposal: Playlists chỉ gate WRITE (list công khai), nhưng Kanban Note phải gate CẢ GET vì là dữ liệu riêng tư — nếu chép y nguyên pattern Playlists sẽ lộ dữ liệu
+- Trade-off nêu rõ không tự chọn ngầm: kéo-thả bằng HTML5 DnD gốc (không thêm dependency) + nút chuyển cột cho mobile, thay vì thêm thư viện `@dnd-kit` (project chưa có lib DnD nào)
+- `/propose`: soạn draft `230726-kanban-quick-note-be-fe.md` — 5 task (migration bảng `kanban_notes`, backend handlers gate-cả-GET, frontend api.ts client, NotesPage UI gate-trước-khi-render, wire routes/Sidebar + verify curl trực tiếp)
+- Draft + companion HTML: `wiki/sources/draft/230726-kanban-quick-note-be-fe.md`, `html/230726-kanban-quick-note-be-fe-seq.html`
+- CHƯA COMMIT — chờ user duyệt proposal, chưa có code nào được viết
+
+## 2026-07-23 — orca-workflow (implement + deploy) — kanban-quick-note-be-fe
+
+- User duyệt proposal, yêu cầu deploy K8s để thử luôn
+- Backend: migration `kanban_notes` trong `db.go`; `notes.go` mới (list/create/update/delete, tất cả gọi `verifyOwnerPassword` kể cả GET); wire routes trong `routes.go`
+- Frontend: `api.ts` thêm 4 hàm client; `NotesPage.tsx` mới (gate trước khi render, tái dùng session key `cozyroom_owner_password`, kanban 3 cột HTML5 drag-drop + nút mũi tên mobile); wire `AppRoutes.tsx` (`/notes`) + `Sidebar.tsx`; CSS thêm vào `index.css` dùng đúng token B&W hiện có
+- Verify: `go build`/`go vet` sạch, `tsc --noEmit` sạch cho file mới (1 lỗi pre-existing ở TrendingChartMode.tsx không liên quan)
+- Build + push `cozyroom-backend:k8s` (sha256:0a118cf0...) và `cozyroom-frontend:k8s` (sha256:7f883373...) lên registry `100.88.197.64:5000`
+- `kubectl rollout restart` cả 2 deployment — thành công, 0 restart ngoài ý muốn
+- Verify thật qua curl trên production: gate 401 (không password) / 200 (đúng password); full CRUD lifecycle (create → list → delete → list rỗng) trên Postgres thật — đã dọn sạch note test
+- Files: `backend/internal/db/db.go`, `backend/internal/api/notes.go` (mới), `backend/internal/api/routes.go`, `frontend/src/api.ts`, `frontend/src/pages/NotesPage.tsx` (mới), `frontend/src/AppRoutes.tsx`, `frontend/src/components/Sidebar.tsx`, `frontend/src/index.css`
+- CHƯA COMMIT git — đã deploy lên cluster qua kubectl, chờ user xác nhận trước khi commit
+
+## 2026-07-28 — query — chunk lặp + không chạy nền iOS
+
+- User báo 2 lỗi qua 2 tin nhắn liên tiếp: (1) audio không chạy nền trên iPad, (2) chunk lặp liên tục, thường trên iPad/hiếm trên macOS, chỉ ở track local không phải YouTube
+- Đọc code thật: `initAudioCtx` (PlayerContext.tsx ~186-206) route audioA+audioB qua AudioContext/AnalyserNode cho visualizer; `onError` (~426-446) retry MEDIA_ERR_NETWORK từ đúng currentPos tối đa 3 lần
+- Query đối chiếu 3 tài liệu: [[GaplessPlayback]] xác nhận AudioContext-cho-cả-2-audio là quyết định chủ đích (2026-05-10) để visualizer mượt qua track swap; [[AudioReliability]] xác nhận retry logic đến từ fix khác (2026-05-12, "mất tiếng giữa chừng") — không phải để tối ưu resume
+- Kết luận: 2 lỗi độc lập — chạy nền iOS do AudioContext bị OS suspend khi khoá màn hình; chunk lặp do retry-logic, xảy ra mọi nền tảng nhưng tỉ lệ theo độ chập chờn mạng (giải thích đúng pattern iPad-thường/macOS-hiếm)
+- Tạo wiki source mới: `wiki/sources/280726-playback-chunk-repeat-ios-background-diagnosis.md` (kết nối 3 tài liệu cũ thành 1 chẩn đoán, chưa từng ghi trước đây)
+- User yêu cầu: sửa cả 2, ưu tiên chunk lặp trước → tiếp theo `/propose`
+
+## 2026-07-28 — orca-workflow (propose) — fix-chunk-repeat-ios-background-fe
+
+- `/propose`: soạn draft `280726-fix-chunk-repeat-ios-background-fe.md` — 3 task, Task 1 (backoff 800ms + guard re-entrant cho retry logic) ưu tiên trước theo yêu cầu, Task 2 (skip AudioContext trên iOS, feature-detect UA+maxTouchPoints vì iPad giả UA Mac), Task 3 verify không regression gapless/lyrics/mediaSession/lastfm
+- Trade-off nêu rõ không tự chọn ngầm: Task 2 đánh đổi mất visualizer trên iOS để đổi lấy chạy nền — dựa trên giới hạn cứng thật của Web Audio API spec (createMediaElementSource là vĩnh viễn, không "trả lại" native output được)
+- Draft + companion HTML: `wiki/sources/draft/280726-fix-chunk-repeat-ios-background-fe.md`, `html/280726-fix-chunk-repeat-ios-background-fe-seq.html`
+- CHƯA COMMIT — chờ user duyệt proposal, chưa có code nào được viết
+
+## 2026-07-28 — orca-workflow (implement + deploy) — fix-chunk-repeat-ios-background-fe
+
+- User duyệt: "ok duyệt, làm cả 2" + "triển khai bằng k8s đấy nhé"
+- Task 1: `retryPendingRef` (guard re-entrant) + `setTimeout(..., 800)` trong `onError` — giữ nguyên `retriesRef`/`currentPos`
+- Task 2: `isIOS()` module-level (UA `/iPad|iPhone|iPod/` + fallback `platform==='MacIntel'`+`maxTouchPoints>1` cho iPad giả UA Mac); `initAudioCtx()` return sớm nếu iOS; `Equalizer.tsx` đã có sẵn `if (!analyser) return null` nên không cần sửa UI
+- `tsc --noEmit` sạch (1 lỗi pre-existing TrendingChartMode.tsx không liên quan)
+- Build + push `cozyroom-frontend:k8s` (sha256:bf006012...), `kubectl rollout restart deployment/frontend` — thành công, 3/3 pod 0 restart
+- Verify: site 200, bundle mới xác nhận chứa `MacIntel` (code detect iOS đã lên production)
+- Chưa test trực tiếp trên thiết bị iOS thật — cần user tự xác nhận trên iPad
+- Files: `frontend/src/PlayerContext.tsx`
+- CHƯA COMMIT git — đã deploy lên cluster qua kubectl, chờ user xác nhận trước khi commit
+
+## 2026-07-28 — orca-workflow (implement + deploy, tiếp) — lỗi thứ 3 "nấc cụt"
+
+- User báo lại: đỡ hơn nhưng vẫn thỉnh thoảng "nấc cụt" sau deploy 2 fix trước
+- Kiểm tra log backend thật: 0 dòng `[PLAYBACK_ERROR]` trong 5 ngày 7 giờ pod chạy — chứng minh symptom chưa từng qua `onError`, 2 fix trước không sai nhưng không phải nguồn còn sót
+- Tìm ra nguồn thật: `onStalled` (PlayerContext.tsx ~565-580) đăng ký trên cả `stalled` VÀ `waiting` — `waiting` là sự kiện bình thường (buffer tạm hết khi phát lossless qua mạng chậm, trình duyệt tự phục hồi), nhưng code lại lùi currentTime 0.1s + ép play() lại mỗi lần — chồng lên lúc trình duyệt đang tự phục hồi, nghe như nấc cụt
+- Fix: bỏ `waiting` khỏi listener của `onStalled`, chỉ giữ `stalled` thật sự
+- Build + push `cozyroom-frontend:k8s` (sha256:d1ff79c0...), rollout thành công, site 200, 3/3 pod mới
+- Files: `frontend/src/PlayerContext.tsx` (tiếp tục sửa cùng file, cùng phiên)
+- CHƯA COMMIT git

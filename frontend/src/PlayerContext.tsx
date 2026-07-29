@@ -63,6 +63,44 @@ function streamUrl(trackId: string, q: Quality | 'lossless-clean'): string {
   return `/stream/${trackId}${q === '320' ? '?q=320' : ''}`
 }
 
+// iPadOS reports its UA as "Macintosh" (same as real macOS) unless the site
+// specifically asks for the mobile UA — the reliable way to tell them apart is
+// a touch-capable "Mac".
+function isIOS(): boolean {
+  const ua = navigator.userAgent
+  if (/iPad|iPhone|iPod/.test(ua)) return true
+  return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+}
+
+// Per-track quality memory: some library files have corrupt metadata / mixed
+// mono-stereo frames that fail lossless decode on any browser (see transcode.go
+// comments) — once a track is known to need a lower tier, remember it so future
+// plays skip straight there instead of repeating the failed-attempt cascade.
+// This also stops one bad file from permanently degrading every OTHER track's
+// default quality for the rest of the session.
+const QUALITY_OVERRIDE_KEY = 'hs-track-quality-overrides'
+const MAX_QUALITY_OVERRIDES = 300
+
+function loadQualityOverrides(): Record<string, Quality | 'lossless-clean'> {
+  try { return JSON.parse(localStorage.getItem(QUALITY_OVERRIDE_KEY) ?? '{}') }
+  catch { return {} }
+}
+function saveQualityOverride(trackId: string, q: Quality | 'lossless-clean') {
+  try {
+    const map = loadQualityOverrides()
+    map[trackId] = q
+    const keys = Object.keys(map)
+    if (keys.length > MAX_QUALITY_OVERRIDES) {
+      for (const k of keys.slice(0, keys.length - MAX_QUALITY_OVERRIDES)) delete map[k]
+    }
+    localStorage.setItem(QUALITY_OVERRIDE_KEY, JSON.stringify(map))
+  } catch {}
+}
+/** Resolve the quality to actually use for a track: its remembered override, else the session default. */
+function resolveQuality(trackId: string, fallback: Quality): Quality | 'lossless-clean' {
+  return loadQualityOverrides()[trackId] ?? fallback
+}
+
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // ── Dual-Audio objects ────────────────────────────────────────────────
   const audioA = useRef(new Audio())
@@ -83,6 +121,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // ── Preload tracking ─────────────────────────────────────────────────
   const preloadedTrackId = useRef<string | null>(null)
   const retriesRef = useRef<Record<string, number>>({})
+  // Guards against overlapping network-error retries (see onError) — without this,
+  // a burst of MEDIA_ERR_NETWORK events stacks multiple reload-seek-play cycles on
+  // top of each other, which is heard as the same short chunk repeating rapidly.
+  const retryPendingRef = useRef<Record<string, boolean>>({})
 
   const init = useRef(loadSaved())
 
@@ -112,7 +154,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const s = init.current
     if (!s?.track) return
     const q = s.quality ?? 'lossless'
-    audioA.current.src = streamUrl(s.track.id, q)
+    audioA.current.src = streamUrl(s.track.id, resolveQuality(s.track.id, q))
     audioA.current.preload = 'auto'
     const seek = () => {
       audioA.current.currentTime = s.progress ?? 0
@@ -152,9 +194,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // Both audioA and audioB get their own MediaElementSource routed through
   // the same AnalyserNode → destination. Whichever is playing produces sound;
   // the paused/standby one contributes silence — no disconnect needed.
+  //
+  // Skipped entirely on iOS: once createMediaElementSource() is called on an
+  // <audio> element, its output is routed through the Web Audio graph for the
+  // rest of that element's life — there is no way to hand it back to the
+  // element's native output later. iOS suspends AudioContext on backgrounding,
+  // which would silence playback even though Media Session (see below) is set
+  // up correctly and would otherwise let audio keep playing with lock-screen
+  // controls. No visualizer on iOS is the trade-off for reliable background
+  // playback there; every other platform is unaffected.
   const audioCtxRef = useRef<AudioContext | null>(null)
 
   const initAudioCtx = useCallback(() => {
+    if (isIOS()) return
     if (audioCtxRef.current) { audioCtxRef.current.resume(); return }
     try {
       const ctx = new AudioContext()
@@ -273,7 +325,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         standby.play().catch(console.error)
       } else {
         // Normal load (no preload available or different track)
-        active.src = streamUrl(t.id, q)
+        active.src = streamUrl(t.id, resolveQuality(t.id, q))
         active.play().catch(console.error)
       }
     }
@@ -395,25 +447,42 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       // MEDIA_ERR_NETWORK = 2
       if (errCode === 2) {
+        // A burst of network errors for the same track fires onError repeatedly
+        // before the previous retry has finished — without this guard each one
+        // would start its own reload-seek-play cycle, heard as the same short
+        // chunk repeating rapidly.
+        if (retryPendingRef.current[tId]) return
+
         const count = retriesRef.current[tId] ?? 0
         if (count < 3) {
           console.warn(`Network error. Retrying (${count + 1}/3)...`)
           retriesRef.current[tId] = count + 1
-          
+          retryPendingRef.current[tId] = true
+
           const currentPos = el.currentTime
           const currentSrc = el.src
-          
-          // Re-load the source to trigger a fresh connection
-          el.src = ''
-          el.load()
-          el.src = currentSrc
-          
-          const onReady = () => {
-            el.currentTime = currentPos
-            el.play().catch(console.error)
-          }
-          el.addEventListener('canplay', onReady, { once: true })
-          el.load()
+
+          // Wait briefly before retrying so a transient network hiccup has time
+          // to clear, instead of hammering the same request again immediately.
+          setTimeout(() => {
+            if (el !== getActive() || trackRef.current?.id !== tId) {
+              retryPendingRef.current[tId] = false
+              return
+            }
+
+            // Re-load the source to trigger a fresh connection
+            el.src = ''
+            el.load()
+            el.src = currentSrc
+
+            const onReady = () => {
+              retryPendingRef.current[tId] = false
+              el.currentTime = currentPos
+              el.play().catch(console.error)
+            }
+            el.addEventListener('canplay', onReady, { once: true })
+            el.load()
+          }, 800)
           return
         } else {
           console.error('Max retries reached for network error.')
@@ -430,6 +499,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         el.load()
         el.src = fallbackSrc
         const onReady = () => {
+          saveQualityOverride(tId, 'lossless')
           el.currentTime = currentPos
           el.play().catch(console.error)
         }
@@ -452,8 +522,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           el.src = ''
           el.load()
           el.src = fallbackSrc
-          
+
           const onReady = () => {
+            saveQualityOverride(tId, 'lossless-clean')
             el.currentTime = currentPos
             el.play().catch(console.error)
           }
@@ -462,16 +533,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           return
         } else {
           console.warn('Clean lossless playback failed. Falling back to 320K MP3 transcode...')
-          setQuality('320')
-          
+
           const currentPos = el.currentTime
           const fallbackSrc = streamUrl(tId, '320')
-          
+
           el.src = ''
           el.load()
           el.src = fallbackSrc
-          
+
           const onReady = () => {
+            saveQualityOverride(tId, '320')
             el.currentTime = currentPos
             el.play().catch(console.error)
           }
@@ -490,7 +561,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setPlaying(false)
     }
 
-    // When stalled (no data for 3s), nudge currentTime to force browser to re-request
+    // When genuinely stalled (no bytes arriving at all), nudge currentTime to force
+    // the browser to re-request. NOT registered on 'waiting' — that event fires
+    // routinely whenever the decode buffer runs low during ordinary streaming of
+    // large lossless files, and the browser already resumes on its own once more
+    // data arrives; nudging currentTime on every 'waiting' replayed the last ~0.1s
+    // right as playback was recovering on its own, heard as an occasional hiccup.
     const onStalled = (e: Event) => {
       const el = e.target as HTMLAudioElement
       if (el !== getActive() || !el.src) return
@@ -506,7 +582,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       el.addEventListener('pause',          onPause)
       el.addEventListener('error',          onError)
       el.addEventListener('stalled',        onStalled)
-      el.addEventListener('waiting',        onStalled)
     }
     return () => {
       for (const el of [a, b, yt]) {
@@ -516,7 +591,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         el.removeEventListener('pause',          onPause)
         el.removeEventListener('error',          onError)
         el.removeEventListener('stalled',        onStalled)
-        el.removeEventListener('waiting',        onStalled)
       }
     }
   }, [startTrack])
@@ -529,7 +603,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (preloadedTrackId.current === next.track.id) return
     const standby = getStandby()
     const q = qualityRef.current
-    standby.src = streamUrl(next.track.id, q)
+    standby.src = streamUrl(next.track.id, resolveQuality(next.track.id, q))
     standby.preload = 'auto'
     standby.load()
     preloadedTrackId.current = next.track.id
@@ -546,7 +620,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     const standby = getStandby()
     const q = qualityRef.current
-    standby.src = streamUrl(next.track.id, q)
+    standby.src = streamUrl(next.track.id, resolveQuality(next.track.id, q))
     standby.preload = 'auto'
     standby.load()
     preloadedTrackId.current = next.track.id

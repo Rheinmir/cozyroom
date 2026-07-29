@@ -270,3 +270,79 @@ export const removeTrackFromPlaylist = (playlistId: string, trackId: string, pas
       throw new Error(err || `Failed to remove track: ${r.status}`)
     }
   })
+
+// ---- Kanban Quick Note ----
+export type KanbanNote = {
+  id: string
+  column_key: string
+  title: string
+  content: string
+  position: number
+  created_at?: number
+  updated_at?: number
+}
+
+export const listNotes = (password: string): Promise<KanbanNote[]> =>
+  fetch('/api/notes', {
+    headers: { 'X-Owner-Password': password },
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed to list notes: ${r.status}`)
+    }
+    return r.json() as Promise<KanbanNote[]>
+  })
+
+export const createNote = (
+  note: { column_key: string; title: string; content: string },
+  password: string
+): Promise<KanbanNote> =>
+  fetch('/api/notes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Owner-Password': password },
+    body: JSON.stringify(note),
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed to create note: ${r.status}`)
+    }
+    return r.json() as Promise<KanbanNote>
+  })
+
+export const updateNote = (
+  id: string,
+  note: { column_key: string; title: string; content: string; position: number },
+  password: string
+): Promise<void> =>
+  fetch(`/api/notes/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Owner-Password': password },
+    body: JSON.stringify(note),
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed to update note: ${r.status}`)
+    }
+  })
+
+export const deleteNote = (id: string, password: string): Promise<void> =>
+  fetch(`/api/notes/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { 'X-Owner-Password': password },
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed to delete note: ${r.status}`)
+    }
+  })
+
+// ---- Debug / Request Log ----
+export type RequestEntry = {
+  time: number       // unix millis
+  method: string
+  path: string
+  status: number
+  duration_ms: number
+}
+
+export const fetchRequestLog = () => get<RequestEntry[]>('/api/debug/requests')

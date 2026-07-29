@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>230726 — Kanban Quick Note (owner-gated)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:220px;height:100vh;z-index:100;overflow:hidden}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:220px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px;max-width:760px;line-height:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}
+section{margin-bottom:64px;scroll-margin-top:80px}
+h2{font-size:16px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:13px;color:#374151;line-height:1.7;margin-bottom:14px;max-width:740px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08);margin-bottom:16px}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.5px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:12px;color:#4338ca}
+.callout{background:rgba(99,102,241,.06);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12.5px;color:#312e81;margin-bottom:16px;max-width:740px;line-height:1.6}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">Kanban Quick Note</div>
+    <a href="#t1">T1 · Migration</a>
+    <a href="#t2">T2 · Backend handlers</a>
+    <a href="#t3">T3 · API client</a>
+    <a href="#t4">T4 · NotesPage UI</a>
+    <a href="#t5">T5 · Wire + verify</a>
+  </div>
+</nav>
+<main>
+<h1>230726 — Kanban Quick Note (owner-gated, 1 người dùng)</h1>
+<p class="subtitle">Bảng note riêng tư khoá bằng mật khẩu <code>owner712002</code> — tái dùng đúng pattern <code>verifyOwnerPassword</code> đã có ở Playlists, nhưng gate cả GET chứ không chỉ write.</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng hiện có / không đổi</span>
+  <span><span class="dot emerald"></span> thêm mới / thay đổi</span>
+  <span><span class="dot amber"></span> nhánh chặn / từ chối</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="t1">
+<h2>T1 · Migration bảng <code>kanban_notes</code> <span class="badge">Claude Code</span></h2>
+<p class="desc">Bảng mới hoàn toàn độc lập với schema hiện có — không khoá ngoại tới track/album/artist, vì note là dữ liệu tự do của riêng owner. Dùng đúng convention timestamp Postgres đã thấy ở các bảng khác trong <code>db.go</code> (<code>EXTRACT(EPOCH FROM NOW())::INTEGER</code>) để nhất quán, và <code>column_key</code> dạng text tự do thay vì enum cứng để giữ migration tối giản nhất có thể.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="180" viewBox="0 0 640 180">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Claude Code</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">db.go (migrate)</text>
+  <text x="550" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Postgres</text>
+  <line x1="90" y1="32" x2="90" y2="175" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="175" class="lifeline-line"/>
+  <line x1="550" y1="32" x2="550" y2="175" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t1s1b"/>
+  <line x1="90" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t1s1m">thêm CREATE TABLE kanban_notes vào migrate()</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t1s2b"/>
+  <line x1="320" y1="93" x2="540" y2="93" class="arr emerald"/>
+  <polygon points="540,89 550,93 540,97" class="arr-head emerald"/>
+  <text x="430" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t1s2m">column_key TEXT tự do + position INTEGER để sắp thứ tự</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box indigo" id="t1s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#312e81" id="t1s3m">Không đụng bảng playlists/ebooks/tracks đã có</text>
+</svg>
+</div>
+</section>
+
+<section id="t2">
+<h2>T2 · Backend handlers <code>notes.go</code> — gate cả GET <span class="badge">Claude Code</span></h2>
+<p class="desc">Điểm khác biệt quan trọng nhất so với Playlists: <code>GET /api/notes</code> cũng phải gọi <code>verifyOwnerPassword</code>, vì đây là dữ liệu riêng tư — không giống playlist vốn công khai. Bỏ sót bước này là lỗi bảo mật thật: ai gọi thẳng <code>curl</code> không kèm mật khẩu sẽ đọc được toàn bộ note riêng tư của owner.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="230" viewBox="0 0 640 230">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Client</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">notes.go (mới)</text>
+  <text x="560" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">verifyOwnerPassword (có sẵn)</text>
+  <line x1="80" y1="32" x2="80" y2="215" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="215" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="215" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t2s1b"/>
+  <line x1="80" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="200" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t2s1m">GET/POST/PUT/DELETE /api/notes* — mọi handler gọi gate trước</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box indigo" id="t2s2b"/>
+  <line x1="320" y1="93" x2="550" y2="93" class="arr indigo"/>
+  <polygon points="550,89 560,93 550,97" class="arr-head indigo"/>
+  <text x="440" y="88" class="msg" text-anchor="middle" fill="#312e81" id="t2s2m">verifyOwnerPassword(r) — dùng nguyên hàm/const đã có, không sửa</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box amber" id="t2s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#92400e" id="t2s3m">Sai/thiếu mật khẩu → 401, KHÔNG trả kèm nội dung note nào</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t2s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t2s4m">Đúng mật khẩu → thực thi CRUD trên bảng kanban_notes</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box indigo" id="t2s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#312e81" id="t2s5m">Playlists/Ebook NSFW dùng chung hàm này — không bị ảnh hưởng</text>
+</svg>
+</div>
+</section>
+
+<section id="t3">
+<h2>T3 · Frontend API client <code>api.ts</code> <span class="badge">OpenCode</span></h2>
+<p class="desc">Lớp mỏng bọc quanh <code>fetch</code>, lặp lại đúng khuôn mẫu các hàm API khác đã có trong file — tự đính header <code>X-Owner-Password</code> lấy từ state mật khẩu đã nhập ở <code>NotesPage</code>. Vì tính chất lặp-khuôn-mẫu rõ ràng, việc này giao cho CLI rẻ hơn xử lý.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="150" viewBox="0 0 640 150">
+  <text x="90" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">OpenCode</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">api.ts</text>
+  <text x="550" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">NotesPage (dùng sau)</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="145" class="lifeline-line"/>
+  <line x1="550" y1="32" x2="550" y2="145" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t3s1b"/>
+  <line x1="90" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t3s1m">thêm listNotes/createNote/updateNote/deleteNote</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t3s2b"/>
+  <line x1="320" y1="93" x2="540" y2="93" class="arr emerald"/>
+  <polygon points="540,89 550,93 540,97" class="arr-head emerald"/>
+  <text x="430" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t3s2m">mỗi hàm tự gắn header X-Owner-Password</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box indigo" id="t3s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#312e81" id="t3s3m">Không đổi hàm API khác đã có trong cùng file</text>
+</svg>
+</div>
+</section>
+
+<section id="t4">
+<h2>T4 · Trang <code>NotesPage.tsx</code> — gate trước khi render <span class="badge">Claude Code</span></h2>
+<p class="desc">Nguyên tắc quan trọng: <strong>gate trước khi render</strong>, không phải "render rồi che bằng CSS". Nếu chỉ ẩn nội dung bằng overlay mờ trong khi component con vẫn gọi API lấy dữ liệu, dữ liệu vẫn nằm trong bộ nhớ trình duyệt và lộ qua DevTools dù giao diện trông như đã khoá. <code>listNotes()</code> chỉ được gọi sau khi state mật khẩu đã xác nhận đúng.</p>
+<div class="callout">Kéo-thả dùng HTML5 Drag and Drop API gốc (không thêm dependency mới) cho desktop, kèm 2 nút mũi tên trái/phải trên mỗi card làm phương án thay thế cho thao tác chạm trên mobile — một đánh đổi tường minh đã nêu trong proposal, không phải thiếu sót.</div>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="230" viewBox="0 0 640 230">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">User</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">NotesPage (mới)</text>
+  <text x="560" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">api.ts → backend</text>
+  <line x1="80" y1="32" x2="80" y2="215" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="215" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="215" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t4s1b"/>
+  <text x="320" y="62" class="msg" text-anchor="middle" fill="#065f46" id="t4s1m">Vào /notes → hiện modal mật khẩu (tái dùng UI FavoritePill), CHƯA fetch gì</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t4s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#92400e" id="t4s2m">Sai mật khẩu → báo lỗi, vẫn không render note nào</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t4s3b"/>
+  <line x1="320" y1="127" x2="550" y2="127" class="arr emerald"/>
+  <polygon points="550,123 560,127 550,131" class="arr-head emerald"/>
+  <text x="440" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t4s3m">Đúng mật khẩu → lưu session state → gọi listNotes()</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t4s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t4s4m">Render 3 cột Todo/Doing/Done, CRUD card + kéo-thả HTML5</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box indigo" id="t4s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#312e81" id="t4s5m">Mobile: nút mũi tên trái/phải thay cho kéo-thả</text>
+</svg>
+</div>
+</section>
+
+<section id="t5">
+<h2>T5 · Wire routing + Sidebar + verify thật <span class="badge">Claude Code</span></h2>
+<p class="desc">Bước cuối là bằng chứng thật rằng cả hai lớp gate (UI không render nếu sai mật khẩu, và API tự chối nếu thiếu mật khẩu) hoạt động độc lập — verify chỉ qua UI mà bỏ qua gọi thẳng API bằng <code>curl</code> rất dễ bỏ sót trường hợp lớp bảo vệ backend bị thiếu. Cũng cần xác nhận Playlists/Ebook NSFW không bị ảnh hưởng vì cùng dùng chung <code>verifyOwnerPassword</code>.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="196" viewBox="0 0 640 196">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Claude Code</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">AppRoutes / Sidebar</text>
+  <text x="560" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">curl /api/notes</text>
+  <line x1="80" y1="32" x2="80" y2="181" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="181" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="181" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t5s1b"/>
+  <line x1="80" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t5s1m">thêm route /notes + mục Sidebar "Notes"</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t5s2b"/>
+  <line x1="320" y1="93" x2="550" y2="93" class="arr amber"/>
+  <polygon points="550,89 560,93 550,97" class="arr-head amber"/>
+  <text x="440" y="88" class="msg" text-anchor="middle" fill="#92400e" id="t5s2m">verify: curl không kèm password → phải bị từ chối</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t5s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#065f46" id="t5s3m">verify UI: đúng mật khẩu → CRUD + F5 vẫn còn dữ liệu</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box indigo" id="t5s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t5s4m">verify: Playlists/Ebook NSFW không regression</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={t1:['t1s1','t1s2','t1s3'],t2:['t2s1','t2s2','t2s3','t2s4','t2s5'],t3:['t3s1','t3s2','t3s3'],t4:['t4s1','t4s2','t4s3','t4s4','t4s5'],t5:['t5s1','t5s2','t5s3','t5s4']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

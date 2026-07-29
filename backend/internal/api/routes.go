@@ -53,10 +53,17 @@ func metricsMiddleware(next http.Handler) http.Handler {
 		path := normalizePath(r.URL.Path)
 		start := time.Now()
 		next.ServeHTTP(sw, r)
-		dur := time.Since(start).Seconds()
+		dur := time.Since(start)
 		status := fmt.Sprintf("%d", sw.status)
 		metrics.HTTPRequestsTotal.WithLabelValues(r.Method, path, status).Inc()
-		metrics.HTTPDurationSeconds.WithLabelValues(r.Method, path).Observe(dur)
+		metrics.HTTPDurationSeconds.WithLabelValues(r.Method, path).Observe(dur.Seconds())
+		globalRing.push(RequestEntry{
+			Time:       start.UnixMilli(),
+			Method:     r.Method,
+			Path:       path,
+			Status:     sw.status,
+			DurationMS: float64(dur.Milliseconds()),
+		})
 	})
 }
 
@@ -135,6 +142,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /metrics", promhttp.Handler())
+	mux.HandleFunc("GET /api/debug/requests", handleRequestLog)
 
 	mux.HandleFunc("GET /api/health", h.health)
 	mux.HandleFunc("GET /api/stats", h.stats)
@@ -239,6 +247,12 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("DELETE /api/playlists/{id}", ph.deletePlaylist)
 	mux.HandleFunc("POST /api/playlists/{id}/tracks", ph.addTrackToPlaylist)
 	mux.HandleFunc("DELETE /api/playlists/{id}/tracks/{track_id}", ph.removeTrackFromPlaylist)
+
+	nh := &NotesHandlers{db: d.ScanDB}
+	mux.HandleFunc("GET /api/notes", nh.listNotes)
+	mux.HandleFunc("POST /api/notes", nh.createNote)
+	mux.HandleFunc("PUT /api/notes/{id}", nh.updateNote)
+	mux.HandleFunc("DELETE /api/notes/{id}", nh.deleteNote)
 
 	mcpTools := mcp.NewRegistry(mcp.ToolDeps{
 		Lib: d.Lib,

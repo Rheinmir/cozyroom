@@ -105,9 +105,17 @@ export default function Sidebar() {
           <span className="nav-link-icon">🎵</span>
           {!collapsed && <span className="nav-link-text">{t('nav.playlists', { defaultValue: 'Playlists' })}</span>}
         </NavLink>
+        <NavLink to="/notes" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Notes">
+          <span className="nav-link-icon">🗒️</span>
+          {!collapsed && <span className="nav-link-text">Notes</span>}
+        </NavLink>
         <NavLink to="/ai" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ai')}>
           <span className="nav-link-icon">🤖</span>
           {!collapsed && <span className="nav-link-text">{t('nav.ai')}</span>}
+        </NavLink>
+        <NavLink to="/debug" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Request Log">
+          <span className="nav-link-icon">📡</span>
+          {!collapsed && <span className="nav-link-text">Request Log</span>}
         </NavLink>
       </div>
 
