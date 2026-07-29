@@ -30,6 +30,16 @@ Tìm thấy nguồn thật: handler `onStalled` (PlayerContext.tsx ~565-580) đ�
 
 **Fix:** bỏ đăng ký `onStalled` khỏi sự kiện `waiting`, chỉ giữ `stalled` (sự kiện thật sự báo "không nhận byte nào", hiếm và đáng can thiệp hơn). Build + push `cozyroom-frontend:k8s` (digest `sha256:d1ff79c0...`), rollout thành công, site 200, 3/3 pod mới.
 
+### Phát hiện + fix thứ 4 (2026-07-29) — nguyên nhân THẬT của "chunk loopback 1s", không phải frontend
+
+User báo lại sau khi test đúng cách (force-quit + mở lại trên iPad): vẫn bị, mô tả chính xác "chunk loopback 1s". Backend metrics thật lúc đó cho thấy `music_stream_errors_total{quality="320kbps"}` đã tăng từ 3 lên **120** (~25% request 320kbps fail). Log backend (trước khi log bị xoay vòng) xác nhận: cùng 1 track ID bị `transcode ...: signal: killed` lặp lại liên tục trong nhiều phút, có lúc 2 lần cách nhau 15ms — không thể do người dùng thao tác, mà do **2 request đồng thời cho cùng (trackID, quality) đua nhau chạy ffmpeg riêng, ghi cùng 1 file .tmp**, request nào bị huỷ trước sẽ giết ffmpeg của nó và dọn file .tmp mà request kia cũng đang cần.
+
+Đây chính là rủi ro đã bị bỏ qua có chủ đích trong postmortem [[120726-mobile-stream-stutter-postmortem]] ("Chưa dùng singleflight dedupe... chấp nhận double-transcode nếu xảy ra") — log thật cho thấy nó không hề hiếm.
+
+**Fix:** thêm `golang.org/x/sync/singleflight` vào `backend/internal/transcode/cache.go::EncodeAndCache` — key = `trackID+quality+ext`. Request đầu tiên (leader) chạy ffmpeg + stream progressive như cũ, không đổi gì. Request trùng đến trong lúc đang encode (follower) KHÔNG tự chạy ffmpeg nữa — chờ leader xong rồi tự phục vụ từ file cache vừa hoàn tất. Không regression cho trường hợp phổ biến (1 request/track): leader vẫn stream progressive y hệt trước.
+
+**Verify thật:** build+push+rollout backend, bắn 3 request đồng thời cho đúng track từng bị lỗi liên tục — cả 3 đều `200`, log không còn `signal: killed`, `music_stream_errors_total` không tăng thêm, track được cache đúng (`X-Cache: hit` cho lần gọi tiếp theo).
+
 ## What
 Sửa 2 bug độc lập trong `frontend/src/PlayerContext.tsx`, ưu tiên chunk-lặp trước theo yêu cầu user: (1) chunk audio lặp liên tục khi mạng chập chờn — do retry logic reload-seek-play dồn dập không có độ trễ và không chặn chồng lệnh; (2) audio không chạy nền được trên iOS/iPadOS — do `AudioContext` route cả 2 audio object qua visualizer, bị hệ điều hành suspend khi khoá màn hình. Chẩn đoán đầy đủ đã ghi ở [[280726-playback-chunk-repeat-ios-background-diagnosis]] — proposal này chỉ tập trung vào phần fix.
 

@@ -1388,3 +1388,16 @@
 - Build + push `cozyroom-frontend:k8s` (sha256:d1ff79c0...), rollout thành công, site 200, 3/3 pod mới
 - Files: `frontend/src/PlayerContext.tsx` (tiếp tục sửa cùng file, cùng phiên)
 - CHƯA COMMIT git
+
+## 2026-07-29 — orca-workflow (implement + deploy, tiếp) — lỗi thứ 4: singleflight dedupe transcode
+
+- User commit code cũ trước ("commit này lại đi"), rồi báo vẫn còn "chunk loopback 1s" trên iPad sau khi test đúng cách (force-quit + mở lại)
+- User gợi ý "hệ phân tán"/"idempotency" — kiểm tra thực tế: backend vẫn `1/1` pod duy nhất, không có chuyện nhiều pod trả dữ liệu khác nhau; ý user không khớp kiến trúc thật nhưng đúng hướng "cần idempotent hoá request trùng"
+- User gọi `/last30days` nhầm công cụ (dùng cho xu hướng mạng xã hội, không phải tra cứu kỹ thuật) — làm rõ rồi đề xuất `golang.org/x/sync/singleflight` (đã có sẵn trong go.mod, không cần thêm dependency mới)
+- Tái hiện thật: bắn nhiều request 320kbps đồng thời cho các track, lấy log backend thật (trước khi bị xoay vòng) — xác nhận `music_stream_errors_total{quality=320kbps}` đã tăng từ 3 lên 120; log cho thấy cùng 1 track bị `transcode ...: signal: killed` lặp lại liên tục, có lúc cách nhau 15ms — đúng race 2 request cùng track+quality tự chạy ffmpeg riêng, đè lên cùng 1 file `.tmp`
+- Đây là rủi ro đã ghi nhận nhưng bỏ qua có chủ đích trong `120726-mobile-stream-stutter-postmortem.md` ("chấp nhận double-transcode nếu xảy ra") — log thật chứng minh không hề hiếm
+- Fix: `backend/internal/transcode/cache.go::EncodeAndCache` — thêm `singleflight.Group` key `trackID+quality+ext`; leader chạy ffmpeg+stream progressive như cũ, follower chờ rồi phục vụ từ cache file vừa xong thay vì tự chạy ffmpeg
+- `go build`/`go vet` sạch; build + push `cozyroom-backend:k8s` (sha256:bc9dbf9e...), rollout thành công, backend 1/1 0 restart
+- Verify thật: bắn 3 request đồng thời cho đúng track từng lỗi liên tục — cả 3 `200`, log sạch không còn `signal: killed`, `music_stream_errors_total` không tăng, track cache đúng (`X-Cache: hit`)
+- Files: `backend/internal/transcode/cache.go`
+- CHƯA COMMIT git
