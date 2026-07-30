@@ -1401,3 +1401,13 @@
 - Verify thật: bắn 3 request đồng thời cho đúng track từng lỗi liên tục — cả 3 `200`, log sạch không còn `signal: killed`, `music_stream_errors_total` không tăng, track cache đúng (`X-Cache: hit`)
 - Files: `backend/internal/transcode/cache.go`
 - CHƯA COMMIT git
+
+## 2026-07-30 — orca-workflow (implement + deploy, tiếp) — lỗi thứ 5: onStalled là thủ phạm thật từ đầu
+
+- Verify pod thật: backend chạy đúng 12h, đúng digest bản fix singleflight, 0 log transcode/killed hôm nay — fix thứ 4 hoạt động đúng nhưng KHÔNG liên quan vì user xác nhận đang gặp lỗi ở lossless (không qua transcode)
+- User tái hiện 100%: "cứ hát khoảng vài câu là chắc chắn bị loop lại 0.1-0.2s" — khớp chính xác hằng số `pos - 0.1` trong `onStalled` (chỉ gỡ khỏi `waiting` ở lần fix thứ 3, còn giữ nguyên cho `stalled`)
+- Kết luận: `stalled` cũng bắn thường xuyên như `waiting` trong điều kiện stream thật — đây là thủ phạm DUY NHẤT gây toàn bộ triệu chứng từ đầu phiên ("ting ting", "nấc cụt", "chunk lặp", "loopback"), 4 fix trước đều là bug thật nhưng không phải nguồn chính
+- Fix: xoá hoàn toàn `onStalled` (rewind 0.1s + force play) khỏi cả `stalled` lẫn `waiting` — browser tự phục hồi buffer, lỗi mạng thật đã có `onError` xử lý riêng
+- `tsc --noEmit` sạch, build + push `cozyroom-frontend:k8s` (sha256:305c0376...), rollout thành công, 3/3 pod mới
+- Files: `frontend/src/PlayerContext.tsx`
+- CHƯA COMMIT git — chờ user xác nhận thật trên thiết bị trước khi commit

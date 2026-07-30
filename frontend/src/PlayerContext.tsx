@@ -561,19 +561,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setPlaying(false)
     }
 
-    // When genuinely stalled (no bytes arriving at all), nudge currentTime to force
-    // the browser to re-request. NOT registered on 'waiting' — that event fires
-    // routinely whenever the decode buffer runs low during ordinary streaming of
-    // large lossless files, and the browser already resumes on its own once more
-    // data arrives; nudging currentTime on every 'waiting' replayed the last ~0.1s
-    // right as playback was recovering on its own, heard as an occasional hiccup.
-    const onStalled = (e: Event) => {
-      const el = e.target as HTMLAudioElement
-      if (el !== getActive() || !el.src) return
-      const pos = el.currentTime
-      el.currentTime = Math.max(0, pos - 0.1)
-      el.play().catch(() => {})
-    }
+    // Previously nudged currentTime back ~0.1s and forced play() on 'stalled'
+    // (and, before that, also on 'waiting') to try to force the browser to
+    // re-request data. Removed entirely: both events fire routinely during
+    // ordinary progressive streaming of large lossless files on a variable
+    // connection, and the browser already recovers from them on its own —
+    // the manual rewind was the actual source of the repeating ~0.1-0.2s
+    // "loopback" heard every few phrases, not a fix for it. A genuine dead
+    // connection is already handled by onError's MEDIA_ERR_NETWORK retry
+    // (with its own backoff + re-entrancy guard) below.
 
     for (const el of [a, b, yt]) {
       el.addEventListener('timeupdate',     onTime)
@@ -581,7 +577,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       el.addEventListener('ended',          onEnd)
       el.addEventListener('pause',          onPause)
       el.addEventListener('error',          onError)
-      el.addEventListener('stalled',        onStalled)
     }
     return () => {
       for (const el of [a, b, yt]) {
@@ -590,7 +585,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         el.removeEventListener('ended',          onEnd)
         el.removeEventListener('pause',          onPause)
         el.removeEventListener('error',          onError)
-        el.removeEventListener('stalled',        onStalled)
       }
     }
   }, [startTrack])

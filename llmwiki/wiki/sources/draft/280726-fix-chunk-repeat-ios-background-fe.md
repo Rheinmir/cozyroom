@@ -40,6 +40,24 @@ User báo lại sau khi test đúng cách (force-quit + mở lại trên iPad): 
 
 **Verify thật:** build+push+rollout backend, bắn 3 request đồng thời cho đúng track từng bị lỗi liên tục — cả 3 đều `200`, log không còn `signal: killed`, `music_stream_errors_total` không tăng thêm, track được cache đúng (`X-Cache: hit` cho lần gọi tiếp theo).
 
+### Phát hiện + fix thứ 5 (2026-07-30) — thủ phạm THẬT SỰ từ đầu đến giờ
+
+User xác nhận: deploy fix singleflight (thứ 4) không giải quyết được vì lần này chunk lặp xảy ra ở **lossless** — hoàn toàn không qua transcode/ffmpeg/singleflight (lossless chỉ là `http.ServeFile` thuần). User tái hiện lại 100% — "cứ hát khoảng vài câu là chắc chắn bị loop lại 0.1-0.2s".
+
+Con số "0.1-0.2s" khớp chính xác với hằng số cứng trong chính `onStalled` (dòng ~570-576) mà lần fix thứ 3 mới chỉ gỡ khỏi sự kiện `waiting`, còn giữ nguyên cho `stalled`:
+
+```js
+const pos = el.currentTime
+el.currentTime = Math.max(0, pos - 0.1)   // đúng 0.1s
+el.play().catch(() => {})
+```
+
+Bằng chứng "100% chắc chắn, lặp lại đều đặn" cho thấy sự kiện `stalled` (không chỉ `waiting`) cũng bắn thường xuyên trong điều kiện stream thật (file lossless nặng qua mạng biến động) — đây chính là nguồn gốc thật của MỌI triệu chứng đã báo từ đầu phiên ("ting ting", "nấc cụt", "chunk lặp", "loopback"), không phải 4 nguyên nhân đã fix trước (network-retry, iOS AudioContext, waiting-listener, transcode race) — dù cả 4 đều là bug thật, có bằng chứng thật, chỉ là không phải nguồn chính gây triệu chứng lặp lại đều đặn 0.1-0.2s.
+
+**Fix:** bỏ hoàn toàn hành vi "lùi currentTime + ép play()" trên CẢ `stalled` lẫn `waiting` — xoá luôn handler `onStalled` và listener đăng ký. Trình duyệt tự phục hồi buffer khi bị `stalled`/`waiting` mà không cần can thiệp thủ công; trường hợp mất kết nối thật đã có `onError`/`MEDIA_ERR_NETWORK` (đã fix backoff+guard ở lần 1) xử lý riêng.
+
+Build + push `cozyroom-frontend:k8s` (digest `sha256:305c0376...`), rollout thành công, 3/3 pod mới, site 200. Chờ user xác nhận thật trên thiết bị.
+
 ## What
 Sửa 2 bug độc lập trong `frontend/src/PlayerContext.tsx`, ưu tiên chunk-lặp trước theo yêu cầu user: (1) chunk audio lặp liên tục khi mạng chập chờn — do retry logic reload-seek-play dồn dập không có độ trễ và không chặn chồng lệnh; (2) audio không chạy nền được trên iOS/iPadOS — do `AudioContext` route cả 2 audio object qua visualizer, bị hệ điều hành suspend khi khoá màn hình. Chẩn đoán đầy đủ đã ghi ở [[280726-playback-chunk-repeat-ios-background-diagnosis]] — proposal này chỉ tập trung vào phần fix.
 
