@@ -1339,6 +1339,7 @@ export default function RadialNav() {
             </div>
           ) : track && track.album_id ? (
             <img
+              key={track.id}
               src={track.album_id.startsWith('yt:')
                 ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
                 : `/api/covers/${track.album_id}?w=80`}
