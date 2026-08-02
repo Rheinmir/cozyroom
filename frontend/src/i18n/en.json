@@ -33,6 +33,8 @@
     "searching": "Searching…",
     "results_for": "Results for \"{{q}}\"",
     "no_results": "No results found.",
+    "ask_ai": "Try the AI Assistant — it understands natural queries like \"sad songs by Sơn Tùng\"",
+    "ask_ai_button": "🤖 Ask AI",
     "artists": "Artists",
     "albums": "Albums",
     "tracks": "Tracks",

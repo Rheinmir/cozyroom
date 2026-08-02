@@ -33,6 +33,8 @@
     "searching": "Đang tìm…",
     "results_for": "Kết quả cho \"{{q}}\"",
     "no_results": "Không tìm thấy kết quả.",
+    "ask_ai": "Thử hỏi Trợ lý AI — có thể hiểu câu tự nhiên như \"nhạc buồn của Sơn Tùng\"",
+    "ask_ai_button": "🤖 Hỏi AI",
     "artists": "Nghệ sĩ",
     "albums": "Album",
     "tracks": "Bài hát",

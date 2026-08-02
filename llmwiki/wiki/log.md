@@ -1,5 +1,35 @@
 # Operation Log
 
+## 2026-08-02 — fix — search-vietnamese-diacritics
+
+- Bug thật user phát hiện: gõ "yeu 5" (không dấu) không tìm ra album/track "Yêu 5" (Rhymastic) dù có trong thư viện local — `ILIKE` so khớp byte-for-byte, không chuẩn hóa dấu tiếng Việt. Ảnh hưởng cả `/api/search` VÀ tool `search_music` của AI Assistant (cùng gọi `SearchRepo.Search`, xác nhận qua grep 2 call site).
+- **Sai lầm giữa chừng — quan trọng, ghi lại để không lặp lại:** ban đầu tưởng production là CockroachDB (dựa theo comment trong `k8s/db-adapter.yaml` mô tả cutover HAProxy→3-node CockroachDB) → viết fix dùng kiểu `STRING` (alias riêng CockroachDB) → deploy 2 lần đều lỗi `type string does not exist`. Test trực tiếp `version()` qua `db-adapter` mới phát hiện: **production thực chất vẫn là PostgreSQL 16.14 thật** — `db-adapter` Deployment đang chạy image `pgbouncer/pgbouncer:latest` (đã rollback về Postgres, đúng như hướng dẫn "ROLLBACK" trong chính file yaml), không phải HAProxy như file mô tả. File yaml trên đĩa không phản ánh đúng state đang chạy trong cluster. Bài học: **luôn xác minh trực tiếp state đang chạy (`kubectl get deployment -o jsonpath=...image`), không suy ra từ comment/file yaml.**
+- Fix cuối cùng (đúng cho Postgres thật): `backend/internal/db/db.go` — SQL function `f_unaccent(t TEXT)` dùng `translate()` với bảng 67 ký tự có dấu tiếng Việt (sinh bằng Go code tạm dùng `golang.org/x/text/unicode/norm`, không gõ tay) + xử lý riêng "đ" (không có Unicode decomposition); thêm 3 GIN trgm expression index trên `f_unaccent(...)` (Postgres hỗ trợ tốt, xác nhận qua test trực tiếp — không như giả định sai về CockroachDB trước đó).
+- `backend/internal/repository/postgres/search.go` — bọc `f_unaccent(...)` cả 2 vế trong 3 câu query hiện có.
+- Verify trên dữ liệu thật qua `kubectl port-forward svc/db-adapter`: "yeu 5" → tìm đúng album + track "Yêu 5"; "rhymastic" (không dấu) vẫn ra đủ 4 nghệ sĩ như cũ (không regression); "Yêu 5" (có dấu) vẫn khớp.
+- Build → push `cozyroom-backend:k8s` (sha256:d34ba2c1...) → rollout → verify curl `/api/search?q=yeu+5` trên pod thật → đúng.
+
+## 2026-08-02 — implement — search-ask-ai-shortcut
+
+- Thay vì endpoint `/api/search/smart` (đã rejected bên dưới), làm 1 tính năng nhỏ hơn: khi `/api/search` không ra kết quả, hiện nút "🤖 Hỏi AI" điều hướng sang `/ai` kèm sẵn câu hỏi trong `location.state.prompt` (theo đúng pattern có sẵn ở `ToolsPage.tsx`)
+- Sửa: `frontend/src/pages/SearchPage.tsx` (empty-state block + nút), `frontend/src/index.css` (`.search-empty-ai`, `.search-ask-ai-btn`), `frontend/src/i18n/vi.json` + `en.json` (key `search.ask_ai`, `search.ask_ai_button`)
+- Verify: `tsc --noEmit` sạch (chỉ còn lỗi pre-existing không liên quan ở `TrendingChartMode.tsx`); test tay qua Chrome — bấm nút từ trang search chuyển đúng sang `/ai` với ô chat đã điền sẵn câu hỏi
+- User xác nhận deploy toàn bộ working tree hiện tại (đã biết rõ có nhiều thay đổi WIP khác kèm theo)
+- Deploy qua `/deploy-k8s-frontend`: build `cozyroom-frontend:k8s` (sha256:e32d8591...), push registry, `kubectl rollout restart deployment/frontend -n cozyroom-k8s` → 3/3 pod Running, 0 restart
+
+## 2026-08-02 — propose — smart-search-claude-be-fe REJECTED
+
+- Sau khi duyệt plan và bắt đầu code, user nhận ra AI Assistant có sẵn (`ai.go` + tool `search_music`) đã đủ năng lực hiểu câu hỏi tự nhiên — endpoint `/api/search/smart` riêng sẽ trùng lặp
+- Quyết định: dùng AI Assistant có sẵn, không thêm endpoint mới. Không có code nào được viết.
+- Draft cập nhật status → rejected: `wiki/sources/draft/010826-smart-search-claude-be-fe.md`
+
+## 2026-08-01 — propose — smart-search-claude-be-fe
+
+- `/claude-api` → thảo luận hướng nâng search lên "search engine xịn" → user chọn "Semantic/hiểu ý truy vấn" → xác nhận "thực hiện cả 2" (mở rộng từ khóa + rerank)
+- Draft: `wiki/sources/draft/010826-smart-search-claude-be-fe.md`
+- Sequence diagram: `html/010826-smart-search-claude-be-fe-seq.html`
+- Trạng thái: proposed — CHƯA code, đang chờ user duyệt plan
+
 ## 2026-06-28 — redesign-existing-projects — redesign-audit-ux
 
 - Ran full design audit via `/redesign-existing-projects` skill
@@ -1411,3 +1441,33 @@
 - `tsc --noEmit` sạch, build + push `cozyroom-frontend:k8s` (sha256:305c0376...), rollout thành công, 3/3 pod mới
 - Files: `frontend/src/PlayerContext.tsx`
 - CHƯA COMMIT git — chờ user xác nhận thật trên thiết bị trước khi commit
+- User xác nhận "nghe lại rồi, ok" → commit `65bf442`
+
+## 2026-08-01 — orca-cli (di chuyển file nhạc, ngoài phạm vi wiki) — MCK album import
+
+- User yêu cầu chuyển album MCK từ Downloads vào thư mục nhạc app quản lý — thực hiện qua PowerShell trực tiếp trên host (move file, sửa ID3 tag `album` bằng ffmpeg cho 30 file để gom đúng 1 album, dọn 30 dòng album rỗng còn sót trong Postgres sau lần scan đầu)
+- Không tạo proposal/wiki cho việc này — thao tác vận hành 1 lần, không phải thay đổi code
+
+## 2026-08-01 — orca-workflow (bugfix ngoài kế hoạch) — RadialNav cover key
+
+- User báo cover ở RadialNav bị mất lặp lại sau khi bỏ onStalled, đề xuất "idempotency key" — kiểm tra code thật: không phải vấn đề trùng request, mà `<img>` thiếu `key={track.id}` nên React tái dùng DOM node cũ, `display:none` set thủ công trong onError không bao giờ reset
+- Fix: thêm `key={track.id}` (đúng pattern đã có sẵn ở PlayerBar.tsx cho cùng loại ảnh cover) — không đụng PlayerContext/phát nhạc
+- Build + deploy + commit `5c879d5`
+
+## 2026-08-01 — orca-workflow (query → propose, gọi từ lệnh /orca-cli) — debug-reporter-be-fe
+
+- User gọi `/orca-cli` nhưng nội dung là feature request: nút debug nổi + element picker (kiểu Orca browser khoanh vùng component lỗi) trên mọi màn hình, báo lỗi lưu vào queue Postgres, agent đọc qua MCP tool, tạo GitHub issue lên rheinmir/setup thủ công khi yêu cầu (giống skill "/raise-issue" user nhắc tới)
+- `/query`: phát hiện `CAPABILITIES.md` liệt kê skill `/raise-issue` và `/orca-issue` nhưng CẢ 2 KHÔNG có trong danh sách skill thực sự khả dụng của phiên — file tự sinh có thể đã cũ, không phụ thuộc vào đó; dùng thẳng `gh issue create` thủ công khi cần
+- Tiền lệ dùng: `/api/debug/requests` (ring buffer, public không gate) làm convention cho endpoint mới; MCP tools registry.go làm convention cho 2 tool mới; `data-tour` convention từ skill tour-guide cho việc suy component hint
+- `/propose`: soạn draft `010826-debug-reporter-be-fe.md` — 6 task (migration bảng debug_reports Postgres persistent, backend handlers không gate password, 2 MCP tool mới, frontend api client, component picker với nguyên tắc "tắt là sạch hoàn toàn", verify không ảnh hưởng player)
+- Draft + companion HTML: `wiki/sources/draft/010826-debug-reporter-be-fe.md`, `html/010826-debug-reporter-be-fe-seq.html`
+- CHƯA COMMIT — chờ user duyệt proposal, chưa có code nào được viết
+
+## 2026-08-01 — orca-workflow (propose) — playback-correlation-id-be-fe
+
+- User làm rõ thuật ngữ mình dùng sai trước đó: không phải "idempotency key" (chống trùng side-effect, đúng nghĩa gốc đã dùng cho singleflight) mà là "correlation ID" — gắn 1 mã ổn định xuyên suốt các lần retry của cùng 1 lần phát để khoanh vùng lỗi qua log (thiết bị nào, bài nào, thử mấy lần)
+- User bổ sung giữa hội thoại: cần cho cả bài preload/chờ trong queue, đúng kịch bản next/prev nhanh — trace code thật xác nhận: audio bytes an toàn (1 standby element, đổi .src tự huỷ request cũ), nhưng `preloadedTrackId.current` bị đánh dấu sẵn sàng ĐỒNG BỘ ngay khi gán .src, không chờ `canplay` — có thể khiến seamless swap phát 1 standby chưa buffer xong nếu next/prev nhanh hơn preload
+- `/propose`: soạn draft `010826-playback-correlation-id-be-fe.md` — 5 task: client_id/attempt_id FE (streamUrl mở rộng optional), log correlation ở handler.go + playback.go (CẤM dùng làm Prometheus label — cardinality nổ), verify end-to-end, và Task 5 mới fix race preload bằng canplay-gated readiness check
+- Draft + companion HTML: `wiki/sources/draft/010826-playback-correlation-id-be-fe.md`, `html/010826-playback-correlation-id-be-fe-seq.html`
+- CHƯA COMMIT — chờ user duyệt proposal, chưa có code nào được viết
+- 2026-08-01 19:14 — session `22fc5a6b` — 29 tool calls — files: 010826-debug-reporter-be-fe-seq.html, 010826-debug-reporter-be-fe.md, 010826-playback-correlation-id-be-fe-seq.html, 010826-playback-correlation-id-be-fe.md, PlayerContext.tsx, RadialNav.tsx, handler.go, index.md …

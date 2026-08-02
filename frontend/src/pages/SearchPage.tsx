@@ -383,7 +383,15 @@ export default function SearchPage() {
     <div className="page">
       <h1 className="page-title">{t('search.results_for', { q })}</h1>
 
-      {empty && <p className="text-muted">{t('search.no_results')}</p>}
+      {empty && (
+        <div className="search-empty-ai">
+          <p className="text-muted">{t('search.no_results')}</p>
+          <p className="text-muted">{t('search.ask_ai')}</p>
+          <Link to="/ai" state={{ prompt: q }} className="search-ask-ai-btn">
+            {t('search.ask_ai_button')}
+          </Link>
+        </div>
+      )}
 
       {artists.length > 0 && (
         <section className="search-section">
