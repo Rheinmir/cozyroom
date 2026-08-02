@@ -2,6 +2,9 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [sources/draft/010826-smart-search-claude-be-fe.md](sources/draft/010826-smart-search-claude-be-fe.md) | draft | Smart search: Claude Haiku tách từ khóa + rerank, fallback an toàn về ILIKE cũ (rejected) |
+| [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Nút debug nổi: element picker báo lỗi + lưu queue DB |
+| [sources/draft/010826-playback-correlation-id-be-fe.md](sources/draft/010826-playback-correlation-id-be-fe.md) | draft | Correlation ID client_id/attempt_id cho luồng phát nhạc + fix race preload |
 | [draft/orca/240626-bgsounds-glass.md](draft/orca/240626-bgsounds-glass.md) | draft | Glassmorphism cho bgsounds-panel: gradient bg, blur, sheen, icon gradient |
 | [draft/orca/230626-ai-input-ux.md](draft/orca/230626-ai-input-ux.md) | draft | textarea vertical centering + multiline toggle; Tools/Analytics vào ai-controls-row |
 | [draft/orca/230626-sounds-serving-hostpath.md](draft/orca/230626-sounds-serving-hostpath.md) | draft | Move Apple sound files out of git+image to k8s hostPath /mnt/f/sounds/ambient/ |
@@ -145,3 +148,5 @@
 | [sources/draft/230726-kanban-quick-note-be-fe.md](sources/draft/230726-kanban-quick-note-be-fe.md) | draft (done) | Kanban Quick Note riêng tư 1 người dùng, gate bằng owner712002 — implement + deploy K8s thật, verify CRUD full lifecycle |
 | [sources/280726-playback-chunk-repeat-ios-background-diagnosis.md](sources/280726-playback-chunk-repeat-ios-background-diagnosis.md) | source | Chẩn đoán: chunk lặp (retry logic AudioReliability) + không chạy nền iOS (AudioContext visualizer GaplessPlayback) — 2 lỗi độc lập |
 | [sources/draft/280726-fix-chunk-repeat-ios-background-fe.md](sources/draft/280726-fix-chunk-repeat-ios-background-fe.md) | draft (done) | Fix chunk lặp (backoff+guard retry) + iOS không chạy nền (skip AudioContext) — implement + deploy K8s thật |
+| [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Proposal: nút debug nổi + element picker, báo lỗi UI lưu queue Postgres, agent đọc qua MCP tool, tạo issue GitHub thủ công khi yêu cầu |
+| [sources/draft/010826-playback-correlation-id-be-fe.md](sources/draft/010826-playback-correlation-id-be-fe.md) | draft | Proposal: correlation ID (client_id+attempt_id) cho log /stream + /api/playback/error, kèm fix race preload đánh dấu sẵn sàng quá sớm khi next/prev nhanh |

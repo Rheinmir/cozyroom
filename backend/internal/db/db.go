@@ -27,6 +27,16 @@ func migrate(db *sql.DB) error {
 	if err != nil {
 		log.Printf("[db] pg_trgm extension: %v", err)
 	}
+	// f_unaccent: accent-insensitive search ("yeu 5" must match "Yêu 5").
+	// translate() + a generated 67-char Vietnamese diacritic table, rather
+	// than the unaccent extension, so 'đ' (no Unicode decomposition, and not
+	// covered by stock unaccent.rules) is handled explicitly and correctly.
+	// IMMUTABLE so it can be used in the GIN trgm expression indexes below.
+	if _, err := db.Exec(`CREATE OR REPLACE FUNCTION f_unaccent(t TEXT) RETURNS TEXT AS $$
+		SELECT translate(lower(t), 'àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ', 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd')
+	$$ LANGUAGE SQL IMMUTABLE`); err != nil {
+		log.Printf("[db] f_unaccent function: %v", err)
+	}
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS artists (
@@ -76,6 +86,13 @@ func migrate(db *sql.DB) error {
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_albums_title_trgm ON albums USING GIN (title gin_trgm_ops)`)
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_title_trgm ON tracks USING GIN (title gin_trgm_ops)`)
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_genre_trgm ON tracks USING GIN (genre gin_trgm_ops)`)
+	// Accent-insensitive search (search.go: f_unaccent(col) ILIKE f_unaccent($1),
+	// so "yeu 5" matches "Yêu 5") — expression indexes on the normalized text,
+	// same GIN trgm mechanism as above. f_unaccent is IMMUTABLE so Postgres
+	// accepts it as an index expression.
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_artists_name_unaccent_trgm ON artists USING GIN (f_unaccent(name) gin_trgm_ops)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_albums_title_unaccent_trgm ON albums USING GIN (f_unaccent(title) gin_trgm_ops)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_title_unaccent_trgm ON tracks USING GIN (f_unaccent(title) gin_trgm_ops)`)
 	// SmartQueue tier lookups: same-artist (via albums.artist_id) and exact-genre.
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_albums_artist_id ON albums (artist_id)`)
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_genre ON tracks (genre) WHERE genre != ''`)
