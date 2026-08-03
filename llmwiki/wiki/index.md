@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [sources/draft/020826-music-play-stats-chart-be-fe.md](sources/draft/020826-music-play-stats-chart-be-fe.md) | draft | Số liệu lượt nghe nhạc: local play log + Last.fm backfill + chart recharts |
 | [sources/draft/010826-smart-search-claude-be-fe.md](sources/draft/010826-smart-search-claude-be-fe.md) | draft | Smart search: Claude Haiku tách từ khóa + rerank, fallback an toàn về ILIKE cũ (rejected) |
 | [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Nút debug nổi: element picker báo lỗi + lưu queue DB |
 | [sources/draft/010826-playback-correlation-id-be-fe.md](sources/draft/010826-playback-correlation-id-be-fe.md) | draft | Correlation ID client_id/attempt_id cho luồng phát nhạc + fix race preload |

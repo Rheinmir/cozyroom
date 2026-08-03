@@ -1297,8 +1297,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: inline-block;
   padding: 8px 18px;
   border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--green);
+  color: #000;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
