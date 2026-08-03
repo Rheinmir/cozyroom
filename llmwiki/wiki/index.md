@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [sources/draft/030826-kanban-notes-upgrade-be-fe.md](sources/draft/030826-kanban-notes-upgrade-be-fe.md) | draft | Nâng cấp Kanban Quick Note thành board giàu chức năng + hệ thống đăng ký/approve người dùng riêng cho kanban (kiểu Gitea) |
 | [sources/draft/020826-music-play-stats-chart-be-fe.md](sources/draft/020826-music-play-stats-chart-be-fe.md) | draft | Số liệu lượt nghe nhạc: local play log + Last.fm backfill + chart recharts |
 | [sources/draft/010826-smart-search-claude-be-fe.md](sources/draft/010826-smart-search-claude-be-fe.md) | draft | Smart search: Claude Haiku tách từ khóa + rerank, fallback an toàn về ILIKE cũ (rejected) |
 | [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Nút debug nổi: element picker báo lỗi + lưu queue DB |
@@ -151,3 +152,4 @@
 | [sources/draft/280726-fix-chunk-repeat-ios-background-fe.md](sources/draft/280726-fix-chunk-repeat-ios-background-fe.md) | draft (done) | Fix chunk lặp (backoff+guard retry) + iOS không chạy nền (skip AudioContext) — implement + deploy K8s thật |
 | [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Proposal: nút debug nổi + element picker, báo lỗi UI lưu queue Postgres, agent đọc qua MCP tool, tạo issue GitHub thủ công khi yêu cầu |
 | [sources/draft/010826-playback-correlation-id-be-fe.md](sources/draft/010826-playback-correlation-id-be-fe.md) | draft | Proposal: correlation ID (client_id+attempt_id) cho log /stream + /api/playback/error, kèm fix race preload đánh dấu sẵn sàng quá sớm khi next/prev nhanh |
+| [sources/draft/030826-kanban-notes-upgrade-be-fe.md](sources/draft/030826-kanban-notes-upgrade-be-fe.md) | draft | Proposal: Kanban /notes lên board giàu tính năng (nhiều board, cột động, label/priority/due-date/subtask/comment) + hệ thống đăng ký/approve người dùng kiểu Gitea, chỉ áp dụng cho kanban |

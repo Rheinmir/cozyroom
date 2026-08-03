@@ -105,3 +105,18 @@ Skills managed globally via `npx skills`. Use `Skill` tool to invoke.
 - New feature request → invoke `propose` first, stop, wait for approval
 - Edit to shared code → invoke `impact-check` then `safe-change`
 - Refactor / rename / move bất kỳ thứ gì trong `frontend/src/` → invoke `frontend-index` trước
+
+## Agent personas (`.claude/agents/*.md`)
+
+Monolith này không tách microservice (xem lý do trong wiki), nên nhiều agent làm việc song song dễ đụng file nhau. Mỗi domain có 1 "đội kỹ thuật" ảo riêng — dùng `Agent` tool với `subagent_type` tương ứng khi công việc rơi vào đúng domain đó, thay vì làm chung 1 persona cho mọi việc:
+
+| Persona | Domain | File chính |
+|---|---|---|
+| `music-engineer` | Tracks/albums/artists/search/playback/Last.fm/số liệu nghe | `search.go`, `lastfm.go`, `music_insight.go`, track/album/artist repo, scanner, `PlayerContext.tsx` |
+| `video-engineer` | Streaming/HLS/transcode/trickplay | `transcode/*`, `hls` package, VideoHandlers |
+| `reader-engineer` | Ebook/comics/scraper | `usecase/ebook.go`, `scraper.go`, `headless_eh.go`, `eh_cached.go` |
+| `ai-engineer` | AI chat/MCP tools/multi-provider LLM | `ai.go`, `ai_providers.go`, `mcp/registry.go` |
+| `social-engineer` | Playlists/notes/trending | `playlists.go`, `notes.go`, `trending.go` |
+| `infra-engineer` | k8s/database/Docker/deploy | `k8s/*.yaml`, `db.go` (`migrate()`), Dockerfiles, `routes.go` khung |
+
+**Điểm nghẽn chung mọi persona đều phải cẩn trọng:** `routes.go`, `handler.go` (struct `handlers`), `db.go`'s `migrate()`, `AppRoutes.tsx`, `Sidebar.tsx` — đây vẫn là file dùng chung thật của monolith, persona không tự động ngăn 2 agent đụng nhau ở đây, chỉ giúp mỗi agent đúng convention/gotcha của domain mình khi làm việc.
