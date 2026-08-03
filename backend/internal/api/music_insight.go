@@ -1,21 +1,22 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
 )
 
 // GET /api/ai/music-insight — a short AI-written blurb about listening habits,
-// generated from the top-played tracks. Cached per day in the settings table
-// so repeat page visits don't re-call Claude. Degrades silently to an empty
-// insight (never an error) if there's no Anthropic key, no play data yet, or
-// the call fails — this is a narrative flourish on top of the real chart
-// data, never something the page depends on.
+// generated from the top-played tracks. Reuses whichever AI provider is
+// already configured for the chat assistant (selectProvider's priority:
+// DeepSeek > Anthropic > Gemini > OpenRouter) — no separate API key needed.
+// Cached per day in the settings table so repeat page visits don't re-call
+// the model. Degrades silently to an empty insight (never an error) if no
+// provider is configured, there's no play data yet, or the call fails — this
+// is a narrative flourish on top of the real chart data, never something the
+// page depends on.
 func (h *AIHandlers) musicInsight(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	today := time.Now().UTC().Add(7 * time.Hour).Format("2006-01-02")
@@ -30,7 +31,8 @@ func (h *AIHandlers) musicInsight(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if h.anthropicKey == "" {
+	provider, err := h.selectProvider("")
+	if err != nil {
 		json.NewEncoder(w).Encode(map[string]string{"insight": ""})
 		return
 	}
@@ -72,12 +74,14 @@ func (h *AIHandlers) musicInsight(w http.ResponseWriter, r *http.Request) {
 		"\n\nViết đúng 1-2 câu tiếng Việt ngắn gọn, giọng thân thiện, nhận xét thú vị về gu nghe nhạc này. " +
 		"Không dùng markdown, không liệt kê lại danh sách, không mở đầu bằng \"Dựa trên\"."
 
-	text, err := callClaudeText(h.anthropicKey, "claude-haiku-4-5-20251001", prompt)
-	if err != nil || strings.TrimSpace(text) == "" {
+	provider.SetSystemPrompt("")
+	msgs := provider.initMessages(nil, prompt)
+	text, _, _, _, _, err := provider.call(msgs, nil)
+	text = strings.TrimSpace(text)
+	if err != nil || text == "" {
 		json.NewEncoder(w).Encode(map[string]string{"insight": ""})
 		return
 	}
-	text = strings.TrimSpace(text)
 
 	cacheJSON, _ := json.Marshal(map[string]string{"date": today, "text": text})
 	h.db.ExecContext(r.Context(),
@@ -85,48 +89,4 @@ func (h *AIHandlers) musicInsight(w http.ResponseWriter, r *http.Request) {
 		 ON CONFLICT(key) DO UPDATE SET value = excluded.value`, string(cacheJSON))
 
 	json.NewEncoder(w).Encode(map[string]string{"insight": text})
-}
-
-// callClaudeText makes a minimal, non-agentic single-turn completion call —
-// no tools, no history. Reuses aiHTTPClient (declared in ai_providers.go).
-func callClaudeText(apiKey, model, prompt string) (string, error) {
-	body := map[string]any{
-		"model":      model,
-		"max_tokens": 200,
-		"messages":   []map[string]any{{"role": "user", "content": prompt}},
-	}
-	b, _ := json.Marshal(body)
-	req, err := http.NewRequest(http.MethodPost, "https://api.anthropic.com/v1/messages", bytes.NewReader(b))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("x-api-key", apiKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
-	req.Header.Set("content-type", "application/json")
-
-	resp, err := aiHTTPClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("anthropic %d: %s", resp.StatusCode, raw)
-	}
-
-	var parsed struct {
-		Content []struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
-		} `json:"content"`
-	}
-	if err := json.Unmarshal(raw, &parsed); err != nil {
-		return "", err
-	}
-	for _, block := range parsed.Content {
-		if block.Type == "text" {
-			return block.Text, nil
-		}
-	}
-	return "", nil
 }
