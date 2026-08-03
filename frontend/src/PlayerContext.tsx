@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { Track } from './types'
-import { fetchSmartQueue, lastfmNowPlaying, lastfmScrobble } from './api'
+import { fetchSmartQueue, lastfmNowPlaying, lastfmScrobble, recordPlay } from './api'
 import pkg from '../package.json'
 
 export type RepeatMode  = 'off' | 'one' | 'all'
@@ -52,15 +52,36 @@ function loadSaved(): SavedState | null {
   catch { return null }
 }
 
-/** Build the stream URL for a track + quality setting. */
-function streamUrl(trackId: string, q: Quality | 'lossless-clean'): string {
+/** Build the stream URL for a track + quality setting.
+ * clientId/attemptId are optional correlation IDs (see getClientId/attemptIdRef
+ * below) — attached only at the call sites tied to a real user playback
+ * attempt (start, network retry, quality fallback), never for preload. */
+function streamUrl(trackId: string, q: Quality | 'lossless-clean', clientId?: string, attemptId?: string): string {
   if (trackId.startsWith('yt:')) {
     return `/api/youtube/stream/${trackId.slice(3)}`
   }
-  if (q === 'lossless-clean') {
-    return `/stream/${trackId}?q=lossless-clean`
+  const params = new URLSearchParams()
+  if (q === 'lossless-clean' || q === '320') params.set('q', q)
+  if (clientId) params.set('client_id', clientId)
+  if (attemptId) params.set('attempt_id', attemptId)
+  const qs = params.toString()
+  return `/stream/${trackId}${qs ? '?' + qs : ''}`
+}
+
+// Stable per-device correlation ID, cached in localStorage — lets backend
+// logs group requests by the device/browser they came from.
+const CLIENT_ID_KEY = 'cozyroom_client_id'
+function getClientId(): string {
+  try {
+    let id = localStorage.getItem(CLIENT_ID_KEY)
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem(CLIENT_ID_KEY, id)
+    }
+    return id
+  } catch {
+    return ''
   }
-  return `/stream/${trackId}${q === '320' ? '?q=320' : ''}`
 }
 
 // iPadOS reports its UA as "Macintosh" (same as real macOS) unless the site
@@ -119,12 +140,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const getStandby = useCallback(() => activeSlot.current === 'A' ? audioB.current : audioA.current, [])
 
   // ── Preload tracking ─────────────────────────────────────────────────
+  // Set only once the browser confirms 'canplay' on the standby element — see
+  // the two preload effects below. startTrack()'s seamless-swap check reads
+  // this, so it must reflect "actually buffered", not just "load() started".
   const preloadedTrackId = useRef<string | null>(null)
+  // Set synchronously the instant a preload load() starts, so a re-running
+  // effect (e.g. every timeupdate tick in the 30s-lookahead trigger) doesn't
+  // restart the same in-flight load. Cleared/overwritten whenever a newer
+  // preload target supersedes it — a stale canplay for an old target then
+  // fails this check and is correctly ignored instead of marking a
+  // never-actually-buffered id as ready.
+  const preloadPendingId = useRef<string | null>(null)
   const retriesRef = useRef<Record<string, number>>({})
   // Guards against overlapping network-error retries (see onError) — without this,
   // a burst of MEDIA_ERR_NETWORK events stacks multiple reload-seek-play cycles on
   // top of each other, which is heard as the same short chunk repeating rapidly.
   const retryPendingRef = useRef<Record<string, boolean>>({})
+  // Correlation ID for the current real playback attempt — set fresh each time
+  // startTrack() starts an actual track (not preload), reused unchanged across
+  // that track's network retries and quality-fallback cascade so backend logs
+  // can group them as "the same attempt" instead of unrelated one-off requests.
+  const attemptIdRef = useRef<string>('')
 
   const init = useRef(loadSaved())
 
@@ -295,6 +331,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setPlaybackError(null)
     initAudioCtx()
     const q = qualityRef.current
+    // Fresh correlation ID for this real playback attempt — reused unchanged
+    // by any network retry / quality fallback that follows for this track.
+    attemptIdRef.current = crypto.randomUUID()
 
     if (t.id.startsWith('yt:')) {
       // Pause dual-audio local elements
@@ -325,7 +364,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         standby.play().catch(console.error)
       } else {
         // Normal load (no preload available or different track)
-        active.src = streamUrl(t.id, resolveQuality(t.id, q))
+        active.src = streamUrl(t.id, resolveQuality(t.id, q), getClientId(), attemptIdRef.current)
         active.play().catch(console.error)
       }
     }
@@ -441,7 +480,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           error_code: errCode,
           error_message: errMsg,
           user_agent: navigator.userAgent,
-          version: pkg.version
+          version: pkg.version,
+          client_id: getClientId(),
+          attempt_id: attemptIdRef.current
         })
       }).catch(console.error)
 
@@ -494,7 +535,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (errCode === 4 && qualityRef.current === '320' && !tId.startsWith('yt:') && !el.src.includes('q=')) {
         console.warn('[cozyroom] 320K transcode failed (format error). Falling back to lossless passthrough.')
         const currentPos = el.currentTime
-        const fallbackSrc = streamUrl(tId, 'lossless')
+        const fallbackSrc = streamUrl(tId, 'lossless', getClientId(), attemptIdRef.current)
         el.src = ''
         el.load()
         el.src = fallbackSrc
@@ -517,7 +558,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           console.warn('Lossless playback failed (source/decode error). Falling back to clean lossless (FLAC copy without metadata)...')
           
           const currentPos = el.currentTime
-          const fallbackSrc = streamUrl(tId, 'lossless-clean')
+          const fallbackSrc = streamUrl(tId, 'lossless-clean', getClientId(), attemptIdRef.current)
           
           el.src = ''
           el.load()
@@ -535,7 +576,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           console.warn('Clean lossless playback failed. Falling back to 320K MP3 transcode...')
 
           const currentPos = el.currentTime
-          const fallbackSrc = streamUrl(tId, '320')
+          const fallbackSrc = streamUrl(tId, '320', getClientId(), attemptIdRef.current)
 
           el.src = ''
           el.load()
@@ -595,12 +636,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const next = peekNextTrack()
     if (!next) return
     if (preloadedTrackId.current === next.track.id) return
+    if (preloadPendingId.current === next.track.id) return // already loading, waiting on canplay
     const standby = getStandby()
     const q = qualityRef.current
-    standby.src = streamUrl(next.track.id, resolveQuality(next.track.id, q))
+    const targetId = next.track.id
+    preloadPendingId.current = targetId
+    standby.src = streamUrl(targetId, resolveQuality(targetId, q))
     standby.preload = 'auto'
     standby.load()
-    preloadedTrackId.current = next.track.id
+    standby.addEventListener('canplay', () => {
+      // Only trust this if no newer preload target has since superseded it —
+      // a rapid next/prev before this one finished buffering would have
+      // overwritten preloadPendingId, and marking this id ready anyway would
+      // let startTrack's seamless-swap play a standby that never actually
+      // buffered the track it thinks it did.
+      if (preloadPendingId.current === targetId) preloadedTrackId.current = targetId
+    }, { once: true })
   }, [track, peekNextTrack, getStandby])
 
   // ── Preload trigger: 30s look-ahead fallback ──────────────────────────
@@ -611,13 +662,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const next = peekNextTrack()
     if (!next) return
     if (preloadedTrackId.current === next.track.id) return // already preloaded
+    if (preloadPendingId.current === next.track.id) return // already loading, waiting on canplay
 
     const standby = getStandby()
     const q = qualityRef.current
-    standby.src = streamUrl(next.track.id, resolveQuality(next.track.id, q))
+    const targetId = next.track.id
+    preloadPendingId.current = targetId
+    standby.src = streamUrl(targetId, resolveQuality(targetId, q))
     standby.preload = 'auto'
     standby.load()
-    preloadedTrackId.current = next.track.id
+    standby.addEventListener('canplay', () => {
+      if (preloadPendingId.current === targetId) preloadedTrackId.current = targetId
+    }, { once: true })
   }, [progress, duration, track, peekNextTrack, getStandby])
 
   const play = useCallback((t: Track, newQueue?: Track[]) => {
@@ -743,6 +799,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         track.artist_name ?? '', track.title, track.album_title ?? '',
         scrobbleStartRef.current,
       ).catch(() => {})
+      recordPlay(track.id).catch(() => {})
     }
   }, [progress, track, duration, isPlaying])
 

@@ -45,6 +45,10 @@ func (u *LibraryUsecase) SmartQueue(ctx context.Context, trackID string, limit i
 	return u.Tracks.SmartQueue(ctx, trackID, limit)
 }
 
+func (u *LibraryUsecase) RecordPlay(ctx context.Context, trackID string) error {
+	return u.Tracks.RecordPlay(ctx, trackID)
+}
+
 func (u *LibraryUsecase) SearchAll(ctx context.Context, q string) (*domain.SearchResult, error) {
 	return u.Search.Search(ctx, q)
 }

@@ -4,12 +4,16 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"cozyroom/internal/domain"
 	"cozyroom/internal/metrics"
 )
 
@@ -200,4 +204,121 @@ func lfmValues(params map[string]string) url.Values {
 	}
 	v.Set("format", "json")
 	return v
+}
+
+// ── Play-count backfill from Last.fm ───────────────────────────────────────
+// One-off, user-triggered job: pulls each track's lifetime Last.fm
+// userplaycount as a baseline (see track_plays vs lastfm_backfill_count split
+// in db.go). Runs in the background because rate-limiting a request per
+// track can take minutes for a real library — the HTTP handler only starts
+// the job and returns; progress is polled via lastfmBackfillStatus.
+
+type lfmBackfillState struct {
+	Running bool   `json:"running"`
+	Done    int    `json:"done"`
+	Total   int    `json:"total"`
+	Error   string `json:"error"`
+}
+
+var (
+	backfillMu    sync.Mutex
+	backfillState lfmBackfillState
+)
+
+func (h *handlers) lastfmBackfillPlayCounts(w http.ResponseWriter, r *http.Request) {
+	username, _ := h.settings.Get(r.Context(), "lastfm_username")
+	if username == "" {
+		http.Error(w, "not connected to Last.fm", http.StatusServiceUnavailable)
+		return
+	}
+
+	backfillMu.Lock()
+	if backfillState.Running {
+		backfillMu.Unlock()
+		http.Error(w, "backfill already running", http.StatusConflict)
+		return
+	}
+	backfillState = lfmBackfillState{Running: true}
+	backfillMu.Unlock()
+
+	tracks, err := h.lib.ListTracks(r.Context(), "")
+	if err != nil {
+		backfillMu.Lock()
+		backfillState.Running = false
+		backfillState.Error = err.Error()
+		backfillMu.Unlock()
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	backfillMu.Lock()
+	backfillState.Total = len(tracks)
+	backfillMu.Unlock()
+
+	go h.runLastfmBackfill(tracks, username)
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (h *handlers) runLastfmBackfill(tracks []domain.Track, username string) {
+	for _, t := range tracks {
+		count, err := lfmTrackPlayCount(h.lastfmKey, t.ArtistName, t.Title, username)
+		if err != nil {
+			log.Printf("lastfm backfill %s - %s: %v", t.ArtistName, t.Title, err)
+		} else if count > 0 {
+			if _, err := h.scanDB.Exec(
+				`UPDATE tracks SET lastfm_backfill_count = GREATEST(lastfm_backfill_count, $1) WHERE id = $2`,
+				count, t.ID); err != nil {
+				log.Printf("lastfm backfill update %s: %v", t.ID, err)
+			}
+		}
+		backfillMu.Lock()
+		backfillState.Done++
+		backfillMu.Unlock()
+		time.Sleep(250 * time.Millisecond) // stay well under Last.fm's rate limit
+	}
+	backfillMu.Lock()
+	backfillState.Running = false
+	backfillMu.Unlock()
+}
+
+// lfmTrackPlayCount calls track.getInfo — a public read method, no api_sig or
+// session key needed — and returns userplaycount for artist/track under the
+// given (already-connected) username.
+func lfmTrackPlayCount(apiKey, artist, track, username string) (int, error) {
+	v := url.Values{}
+	v.Set("method", "track.getInfo")
+	v.Set("api_key", apiKey)
+	v.Set("artist", artist)
+	v.Set("track", track)
+	v.Set("username", username)
+	v.Set("format", "json")
+
+	resp, err := http.Get(lfmAPI + "?" + v.Encode())
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Track struct {
+			UserPlayCount string `json:"userplaycount"`
+		} `json:"track"`
+		Error int `json:"error"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return 0, err
+	}
+	if result.Error != 0 {
+		return 0, nil // not found on Last.fm — skip, not a hard error
+	}
+	count, _ := strconv.Atoi(result.Track.UserPlayCount)
+	return count, nil
+}
+
+func (h *handlers) lastfmBackfillStatus(w http.ResponseWriter, r *http.Request) {
+	backfillMu.Lock()
+	defer backfillMu.Unlock()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(backfillState)
 }

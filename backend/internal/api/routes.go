@@ -146,12 +146,14 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 
 	mux.HandleFunc("GET /api/health", h.health)
 	mux.HandleFunc("GET /api/stats", h.stats)
+	mux.HandleFunc("GET /api/stats/plays", h.playStats)
 	mux.HandleFunc("POST /api/scan", h.scan)
 	mux.HandleFunc("GET /api/artists", h.listArtists)
 	mux.HandleFunc("GET /api/artists/{id}", h.artistDetail)
 	mux.HandleFunc("GET /api/albums", h.listAlbums)
 	mux.HandleFunc("GET /api/albums/{id}", h.getAlbum)
 	mux.HandleFunc("GET /api/tracks", h.listTracks)
+	mux.HandleFunc("POST /api/tracks/{id}/play", h.recordPlay)
 	mux.HandleFunc("GET /api/covers/{id}", h.cover)
 	mux.HandleFunc("GET /api/artist-images/{id}", h.artistImage)
 	mux.HandleFunc("GET /api/smart-queue", h.smartQueue)
@@ -193,6 +195,8 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("DELETE /api/lastfm/disconnect", h.lastfmDisconnect)
 	mux.HandleFunc("POST /api/lastfm/now-playing",  h.lastfmNowPlaying)
 	mux.HandleFunc("POST /api/lastfm/scrobble",     h.lastfmScrobble)
+	mux.HandleFunc("POST /api/lastfm/backfill-play-counts", h.lastfmBackfillPlayCounts)
+	mux.HandleFunc("GET /api/lastfm/backfill-play-counts",  h.lastfmBackfillStatus)
 
 	sc := NewScraperHandlers(d.CloakProxyURL)
 	mux.HandleFunc("GET /api/scraper/md/latest",         sc.mdLatest)
@@ -293,6 +297,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/ai/model-prices", aiH.modelPricesList)
 	mux.HandleFunc("PUT /api/ai/model-prices", aiH.modelPricesUpsert)
 	mux.HandleFunc("GET /api/ai/stats/daily", aiH.statsDaily)
+	mux.HandleFunc("GET /api/ai/music-insight", aiH.musicInsight)
 
 	mux.Handle("/", spaHandler{root: "./dist"})
 

@@ -271,5 +271,18 @@ func migrate(db *sql.DB) error {
 	db.Exec(`ALTER TABLE ai_model_prices ADD COLUMN IF NOT EXISTS cached_in REAL NOT NULL DEFAULT 0`)
 	db.Exec(`ALTER TABLE ai_model_prices ADD COLUMN IF NOT EXISTS cached_out REAL NOT NULL DEFAULT 0`)
 	db.Exec(`ALTER TABLE chat_logs ADD COLUMN IF NOT EXISTS tokens_cached_in INTEGER NOT NULL DEFAULT 0`)
+	// track_plays: append-only log, one row per completed local play — lets us
+	// compute both "top played" (COUNT per track) and "plays per day" (GROUP BY
+	// played_at) from the same source. lastfm_backfill_count is a separate
+	// one-time snapshot from Last.fm's userplaycount (a running total, not a
+	// per-play timestamp, so it can't be represented as track_plays rows).
+	db.Exec(`CREATE TABLE IF NOT EXISTS track_plays (
+		id         TEXT PRIMARY KEY,
+		track_id   TEXT NOT NULL,
+		played_at  INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER)
+	)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_track_plays_track_id ON track_plays(track_id)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_track_plays_played_at ON track_plays(played_at)`)
+	db.Exec(`ALTER TABLE tracks ADD COLUMN IF NOT EXISTS lastfm_backfill_count INTEGER NOT NULL DEFAULT 0`)
 	return nil
 }

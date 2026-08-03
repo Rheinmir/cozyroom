@@ -22,6 +22,7 @@ import PlaylistsPage from './pages/PlaylistsPage'
 import NotesPage from './pages/NotesPage'
 import AIAssistantPage from './pages/AIAssistantPage'
 import AIStatsPage from './pages/AIStatsPage'
+import MusicStatsPage from './pages/MusicStatsPage'
 import ToolsPage from './pages/ToolsPage'
 import RequestLogPage from './pages/RequestLogPage'
 
@@ -51,6 +52,7 @@ export default function AppRoutes() {
               <Route path="/notes"       element={<NotesPage />} />
               <Route path="/ai"          element={<AIAssistantPage />} />
               <Route path="/ai/stats"    element={<AIStatsPage />} />
+              <Route path="/stats/music" element={<MusicStatsPage />} />
               <Route path="/tools"       element={<ToolsPage />} />
               <Route path="/debug"       element={<RequestLogPage />} />
             </Routes>

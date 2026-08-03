@@ -113,6 +113,10 @@ export default function Sidebar() {
           <span className="nav-link-icon">🤖</span>
           {!collapsed && <span className="nav-link-text">{t('nav.ai')}</span>}
         </NavLink>
+        <NavLink to="/stats/music" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Số liệu nghe nhạc">
+          <span className="nav-link-icon">📊</span>
+          {!collapsed && <span className="nav-link-text">Số liệu nghe</span>}
+        </NavLink>
         <NavLink to="/debug" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Request Log">
           <span className="nav-link-icon">📡</span>
           {!collapsed && <span className="nav-link-text">Request Log</span>}

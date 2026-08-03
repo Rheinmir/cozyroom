@@ -30,6 +30,7 @@ type TrackRepository interface {
 	SmartQueue(ctx context.Context, trackID string, limit int) ([]Track, error)
 	IsEmpty(ctx context.Context) bool
 	Upsert(ctx context.Context, t Track) error
+	RecordPlay(ctx context.Context, trackID string) error
 }
 
 // VideoRepository reads and writes videos.

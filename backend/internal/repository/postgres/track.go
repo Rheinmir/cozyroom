@@ -2,7 +2,9 @@
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"fmt"
 
 	"cozyroom/internal/domain"
 )
@@ -81,6 +83,14 @@ func (r *TrackRepo) GetFilePath(ctx context.Context, id string) (string, error) 
 	return fp, err
 }
 
+// SmartQueue picks the next tracks to queue, biased same-artist > same-genre >
+// similar-genre > random — same priority weights as before (8:5:3:1), but
+// computed as 4 small indexed lookups instead of one ORDER BY over every row
+// in the library (see llmwiki postmortem 2026-07-12, "SmartQueue O(N log N)").
+// A tier that returns fewer than its proportional share (e.g. an artist with
+// only 2 tracks) rolls its shortfall into the next tier's target, so the
+// total still reaches `limit` and one prolific artist can't crowd out the
+// genre-diversity the original single-query version provided.
 func (r *TrackRepo) SmartQueue(ctx context.Context, trackID string, limit int) ([]domain.Track, error) {
 	var genre, artistID string
 	err := r.q.QueryRowContext(ctx,
@@ -94,43 +104,119 @@ func (r *TrackRepo) SmartQueue(ctx context.Context, trackID string, limit int) (
 		return nil, err
 	}
 
-	rows, err := r.q.QueryContext(ctx, `
-		SELECT t.id, t.album_id, t.title, COALESCE(t.track_num,0), COALESCE(t.duration_s,0), ar.name, al.title, ar.id
-		FROM tracks t JOIN albums al ON al.id = t.album_id JOIN artists ar ON ar.id = al.artist_id
-		WHERE t.id != $1
-		ORDER BY (
-			CASE
-				WHEN al.artist_id = $2                                        THEN 8.0
-				WHEN t.genre != '' AND t.genre = $3                           THEN 5.0
-				WHEN t.genre != '' AND $3 != '' AND (
-					t.genre ILIKE '%' || $3 || '%' OR $3 ILIKE '%' || t.genre || '%'
-				)                                                             THEN 3.0
-				ELSE 1.0
-			END * (0.5 + RANDOM())
-		) DESC
-		LIMIT $4`,
-		trackID, artistID, genre, limit,
-	)
+	const trackCols = `t.id, t.album_id, t.title, COALESCE(t.track_num,0), COALESCE(t.duration_s,0), ar.name, al.title, ar.id`
+	const trackJoin = `FROM tracks t JOIN albums al ON al.id = t.album_id JOIN artists ar ON ar.id = al.artist_id`
+
+	seen := map[string]bool{trackID: true}
+	var out []domain.Track
+
+	// fetch runs one tier's query capped at `want` rows, appending any
+	// not-already-seen results to out, and returns how many it actually got.
+	fetch := func(want int, query string, args ...any) (int, error) {
+		if want <= 0 {
+			return 0, nil
+		}
+		rows, err := r.q.QueryContext(ctx, query, append(args, want)...)
+		if err != nil {
+			return 0, err
+		}
+		defer rows.Close()
+		got := 0
+		for rows.Next() {
+			var t domain.Track
+			if err := rows.Scan(&t.ID, &t.AlbumID, &t.Title, &t.TrackNum, &t.DurationS, &t.ArtistName, &t.AlbumTitle, &t.ArtistID); err != nil {
+				return got, err
+			}
+			if seen[t.ID] {
+				continue
+			}
+			seen[t.ID] = true
+			out = append(out, t)
+			got++
+		}
+		return got, rows.Err()
+	}
+
+	// Proportional split of `limit` across the 4 priority tiers (weights 8:5:3:1
+	// match the old CASE scores); tier 4 absorbs the rounding remainder.
+	target1 := limit * 8 / 17
+	target2 := limit * 5 / 17
+	target3 := limit * 3 / 17
+	target4 := limit - target1 - target2 - target3
+
+	// Tier 1 — same artist. Indexed via idx_albums_artist_id.
+	got, err := fetch(target1,
+		`SELECT `+trackCols+` `+trackJoin+`
+		 WHERE al.artist_id = $1 AND t.id != $2
+		 ORDER BY RANDOM() LIMIT $3`,
+		artistID, trackID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	carry := target1 - got
 
-	var out []domain.Track
-	for rows.Next() {
-		var t domain.Track
-		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Title, &t.TrackNum, &t.DurationS, &t.ArtistName, &t.AlbumTitle, &t.ArtistID); err != nil {
+	// Tier 2 — exact genre match. Indexed via idx_tracks_genre.
+	want2 := target2 + carry
+	got2 := 0
+	if genre != "" {
+		got2, err = fetch(want2,
+			`SELECT `+trackCols+` `+trackJoin+`
+			 WHERE t.genre = $1 AND t.id != $2
+			 ORDER BY RANDOM() LIMIT $3`,
+			genre, trackID)
+		if err != nil {
 			return nil, err
 		}
-		out = append(out, t)
 	}
-	return out, rows.Err()
+	carry = want2 - got2
+
+	// Tier 3 — similar genre. Indexed via idx_tracks_genre_trgm (pg_trgm GIN).
+	want3 := target3 + carry
+	got3 := 0
+	if genre != "" {
+		got3, err = fetch(want3,
+			`SELECT `+trackCols+` `+trackJoin+`
+			 WHERE t.genre != '' AND t.genre % $1 AND t.id != $2
+			 ORDER BY RANDOM() LIMIT $3`,
+			genre, trackID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	carry = want3 - got3
+
+	// Tier 4 — random fallback across the whole library, absorbing any
+	// shortfall from the tiers above (e.g. no genre tagged, or a lone track
+	// by its artist). This tier alone is still an O(N log N) sort, same as
+	// the old query — but it only runs, and only for the leftover slots,
+	// when the indexed tiers above didn't already fill `limit`.
+	want4 := target4 + carry
+	if _, err := fetch(want4,
+		`SELECT `+trackCols+` `+trackJoin+`
+		 WHERE t.id != $1
+		 ORDER BY RANDOM() LIMIT $2`,
+		trackID); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 func (r *TrackRepo) IsEmpty(ctx context.Context) bool {
 	var n int
 	r.q.QueryRowContext(ctx, "SELECT COUNT(*) FROM tracks").Scan(&n)
 	return n == 0
+}
+
+// RecordPlay logs one completed listen as a new row (not an update) — see
+// track_plays schema comment in db.go for why append-only.
+func (r *TrackRepo) RecordPlay(ctx context.Context, trackID string) error {
+	b := make([]byte, 8)
+	_, _ = rand.Read(b)
+	id := fmt.Sprintf("%x", b)
+	_, err := r.q.ExecContext(ctx,
+		`INSERT INTO track_plays (id, track_id) VALUES ($1, $2)`, id, trackID)
+	return err
 }
 
 func (r *TrackRepo) Upsert(ctx context.Context, t domain.Track) error {

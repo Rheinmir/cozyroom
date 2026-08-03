@@ -147,6 +147,74 @@ func (h *handlers) stats(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(s)
 }
 
+// GET /api/stats/plays?days=30 — top-played tracks (local track_plays count +
+// lastfm_backfill_count baseline) and a local-only daily play histogram.
+// Last.fm's userplaycount has no per-play timestamp, so the daily breakdown
+// can only ever reflect plays recorded locally (see llmwiki proposal
+// 020826-music-play-stats-chart-be-fe for why this split is intentional).
+func (h *handlers) playStats(w http.ResponseWriter, r *http.Request) {
+	days := 30
+	if n, err := strconv.Atoi(r.URL.Query().Get("days")); err == nil && n > 0 && n <= 365 {
+		days = n
+	}
+
+	type topTrack struct {
+		ID         string `json:"id"`
+		Title      string `json:"title"`
+		ArtistName string `json:"artist_name"`
+		AlbumTitle string `json:"album_title"`
+		CoverURL   string `json:"cover_url"`
+		Plays      int    `json:"plays"`
+	}
+	top := []topTrack{}
+	rows, err := h.scanDB.QueryContext(r.Context(), `
+		SELECT t.id, t.title, ar.name, al.title, COALESCE(al.cover_path,''),
+		       t.lastfm_backfill_count + COUNT(tp.id) AS total_plays
+		FROM tracks t
+		JOIN albums al ON al.id = t.album_id
+		JOIN artists ar ON ar.id = al.artist_id
+		LEFT JOIN track_plays tp ON tp.track_id = t.id
+		GROUP BY t.id, ar.name, al.title, al.cover_path
+		HAVING t.lastfm_backfill_count + COUNT(tp.id) > 0
+		ORDER BY total_plays DESC LIMIT 10`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for rows.Next() {
+		var tt topTrack
+		if rows.Scan(&tt.ID, &tt.Title, &tt.ArtistName, &tt.AlbumTitle, &tt.CoverURL, &tt.Plays) == nil {
+			top = append(top, tt)
+		}
+	}
+	rows.Close()
+
+	type dayCount struct {
+		Date  string `json:"date"`
+		Plays int    `json:"plays"`
+	}
+	daily := []dayCount{}
+	rows2, err := h.scanDB.QueryContext(r.Context(), `
+		SELECT to_char(to_timestamp(played_at), 'YYYY-MM-DD') d, COUNT(*)
+		FROM track_plays
+		WHERE played_at >= extract(epoch from now() - ($1 || ' days')::interval)
+		GROUP BY d ORDER BY d`, days)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for rows2.Next() {
+		var dc dayCount
+		if rows2.Scan(&dc.Date, &dc.Plays) == nil {
+			daily = append(daily, dc)
+		}
+	}
+	rows2.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"top": top, "daily": daily})
+}
+
 func (h *handlers) scan(w http.ResponseWriter, r *http.Request) {
 	// Scan still uses the library package directly — it has its own internal
 	// transaction via UoW (see library/scanner.go refactor).
@@ -306,6 +374,19 @@ func (h *handlers) listTracks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tracks)
 }
 
+// flushWriter flushes after every Write so a live ffmpeg transcode reaches
+// the client progressively instead of waiting on Go's response buffering
+// (nginx already runs proxy_buffering off for this path — see CozyArchitecture.md).
+type flushWriter struct{ w http.ResponseWriter }
+
+func (fw flushWriter) Write(p []byte) (int, error) {
+	n, err := fw.w.Write(p)
+	if f, ok := fw.w.(http.Flusher); ok {
+		f.Flush()
+	}
+	return n, err
+}
+
 func (h *handlers) stream(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	filePath, err := h.lib.TrackFilePath(r.Context(), id)
@@ -318,16 +399,37 @@ func (h *handlers) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Correlation IDs from the frontend (see PlayerContext.tsx streamUrl) — used
+	// only in plain log lines below so retries of the same playback attempt can
+	// be grouped when reading logs. Never pass these into a Prometheus label:
+	// they are near-random per attempt, and would create an unbounded number of
+	// distinct time series.
+	clientID := r.URL.Query().Get("client_id")
+	attemptID := r.URL.Query().Get("attempt_id")
+
 	// ?q=320 → transcode to 320 kbps MP3 via ffmpeg (all formats, not just lossless —
-	// ensures browsers get valid MP3 even for unusual/corrupt MP3 encodings)
+	// ensures browsers get valid MP3 even for unusual/corrupt MP3 encodings).
+	// Cached to disk after first transcode: replays and gapless preloads of the
+	// same track then serve as a plain Range-seekable file instead of re-running
+	// ffmpeg every time (see llmwiki postmortem on mobile stutter, 2026-07-12).
 	if r.URL.Query().Get("q") == "320" {
+		if cachedPath, ok := transcode.Cached(id, "320", "mp3"); ok {
+			w.Header().Set("X-Quality", "320kbps-mp3")
+			w.Header().Set("X-Cache", "hit")
+			http.ServeFile(w, r, cachedPath)
+			return
+		}
 		w.Header().Set("Content-Type", "audio/mpeg")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("X-Accel-Buffering", "no")
 		w.Header().Set("X-Quality", "320kbps-mp3")
+		w.Header().Set("X-Cache", "miss")
 		metrics.StreamsTotal.WithLabelValues("320kbps").Inc()
-		if err := transcode.ToMP3_320(r.Context(), filePath, w); err != nil {
-			log.Printf("transcode %s: %v", id, err)
+		fw := flushWriter{w}
+		if err := transcode.EncodeAndCache(r.Context(), fw, id, "320", "mp3", func(ctx context.Context, out io.Writer) error {
+			return transcode.ToMP3_320(ctx, filePath, out)
+		}); err != nil {
+			log.Printf("transcode %s: %v (client=%s attempt=%s)", id, err, clientID, attemptID)
 			metrics.StreamErrorsTotal.WithLabelValues("320kbps", "transcode_failed").Inc()
 		}
 		return
@@ -335,13 +437,23 @@ func (h *handlers) stream(w http.ResponseWriter, r *http.Request) {
 
 	// ?q=lossless-clean → copy lossless audio but strip metadata on-the-fly to bypass corrupt tags crashing browser demuxers
 	if r.URL.Query().Get("q") == "lossless-clean" && transcode.IsLossless(filePath) {
+		if cachedPath, ok := transcode.Cached(id, "lossless-clean", "flac"); ok {
+			w.Header().Set("X-Quality", "lossless-clean")
+			w.Header().Set("X-Cache", "hit")
+			http.ServeFile(w, r, cachedPath)
+			return
+		}
 		w.Header().Set("Content-Type", "audio/flac")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("X-Accel-Buffering", "no")
 		w.Header().Set("X-Quality", "lossless-clean")
+		w.Header().Set("X-Cache", "miss")
 		metrics.StreamsTotal.WithLabelValues("lossless-clean").Inc()
-		if err := transcode.ToCleanFLAC(r.Context(), filePath, w); err != nil {
-			log.Printf("clean flac %s: %v", id, err)
+		fw := flushWriter{w}
+		if err := transcode.EncodeAndCache(r.Context(), fw, id, "lossless-clean", "flac", func(ctx context.Context, out io.Writer) error {
+			return transcode.ToCleanFLAC(ctx, filePath, out)
+		}); err != nil {
+			log.Printf("clean flac %s: %v (client=%s attempt=%s)", id, err, clientID, attemptID)
 			metrics.StreamErrorsTotal.WithLabelValues("lossless-clean", "transcode_failed").Inc()
 		}
 		return
@@ -379,6 +491,21 @@ func (h *handlers) smartQueue(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tracks)
+}
+
+// POST /api/tracks/{id}/play — fire-and-forget play-count log. Never surfaces
+// a hard error to the player UI; a failed write here must not interrupt
+// playback, so we just log server-side and always return 204.
+func (h *handlers) recordPlay(w http.ResponseWriter, r *http.Request) {
+	trackID := r.PathValue("id")
+	if !hexID.MatchString(trackID) {
+		http.Error(w, "invalid track id", http.StatusBadRequest)
+		return
+	}
+	if err := h.lib.RecordPlay(r.Context(), trackID); err != nil {
+		log.Printf("recordPlay %s: %v", trackID, err)
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handlers) search(w http.ResponseWriter, r *http.Request) {

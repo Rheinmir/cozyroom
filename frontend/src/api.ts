@@ -75,6 +75,35 @@ export const lastfmScrobble = (artist: string, track: string, album: string, tim
     body: JSON.stringify({ artist, track, album, timestamp }),
   }).then(() => {})
 
+// ---- Play stats ----
+export const recordPlay = (trackId: string): Promise<void> =>
+  fetch(`/api/tracks/${trackId}/play`, { method: 'POST' }).then(() => {})
+
+export type TopPlayedTrack = {
+  id: string
+  title: string
+  artist_name: string
+  album_title: string
+  cover_url: string
+  plays: number
+}
+export type DailyPlayCount = { date: string; plays: number }
+export type PlayStats = { top: TopPlayedTrack[]; daily: DailyPlayCount[] }
+
+export const fetchPlayStats = (days = 30): Promise<PlayStats> =>
+  get<PlayStats>(`/api/stats/plays?days=${days}`)
+
+export const fetchMusicInsight = (): Promise<{ insight: string }> =>
+  get<{ insight: string }>('/api/ai/music-insight')
+
+export const backfillLastfmPlayCounts = (): Promise<void> =>
+  fetch('/api/lastfm/backfill-play-counts', { method: 'POST' }).then(r => {
+    if (!r.ok) throw new Error('backfill failed')
+  })
+
+export type LastfmBackfillStatus = { running: boolean; done: number; total: number; error: string }
+export const fetchLastfmBackfillStatus = () => get<LastfmBackfillStatus>('/api/lastfm/backfill-play-counts')
+
 // ---- Scraper (Comics) ----
 export type ComicResult = {
   id: string; name?: string; title?: string; token?: string

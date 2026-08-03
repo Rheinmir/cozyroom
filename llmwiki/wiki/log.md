@@ -1,5 +1,32 @@
 # Operation Log
 
+## 2026-08-02 — redesign — music-stats-storytelling + fix color-token bug
+
+- User: "muốn dashboard có tính chất storytelling" + "cần thiết thì thêm yếu tố AI" → dùng skill `dataviz` (form → hero figure, mark specs, single-hue sequential) để thiết kế lại `MusicStatsPage.tsx`: hero figure (tổng lượt nghe) → AI insight (quote, italic) → spotlight card (#1 track + cover art + play count) → 2 chart (đã restyle: bar bo góc 4px + direct label ở đầu bar, line 2px, cùng 1 hue)
+- Backend mới: `backend/internal/api/music_insight.go` — `GET /api/ai/music-insight` (Claude Haiku sinh 1-2 câu nhận xét gu nghe nhạc từ top-5 track, cache theo ngày trong bảng `settings`, degrade êm nếu thiếu key/lỗi)
+- **Bug thật phát hiện khi test bằng mock qua Chrome**: `var(--accent)` KHÔNG tồn tại trong design system thật của app (app đã đổi hẳn sang tông đen-trắng-xám — token thật là `--green`/`--purple`, cả hai đều `#ffffff`). Điều này làm nút bấm/bar/line vô hình (nền trong suốt). Sửa cả `MusicStatsPage.tsx` VÀ ngược lại sửa luôn `.search-ask-ai-btn` trong `index.css` (bug tương tự từ tính năng "Hỏi AI" làm trước đó cùng phiên) — dùng đúng pattern `background: var(--green); color: #000` đã xác nhận qua grep khớp với `.tool-detail-use-btn`/`.tools-filter-btn--active` đang chạy thật trong app
+- Verify: `tsc --noEmit` sạch; test qua Chrome với mock data (top-5 track, insight text giả) — xác nhận đúng bố cục storytelling render ra, nút "Đồng bộ Last.fm" hiển thị đúng màu sau khi sửa
+- CHƯA deploy — đang chờ xác nhận
+
+## 2026-08-02 — implement — music-play-stats-chart
+
+- User duyệt plan → implement cả 7 task:
+  - `backend/internal/db/db.go` — bảng `track_plays` + cột `tracks.lastfm_backfill_count`
+  - `backend/internal/repository/postgres/track.go` + `domain/repository.go` + `usecase/library.go` — `RecordPlay()`
+  - `backend/internal/api/handler.go` — `POST /api/tracks/{id}/play`, `GET /api/stats/plays?days=30`
+  - `backend/internal/api/lastfm.go` — `POST/GET /api/lastfm/backfill-play-counts` (chạy nền, rate-limit 250ms, GREATEST tránh double-count)
+  - `frontend/src/api.ts`, `PlayerContext.tsx` — `recordPlay()` gắn cạnh `lastfmScrobble()` hiện có
+  - `frontend/src/pages/MusicStatsPage.tsx` (mới) + route `/stats/music` + nav Sidebar
+- Verify: `go build`/`tsc --noEmit` sạch; test SQL trực tiếp qua `kubectl port-forward svc/db-adapter` với dữ liệu thật (track "Yêu 5") — top-played tính đúng `42 (Last.fm baseline) + 3 (local) = 45`, daily group đúng ngày hôm nay; test UI qua Chrome — trang render sạch, không lỗi console, empty-state hiển thị đúng khi chưa có dữ liệu/chưa kết nối Last.fm
+- CHƯA deploy lên k8s — đang chờ xác nhận từ user
+
+## 2026-08-02 — propose — music-play-stats-chart
+
+- User: "claim số liệu nghe của các bài hát và vẽ chart" → Explore agent research hạ tầng hiện có (Last.fm scrobble, PlayerContext threshold, recharts pattern) → hỏi rõ nguồn dữ liệu → user chọn "cả hai — Last.fm cho lịch sử cũ, tự đếm cho từ giờ"
+- Draft: `wiki/sources/draft/020826-music-play-stats-chart-be-fe.md`
+- Sequence diagram: `html/020826-music-play-stats-chart-be-fe-seq.html`
+- Trạng thái: proposed — CHƯA code, đang chờ user duyệt plan (7 task: schema, record-play BE, stats endpoint, Last.fm backfill, FE hook, trang chart, verify)
+
 ## 2026-08-02 — fix — search-vietnamese-diacritics
 
 - Bug thật user phát hiện: gõ "yeu 5" (không dấu) không tìm ra album/track "Yêu 5" (Rhymastic) dù có trong thư viện local — `ILIKE` so khớp byte-for-byte, không chuẩn hóa dấu tiếng Việt. Ảnh hưởng cả `/api/search` VÀ tool `search_music` của AI Assistant (cùng gọi `SearchRepo.Search`, xác nhận qua grep 2 call site).
