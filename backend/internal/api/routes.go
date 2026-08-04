@@ -158,6 +158,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/artist-images/{id}", h.artistImage)
 	mux.HandleFunc("GET /api/smart-queue", h.smartQueue)
 	mux.HandleFunc("GET /api/search", h.search)
+	mux.HandleFunc("GET /api/lyrics/detect-language", h.detectLyricsLanguage)
 	mux.HandleFunc("GET /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("POST /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("DELETE /api/lyrics/{id}", h.lyricsHandler)
@@ -257,6 +258,38 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("POST /api/notes", nh.createNote)
 	mux.HandleFunc("PUT /api/notes/{id}", nh.updateNote)
 	mux.HandleFunc("DELETE /api/notes/{id}", nh.deleteNote)
+	mux.HandleFunc("GET /api/notes/{id}/subtasks", nh.listSubtasks)
+	mux.HandleFunc("POST /api/notes/{id}/subtasks", nh.createSubtask)
+	mux.HandleFunc("PUT /api/notes/{id}/subtasks/{subtaskId}", nh.updateSubtask)
+	mux.HandleFunc("DELETE /api/notes/{id}/subtasks/{subtaskId}", nh.deleteSubtask)
+	mux.HandleFunc("GET /api/notes/{id}/comments", nh.listComments)
+	mux.HandleFunc("POST /api/notes/{id}/comments", nh.createComment)
+	mux.HandleFunc("DELETE /api/notes/{id}/comments/{commentId}", nh.deleteComment)
+
+	bh := &BoardHandlers{db: d.ScanDB}
+	mux.HandleFunc("GET /api/boards", bh.listBoards)
+	mux.HandleFunc("POST /api/boards", bh.createBoard)
+	mux.HandleFunc("PUT /api/boards/{id}", bh.updateBoard)
+	mux.HandleFunc("DELETE /api/boards/{id}", bh.deleteBoard)
+	mux.HandleFunc("GET /api/boards/{id}/columns", bh.listColumns)
+	mux.HandleFunc("POST /api/boards/{id}/columns", bh.createColumn)
+	mux.HandleFunc("PUT /api/boards/{id}/columns/{columnId}", bh.updateColumn)
+	mux.HandleFunc("DELETE /api/boards/{id}/columns/{columnId}", bh.deleteColumn)
+	mux.HandleFunc("GET /api/boards/{id}/labels", bh.listLabels)
+	mux.HandleFunc("POST /api/boards/{id}/labels", bh.createLabel)
+	mux.HandleFunc("DELETE /api/boards/{id}/labels/{labelId}", bh.deleteLabel)
+	mux.HandleFunc("GET /api/boards/{id}/roles", bh.listRoles)
+	mux.HandleFunc("GET /api/boards/{id}/members", bh.listMembers)
+	mux.HandleFunc("POST /api/boards/{id}/members", bh.upsertMember)
+
+	kh := &KanbanAuthHandlers{db: d.ScanDB}
+	mux.HandleFunc("POST /api/kanban/register", kh.register)
+	mux.HandleFunc("POST /api/kanban/login", kh.login)
+	mux.HandleFunc("POST /api/kanban/logout", kh.logout)
+	mux.HandleFunc("GET /api/kanban/users", kh.listApprovedUsers)
+	mux.HandleFunc("GET /api/kanban/admin/pending", kh.listPending)
+	mux.HandleFunc("POST /api/kanban/admin/users/{id}/approve", kh.approveUser)
+	mux.HandleFunc("POST /api/kanban/admin/users/{id}/reject", kh.rejectUser)
 
 	mcpTools := mcp.NewRegistry(mcp.ToolDeps{
 		Lib: d.Lib,

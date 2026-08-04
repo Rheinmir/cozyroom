@@ -4,7 +4,7 @@ import { usePlayer } from '../PlayerContext'
 import { useBgSounds } from '../BgSoundsContext'
 import BackgroundSoundsPanel from './BackgroundSoundsPanel'
 import type { RepeatMode, ShuffleMode } from '../PlayerContext'
-import { fetchArtistDetail } from '../api'
+import { fetchArtistDetail, detectLyricsLanguage } from '../api'
 import type { ArtistDetail } from '../api'
 import Equalizer from './Equalizer'
 import LyricsView from './LyricsView'
@@ -79,6 +79,7 @@ export default function PlayerBar() {
   const [mobileTab,    setMobileTab]    = useState<'player' | 'lyrics'>('player')
   const [artistInfo,   setArtistInfo]   = useState<ArtistDetail | null>(null)
   const [trActive,     setTrActive]     = useState(false)
+  const [autoTranslate, setAutoTranslate] = useState(() => localStorage.getItem('lyrics-auto-translate') === '1')
   const [ctrlsVisible, setCtrlsVisible] = useState(false)
   const ctrlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lyricsRef     = useRef<LyricsViewHandle>(null)
@@ -90,6 +91,19 @@ export default function PlayerBar() {
 
   useEffect(() => { setTrActive(false) }, [track?.id])
   useEffect(() => () => { if (ctrlsTimerRef.current) clearTimeout(ctrlsTimerRef.current) }, [])
+  useEffect(() => { localStorage.setItem('lyrics-auto-translate', autoTranslate ? '1' : '0') }, [autoTranslate])
+
+  // Called by LyricsView once lyrics for the given trackId have actually
+  // loaded — only then is it safe to auto-trigger translation (see the
+  // comment on LyricsView's own `onReady` effect for why).
+  const handleLyricsReady = (readyTrackId: string) => {
+    if (!autoTranslate || trActive || readyTrackId !== track?.id) return
+    const text = `${track.title} ${artistInfo?.name ?? ''}`.trim()
+    if (!text) return
+    detectLyricsLanguage(text)
+      .then(({ lang }) => { if (lang && lang !== 'vi') lyricsRef.current?.toggleTranslation() })
+      .catch(() => {})
+  }
 
   const showCtrls = () => {
     setCtrlsVisible(true)
@@ -329,7 +343,7 @@ export default function PlayerBar() {
               {/* Tab 2 / right col: track title + lyrics */}
               <div className={'npo-content' + (mobileTab === 'player' ? ' npo-panel--hidden' : '')}>
                 <div className="npo-lyrics-wrap">
-                  <LyricsView ref={lyricsRef} trackId={track.id} onTranslateActiveChange={setTrActive} />
+                  <LyricsView ref={lyricsRef} trackId={track.id} onTranslateActiveChange={setTrActive} onReady={handleLyricsReady} />
                 </div>
               </div>
             </div>
@@ -342,6 +356,11 @@ export default function PlayerBar() {
                 onClick={() => lyricsRef.current?.toggleTranslation()}
                 title={trActive ? t('player.hide_translation') : t('player.show_translation')}
               >🌐</button>
+              <button
+                className={'npo-auto-translate-btn ctrl-btn' + (autoTranslate ? ' ctrl-btn--active' : '')}
+                onClick={() => setAutoTranslate(v => !v)}
+                title={autoTranslate ? t('player.auto_translate_on') : t('player.auto_translate_off')}
+              >⚡</button>
               <div className="npo-progress">
                 <input type="range" className="progress-bar" style={progressStyle} min={0} max={duration || 1} step={0.5} value={progress} onChange={e => seek(Number(e.target.value))} />
                 <div className="npo-times">

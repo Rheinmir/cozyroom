@@ -92,6 +92,8 @@
     "smart_off": "Bật Smart Radio",
     "show_translation": "Hiện bản dịch",
     "hide_translation": "Ẩn bản dịch",
+    "auto_translate_on": "Tự động dịch: đang bật (bài không phải tiếng Việt sẽ tự dịch)",
+    "auto_translate_off": "Tự động dịch: đang tắt",
     "lyrics": "Lời bài hát",
     "playback_failed": "Không thể phát bài hát",
     "playback_error": "Lỗi: {{message}} (Mã: {{code}})"

@@ -56,6 +56,9 @@ export const bustLyricsCache = (trackId: string): Promise<void> =>
 export const fetchLyricsTranslation = (trackId: string, lang = 'vi') =>
   get<{ lines: string[] }>(`/api/lyrics/${trackId}/translate?lang=${lang}`)
 
+export const detectLyricsLanguage = (text: string) =>
+  get<{ lang: string; confidence: number }>(`/api/lyrics/detect-language?text=${encodeURIComponent(text)}`)
+
 // Last.fm
 export type LastfmStatus = { connected: boolean; username: string; configured: boolean }
 
@@ -300,70 +303,174 @@ export const removeTrackFromPlaylist = (playlistId: string, trackId: string, pas
     }
   })
 
-// ---- Kanban Quick Note ----
+// ---- Kanban ----
+// Every kanban call carries EITHER the owner password (admin mode, unchanged
+// since the original Kanban Quick Note feature) OR a logged-in user's
+// session token — never both, never neither once past the gate screen.
+export type KanbanCreds = { password?: string; token?: string }
+
+const kanbanHeaders = (creds: KanbanCreds): Record<string, string> =>
+  creds.password ? { 'X-Owner-Password': creds.password }
+    : creds.token ? { 'X-Kanban-Session': creds.token }
+    : {}
+
+const kanbanFetch = <T>(url: string, creds: KanbanCreds, init: RequestInit = {}, action = 'kanban request'): Promise<T> =>
+  fetch(url, { ...init, headers: { ...kanbanHeaders(creds), ...(init.headers || {}) } }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed ${action}: ${r.status}`)
+    }
+    return r.status === 204 ? (undefined as T) : (r.json() as Promise<T>)
+  })
+
+const kanbanJSON = <T>(url: string, method: string, body: unknown, creds: KanbanCreds, action = 'kanban request'): Promise<T> =>
+  kanbanFetch<T>(url, creds, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }, action)
+
+// -- Auth (register/login are unauthenticated by definition; no creds yet) --
+export const registerKanbanUser = (username: string, password: string): Promise<{ username: string; status: string }> =>
+  fetch('/api/kanban/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Đăng ký thất bại: ${r.status}`)
+    }
+    return r.json()
+  })
+
+export const loginKanbanUser = (username: string, password: string): Promise<{ token: string; username: string; color: string; expires_at: number }> =>
+  fetch('/api/kanban/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Đăng nhập thất bại: ${r.status}`)
+    }
+    return r.json()
+  })
+
+export const logoutKanbanUser = (token: string): Promise<void> =>
+  fetch('/api/kanban/logout', { method: 'POST', headers: { 'X-Kanban-Session': token } }).then(() => undefined)
+
+export type KanbanUser = { id: string; username: string; color: string }
+export type KanbanPendingUser = { id: string; username: string; created_at: number }
+
+export const listApprovedKanbanUsers = (creds: KanbanCreds) =>
+  kanbanFetch<KanbanUser[]>('/api/kanban/users', creds, {}, 'to list users')
+export const listPendingKanbanUsers = (password: string) =>
+  kanbanFetch<KanbanPendingUser[]>('/api/kanban/admin/pending', { password }, {}, 'to list pending users')
+export const approveKanbanUser = (id: string, password: string, boardId?: string, roleId?: string) =>
+  kanbanJSON<void>(`/api/kanban/admin/users/${encodeURIComponent(id)}/approve`, 'POST',
+    { board_id: boardId, role_id: roleId }, { password }, 'to approve user')
+export const rejectKanbanUser = (id: string, password: string) =>
+  kanbanFetch<void>(`/api/kanban/admin/users/${encodeURIComponent(id)}/reject`, { password }, { method: 'POST' }, 'to reject user')
+
+// -- Boards / columns / labels --
+export type KanbanBoard = { id: string; name: string; position: number; created_at: number }
+export type KanbanColumn = { id: string; board_id: string; name: string; position: number }
+export type KanbanLabel = { id: string; board_id: string; name: string; color: string }
+
+export const listBoards = (creds: KanbanCreds) =>
+  kanbanFetch<KanbanBoard[]>('/api/boards', creds, {}, 'to list boards')
+export const createBoard = (name: string, creds: KanbanCreds) =>
+  kanbanJSON<KanbanBoard>('/api/boards', 'POST', { name }, creds, 'to create board')
+export const updateBoard = (id: string, patch: { name: string; position: number }, creds: KanbanCreds) =>
+  kanbanJSON<void>(`/api/boards/${encodeURIComponent(id)}`, 'PUT', patch, creds, 'to update board')
+export const deleteBoard = (id: string, creds: KanbanCreds) =>
+  kanbanFetch<void>(`/api/boards/${encodeURIComponent(id)}`, creds, { method: 'DELETE' }, 'to delete board')
+
+export const listColumns = (boardId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanColumn[]>(`/api/boards/${encodeURIComponent(boardId)}/columns`, creds, {}, 'to list columns')
+export const createColumn = (boardId: string, name: string, creds: KanbanCreds) =>
+  kanbanJSON<KanbanColumn>(`/api/boards/${encodeURIComponent(boardId)}/columns`, 'POST', { name }, creds, 'to create column')
+export const updateColumn = (boardId: string, columnId: string, patch: { name: string; position: number }, creds: KanbanCreds) =>
+  kanbanJSON<void>(`/api/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`, 'PUT', patch, creds, 'to update column')
+export const deleteColumn = (boardId: string, columnId: string, creds: KanbanCreds) =>
+  kanbanFetch<void>(`/api/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`, creds, { method: 'DELETE' }, 'to delete column')
+
+export const listLabels = (boardId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanLabel[]>(`/api/boards/${encodeURIComponent(boardId)}/labels`, creds, {}, 'to list labels')
+export const createLabel = (boardId: string, label: { name: string; color: string }, creds: KanbanCreds) =>
+  kanbanJSON<KanbanLabel>(`/api/boards/${encodeURIComponent(boardId)}/labels`, 'POST', label, creds, 'to create label')
+export const deleteLabel = (boardId: string, labelId: string, creds: KanbanCreds) =>
+  kanbanFetch<void>(`/api/boards/${encodeURIComponent(boardId)}/labels/${encodeURIComponent(labelId)}`, creds, { method: 'DELETE' }, 'to delete label')
+
+// -- Roles / members (per-board — role is a membership fact, not a global user attribute) --
+export type KanbanBoardRole = { id: string; board_id: string; name: string; is_system: boolean }
+export type KanbanBoardMember = { user_id: string; username: string; role_id: string; role_name: string }
+
+export const listBoardRoles = (boardId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanBoardRole[]>(`/api/boards/${encodeURIComponent(boardId)}/roles`, creds, {}, 'to list roles')
+export const listBoardMembers = (boardId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanBoardMember[]>(`/api/boards/${encodeURIComponent(boardId)}/members`, creds, {}, 'to list members')
+export const upsertBoardMember = (boardId: string, userId: string, roleId: string, creds: KanbanCreds) =>
+  kanbanJSON<void>(`/api/boards/${encodeURIComponent(boardId)}/members`, 'POST', { user_id: userId, role_id: roleId }, creds, 'to assign role')
+
+// -- Notes --
 export type KanbanNote = {
   id: string
-  column_key: string
+  board_id: string
+  column_id: string
   title: string
   content: string
   position: number
-  created_at?: number
-  updated_at?: number
+  priority: string
+  due_date: number | null
+  assigned_user_id: string
+  label_ids: string[]
+  subtask_total: number
+  subtask_done: number
+  created_at: number
+  updated_at: number
 }
 
-export const listNotes = (password: string): Promise<KanbanNote[]> =>
-  fetch('/api/notes', {
-    headers: { 'X-Owner-Password': password },
-  }).then(async r => {
-    if (!r.ok) {
-      const err = await r.text().catch(() => '')
-      throw new Error(err || `Failed to list notes: ${r.status}`)
-    }
-    return r.json() as Promise<KanbanNote[]>
-  })
+export type KanbanNoteInput = {
+  board_id: string
+  column_id: string
+  title: string
+  content: string
+  priority: string
+  due_date: number | null
+  assigned_user_id: string
+  label_ids: string[]
+}
 
-export const createNote = (
-  note: { column_key: string; title: string; content: string },
-  password: string
-): Promise<KanbanNote> =>
-  fetch('/api/notes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Owner-Password': password },
-    body: JSON.stringify(note),
-  }).then(async r => {
-    if (!r.ok) {
-      const err = await r.text().catch(() => '')
-      throw new Error(err || `Failed to create note: ${r.status}`)
-    }
-    return r.json() as Promise<KanbanNote>
-  })
+export const listNotes = (boardId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanNote[]>(`/api/notes?board_id=${encodeURIComponent(boardId)}`, creds, {}, 'to list notes')
+export const createNote = (note: KanbanNoteInput, creds: KanbanCreds) =>
+  kanbanJSON<KanbanNote>('/api/notes', 'POST', note, creds, 'to create note')
+export const updateNote = (id: string, note: KanbanNoteInput & { position: number }, creds: KanbanCreds) =>
+  kanbanJSON<void>(`/api/notes/${encodeURIComponent(id)}`, 'PUT', note, creds, 'to update note')
+export const deleteNote = (id: string, creds: KanbanCreds) =>
+  kanbanFetch<void>(`/api/notes/${encodeURIComponent(id)}`, creds, { method: 'DELETE' }, 'to delete note')
 
-export const updateNote = (
-  id: string,
-  note: { column_key: string; title: string; content: string; position: number },
-  password: string
-): Promise<void> =>
-  fetch(`/api/notes/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'X-Owner-Password': password },
-    body: JSON.stringify(note),
-  }).then(async r => {
-    if (!r.ok) {
-      const err = await r.text().catch(() => '')
-      throw new Error(err || `Failed to update note: ${r.status}`)
-    }
-  })
+// -- Subtasks / comments --
+export type KanbanSubtask = { id: string; note_id: string; title: string; done: boolean; position: number }
+export type KanbanComment = { id: string; note_id: string; author_label: string; content: string; created_at: number }
 
-export const deleteNote = (id: string, password: string): Promise<void> =>
-  fetch(`/api/notes/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: { 'X-Owner-Password': password },
-  }).then(async r => {
-    if (!r.ok) {
-      const err = await r.text().catch(() => '')
-      throw new Error(err || `Failed to delete note: ${r.status}`)
-    }
-  })
+export const listSubtasks = (noteId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanSubtask[]>(`/api/notes/${encodeURIComponent(noteId)}/subtasks`, creds, {}, 'to list subtasks')
+export const createSubtask = (noteId: string, title: string, creds: KanbanCreds) =>
+  kanbanJSON<KanbanSubtask>(`/api/notes/${encodeURIComponent(noteId)}/subtasks`, 'POST', { title }, creds, 'to create subtask')
+export const updateSubtask = (noteId: string, subtaskId: string, patch: { title: string; done: boolean; position: number }, creds: KanbanCreds) =>
+  kanbanJSON<void>(`/api/notes/${encodeURIComponent(noteId)}/subtasks/${encodeURIComponent(subtaskId)}`, 'PUT', patch, creds, 'to update subtask')
+export const deleteSubtask = (noteId: string, subtaskId: string, creds: KanbanCreds) =>
+  kanbanFetch<void>(`/api/notes/${encodeURIComponent(noteId)}/subtasks/${encodeURIComponent(subtaskId)}`, creds, { method: 'DELETE' }, 'to delete subtask')
+
+export const listComments = (noteId: string, creds: KanbanCreds) =>
+  kanbanFetch<KanbanComment[]>(`/api/notes/${encodeURIComponent(noteId)}/comments`, creds, {}, 'to list comments')
+export const createComment = (noteId: string, content: string, creds: KanbanCreds) =>
+  kanbanJSON<KanbanComment>(`/api/notes/${encodeURIComponent(noteId)}/comments`, 'POST', { content }, creds, 'to create comment')
+export const deleteComment = (noteId: string, commentId: string, creds: KanbanCreds) =>
+  kanbanFetch<void>(`/api/notes/${encodeURIComponent(noteId)}/comments/${encodeURIComponent(commentId)}`, creds, { method: 'DELETE' }, 'to delete comment')
 
 // ---- Debug / Request Log ----
 export type RequestEntry = {

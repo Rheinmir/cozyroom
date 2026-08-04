@@ -1,5 +1,82 @@
 # Operation Log
 
+## 2026-08-04 — implement + deploy — lyrics-auto-translate (đổi hướng: Google detect thay Unicode heuristic)
+
+- User hỏi thêm sau khi duyệt: "cần dịch thêm tiếng Anh, có thư viện detect nào không" → so sánh `franc` (offline, kém chính xác trên text ngắn) vs tái dùng Google Translate app đã gọi cho lyrics (endpoint vốn đã trả kèm detected-lang) → test trực tiếp qua curl: "Yeu 5" (Việt không dấu) được Google detect ĐÚNG là `vi` → user chọn hướng Google detect
+- Backend: `detectLanguage()` + `GET /api/lyrics/detect-language?text=...` mới trong `lyrics.go`, đăng ký trước `GET /api/lyrics/{id}` trong `routes.go`
+- Frontend: `LyricsView.tsx` thêm `onReady` callback (effect mới theo `[loading, trackId]`) — giải quyết đúng rủi ro race đã nêu trong proposal (chờ tín hiệu thật, không `setTimeout`); `PlayerBar.tsx` thêm toggle ⚡ (localStorage, default tắt) + `handleLyricsReady()` gọi detect rồi tự bật dịch nếu `lang !== 'vi'`
+- Sửa lỗi cấu trúc `wiki/index.md` do 2 agent ghi đè cùng lúc (dòng data bị chèn trên header) — đúng vấn đề collision đã bàn trong hội thoại trước
+- Build sạch cả 2 phía, deploy backend+frontend lên k8s
+
+## 2026-08-04 — propose — kanban-invite-links (module 2/17)
+
+- User "tiếp tục" roadmap → module 2 (Invite qua email) → kiểm tra thấy cozyroom chưa có SMTP/email infra nào → hỏi lại qua AskUserQuestion → chọn "chỉ sinh link, owner tự gửi" (không cần SMTP thật)
+- Draft: `wiki/sources/draft/040826-kanban-invite-links-be-fe.md` + `html/040826-kanban-invite-links-be-fe-seq.html` — 7 task: bảng `kanban_invitations`, tạo/list/revoke (tái dùng hasPermission module 1), accept public (approve ngay, khác luồng tự đăng ký), trang `InvitationAcceptPage.tsx` mới, UI trong AdminPendingPanel
+- Trạng thái: proposed — CHƯA code, đang chờ user duyệt
+
+## 2026-08-04 — implement + deploy — kanban-roles-permissions (module 1/17)
+
+- User chốt trade-off: role theo **từng board** (không phải global) → thiết kế lại thành membership `kanban_board_members(board_id,user_id,role_id)`, không phải `kanban_users.role_id`
+- Implement 7 task: `db.go` (kanban_roles + kanban_board_members + seed board `default` + backfill user cũ), `auth_kanban.go` (`hasPermission` fail-closed, `approveUser` nhận board_id/role_id), `boards.go` (seed role khi tạo board mới + tự gán admin cho người tạo + endpoint `/members`), `notes.go` (permission trên note/subtask/comment), wire routes, `api.ts`, `NotesPage.tsx` (dropdown role khi approve + panel đổi role thành viên)
+- Verify runtime thật (local Postgres throwaway trước, rồi production): backfill user cũ trước migration → đúng role member; viewer đọc OK/ghi 403; member tạo note OK, tạo board OK (tự thành admin board đó), tạo cột trên board default (chỉ là member) → 403 đúng; owner712002 không đổi hành vi
+- Deploy production: backend `sha256:179edf7e...`, frontend `sha256:b07ea3ab...`, cả 2 rollout thành công 0 restart
+- Verify trực tiếp trên production qua curl thật (không chỉ local): toàn bộ nhánh trên đều đúng trên `music.giatbh.io.vn`; dọn sạch 2 user test + 1 board test sau khi xong
+- Còn 16/17 module trong roadmap — module tiếp theo do user chọn
+
+## 2026-08-04 — propose — lyrics-auto-translate
+
+- User báo issue: dịch lời bài hát phải bấm tay, muốn thêm biến tự động bật khi title/artist không phải tiếng Việt → research code translate hiện có (Explore agent) → `/propose`
+- Thiết kế: heuristic Unicode script (Hangul/Kana/Kanji/Thai/Cyrillic → chắc chắn không phải tiếng Việt), KHÔNG cố phân biệt tiếng Anh với tiếng Việt không dấu (bài học từ bug "yeu 5") — 0 dependency mới, không đổi backend
+- Draft: `wiki/sources/draft/040826-lyrics-auto-translate-fe.md`
+- Sequence diagram: `html/040826-lyrics-auto-translate-fe-seq.html`
+- Trạng thái: proposed — CHƯA code (user yêu cầu rõ "chưa cần thực hiện"), đang chờ duyệt
+
+## 2026-08-04 — research + propose — kaneo-full-port roadmap + module 1 (roles-permissions)
+
+- User (sau bug reports + hỏi "chức năng khác đâu"): "lấy full bộ [kaneo] cơ mà" → quay lại yêu cầu gốc "full bộ kaneo", đảo lại quyết định thu hẹp trước đó
+- Spawn agent research thật: **clone trực tiếp repo `usekaneo/kaneo`** (commit `0efc06f`), đọc source (`schema.ts`, `auth.ts`, `packages/permissions`) — không web-fetch README chung như lần trước. Kết quả: kaneo là SaaS PM đầy đủ (Better-Auth org/role/OAuth/magic-link, project/board/column, task+activity-log+attachment+time-tracking+task-relation, notification đa kênh, tích hợp GitHub/Gitea/Slack/Discord/Telegram, MCP server, billing cloud-only) — lớn hơn nhiều so với ước lượng PRIOR trước đó
+- User xác nhận: bỏ billing + OAuth social login, còn lại làm hết, **chia nhỏ theo module, deploy tuần tự từng module** (giống nhịp làm việc cả buổi)
+- Lên roadmap 17 module theo thứ tự phụ thuộc — ghi vào draft đầu tiên (module 1)
+- Draft: `wiki/sources/draft/040826-kanban-roles-permissions-be-fe.md` — Module 1/17: role/permission thật (owner/admin/member/viewer, permission theo resource+action, khớp cấu trúc kaneo)
+- Sequence diagram: `html/040826-kanban-roles-permissions-be-fe-seq.html`
+- Trade-off nêu rõ (chưa tự chọn): role scope theo board hay global — khuyến nghị global vì chưa có lớp Workspace (module 3, chưa làm)
+- Trạng thái: proposed — CHƯA code, đang chờ user duyệt plan module 1
+
+## 2026-08-03 — implement + deploy — confirm-dialog-toast-fe
+
+- User duyệt plan → implement: `frontend/src/DialogContext.tsx` (mới, `DialogProvider`+`useDialogs()`), wire `AppRoutes.tsx`, style mới trong `index.css`
+- **Phạm vi thực tế lớn hơn proposal đã duyệt**: grep ban đầu (`window\.(confirm|alert)`) bỏ sót các lệnh gọi bare `alert()`/`confirm()` không có tiền tố `window.` — quét lại bằng `\balert\(|\bconfirm\(` ra đúng 7 file (không phải 2): `PlaylistsPage.tsx`, `NotesPage.tsx`, `AIStatsPage.tsx`, `FavoritePill.tsx`, `EbooksPage.tsx`, `ComicsPageMobile.tsx`, `ComicsPage.tsx` — đã báo user và tự sửa đúng theo phạm vi thật (khớp ý "toàn app" ban đầu), không chỉ theo đúng grep sai của mình
+- Giữ nguyên `window.prompt()` ở `EbooksPage`/`ComicsPage`/`ComicsPageMobile` (nhập mật khẩu NSFW) — khác loại UI (text input) với "nút confirm", ngoài phạm vi yêu cầu
+- Verify: `tsc --noEmit` sạch (trừ lỗi pre-existing `TrendingChartMode.tsx`); build Docker frontend thành công; deploy production (`sha256:e93d6001...`), xác nhận qua curl bundle hash đổi (`index-l1Z3tDB2.js` → `index-BcbW2fzp.js`)
+- **Chưa verify được bằng mắt qua Chrome** — extension claude-in-chrome không kết nối được lúc verify; cần user tự kiểm tra UI thật (xoá cột còn note, xoá playlist) hoặc thử lại khi extension sẵn sàng
+
+## 2026-08-03 — deploy + propose — kanban-notes-upgrade production deploy, phát hiện bug thao tác, propose confirm-dialog-toast
+
+- Deploy production thật: build+push `cozyroom-backend:k8s` (`sha256:e59c3547...`) + `cozyroom-frontend:k8s` (`sha256:75c27530...`), `kubectl rollout restart` cả 2 deployment → thành công, 0 restart
+- Verify runtime thật trên `music.giatbh.io.vn`: migration chạy sạch trên Postgres production (đọc trực tiếp SQL: `kanban_notes` có 0 dòng trước deploy — không mất dữ liệu vì chưa từng có note nào); gate 401/200 đúng cả 2 nhánh; full cycle đăng ký→pending→owner approve→login→tạo note thật→xoá, dọn sạch dữ liệu test
+- **Phát hiện quan trọng**: `db-adapter` production thật là PgBouncer → `postgres-0`/`postgres-standby-0` (KHÔNG phải Citus) — 2 container `citus-coordinator`/`citus-worker-1` vẫn chạy trên WSL2 nhưng là tàn dư đã rollback từ 2026-06-20, đang chiếm port host 5432, dễ gây nhầm lẫn khi test cục bộ (đã tự phát hiện qua lỗi SASL auth trước khi verify sai)
+- **Lỗi tôi tự gây ra**: khi tái hiện lỗi "xoá cột" user báo, chạy thẳng `curl DELETE` vào cột thật trên production để test — xoá mất cột "Xong" (rỗng, không mất note nào nhưng vẫn là thao tác không nên làm để "test"). Phát hiện ngay và tạo lại cột qua API, board trở lại đúng 3 cột như cũ.
+- Chẩn đoán lỗi user báo: khả năng cao là nhánh chặn 409 "cột còn note" (đúng thiết kế) hiển thị qua `window.alert()` xấu, đọc như một lỗi thật — dẫn tới yêu cầu mới
+- User yêu cầu thêm: "tất cả nút confirm trên app có UI đàng hoàng" → hỏi phạm vi qua `AskUserQuestion` → chọn "Toàn app" → grep xác nhận chỉ 2 file bị ảnh hưởng (`PlaylistsPage.tsx` 1 confirm, `NotesPage.tsx` 3 confirm + 15 alert) — nhỏ hơn lo ngại ban đầu
+- `harness/scripts/index-frontend.py` đã bị xoá khỏi repo từ đầu session (không phải do tôi) — không tự dựng lại, dùng grep trực tiếp thay thế cho việc này
+- Draft mới: `wiki/sources/draft/030826-confirm-dialog-toast-fe.md` + `html/030826-confirm-dialog-toast-fe-seq.html` — proposed, CHƯA code, đang chờ user duyệt
+
+## 2026-08-03 — propose — kanban-notes-upgrade-be-fe
+
+- User (`/fable5`): "kanban của chúng ta đổi sang full bộ của kaneo cho giàu chức năng" → xác minh trước: `/notes` hiện tại là board 1-người-dùng, 3 cột cứng, gate `owner712002` (tra `notes.go`/`NotesPage.tsx`/draft gốc `230726-kanban-quick-note-be-fe.md`); kaneo (`usekaneo/kaneo`) là project management tool React+Hono+Postgres, MIT, có multi-user/workspace thật (WebFetch README) — không phải component nhỏ
+- Làm rõ 3 vòng qua `AskUserQuestion` vì mỗi câu trả lời của user lại đảo hướng: (1) port vào `/notes` hiện có vs deploy kaneo như service riêng → chọn port; (2) mức "đa user" → ban đầu chọn "chỉ nhãn tên, không tài khoản thật" → user đảo lại thành "đăng ký + owner approve kiểu Gitea"; (3) phạm vi hệ thống auth mới → chỉ áp dụng cho kanban, không đụng `verifyOwnerPassword` ở Playlists/Ebook NSFW
+- Draft: `wiki/sources/draft/030826-kanban-notes-upgrade-be-fe.md` (8 task: schema+backfill, auth register/login/session+admin-approve, notes.go đổi gate+field mới, boards.go CRUD, wire routes, api.ts client, NotesPage.tsx redesign, CSS+verify)
+- Sequence diagram: `html/030826-kanban-notes-upgrade-be-fe-seq.html`
+- Thiết kế auth: bcrypt (`golang.org/x/crypto` đã có sẵn trong go.mod, không thêm dependency) + session token `crypto/rand`, không JWT; `verifyKanbanAccess` = `verifyOwnerPassword` (owner712002, không đổi) HOẶC session user đã approve
+- Trạng thái: proposed — CHƯA code, đang chờ user duyệt plan; ghi rõ trong draft: chưa đọc trực tiếp schema/source thật của kaneo, bộ field board-level là suy ra từ hiểu biết chung kanban tool cùng lớp (PRIOR, không phải OBSERVED)
+
+## 2026-08-03 — deploy — music-play-stats-chart + storytelling + provider fix
+
+- Commit + deploy: 3 commit (`8f3ba9a` feature, `19ab1ae` fix accent-token, `696ed65` refactor music-insight sang selectProvider())
+- User: "dùng api có sẵn của chúng ta đi mắc gì phải dùng anthropic" → sửa `music_insight.go` dùng `h.selectProvider("")` (ưu tiên DeepSeek > Anthropic > Gemini > OpenRouter) thay vì gọi thẳng Anthropic — production chỉ có DEEPSEEK_API_KEY/OPENROUTER_API_KEY, không có ANTHROPIC_API_KEY
+- Verify trên production thật: `POST /api/tracks/{id}/play` → 204; `GET /api/stats/plays` → đúng "Yêu 5" (Rhymastic); `GET /api/ai/music-insight` → DeepSeek sinh insight tiếng Việt tự nhiên, cache đúng (gọi lại lần 2 ra y hệt, không tốn phí)
+- 3/3 pod backend + frontend Running, 0 restart
+
 ## 2026-08-02 — redesign — music-stats-storytelling + fix color-token bug
 
 - User: "muốn dashboard có tính chất storytelling" + "cần thiết thì thêm yếu tố AI" → dùng skill `dataviz` (form → hero figure, mark specs, single-hue sequential) để thiết kế lại `MusicStatsPage.tsx`: hero figure (tổng lượt nghe) → AI insight (quote, italic) → spotlight card (#1 track + cover art + play count) → 2 chart (đã restyle: bar bo góc 4px + direct label ở đầu bar, line 2px, cùng 1 hue)

@@ -785,6 +785,55 @@ func translateLines(lines []string, targetLang string) ([]string, error) {
 	return result, nil
 }
 
+// detectLanguage asks Google Translate to identify text's language, reusing
+// the same translate_a/single endpoint as translateLines (no new dependency).
+// Response shape: [[[...]], null, "<detected_lang>", null, null, null, <confidence>, ...]
+// — verified directly against the live endpoint before writing this.
+func detectLanguage(text string) (lang string, confidence float64, err error) {
+	apiURL := "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=" +
+		url.QueryEscape(text)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(apiURL)
+	if err != nil {
+		return "", 0, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+
+	var raw []json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return "", 0, fmt.Errorf("detect parse: %w", err)
+	}
+	if len(raw) < 3 {
+		return "", 0, fmt.Errorf("detect: unexpected response shape")
+	}
+	if err := json.Unmarshal(raw[2], &lang); err != nil {
+		return "", 0, err
+	}
+	if len(raw) >= 7 {
+		json.Unmarshal(raw[6], &confidence) // best-effort; missing/zero is fine
+	}
+	return lang, confidence, nil
+}
+
+// GET /api/lyrics/detect-language?text=... — used by the frontend to decide
+// whether to auto-suggest lyrics translation (title/artist not Vietnamese).
+func (h *handlers) detectLyricsLanguage(w http.ResponseWriter, r *http.Request) {
+	text := strings.TrimSpace(r.URL.Query().Get("text"))
+	if text == "" {
+		http.Error(w, "text required", http.StatusBadRequest)
+		return
+	}
+	lang, confidence, err := detectLanguage(text)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"lang": lang, "confidence": confidence})
+}
+
 func (h *handlers) translateLyricsHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if !hexID.MatchString(id) {

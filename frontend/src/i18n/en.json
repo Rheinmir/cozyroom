@@ -92,6 +92,8 @@
     "smart_off": "Turn on Smart Radio",
     "show_translation": "Show translation",
     "hide_translation": "Hide translation",
+    "auto_translate_on": "Auto-translate: on (non-Vietnamese songs auto-translate)",
+    "auto_translate_off": "Auto-translate: off",
     "lyrics": "Lyrics",
     "playback_failed": "Playback Failed",
     "playback_error": "Failed to play song. Error: {{message}} (Code: {{code}})"

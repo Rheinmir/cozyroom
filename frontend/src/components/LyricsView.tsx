@@ -41,8 +41,8 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export type LyricsViewHandle = { toggleTranslation: () => void; toggleTools: () => void }
 
-const LyricsView = forwardRef<LyricsViewHandle, { trackId: string; onTranslateActiveChange?: (v: boolean) => void }>(
-function LyricsView({ trackId, onTranslateActiveChange }, ref) {
+const LyricsView = forwardRef<LyricsViewHandle, { trackId: string; onTranslateActiveChange?: (v: boolean) => void; onReady?: (trackId: string) => void }>(
+function LyricsView({ trackId, onTranslateActiveChange, onReady }, ref) {
   const { t } = useTranslation()
   const { progress, duration } = usePlayer()
   const stored = cache.has(trackId) ? cache.get(trackId) : null
@@ -105,6 +105,15 @@ function LyricsView({ trackId, onTranslateActiveChange }, ref) {
     doFetch(trackId, false, controller.signal)
     return () => controller.abort()
   }, [trackId])
+
+  // Fires once lyrics for THIS trackId have actually loaded (cache-hit is
+  // synchronous above; network fetch flips `loading` false when it resolves).
+  // Callers (e.g. auto-translate) must wait for this before calling
+  // toggleTranslation() — calling it right after a trackId change would still
+  // see the previous track's `synced` lines.
+  useEffect(() => {
+    if (!loading) onReady?.(trackId)
+  }, [loading, trackId])
 
   const data = results[selectedIdx] ?? null
   const synced = data?.synced ?? []

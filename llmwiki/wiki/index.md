@@ -2,7 +2,11 @@
 
 | File | Type | Summary |
 |------|------|---------|
-| [sources/draft/030826-kanban-notes-upgrade-be-fe.md](sources/draft/030826-kanban-notes-upgrade-be-fe.md) | draft | Nâng cấp Kanban Quick Note thành board giàu chức năng + hệ thống đăng ký/approve người dùng riêng cho kanban (kiểu Gitea) |
+| [sources/draft/040826-kanban-invite-links-be-fe.md](sources/draft/040826-kanban-invite-links-be-fe.md) | draft | Module 2/17 roadmap kaneo-port: invite qua link (không gửi mail thật) — approve ngay khi accept |
+| [sources/draft/040826-lyrics-auto-translate-fe.md](sources/draft/040826-lyrics-auto-translate-fe.md) | draft (done) | Tự động gợi ý dịch lời khi title/artist không phải tiếng Việt — dùng Google Translate detect (không heuristic Unicode như đề xuất gốc), deploy production |
+| [sources/draft/040826-kanban-roles-permissions-be-fe.md](sources/draft/040826-kanban-roles-permissions-be-fe.md) | draft (done) | Module 1/17 roadmap kaneo-port: role/permission theo từng board (owner/admin/member/viewer) cho Kanban — deploy production, verify runtime đầy đủ |
+| [sources/draft/030826-confirm-dialog-toast-fe.md](sources/draft/030826-confirm-dialog-toast-fe.md) | draft (done) | Thay window.confirm/alert bằng ConfirmDialog + Toast dùng chung — thực tế 7 file (không phải 2), deploy production, chưa verify mắt qua Chrome |
+| [sources/draft/030826-kanban-notes-upgrade-be-fe.md](sources/draft/030826-kanban-notes-upgrade-be-fe.md) | draft (done) | Nâng cấp Kanban Quick Note thành board giàu chức năng + hệ thống đăng ký/approve người dùng riêng cho kanban (kiểu Gitea) — deploy production, verify runtime thật đầy đủ |
 | [sources/draft/020826-music-play-stats-chart-be-fe.md](sources/draft/020826-music-play-stats-chart-be-fe.md) | draft | Số liệu lượt nghe nhạc: local play log + Last.fm backfill + chart recharts |
 | [sources/draft/010826-smart-search-claude-be-fe.md](sources/draft/010826-smart-search-claude-be-fe.md) | draft | Smart search: Claude Haiku tách từ khóa + rerank, fallback an toàn về ILIKE cũ (rejected) |
 | [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Nút debug nổi: element picker báo lỗi + lưu queue DB |
