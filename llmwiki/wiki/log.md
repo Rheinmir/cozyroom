@@ -1584,3 +1584,10 @@
 - 2 bug CSS không liên quan phát hiện tình cờ lúc test, fix riêng: .smart-badge--active/.collection-badge chữ trắng trên nền trắng (theme monochrome --purple=#fff); .lyrics-source-dropdown luôn mở xuống dù panel cha neo sát đáy màn hình, bị cắt.
 - Promoted: wiki/sources/draft/040826-lyrics-auto-translate-fe.md -> concepts/LyricsAutoTranslate.md
 - Commits: e53a546 (bản đầu), 0cf2350 (fix auto-translate), 671bf2c (fix CSS)
+
+## 2026-08-05 — verify-before-commit — lyrics-auto-translate-prev-verify
+
+- Verify them chieu prev() (doi bai that, bam trong 3s dau) bang Playwright: "Faded (Interlude)" -> Previous -> "Faded" -> 42/42 dong co ban dich tu dong, giong het next().
+- Xac nhan "bam backward khong tu detect" nguoi dung bao truoc do LA HANH VI CHUAN: prev() neu currentTime > 3s chi seek ve 0, khong doi bai (track.id khong doi -> khong co gi de re-detect) — khong phai bug.
+- Xac nhan nguyen nhan cuoi cung cho cac bao cao "bai X khong tu dich" (Heavy Is the Crown, Gods...): sessionStorage cache lyr-tr:{trackId} bi ket state cu tu nhung lan test TRUOC KHI fix hom nay deploy — user tu xoa sessionStorage va xac nhan dich hien lai ngay.
+- Cap nhat concepts/LyricsAutoTranslate.md: them section "Prev vs restart" va "sessionStorage cache co the bi ket state cu", ghi nhan bug lastfmNowPlaying() 401 chua sua (ngoai scope, theo yeu cau user).

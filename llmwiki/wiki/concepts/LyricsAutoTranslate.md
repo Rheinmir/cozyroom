@@ -30,12 +30,22 @@ Tự động bật dịch lời bài hát (nút 🌐 sẵn có) khi phát hiện
 | `crypto.randomUUID()` throw ở HTTP thô (NodePort, non-secure context) | API này chỉ tồn tại trong secure context (HTTPS/localhost) | `safeUUID()` fallback trong `PlayerContext.tsx` |
 
 ## Verify
-- Playwright headless (scratch dir, không thêm dependency vào repo): phát 1 bài tự dịch (32 dòng), bấm Next sang bài khác → 42/42 dòng lyrics có bản dịch tự động, lặp lại ổn định 2 lần.
+- Playwright headless (scratch dir, không thêm dependency vào repo):
+  - Next: phát "Do It All for You" (tự dịch, 32 dòng) → bấm Next sang "Faded" → 42/42 dòng có bản dịch tự động.
+  - Prev (đổi bài thật, bấm trong 3s đầu — xem "Prev vs restart" bên dưới): phát "Faded (Interlude)" → bấm Previous → nhảy về "Faded" → 42/42 dòng có bản dịch tự động.
+  - Cả 2 chiều lặp lại ổn định, không có lần nào bị chặn nhầm bởi race `trActive`.
 - Stress test 91 track ngẫu nhiên (script Python, `/api/albums` → sample → `/api/tracks?album_id`): 0 lỗi detect-language, latency max ~1.9s; translate pipeline 33/41 dịch thành công, 8/41 404 xác nhận là thiếu lyrics thật (đã warm cache trước khi test, không phải race).
+
+## Prev vs restart (không phải bug)
+`prev()` trong `PlayerContext.tsx` có nhánh: nếu bài đang phát đã qua giây thứ 3, bấm Previous chỉ tua về đầu bài ĐANG phát (`active.currentTime = 0`), không đổi bài — giống mọi trình phát nhạc (Spotify...). `track.id` không đổi → không có gì để LyricsView re-detect → auto-translate không chạy lại, đúng như thiết kế. User từng báo "bấm backward không tự detect" — đây chính là nguyên nhân, xác nhận qua đọc code + test, không phải lỗi.
+
+## `sessionStorage` cache dịch có thể bị kẹt state cũ
+`handleToggleTranslation()` (`LyricsView.tsx`) cache kết quả dịch vào `sessionStorage['lyr-tr:{trackId}']`, không tự hết hạn (chỉ mất khi đóng tab). Trong lúc debug session này, nhiều báo cáo "bài X không tự dịch" (Heavy Is the Crown, The Last Goodbye, Gods...) hoá ra backend luôn đúng 100% khi test trực tiếp — nghi vấn cuối cùng và được user tự xác nhận: xoá `sessionStorage` (`Object.keys(sessionStorage).filter(k=>k.startsWith('lyr-tr:')).forEach(k=>sessionStorage.removeItem(k))`) thì dịch hiện lại ngay. Kết luận: các báo cáo đó là do state/cache kẹt lại từ những lần test TRƯỚC KHI các fix hôm nay được deploy, không phải bug còn tồn tại trong code hiện tại. Cách chẩn đoán nhanh lần sau: in + xoá `lyr-tr:*` trước khi kết luận là bug.
 
 ## Notes
 - Liên quan: [[Lyrics]], [[LyricsUI]], [[LyricsReliability]]
 - Bug CSS không liên quan phát hiện trong lúc test (đã fix riêng, xem commit `671bf2c`): `.smart-badge--active`/`.collection-badge` dùng `color:#fff` trên `background: var(--purple)` (theme monochrome, `--purple`=`#fff`) — chữ vô hình; `.lyrics-source-dropdown` luôn mở xuống dù panel cha neo sát đáy màn hình.
+- Bug không liên quan tìm thấy nhưng CHƯA sửa (theo yêu cầu user, ngoài phạm vi): `lastfmNowPlaying()` (`PlayerContext.tsx`) gọi vô điều kiện mỗi lần đổi bài, không check `connected` trước — user chưa link Last.fm sẽ luôn thấy 401 mỗi lần đổi bài trong console.
 
 ## Origin
 - **Draft:** `wiki/sources/draft/040826-lyrics-auto-translate-fe.md`
