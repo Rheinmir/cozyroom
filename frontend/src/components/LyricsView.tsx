@@ -41,8 +41,14 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export type LyricsViewHandle = { toggleTranslation: () => void; toggleTools: () => void }
 
-const LyricsView = forwardRef<LyricsViewHandle, { trackId: string; onTranslateActiveChange?: (v: boolean) => void; onReady?: (trackId: string) => void }>(
-function LyricsView({ trackId, onTranslateActiveChange, onReady }, ref) {
+const LyricsView = forwardRef<LyricsViewHandle, {
+  trackId: string
+  onTranslateActiveChange?: (v: boolean) => void
+  onReady?: (trackId: string) => void
+  autoTranslate?: boolean
+  onToggleAutoTranslate?: () => void
+}>(
+function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, onToggleAutoTranslate }, ref) {
   const { t } = useTranslation()
   const { progress, duration } = usePlayer()
   const stored = cache.has(trackId) ? cache.get(trackId) : null
@@ -65,6 +71,16 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady }, ref) {
   const plainRef = useRef<HTMLPreElement>(null)
   const prevIdxRef = useRef(-1)
 
+  // doFetch's closure is captured once, when the [trackId] effect below
+  // schedules it — but by the time the network call resolves, the PARENT may
+  // have re-rendered several times (e.g. its own trActive-reset effect).
+  // Calling the captured `onReady` directly would use whatever stale
+  // autoTranslate/trActive it saw back at effect-schedule time. Route through
+  // a ref (kept current every render, same pattern as toggleFnRef below) so
+  // the call always reaches the latest handler.
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
+
   const pickBest = (list: LyricsData[]) => {
     let best = list.findIndex(r => (r.synced?.length ?? 0) > 0)
     if (best < 0) best = list.findIndex(r => r.source !== 'embedded')
@@ -85,7 +101,13 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady }, ref) {
         if (err?.name === 'AbortError') return
         if (!silent) { setResults([]); setSources([]); setBeCached(false) }
       })
-      .finally(() => { if (!silent) setLoading(false) })
+      .finally(() => {
+        if (!silent) setLoading(false)
+        // Call directly from here (not from a `loading` watcher effect) — a
+        // watcher would run in the same commit as the trackId change, seeing
+        // the PREVIOUS track's stale `loading=false`, and fire early.
+        if (!silent && !signal?.aborted) onReadyRef.current?.(id)
+      })
   }
 
   useEffect(() => {
@@ -99,21 +121,17 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady }, ref) {
       setBeCached(e.beCached)
       setSelected(pickBest(e.results))
       setLoading(false)
+      // Defer to the next macrotask — the `setShowTr(false)` above is still a
+      // queued update; calling onReady synchronously here would let the
+      // parent's guard read the PREVIOUS track's stale trActive=true before
+      // onTranslateActiveChange(false) has propagated up.
+      setTimeout(() => onReadyRef.current?.(trackId), 0)
       return
     }
     const controller = new AbortController()
     doFetch(trackId, false, controller.signal)
     return () => controller.abort()
   }, [trackId])
-
-  // Fires once lyrics for THIS trackId have actually loaded (cache-hit is
-  // synchronous above; network fetch flips `loading` false when it resolves).
-  // Callers (e.g. auto-translate) must wait for this before calling
-  // toggleTranslation() — calling it right after a trackId change would still
-  // see the previous track's `synced` lines.
-  useEffect(() => {
-    if (!loading) onReady?.(trackId)
-  }, [loading, trackId])
 
   const data = results[selectedIdx] ?? null
   const synced = data?.synced ?? []
@@ -345,6 +363,13 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady }, ref) {
             >
               {translating ? '…' : '🌐'}
             </button>
+            {onToggleAutoTranslate && (
+              <button
+                className={'lyrics-tr-btn' + (autoTranslate ? ' lyrics-tr-btn--active' : '')}
+                onClick={onToggleAutoTranslate}
+                title={autoTranslate ? t('player.auto_translate_on') : t('player.auto_translate_off')}
+              >⚡</button>
+            )}
             <button className="lyrics-refresh-btn" onClick={handleRefresh} title={t('lyrics.refetch')}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
             </button>

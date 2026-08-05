@@ -68,6 +68,12 @@ function streamUrl(trackId: string, q: Quality | 'lossless-clean', clientId?: st
   return `/stream/${trackId}${qs ? '?' + qs : ''}`
 }
 
+// crypto.randomUUID is only defined in secure contexts (HTTPS/localhost) —
+// falls back to a non-crypto ID so plain-HTTP access doesn't crash playback.
+function safeUUID(): string {
+  try { return crypto.randomUUID() } catch { return `${Date.now()}-${Math.random().toString(36).slice(2)}` }
+}
+
 // Stable per-device correlation ID, cached in localStorage — lets backend
 // logs group requests by the device/browser they came from.
 const CLIENT_ID_KEY = 'cozyroom_client_id'
@@ -75,7 +81,7 @@ function getClientId(): string {
   try {
     let id = localStorage.getItem(CLIENT_ID_KEY)
     if (!id) {
-      id = crypto.randomUUID()
+      id = safeUUID()
       localStorage.setItem(CLIENT_ID_KEY, id)
     }
     return id
@@ -333,7 +339,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const q = qualityRef.current
     // Fresh correlation ID for this real playback attempt — reused unchanged
     // by any network retry / quality fallback that follows for this track.
-    attemptIdRef.current = crypto.randomUUID()
+    attemptIdRef.current = safeUUID()
 
     if (t.id.startsWith('yt:')) {
       // Pause dual-audio local elements

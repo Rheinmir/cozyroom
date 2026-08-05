@@ -79,7 +79,7 @@ export default function PlayerBar() {
   const [mobileTab,    setMobileTab]    = useState<'player' | 'lyrics'>('player')
   const [artistInfo,   setArtistInfo]   = useState<ArtistDetail | null>(null)
   const [trActive,     setTrActive]     = useState(false)
-  const [autoTranslate, setAutoTranslate] = useState(() => localStorage.getItem('lyrics-auto-translate') === '1')
+  const [autoTranslate, setAutoTranslate] = useState(() => localStorage.getItem('lyrics-auto-translate') !== '0')
   const [ctrlsVisible, setCtrlsVisible] = useState(false)
   const ctrlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lyricsRef     = useRef<LyricsViewHandle>(null)
@@ -98,11 +98,20 @@ export default function PlayerBar() {
   // comment on LyricsView's own `onReady` effect for why).
   const handleLyricsReady = (readyTrackId: string) => {
     if (!autoTranslate || trActive || readyTrackId !== track?.id) return
-    const text = `${track.title} ${artistInfo?.name ?? ''}`.trim()
+    // Use the track's own artist_name/album_title (synchronous, on the track
+    // object already) rather than the separately-fetched `artistInfo` — that
+    // fetch may still be in flight when lyrics finish loading, silently
+    // degrading detection to title-only.
+    const text = `${track.title} ${track.artist_name ?? ''} ${track.album_title ?? ''}`.trim()
     if (!text) return
+    // detect-language hits an unofficial Google endpoint — retry once on
+    // failure instead of silently giving up. Result is always exactly one of
+    // two outcomes: translate on (foreign) or leave it off (Vietnamese / still
+    // unknown after retry) — never left hanging.
     detectLyricsLanguage(text)
+      .catch(() => new Promise(r => setTimeout(r, 1000)).then(() => detectLyricsLanguage(text)))
       .then(({ lang }) => { if (lang && lang !== 'vi') lyricsRef.current?.toggleTranslation() })
-      .catch(() => {})
+      .catch(err => console.warn('[auto-translate] language detect failed after retry', err))
   }
 
   const showCtrls = () => {
@@ -343,7 +352,14 @@ export default function PlayerBar() {
               {/* Tab 2 / right col: track title + lyrics */}
               <div className={'npo-content' + (mobileTab === 'player' ? ' npo-panel--hidden' : '')}>
                 <div className="npo-lyrics-wrap">
-                  <LyricsView ref={lyricsRef} trackId={track.id} onTranslateActiveChange={setTrActive} onReady={handleLyricsReady} />
+                  <LyricsView
+                    ref={lyricsRef}
+                    trackId={track.id}
+                    onTranslateActiveChange={setTrActive}
+                    onReady={handleLyricsReady}
+                    autoTranslate={autoTranslate}
+                    onToggleAutoTranslate={() => setAutoTranslate(v => !v)}
+                  />
                 </div>
               </div>
             </div>
