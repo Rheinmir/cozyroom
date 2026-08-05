@@ -26,6 +26,7 @@
 | [concepts/DeezerEnricher.md](concepts/DeezerEnricher.md) | concept | Background artist image fetcher via Deezer API; incremental design |
 | [concepts/MobileUI.md](concepts/MobileUI.md) | concept | Mobile layout: bottom nav, mini player bar, slide-up now-playing sheet (≤640px) |
 | [concepts/Lyrics.md](concepts/Lyrics.md) | concept | Multi-source parallel lyrics (sidecar, LRCLIB, NetEase, QQ Music); desktop overlay; save to .lrc |
+| [concepts/LyricsAutoTranslate.md](concepts/LyricsAutoTranslate.md) | concept | Tự động bật dịch khi title/artist/album không phải tiếng Việt; default ON; race conditions onReady/cache-hit đã fix; Playwright + stress-test verify |
 | [sources/prometheus-standalone-container-infra.md](sources/prometheus-standalone-container-infra.md) | source | Prometheus + Grafana standalone Docker Compose stack in ~/observability/; reusable across projects |
 | [sources/music-giatbh-io-vn-evaluation.md](sources/music-giatbh-io-vn-evaluation.md) | source | UI/UX evaluation of live site — 5 issue groups: navigation, data display, aesthetics, search, lastfm API |
 | [concepts/CleanArchitecture.md](concepts/CleanArchitecture.md) | concept | Clean Architecture layer map, ACID guarantees, and key design decisions |

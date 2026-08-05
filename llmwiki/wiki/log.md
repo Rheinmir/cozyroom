@@ -1575,3 +1575,12 @@
 - Draft + companion HTML: `wiki/sources/draft/010826-playback-correlation-id-be-fe.md`, `html/010826-playback-correlation-id-be-fe-seq.html`
 - CHƯA COMMIT — chờ user duyệt proposal, chưa có code nào được viết
 - 2026-08-01 19:14 — session `22fc5a6b` — 29 tool calls — files: 010826-debug-reporter-be-fe-seq.html, 010826-debug-reporter-be-fe.md, 010826-playback-correlation-id-be-fe-seq.html, 010826-playback-correlation-id-be-fe.md, PlayerContext.tsx, RadialNav.tsx, handler.go, index.md …
+
+## 2026-08-05 — verify-before-commit — lyrics-auto-translate-fixes
+
+- Debug thực tế nhiều báo cáo "auto-translate không tự bật" (Heavy Is the Crown, The Last Goodbye, Golden Hour, Gods) — mọi lần test trực tiếp backend (detect-language + translate) đều đúng 100%, nghi vấn cuối cùng là stale Service Worker/bundle JS cu o phia client test, khong phai code.
+- Fix 4 bug thật tìm ra trong lúc debug: (1) crypto.randomUUID() throw o secure context HTTP thô, crash startTrack() — thêm safeUUID() fallback; (2) nút ⚡ auto-translate chỉ tồn tại trong .npo-controls (mobile-only CSS), desktop không có cách bật — thêm vào panel "⋮ Lyric settings" + đổi mặc định ON; (3) detect ngôn ngữ dùng title+artist_name+album_title đồng bộ từ track object thay vì chờ fetchArtistDetail riêng (hay race, rơi về chỉ title); (4) race onReady khi next/track-switch (closure đóng băng trActive cũ) — sửa bằng ref pattern onReadyRef.
+- Verify: Playwright headless tự cài trong scratch dir (không thêm dependency vào repo) — next từ bài đang tự dịch sang bài khác → 42/42 dòng có bản dịch, lặp lại ổn định. Stress test 91 track ngẫu nhiên qua /api/albums + /api/tracks — 0 lỗi detect-language, translate pipeline 33/41 thành công + 8/41 404 xác nhận data gap thật (đã warm cache đúng thứ tự trước khi test).
+- 2 bug CSS không liên quan phát hiện tình cờ lúc test, fix riêng: .smart-badge--active/.collection-badge chữ trắng trên nền trắng (theme monochrome --purple=#fff); .lyrics-source-dropdown luôn mở xuống dù panel cha neo sát đáy màn hình, bị cắt.
+- Promoted: wiki/sources/draft/040826-lyrics-auto-translate-fe.md -> concepts/LyricsAutoTranslate.md
+- Commits: e53a546 (bản đầu), 0cf2350 (fix auto-translate), 671bf2c (fix CSS)
