@@ -1229,7 +1229,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .smart-badge:hover { background: rgba(255,255,255,.2); transform: scale(1.05); }
 .smart-badge--active {
   background: var(--purple);
-  color: #fff;
+  color: #000;
   box-shadow: 0 0 12px rgba(255,255,255,.4);
 }
 
@@ -2136,7 +2136,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .lyrics-source-trigger:hover { background: rgba(255,255,255,.14); }
 .lyrics-source-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  bottom: calc(100% + 4px);
   left: 0;
   min-width: 140px;
   background: #282828;
@@ -2554,7 +2554,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-weight: 700;
   border-radius: 4px;
   background: var(--purple);
-  color: #fff;
+  color: #000;
   backdrop-filter: blur(4px);
   z-index: 2;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
