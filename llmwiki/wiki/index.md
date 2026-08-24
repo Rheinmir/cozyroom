@@ -2,6 +2,12 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md](sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md) | draft (done) | Fix AI agent bị kẹt tạo playlist bulk: download_youtube tải đồng bộ + trả track_id thật (bỏ _frontend_action), round-cap tool-calling 6→25 + hướng dẫn model batch tool-call — build pass, chưa deploy |
+| [sources/200826-music-streaming-request-flow.md](sources/200826-music-streaming-request-flow.md) | source | Sequence diagram toàn bộ request khi phát 1 bài nhạc — local library vs YouTube, kèm 2 bug tìm thấy (recordPlay/smart-queue 400 cho track yt:) |
+| [sources/draft/160826-debug-topology-request-flow-be-fe.md](sources/draft/160826-debug-topology-request-flow-be-fe.md) | draft | Đề xuất: /debug — node "cloudflared" riêng + click request log vẽ luồng, chỉ khi màn hình thực sự đã setState data (Phương án B đúng nghĩa, ~19 file) |
+| [sources/160826-flannel-crossnode-partition-postmortem.md](sources/160826-flannel-crossnode-partition-postmortem.md) | source | Postmortem: flannel.1 chết âm thầm trên node k8s-s2 (k3s-agent vẫn active) → cross-node partition; fix: restart k3s-agent; phát hiện qua tool /debug mới |
+| [sources/draft/160826-debug-network-page-be-fe.md](sources/draft/160826-debug-network-page-be-fe.md) | draft (implemented) | Gộp vào /debug (RequestLogPage) có sẵn: pod/node + bảng service reachable + evidence mạng thật (CF-Ray/traceroute từ server) — gate owner-password |
+| [sources/draft/140826-offline-music-download-fe.md](sources/draft/140826-offline-music-download-fe.md) | draft (implemented) | Nghe nhạc offline: tải track về IndexedDB phía client (tách biệt Service Worker), không đổi backend — chưa runtime-verify qua browser thật |
 | [sources/draft/040826-kanban-invite-links-be-fe.md](sources/draft/040826-kanban-invite-links-be-fe.md) | draft | Module 2/17 roadmap kaneo-port: invite qua link (không gửi mail thật) — approve ngay khi accept |
 | [sources/draft/040826-lyrics-auto-translate-fe.md](sources/draft/040826-lyrics-auto-translate-fe.md) | draft (done) | Tự động gợi ý dịch lời khi title/artist không phải tiếng Việt — dùng Google Translate detect (không heuristic Unicode như đề xuất gốc), deploy production |
 | [sources/draft/040826-kanban-roles-permissions-be-fe.md](sources/draft/040826-kanban-roles-permissions-be-fe.md) | draft (done) | Module 1/17 roadmap kaneo-port: role/permission theo từng board (owner/admin/member/viewer) cho Kanban — deploy production, verify runtime đầy đủ |

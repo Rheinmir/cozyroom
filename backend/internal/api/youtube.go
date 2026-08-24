@@ -2,16 +2,14 @@ package api
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -287,74 +285,16 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 	if dlPath == "" {
 		dlPath = h.musicPath
 	}
-	cmd := exec.CommandContext(r.Context(), "yt-dlp",
-		"-f", "bestaudio",
-		"-x", "--audio-format", "best",
-		"--embed-metadata",   // embed title, artist, album, date into file tags
-		"--write-thumbnail",  // save thumbnail as separate file (ytID.jpg or .webp)
-		"--convert-thumbnails", "jpg", // normalize to jpg
-		"--paths", dlPath,
-		"-o", "%(id)s.%(ext)s",
-		"https://www.youtube.com/watch?v="+body.ID,
-	)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("[yt-dlp] download %s: %v\n%s", body.ID, err, string(output))
+
+	if _, _, _, err := library.DownloadYouTubeAudio(r.Context(), h.db, dlPath, h.coversDir, body.ID, body.Title, body.Artist); err != nil {
+		if errors.Is(err, library.ErrYouTubeFileNotFound) {
+			log.Printf("[yt-dlp] download %s: could not find audio file in %s", body.ID, dlPath)
+			http.Error(w, "download failed: file not found", http.StatusInternalServerError)
+			return
+		}
+		log.Printf("[yt-dlp] download %s: %v", body.ID, err)
 		http.Error(w, "download failed", http.StatusInternalServerError)
 		return
-	}
-
-	// Find the downloaded audio file
-	var filePath string
-	for _, ext := range []string{".opus", ".webm", ".m4a", ".mp3"} {
-		testPath := filepath.Join(dlPath, body.ID+ext)
-		if _, err := os.Stat(testPath); err == nil {
-			filePath = testPath
-			break
-		}
-	}
-
-	if filePath == "" {
-		log.Printf("[yt-dlp] download %s: could not find audio file in %s", body.ID, dlPath)
-		http.Error(w, "download failed: file not found", http.StatusInternalServerError)
-		return
-	}
-
-	// Resolve uploader — prefer body.Artist, skip second yt-dlp call if already clean
-	uploader := strings.TrimSpace(body.Artist)
-	if uploader == "" || (strings.HasPrefix(uploader, "UC") && len(uploader) == 24) {
-		// body.Artist is a channel ID, not a name — fetch friendly name
-		cmdU := exec.CommandContext(r.Context(), "yt-dlp", "--print", "uploader",
-			"https://www.youtube.com/watch?v="+body.ID)
-		if outU, err := cmdU.Output(); err == nil {
-			if name := strings.TrimSpace(string(outU)); name != "" {
-				uploader = name
-			}
-		}
-	}
-
-	// Copy yt-dlp-written thumbnail into covers dir so it shows up immediately
-	// yt-dlp writes it as <id>.jpg (after --convert-thumbnails jpg)
-	thumbSrc := filepath.Join(dlPath, body.ID+".jpg")
-	if _, err := os.Stat(thumbSrc); err == nil {
-		// Derive albumID the same way IndexFileWithMetadata does
-		artistID := id8hex(uploader)
-		albumID := id8hex(artistID + strings.TrimSpace(body.Title))
-		thumbDst := filepath.Join(h.coversDir, albumID+".jpg")
-		if _, statErr := os.Stat(thumbDst); os.IsNotExist(statErr) {
-			if data, err := os.ReadFile(thumbSrc); err == nil {
-				if err := os.MkdirAll(h.coversDir, 0755); err == nil {
-					_ = os.WriteFile(thumbDst, data, 0644)
-					log.Printf("[yt-dlp] cover saved: %s → %s", thumbSrc, thumbDst)
-				}
-			}
-		}
-		os.Remove(thumbSrc) // clean up from music dir
-	}
-
-	log.Printf("[yt-dlp] indexing %s (title=%q artist=%q)", filePath, body.Title, uploader)
-	if err := library.IndexFileWithMetadata(h.db, filePath, h.coversDir, body.Title, uploader, body.Title); err != nil {
-		log.Printf("[yt-dlp] index error: %v", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -363,14 +303,6 @@ func (h *YouTubeHandlers) download(w http.ResponseWriter, r *http.Request) {
 		"tracks_scanned": 1,
 	})
 }
-
-// id8hex reproduces the same ID derivation as library.id8.
-// MUST stay in sync with scanner.go:id8() — SHA-256, lowercase, trim, 8 bytes.
-func id8hex(s string) string {
-	h := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(s))))
-	return fmt.Sprintf("%x", h[:8])
-}
-
 
 // channel fetches latest videos from a YouTube channel URL, or searches within it.
 // Query params:

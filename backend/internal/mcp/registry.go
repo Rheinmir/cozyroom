@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"cozyroom/internal/library"
 	"cozyroom/internal/usecase"
 )
 
@@ -27,11 +28,14 @@ func randomHexID() string {
 
 // ToolDeps are the dependencies needed to handle MCP tool calls natively.
 type ToolDeps struct {
-	Lib           *usecase.LibraryUsecase
-	DB            *sql.DB
-	ScanFunc      func() (int, error) // triggers library.Scan; nil = no-op
-	CloakProxyURL string
+	Lib            *usecase.LibraryUsecase
+	DB             *sql.DB
+	ScanFunc       func() (int, error) // triggers library.Scan; nil = no-op
+	CloakProxyURL  string
 	ReloadCronFunc func() error // reloads cron tasks
+	MusicPath      string       // read-only music library dir; fallback download dir
+	YtDownloadPath string       // writable dir for yt-dlp downloads (preferred over MusicPath)
+	CoversDir      string
 }
 
 // NewRegistry returns all MCP tools wired to native backend services.
@@ -536,8 +540,10 @@ func searchYouTubeTool(d ToolDeps) Tool {
 
 func downloadYouTubeTool(d ToolDeps) Tool {
 	return Tool{
-		Name:        "download_youtube",
-		Description: "Download YouTube audio to library (async, no immediate playback). Use play_youtube_stream to play immediately.",
+		Name: "download_youtube",
+		Description: "Download YouTube audio into the library. Runs synchronously and returns a real track_id " +
+			"you can pass directly to add_to_playlist right away — no need to search for the track afterward. " +
+			"For bulk downloads (many videos), call this tool multiple times in the SAME response turn instead of one at a time.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -548,11 +554,25 @@ func downloadYouTubeTool(d ToolDeps) Tool {
 			"required": []string{"id", "title"},
 		},
 		Handler: func(input map[string]any) (any, error) {
+			id := strInput(input, "id")
+			title := strInput(input, "title")
+			artist := strInput(input, "artist")
+			if id == "" || title == "" {
+				return nil, fmt.Errorf("id and title required")
+			}
+			dlPath := d.YtDownloadPath
+			if dlPath == "" {
+				dlPath = d.MusicPath
+			}
+			trackID, resolvedTitle, resolvedArtist, err := library.DownloadYouTubeAudio(
+				context.Background(), d.DB, dlPath, d.CoversDir, id, title, artist)
+			if err != nil {
+				return nil, fmt.Errorf("download_youtube: %w", err)
+			}
 			return map[string]any{
-				"_frontend_action": "download_youtube",
-				"id":               strInput(input, "id"),
-				"title":            strInput(input, "title"),
-				"artist":           strInput(input, "artist"),
+				"track_id": trackID,
+				"title":    resolvedTitle,
+				"artist":   resolvedArtist,
 			}, nil
 		},
 	}

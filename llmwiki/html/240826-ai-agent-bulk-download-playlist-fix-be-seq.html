@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>240826 — Fix AI agent bị kẹt khi tạo playlist bulk (tải YouTube + thêm nhiều bài)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:230px;height:100vh;z-index:100;overflow-y:auto}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:7px 10px 7px 12px;font-size:12px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:2px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:230px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:21px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px;max-width:780px;line-height:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}
+section{margin-bottom:56px;scroll-margin-top:80px}
+h2{font-size:15px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:12.5px;color:#374151;line-height:1.7;margin-bottom:12px;max-width:760px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:18px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08);margin-bottom:14px}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:11.5px;color:#4338ca}
+.callout{background:rgba(99,102,241,.06);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:9px 13px;font-size:12px;color:#312e81;margin-bottom:14px;max-width:760px;line-height:1.6}
+.prose{background:rgba(255,255,255,.4);border-radius:10px;padding:14px 16px;font-size:12.5px;color:#312e81;line-height:1.75;max-width:780px;margin-top:10px}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">AI Agent Bulk Fix</div>
+    <a href="#t1">T1 · DownloadYouTubeAudio</a>
+    <a href="#t2">T2 · MCP tool đồng bộ</a>
+    <a href="#t3">T3 · Round-cap + batch prompt</a>
+  </div>
+</nav>
+<main>
+<h1>240826 — Fix AI agent bị kẹt khi tạo playlist bulk (24 tác phẩm cổ điển, tải YouTube + thêm playlist)</h1>
+<p class="subtitle">User yêu cầu agent tạo playlist 24 bài, tải YouTube, thêm vào playlist. Transcript thật cho thấy agent tự lý luận đúng rằng nó bị kẹt — không có <code>track_id</code> sau download, và bị giới hạn 6 vòng tool-calling. 2 fix độc lập, cả 2 đều nằm trong domain <code>ai-engineer</code>.</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng hiện có / không đổi</span>
+  <span><span class="dot emerald"></span> thêm mới / thay đổi</span>
+  <span><span class="dot amber"></span> nhánh chặn / rủi ro cần lưu ý</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="t1">
+<h2>T1 · Extract DownloadYouTubeAudio() dùng chung <span class="badge">ai-engineer</span></h2>
+<p class="desc">Trước: logic tải yt-dlp + index nằm nguyên trong HTTP handler, không tái sử dụng được. Sau: 1 hàm dùng chung trả về track_id xác định trước.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="700" height="150" viewBox="0 0 700 150">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">yt-dlp exec + index</text>
+  <text x="350" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">library.DownloadYouTubeAudio (mới)</text>
+  <text x="610" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">id8(filePath)</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/>
+  <line x1="350" y1="32" x2="350" y2="145" class="lifeline-line"/>
+  <line x1="610" y1="32" x2="610" y2="145" class="lifeline-line"/>
+  <rect x="25" y="46" width="650" height="26" class="step-box indigo" id="t1s1b"/>
+  <text x="350" y="62" class="msg" text-anchor="middle" fill="#312e81" id="t1s1m">yt-dlp -x --audio-format best, resolve uploader, copy thumbnail — logic giữ nguyên</text>
+  <rect x="25" y="80" width="650" height="26" class="step-box emerald" id="t1s2b"/>
+  <line x1="90" y1="93" x2="340" y2="93" class="arr emerald"/><polygon points="340,89 350,93 340,97" class="arr-head emerald"/>
+  <text x="220" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t1s2m">Di chuyển vào hàm dùng chung — cả HTTP handler và MCP tool đều gọi được</text>
+  <rect x="25" y="114" width="650" height="26" class="step-box emerald" id="t1s3b"/>
+  <line x1="350" y1="127" x2="600" y2="127" class="arr emerald"/><polygon points="600,123 610,127 600,131" class="arr-head emerald"/>
+  <text x="480" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t1s3m">Trả trackID = id8(filePath) — cùng công thức deterministic của scanner.go</text>
+</svg>
+</div>
+<div class="prose">Vì <code>trackID</code> trong toàn hệ thống được tính hoàn toàn xác định trước (sha256 8-byte của đường dẫn file, không phải ID sinh ngẫu nhiên hay auto-increment), việc trích xuất logic tải+index thành 1 hàm dùng chung trả thẳng track_id là an toàn tuyệt đối — không có rủi ro 2 nơi gọi (HTTP handler cho user thường, MCP tool cho AI agent) tính ra 2 ID khác nhau cho cùng 1 file, vì công thức không đổi bất kể ai gọi nó. <code>IndexFileWithMetadata</code> trước khi sửa chỉ có 2 nơi gọi (scanner.go, youtube.go) nên thêm điểm gọi thứ 3 này không phá vỡ gì đã có.</div>
+</section>
+
+<section id="t2">
+<h2>T2 · MCP tool tải đồng bộ, trả track_id thật <span class="badge">ai-engineer</span></h2>
+<p class="desc">Đây là fix cho đúng nguyên nhân agent tự phát hiện trong transcript: tool cũ trả <code>_frontend_action</code>, không đảm bảo download thật sự xảy ra, và không có track_id để nối bước tiếp.</p>
+<div class="callout">Trước: <code>download_youtube</code> chỉ trả <code>{"_frontend_action":"download_youtube",...}</code> — việc tải CHỈ xảy ra nếu có 1 frontend đang lắng nghe action này rồi tự gọi API riêng (fire-and-forget, không xử lý kết quả). Agent chạy headless thì không có gì được tải cả.</div>
+<div class="diagram diagram-box">
+<svg class="seq" width="700" height="150" viewBox="0 0 700 150">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Agent gọi tool</text>
+  <text x="350" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">downloadYouTubeTool.Handler</text>
+  <text x="610" y="24" class="lifeline-label" fill="#f59e0b" text-anchor="middle">Frontend (cũ, bỏ)</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/>
+  <line x1="350" y1="32" x2="350" y2="145" class="lifeline-line"/>
+  <line x1="610" y1="32" x2="610" y2="145" class="lifeline-line"/>
+  <rect x="25" y="46" width="650" height="26" class="step-box amber" id="t2s1b"/>
+  <text x="350" y="62" class="msg" text-anchor="middle" fill="#92400e" id="t2s1m">CŨ: trả _frontend_action, không tải gì cả trong tool call này</text>
+  <rect x="25" y="80" width="650" height="26" class="step-box emerald" id="t2s2b"/>
+  <line x1="90" y1="93" x2="340" y2="93" class="arr emerald"/><polygon points="340,89 350,93 340,97" class="arr-head emerald"/>
+  <text x="220" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t2s2m">MỚI: gọi library.DownloadYouTubeAudio(...) đồng bộ, chờ xong trong Handler</text>
+  <rect x="25" y="114" width="650" height="26" class="step-box emerald" id="t2s3b"/>
+  <text x="350" y="130" class="msg" text-anchor="middle" fill="#065f46" id="t2s3m">Trả {"track_id","title","artist"} thật — agent dùng ngay cho add_to_playlist</text>
+</svg>
+</div>
+<div class="prose">Sau khi sửa, tool tự làm hết việc tải + index bên trong backend, không cần frontend tham gia — hoạt động đúng cả khi agent chạy headless (không có UI nào mở). Nhánh cũ trong <code>AIAssistantPage.tsx:636-641</code> (fetch <code>/api/youtube/download</code> khi thấy action) được giữ nguyên không xoá, nhưng đơn giản không còn được tool này trigger nữa — tránh double-download mà không cần dọn code frontend. <code>ToolDeps</code> được bổ sung field <code>MusicPath/YtDownloadPath/CoversDir</code>, wire từ đúng giá trị đã dùng cho <code>YouTubeHandlers</code> ở <code>routes.go</code>.</div>
+</section>
+
+<section id="t3">
+<h2>T3 · Round-cap 6→25 + hướng dẫn batch tool-call <span class="badge">ai-engineer</span></h2>
+<p class="desc">User quyết định rõ: không chỉ tăng số cứng — để model tự dồn nhiều tool-call cùng loại vào 1 lượt, harness chỉ cần đủ rộng để không cắt ngang khi model đang làm đúng.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="700" height="185" viewBox="0 0 700 185">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">for i:=0;i&lt;N;i++</text>
+  <text x="350" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">System prompt + model</text>
+  <text x="610" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">24 download + 24 add</text>
+  <line x1="80" y1="32" x2="80" y2="171" class="lifeline-line"/>
+  <line x1="350" y1="32" x2="350" y2="171" class="lifeline-line"/>
+  <line x1="610" y1="32" x2="610" y2="171" class="lifeline-line"/>
+  <rect x="25" y="46" width="650" height="26" class="step-box amber" id="t3s1b"/>
+  <text x="350" y="62" class="msg" text-anchor="middle" fill="#92400e" id="t3s1m">CŨ: N=6, cắt ngang giữa lúc model đang lên plan cho 49 lệnh cần thiết</text>
+  <rect x="25" y="80" width="650" height="26" class="step-box emerald" id="t3s2b"/>
+  <line x1="350" y1="93" x2="600" y2="93" class="arr emerald"/><polygon points="600,89 610,93 600,97" class="arr-head emerald"/>
+  <text x="480" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t3s2m">MỚI: system prompt hướng dẫn dồn nhiều tool-call cùng loại vào 1 response</text>
+  <rect x="25" y="114" width="650" height="26" class="step-box emerald" id="t3s3b"/>
+  <text x="350" y="130" class="msg" text-anchor="middle" fill="#065f46" id="t3s3m">const maxToolRounds=25 — lưới an toàn, không phải cơ chế chính</text>
+  <rect x="25" y="148" width="650" height="26" class="step-box indigo" id="t3s4b"/>
+  <text x="350" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t3s4m">go build ./... + go vet ./... sạch trên toàn bộ thay đổi</text>
+</svg>
+</div>
+<div class="prose">Quyết định có chủ đích: bất kỳ số cố định nào cũng có thể bị vượt qua bởi 1 batch lớn hơn trong tương lai (24 bài hôm nay, 50 bài lúc khác) — nên giải pháp bền hơn là để model tự thiết kế cách gọi hiệu quả (hầu hết API tool-calling hiện đại, gồm định dạng OpenAI-compatible mà DeepSeek dùng, cho phép 1 response trả nhiều <code>tool_calls</code> cùng lúc), còn harness chỉ cần đủ rộng rãi để không cắt ngang khi model đang làm đúng hướng. Ceiling 25 vẫn tồn tại như lưới an toàn chống runaway cho trường hợp model không tuân theo hướng dẫn batch, nhưng không còn là giới hạn thực tế cản việc như số 6 cũ. Chưa test end-to-end thật với list 24 tác phẩm (chưa deploy/commit) — chỉ xác nhận build/vet sạch ở bước này.</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={t1:['t1s1','t1s2','t1s3'],t2:['t2s1','t2s2','t2s3'],t3:['t3s1','t3s2','t3s3','t3s4']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

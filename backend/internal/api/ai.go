@@ -14,8 +14,16 @@ import (
 	"cozyroom/internal/mcp"
 )
 
+// maxToolRounds caps how many model↔tool round-trips a single chat turn may
+// take. Kept generous mainly as a runaway-safety net — bulk tasks (e.g.
+// downloading 24 tracks) are expected to finish in far fewer rounds because
+// the system prompt instructs the model to batch same-type tool calls into
+// one response instead of issuing them one at a time.
+const maxToolRounds = 25
+
 const aiSystemPromptBase = `Assistant cho Cozyroom music app. Dùng tools để tìm nhạc, phát bài, tải YouTube, quản lý playlist. Trả lời tiếng Việt nếu user nói tiếng Việt.
 Sau khi gọi tool xong, LUÔN viết 1 câu thông báo kết quả cho user bằng tiếng Việt. Không được trả lời rỗng.
+QUAN TRỌNG khi làm việc số lượng lớn (tải nhiều bài, thêm nhiều bài vào playlist, v.v.): hãy gọi NHIỀU tool-call cùng loại trong CÙNG một lượt trả lời (một response nhiều tool_use), KHÔNG gọi tuần tự từng cái một qua nhiều lượt — ví dụ tải 24 bài nên gộp thành 1-2 lượt gọi download_youtube (mỗi lượt nhiều lệnh) chứ không phải 24 lượt riêng.
 Khi get_trending trả về markdown table (bắt đầu bằng "| # |"), copy NGUYÊN VĂN bảng đó vào response — KHÔNG tóm tắt, KHÔNG đổi thành danh sách.
 Khi user nói sở thích, thói quen, hoặc bạn học được điều quan trọng về user → dùng remember() để lưu ngay (scope="user" mặc định).
 Khi muốn lưu thứ gì chỉ cho cuộc hội thoại hiện tại → remember() với scope="session".
@@ -168,7 +176,7 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 	var toolErrors []string
 	var totalIn, totalOut int
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < maxToolRounds; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
 		if err != nil {
 			errStr := err.Error()
@@ -341,7 +349,7 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 	var toolErrors []string
 	var totalIn, totalOut int
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < maxToolRounds; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
 		if err != nil {
 			if strings.Contains(err.Error(), "429") {
@@ -1235,7 +1243,7 @@ func (h *AIHandlers) ExecutePrompt(sessionID, message string, history []ChatMess
 	var toolErrors []string
 	var totalIn, totalOut int
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < maxToolRounds; i++ {
 		text, calls, tokIn, tokOut, done, err := provider.call(msgs, h.tools)
 		if err != nil {
 			return "", nil, err

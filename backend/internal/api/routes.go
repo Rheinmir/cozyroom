@@ -305,6 +305,9 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 			}
 			return nil
 		},
+		MusicPath:      d.MusicPath,
+		YtDownloadPath: d.YtDownloadPath,
+		CoversDir:      d.CoversDir,
 	})
 	mux.HandleFunc("/mcp", mcp.NewHTTPHandler(mcpTools))
 	aiH := &AIHandlers{
