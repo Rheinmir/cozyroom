@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	cozydb "cozyroom/internal/db"
 	"cozyroom/internal/mcp"
 )
 
@@ -493,22 +494,19 @@ func (h *AIHandlers) memoryImport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	tx, err := h.db.Begin()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer tx.Rollback()
-	tx.Exec(`DELETE FROM agent_state WHERE scope='user' AND scope_id='default'`)
 	now := time.Now().UTC().Add(7 * time.Hour).Format("2006-01-02 15:04:05")
-	for _, f := range body.Facts {
-		if strings.TrimSpace(f.Key) == "" {
-			continue
+	err := cozydb.Transact(h.db, func(tx *sql.Tx) error {
+		tx.Exec(`DELETE FROM agent_state WHERE scope='user' AND scope_id='default'`)
+		for _, f := range body.Facts {
+			if strings.TrimSpace(f.Key) == "" {
+				continue
+			}
+			tx.Exec(`INSERT INTO agent_state (scope, scope_id, key, value, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+				"user", "default", strings.TrimSpace(f.Key), f.Value, now)
 		}
-		tx.Exec(`INSERT INTO agent_state (scope, scope_id, key, value, updated_at) VALUES ($1, $2, $3, $4, $5)`,
-			"user", "default", strings.TrimSpace(f.Key), f.Value, now)
-	}
-	if err := tx.Commit(); err != nil {
+		return nil
+	})
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

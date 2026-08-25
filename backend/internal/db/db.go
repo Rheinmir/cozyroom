@@ -216,6 +216,123 @@ func migrate(db *sql.DB) error {
 		created_at  INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER),
 		updated_at  INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER)
 	)`)
+	// Kanban upgrade (030826): boards/columns replace the old fixed 3-column
+	// layout; column_key is kept (unused by new code) rather than dropped,
+	// so the backfill below stays reversible until verified in production.
+	db.Exec(`ALTER TABLE kanban_notes ADD COLUMN IF NOT EXISTS board_id TEXT`)
+	db.Exec(`ALTER TABLE kanban_notes ADD COLUMN IF NOT EXISTS column_id TEXT`)
+	db.Exec(`ALTER TABLE kanban_notes ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT ''`)
+	db.Exec(`ALTER TABLE kanban_notes ADD COLUMN IF NOT EXISTS due_date INTEGER`)
+	db.Exec(`ALTER TABLE kanban_notes ADD COLUMN IF NOT EXISTS assigned_user_id TEXT NOT NULL DEFAULT ''`)
+	// column_key is legacy (see backfill below) — new inserts no longer set it.
+	db.Exec(`ALTER TABLE kanban_notes ALTER COLUMN column_key DROP NOT NULL`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_boards (
+		id         TEXT PRIMARY KEY,
+		name       TEXT NOT NULL,
+		position   INTEGER NOT NULL DEFAULT 0,
+		created_at INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER)
+	)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_columns (
+		id       TEXT PRIMARY KEY,
+		board_id TEXT NOT NULL,
+		name     TEXT NOT NULL,
+		position INTEGER NOT NULL
+	)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_kanban_columns_board_id ON kanban_columns(board_id)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_labels (
+		id       TEXT PRIMARY KEY,
+		board_id TEXT NOT NULL,
+		name     TEXT NOT NULL,
+		color    TEXT NOT NULL DEFAULT ''
+	)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_kanban_labels_board_id ON kanban_labels(board_id)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_note_labels (
+		note_id  TEXT NOT NULL,
+		label_id TEXT NOT NULL,
+		PRIMARY KEY (note_id, label_id)
+	)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_subtasks (
+		id       TEXT PRIMARY KEY,
+		note_id  TEXT NOT NULL,
+		title    TEXT NOT NULL,
+		done     INTEGER NOT NULL DEFAULT 0,
+		position INTEGER NOT NULL
+	)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_kanban_subtasks_note_id ON kanban_subtasks(note_id)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_comments (
+		id             TEXT PRIMARY KEY,
+		note_id        TEXT NOT NULL,
+		author_user_id TEXT NOT NULL DEFAULT '',
+		author_label   TEXT NOT NULL DEFAULT '',
+		content        TEXT NOT NULL,
+		created_at     INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER)
+	)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_kanban_comments_note_id ON kanban_comments(note_id)`)
+	// kanban_users/kanban_sessions are a separate, kanban-scoped auth system
+	// (register + owner-approve, Gitea-style) — independent of OwnerPassword,
+	// which remains the sole admin/approval credential (see auth_kanban.go).
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_users (
+		id            TEXT PRIMARY KEY,
+		username      TEXT NOT NULL UNIQUE,
+		password_hash TEXT NOT NULL,
+		status        TEXT NOT NULL DEFAULT 'pending',
+		color         TEXT NOT NULL DEFAULT '',
+		created_at    INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER),
+		approved_at   INTEGER
+	)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_sessions (
+		token      TEXT PRIMARY KEY,
+		user_id    TEXT NOT NULL,
+		expires_at INTEGER NOT NULL
+	)`)
+	// Roles are scoped PER BOARD (040826 module 1) — a user's permission level
+	// can differ across boards, so role is a membership fact (board_id,
+	// user_id) -> role_id, not an attribute of kanban_users itself.
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_roles (
+		id          TEXT PRIMARY KEY,
+		board_id    TEXT NOT NULL,
+		name        TEXT NOT NULL,
+		permissions TEXT NOT NULL,
+		is_system   INTEGER NOT NULL DEFAULT 0,
+		position    INTEGER NOT NULL DEFAULT 0
+	)`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_kanban_roles_board_id ON kanban_roles(board_id)`)
+	db.Exec(`CREATE TABLE IF NOT EXISTS kanban_board_members (
+		board_id TEXT NOT NULL,
+		user_id  TEXT NOT NULL,
+		role_id  TEXT NOT NULL,
+		PRIMARY KEY (board_id, user_id)
+	)`)
+	// One-time backfill (idempotent via fixed IDs + board_id IS NULL guard):
+	// notes created before this upgrade have no board/column yet.
+	db.Exec(`INSERT INTO kanban_boards (id, name, position) VALUES ('default', 'Bảng chính', 0) ON CONFLICT (id) DO NOTHING`)
+	db.Exec(`INSERT INTO kanban_columns (id, board_id, name, position) VALUES
+		('col_todo', 'default', 'Cần làm', 0),
+		('col_doing', 'default', 'Đang làm', 1),
+		('col_done', 'default', 'Xong', 2)
+		ON CONFLICT (id) DO NOTHING`)
+	db.Exec(`UPDATE kanban_notes SET
+		board_id = 'default',
+		column_id = CASE column_key WHEN 'todo' THEN 'col_todo' WHEN 'doing' THEN 'col_doing' WHEN 'done' THEN 'col_done' ELSE 'col_todo' END
+		WHERE board_id IS NULL`)
+	// Seed the 4 default roles for the pre-existing 'default' board (fixed
+	// IDs so this stays idempotent — boards created after this migration get
+	// their own freshly generated role IDs via boards.go's createBoard).
+	const fullPerms = `{"board":["create","read","update","delete"],"column":["create","read","update","delete"],"label":["create","read","update","delete"],"note":["create","read","update","delete","assign"],"comment":["create","read","update","delete"]}`
+	const memberPerms = `{"board":["read"],"column":["read"],"label":["read"],"note":["create","read","update","delete","assign"],"comment":["create","read","update","delete"]}`
+	const viewerPerms = `{"board":["read"],"column":["read"],"label":["read"],"note":["read"],"comment":["read"]}`
+	db.Exec(`INSERT INTO kanban_roles (id, board_id, name, permissions, is_system, position) VALUES
+		('default_role_owner', 'default', 'owner', $1, 1, 0),
+		('default_role_admin', 'default', 'admin', $1, 1, 1),
+		('default_role_member', 'default', 'member', $2, 1, 2),
+		('default_role_viewer', 'default', 'viewer', $3, 1, 3)
+		ON CONFLICT (id) DO NOTHING`, fullPerms, memberPerms, viewerPerms)
+	// Users approved before this module existed had no per-board role at
+	// all — without this backfill, hasPermission's fail-closed default would
+	// silently strip every one of them of write access on the default board.
+	db.Exec(`INSERT INTO kanban_board_members (board_id, user_id, role_id)
+		SELECT 'default', id, 'default_role_member' FROM kanban_users WHERE status = 'approved'
+		ON CONFLICT (board_id, user_id) DO NOTHING`)
 	db.Exec(`CREATE TABLE IF NOT EXISTS chat_logs (
 		id          TEXT PRIMARY KEY,
 		created_at  TEXT NOT NULL,

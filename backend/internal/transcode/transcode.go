@@ -21,7 +21,10 @@ func IsLossless(path string) bool {
 // ToMP3_320 pipes the audio file through ffmpeg and writes 320 kbps MP3 to w.
 // The ffmpeg process is killed when ctx is cancelled (e.g. client disconnects).
 func ToMP3_320(ctx context.Context, path string, w io.Writer) error {
-	bw := bufio.NewWriterSize(w, 256*1024) // 256 KB buffer smooths ffmpeg burst writes
+	// 32 KB (~0.8s of 320kbps audio) smooths ffmpeg's bursty write pattern
+	// without holding back the client's first byte for several seconds —
+	// a large buffer here directly adds to perceived playback start latency.
+	bw := bufio.NewWriterSize(w, 32*1024)
 	cmd := exec.CommandContext(ctx, "ffmpeg",
 		"-hide_banner", "-loglevel", "error",
 		"-i", path,

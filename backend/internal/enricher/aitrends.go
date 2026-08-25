@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -76,10 +77,15 @@ func EnrichWithAI(db *sql.DB, geminiKeys []string, openRouterKey string) {
 	enrich(db, geminiKeys, openRouterKey, false)
 }
 
-// EnrichWithAIForce bypasses the advisory lock (for manual trigger when lock is stuck).
+// EnrichWithAIForce bypasses the enrich lease (for manual trigger when the lease is stuck).
 func EnrichWithAIForce(db *sql.DB, geminiKeys []string, openRouterKey string) {
 	enrich(db, geminiKeys, openRouterKey, true)
 }
+
+// enrichLeaseTTL must exceed the longest possible enrich run: a crashed pod's
+// lease is only reclaimed after it expires (advisory locks died with sessions;
+// leases die by TTL).
+const enrichLeaseTTL = "2 hours"
 
 func enrich(db *sql.DB, geminiKeys []string, openRouterKey string, force bool) {
 	slots := buildSlots(geminiKeys, openRouterKey)
@@ -90,17 +96,29 @@ func enrich(db *sql.DB, geminiKeys []string, openRouterKey string, force bool) {
 	slotIdx := 0
 
 	if !force {
-		// advisory lock — only 1 pod enriches at a time; auto-released on pod crash
-		var locked bool
-		if err := db.QueryRow(`SELECT pg_try_advisory_lock(hashtext('ai-enrich')::bigint)`).Scan(&locked); err != nil {
-			log.Printf("aitrends: advisory lock query: %v — skipping", err)
+		// lease table — only 1 pod enriches at a time. CockroachDB has no
+		// advisory locks, so mutual exclusion is a row lease: the INSERT wins,
+		// or the UPDATE wins only if the previous lease already expired.
+		// A crashed pod's lease is reclaimed after enrichLeaseTTL.
+		holder, _ := os.Hostname()
+		var acquired bool
+		err := db.QueryRow(`
+			INSERT INTO enrich_lease (key, holder, expires_at)
+			VALUES ('ai-enrich', $1, now() + interval '`+enrichLeaseTTL+`')
+			ON CONFLICT (key) DO UPDATE
+			  SET holder = excluded.holder, expires_at = excluded.expires_at
+			  WHERE enrich_lease.expires_at < now()
+			RETURNING true`, holder).Scan(&acquired)
+		if err == sql.ErrNoRows {
+			log.Printf("aitrends: lease held by another pod — skipping")
 			return
 		}
-		if !locked {
-			log.Printf("aitrends: lock not acquired (another pod running) — skipping")
+		if err != nil {
+			log.Printf("aitrends: lease query: %v — skipping", err)
 			return
 		}
-		defer func() { db.QueryRow(`SELECT pg_advisory_unlock(hashtext('ai-enrich')::bigint)`).Scan(new(bool)) }()
+		// release the lease early on completion (expires_at = now() → reclaimable)
+		defer db.Exec(`UPDATE enrich_lease SET expires_at = now() WHERE key='ai-enrich' AND holder=$1`, holder)
 	}
 
 	today := time.Now().Format("2006-01-02")

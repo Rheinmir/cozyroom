@@ -28,10 +28,18 @@ func rebind(query string) string {
 }
 
 func (db *RDB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	return db.DB.ExecContext(ctx, rebind(query), args...)
+	// Autocommit single statements are safe to retry on 40001 (never committed).
+	q := rebind(query)
+	var res sql.Result
+	err := WithRetry(func() error {
+		var execErr error
+		res, execErr = db.DB.ExecContext(ctx, q, args...)
+		return execErr
+	})
+	return res, err
 }
 func (db *RDB) Exec(query string, args ...any) (sql.Result, error) {
-	return db.DB.ExecContext(context.Background(), rebind(query), args...)
+	return db.ExecContext(context.Background(), query, args...)
 }
 func (db *RDB) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	return db.DB.QueryContext(ctx, rebind(query), args...)

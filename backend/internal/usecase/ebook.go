@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+
+	cozydb "cozyroom/internal/db"
 	"cozyroom/internal/domain"
 )
 
@@ -45,40 +47,36 @@ func (u *EbookUsecase) EbookFilePath(ctx context.Context, id string) (string, er
 }
 
 func (u *EbookUsecase) SetNSFW(ctx context.Context, id string, isNSFW bool) error {
-	uow, err := u.repoFactory.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer uow.Rollback()
-
-	if err := uow.Ebooks().SetNSFW(ctx, id, isNSFW); err != nil {
-		return err
-	}
-	return uow.Commit()
+	return u.write(ctx, func(uow domain.UnitOfWork) error {
+		return uow.Ebooks().SetNSFW(ctx, id, isNSFW)
+	})
 }
 
 func (u *EbookUsecase) SetProgress(ctx context.Context, id string, progress string) error {
-	uow, err := u.repoFactory.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer uow.Rollback()
-
-	if err := uow.Ebooks().SetProgress(ctx, id, progress); err != nil {
-		return err
-	}
-	return uow.Commit()
+	return u.write(ctx, func(uow domain.UnitOfWork) error {
+		return uow.Ebooks().SetProgress(ctx, id, progress)
+	})
 }
 
 func (u *EbookUsecase) SetCollection(ctx context.Context, id string, collection string) error {
-	uow, err := u.repoFactory.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer uow.Rollback()
+	return u.write(ctx, func(uow domain.UnitOfWork) error {
+		return uow.Ebooks().SetCollection(ctx, id, collection)
+	})
+}
 
-	if err := uow.Ebooks().SetCollection(ctx, id, collection); err != nil {
-		return err
-	}
-	return uow.Commit()
+// write runs fn in a unit of work, retrying the whole transaction on
+// serialization failure (CockroachDB SERIALIZABLE).
+func (u *EbookUsecase) write(ctx context.Context, fn func(domain.UnitOfWork) error) error {
+	return cozydb.WithRetry(func() error {
+		uow, err := u.repoFactory.Begin(ctx)
+		if err != nil {
+			return err
+		}
+		defer uow.Rollback()
+
+		if err := fn(uow); err != nil {
+			return err
+		}
+		return uow.Commit()
+	})
 }

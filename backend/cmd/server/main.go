@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
 	repo "cozyroom/internal/repository/postgres"
+	"cozyroom/internal/transcode"
 	"cozyroom/internal/usecase"
 )
 
@@ -54,6 +56,7 @@ func main() {
 	videoPosterDir  := envOr("VIDEO_POSTER_DIR", "/data/video-posters")
 	ebookCoversDir  := envOr("EBOOK_COVERS_DIR", "/data/ebook-covers")
 	comicsDir       := envOr("COMICS_DIR", "/data/comics")
+	transcodeCacheDir := envOr("TRANSCODE_CACHE_DIR", "/data/transcode-cache")
 	lastfmKey       := envOr("LASTFM_API_KEY", "")
 	lastfmSecret    := envOr("LASTFM_API_SECRET", "")
 	tmdbAPIKey      := envOr("TMDB_API_KEY", "")
@@ -83,6 +86,16 @@ func main() {
 	}
 	if err := os.MkdirAll(comicsDir, 0755); err != nil {
 		log.Fatalf("create comics dir: %v", err)
+	}
+	if err := os.MkdirAll(transcodeCacheDir, 0755); err != nil {
+		log.Fatalf("create transcode-cache dir: %v", err)
+	}
+	transcode.CacheDir = transcodeCacheDir
+	transcodeCacheMaxMB := 5000
+	if v := os.Getenv("TRANSCODE_CACHE_MAX_MB"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			transcodeCacheMaxMB = n
+		}
 	}
 	hlsMgr := hls.New(hlsDir)
 	hlsMgr.Watch(ctx) // detect + kill stuck ffmpeg transcode jobs
@@ -201,6 +214,17 @@ func main() {
 		enricher.FetchArtistImages(enricher.DeezerProvider{}, artistRepo, artistImgDir)
 		if tmdbAPIKey != "" {
 			enricher.FetchVideoPosters(enricher.TMDbProvider{APIKey: tmdbAPIKey}, videoRepo, videoPosterDir)
+		}
+	}()
+
+	// ---- Transcode cache cleanup (every 1h) ----
+	go func() {
+		maxBytes := int64(transcodeCacheMaxMB) * 1024 * 1024
+		transcode.CleanupCache(maxBytes)
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			transcode.CleanupCache(maxBytes)
 		}
 	}()
 

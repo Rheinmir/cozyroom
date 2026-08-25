@@ -16,14 +16,19 @@ func (h *handlers) logPlaybackError(w http.ResponseWriter, r *http.Request) {
 		ErrorMessage string `json:"error_message"`
 		UserAgent    string `json:"user_agent"`
 		Version      string `json:"version"`
+		// Correlation IDs from the frontend (see PlayerContext.tsx) — logged
+		// as plain text only, never as a Prometheus label (near-random per
+		// attempt, unbounded cardinality).
+		ClientID  string `json:"client_id"`
+		AttemptID string `json:"attempt_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("[PLAYBACK_ERROR] Version: %s, Track: %s, Src: %s, Code: %d, Message: %q, UA: %q",
-		body.Version, body.TrackID, body.Src, body.ErrorCode, body.ErrorMessage, body.UserAgent)
+	log.Printf("[PLAYBACK_ERROR] Version: %s, Track: %s, Src: %s, Code: %d, Message: %q, UA: %q, Client: %s, Attempt: %s",
+		body.Version, body.TrackID, body.Src, body.ErrorCode, body.ErrorMessage, body.UserAgent, body.ClientID, body.AttemptID)
 
 	w.WriteHeader(http.StatusOK)
 }

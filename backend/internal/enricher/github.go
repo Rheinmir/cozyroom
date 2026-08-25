@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+
+	cozydb "cozyroom/internal/db"
 )
 
 type TrendingRepo struct {
@@ -264,15 +266,15 @@ func fetchRecentStargazers(client *http.Client, fullName string, currentStars in
 }
 
 func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	today := time.Now().UTC().Format("2006-01-02")
 	now := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 
+	return cozydb.Transact(db, func(tx *sql.Tx) error {
+		return saveTrendingSnapshot(tx, repos, today, now)
+	})
+}
+
+func saveTrendingSnapshot(tx *sql.Tx, repos []TrendingRepo, today, now string) error {
 	for i := range repos {
 		r := &repos[i]
 
@@ -321,7 +323,7 @@ func SaveTrendingSnapshot(db *sql.DB, repos []TrendingRepo) error {
 		}
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 func fetchRepoTopics(client *http.Client, fullName string, token string) ([]string, error) {

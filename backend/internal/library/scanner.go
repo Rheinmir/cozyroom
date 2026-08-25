@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/dhowden/tag"
+
+	cozydb "cozyroom/internal/db"
 )
 
 var (
@@ -50,32 +52,29 @@ func Scan(db *sql.DB, musicPath, coversDir string) (Result, error) {
 		return Result{}, fmt.Errorf("create covers dir: %w", err)
 	}
 
-	tx, err := db.Begin()
+	var res Result
+	err := cozydb.Transact(db, func(tx *sql.Tx) error {
+		res = Result{} // the whole transaction re-runs on serialization retry
+		return filepath.Walk(musicPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return err
+			}
+			if !audioExts[strings.ToLower(filepath.Ext(path))] {
+				return nil
+			}
+			if indexErr := indexFile(tx, path, coversDir); indexErr != nil {
+				log.Printf("scanner: skip %s: %v", path, indexErr)
+				res.Errors++
+			} else {
+				res.Tracks++
+			}
+			return nil
+		})
+	})
 	if err != nil {
 		return Result{}, err
 	}
-	defer tx.Rollback()
-
-	var res Result
-	walkErr := filepath.Walk(musicPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
-			return err
-		}
-		if !audioExts[strings.ToLower(filepath.Ext(path))] {
-			return nil
-		}
-		if indexErr := indexFile(tx, path, coversDir); indexErr != nil {
-			log.Printf("scanner: skip %s: %v", path, indexErr)
-			res.Errors++
-		} else {
-			res.Tracks++
-		}
-		return nil
-	})
-	if walkErr != nil {
-		return Result{}, walkErr
-	}
-	return res, tx.Commit()
+	return res, nil
 }
 
 // IndexFile indexes a single audio file in the database.
@@ -83,16 +82,9 @@ func IndexFile(db *sql.DB, path, coversDir string) error {
 	if err := os.MkdirAll(coversDir, 0755); err != nil {
 		return fmt.Errorf("create covers dir: %w", err)
 	}
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if err := indexFile(tx, path, coversDir); err != nil {
-		return err
-	}
-	return tx.Commit()
+	return cozydb.Transact(db, func(tx *sql.Tx) error {
+		return indexFile(tx, path, coversDir)
+	})
 }
 
 // IndexFileWithMetadata indexes a single audio file and overrides its tag metadata with the provided values.
@@ -100,12 +92,12 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 	if err := os.MkdirAll(coversDir, 0755); err != nil {
 		return fmt.Errorf("create covers dir: %w", err)
 	}
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+	return cozydb.Transact(db, func(tx *sql.Tx) error {
+		return indexFileWithMetadata(tx, path, coversDir, title, artist, album)
+	})
+}
 
+func indexFileWithMetadata(tx *sql.Tx, path, coversDir, title, artist, album string) error {
 	artistName := strings.TrimSpace(artist)
 	if artistName == "" {
 		artistName = "Unknown Artist"
@@ -160,15 +152,11 @@ func IndexFileWithMetadata(db *sql.DB, path, coversDir, title, artist, album str
 		return err
 	}
 
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=excluded.album_id, title=excluded.title, track_num=excluded.track_num, file_path=excluded.file_path, genre=excluded.genre`,
 		trackID, albumID, trackTitle, 0, path, "",
 	)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	return err
 }
 
 func downloadYTThumbnail(ytID, destPath string) {

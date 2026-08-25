@@ -2,7 +2,13 @@
 
 | File | Type | Summary |
 |------|------|---------|
-| [sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md](sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md) | draft (done) | Fix AI agent bị kẹt tạo playlist bulk: download_youtube tải đồng bộ + trả track_id thật (bỏ _frontend_action), round-cap tool-calling 6→25 + hướng dẫn model batch tool-call — build pass, chưa deploy |
+| [sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md](sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md) | draft (done) | Fix AI agent bị kẹt tạo playlist bulk: download_youtube tải đồng bộ + trả track_id thật (bỏ _frontend_action), round-cap tool-calling 6→25 + hướng dẫn model batch tool-call — deploy production, verify pod mới OK |
+| [[K3s infra topology]] | concept | WSL2 này chính là node control-plane k3s; kubectl qua wsl bash; vị trí Prometheus/Grafana/Pushgateway thật |
+| [[Stream observability findings]] | concept | Backend QoS BestEffort (không limit), Grafana datasource từng trỏ sai localhost, Telegram alert chưa từng hoạt động |
+| [[Cozyroom is single-tenant]] | concept | Không có bảng users/auth nào — mọi tính năng "theo từng người" cần xây auth thật trước |
+| [[SW blank page postmortem]] | concept | Postmortem trang trắng: CF đè cache header sw.js — fix bằng đổi tên sw.js→sw2.js |
+| [[Reuse existing AI provider]] | concept | Luôn dùng selectProvider() có sẵn, không hardcode Anthropic — prod chỉ có DeepSeek/OpenRouter key |
+| [[Prod DB is Postgres, not CockroachDB]] | concept | k8s/db-adapter.yaml mô tả CockroachDB nhưng đã rollback — production thật là Postgres 16.14 qua pgbouncer |
 | [sources/200826-music-streaming-request-flow.md](sources/200826-music-streaming-request-flow.md) | source | Sequence diagram toàn bộ request khi phát 1 bài nhạc — local library vs YouTube, kèm 2 bug tìm thấy (recordPlay/smart-queue 400 cho track yt:) |
 | [sources/draft/160826-debug-topology-request-flow-be-fe.md](sources/draft/160826-debug-topology-request-flow-be-fe.md) | draft | Đề xuất: /debug — node "cloudflared" riêng + click request log vẽ luồng, chỉ khi màn hình thực sự đã setState data (Phương án B đúng nghĩa, ~19 file) |
 | [sources/160826-flannel-crossnode-partition-postmortem.md](sources/160826-flannel-crossnode-partition-postmortem.md) | source | Postmortem: flannel.1 chết âm thầm trên node k8s-s2 (k3s-agent vẫn active) → cross-node partition; fix: restart k3s-agent; phát hiện qua tool /debug mới |
