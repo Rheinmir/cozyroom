@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -27,10 +27,33 @@ function ArtistAvatar({ imageUrl, name }: { imageUrl: string; name: string }) {
   return <img src={imgSrc(imageUrl, 200)} alt={name} loading="lazy" onError={() => setFailed(true)} />
 }
 
+const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')]
+
+function letterOf(name: string) {
+  const c = name.trim().charAt(0).toUpperCase()
+  return /[A-Z]/.test(c) ? c : '#'
+}
+
 export default function ArtistsPage() {
   const { t } = useTranslation()
   const { data: artists = [], isLoading } = useQuery({ queryKey: ['artists'], queryFn: fetchArtists, staleTime: 5 * 60_000 })
   const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: fetchStats, staleTime: 5 * 60_000 })
+  const [filterQuery, setFilterQuery] = useState('')
+
+  const sortedArtists = useMemo(
+    () => [...artists].sort((a, b) => a.name.localeCompare(b.name)),
+    [artists]
+  )
+  const availableLetters = useMemo(
+    () => new Set(sortedArtists.map(a => letterOf(a.name))),
+    [sortedArtists]
+  )
+  const filtered = filterQuery.trim()
+    ? sortedArtists.filter(a => a.name.toLowerCase().includes(filterQuery.trim().toLowerCase()))
+    : sortedArtists
+
+  // Track which letter each rendered artist starts, so the A-Z rail can jump to it
+  let lastLetter = ''
 
   if (isLoading) return <div className="loading">{t('library.loading')}</div>
 
@@ -43,18 +66,50 @@ export default function ArtistsPage() {
           <span>{stats.tracks} {t('search.tracks').toLowerCase()}</span>
         </div>
       )}
-      <div className="library-tag">Thư viện</div>
       <h1 className="page-title">{t('nav.artists')}</h1>
-      <div className="artist-grid">
-        {artists.map(a => (
-          <Link key={a.id} to={`/artist/${a.id}`} className="artist-card">
-            <div className="artist-avatar" style={{ background: gradientFor(a.name) }}>
-              <ArtistAvatar imageUrl={a.image_url ?? ''} name={a.name} />
-            </div>
-            <span className="artist-name">{a.name}</span>
-            <span className="artist-sub">{t('library.artist')}</span>
-          </Link>
-        ))}
+      <input
+        type="text"
+        className="artist-filter-input"
+        placeholder={`Lọc trong ${sortedArtists.length} nghệ sĩ…`}
+        value={filterQuery}
+        onChange={e => setFilterQuery(e.target.value)}
+      />
+      <div className="artist-grid-wrap">
+        <div className="artist-grid">
+          {filtered.map(a => {
+            const letter = letterOf(a.name)
+            const isFirstOfLetter = !filterQuery.trim() && letter !== lastLetter
+            if (isFirstOfLetter) lastLetter = letter
+            return (
+              <Link
+                key={a.id}
+                to={`/artist/${a.id}`}
+                className="artist-card"
+                id={isFirstOfLetter ? `artist-letter-${letter}` : undefined}
+              >
+                <div className="artist-avatar" style={{ background: gradientFor(a.name) }}>
+                  <ArtistAvatar imageUrl={a.image_url ?? ''} name={a.name} />
+                </div>
+                <span className="artist-name">{a.name}</span>
+                <span className="artist-sub">{t('library.artist')}</span>
+              </Link>
+            )
+          })}
+        </div>
+        {!filterQuery.trim() && (
+          <div className="artist-az-rail">
+            {AZ.map(letter => (
+              <button
+                key={letter}
+                className="artist-az-btn"
+                disabled={!availableLetters.has(letter)}
+                onClick={() => document.getElementById(`artist-letter-${letter}`)?.scrollIntoView({ block: 'start' })}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

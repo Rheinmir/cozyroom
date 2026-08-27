@@ -8,6 +8,9 @@ deepseek-api-key.md
 *.key
 k8s/secret.yaml
 
+# security scan artifacts — local review only, never deploy/commit
+security/
+
 # build artifacts
 backend/dist/
 frontend/node_modules/

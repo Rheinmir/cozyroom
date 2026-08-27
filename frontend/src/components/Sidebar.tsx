@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchLastfmStatus } from '../api'
 import type { LastfmStatus } from '../api'
+import CozyroomMark from './CozyroomMark'
 
 const COLLAPSED_W = '56px'
 const EXPANDED_W  = '220px'
@@ -68,12 +69,13 @@ export default function Sidebar() {
   return (
     <nav className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}>
       <div className="sidebar-brand">
-        <img src="/favicon.png" width="28" height="28" alt="Cozyroom logo" style={{ borderRadius: '50%' }} />
+        <CozyroomMark />
         {!collapsed && <span>Cozyroom</span>}
         <button
           className="sidebar-collapse-btn"
           onClick={toggleCollapse}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? '›' : '‹'}
         </button>

@@ -38,7 +38,7 @@ export default function AlbumPage() {
   if (isLoading) return <div className="loading">{t('library.loading')}</div>
 
   return (
-    <div className="page">
+    <div className="page album-page">
       <button className="back-btn" onClick={() => navigate(-1)}>{t('library.back')}</button>
 
       <div className="album-hero">
@@ -73,6 +73,9 @@ export default function AlbumPage() {
                 key={t.id}
                 className={'track-row' + (isCurrent ? ' track-row--active' : '')}
                 onClick={() => play(t, tracks)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t, tracks) } }}
               >
                 <td className="col-num">
                   {isCurrent && isPlaying

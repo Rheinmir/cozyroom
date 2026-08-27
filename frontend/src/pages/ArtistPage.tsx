@@ -38,7 +38,7 @@ export default function ArtistPage() {
         <div>
           <p className="hero-type">Artist</p>
           <h1 className="hero-title">{artistName}</h1>
-          <p className="hero-meta">{albums.length} albums</p>
+          <p className="hero-meta">{albums.length} album{albums.length === 1 ? '' : 's'}</p>
         </div>
       </div>
 

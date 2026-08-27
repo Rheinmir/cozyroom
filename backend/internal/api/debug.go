@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -69,19 +70,28 @@ func debugServices(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	results := make([]serviceCheck, 0, len(debugServiceTargets))
-	for _, t := range debugServiceTargets {
-		start := time.Now()
-		conn, err := net.DialTimeout("tcp", t.Addr, 1500*time.Millisecond)
-		sc := serviceCheck{Name: t.Name, Addr: t.Addr, LatencyMS: time.Since(start).Milliseconds()}
-		if err != nil {
-			sc.Error = err.Error()
-		} else {
-			sc.Reachable = true
-			conn.Close()
-		}
-		results = append(results, sc)
+	// Dial every target concurrently — sequentially, an unreachable service
+	// costs its full 1.5s timeout each, and with 4 targets that added up to
+	// several seconds of dead time on every /debug page load.
+	results := make([]serviceCheck, len(debugServiceTargets))
+	var wg sync.WaitGroup
+	for i, t := range debugServiceTargets {
+		wg.Add(1)
+		go func(i int, t struct{ Name, Addr string }) {
+			defer wg.Done()
+			start := time.Now()
+			conn, err := net.DialTimeout("tcp", t.Addr, 1500*time.Millisecond)
+			sc := serviceCheck{Name: t.Name, Addr: t.Addr, LatencyMS: time.Since(start).Milliseconds()}
+			if err != nil {
+				sc.Error = err.Error()
+			} else {
+				sc.Reachable = true
+				conn.Close()
+			}
+			results[i] = sc
+		}(i, t)
 	}
+	wg.Wait()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }

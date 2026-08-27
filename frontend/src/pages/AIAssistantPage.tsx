@@ -5,10 +5,12 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { usePlayer } from '../PlayerContext'
 import { useBgSounds } from '../BgSoundsContext'
+import { useDialogs } from '../DialogContext'
 import type { RepeatMode, ShuffleMode } from '../PlayerContext'
 import type { Track } from '../types'
 import FavoritePill from '../components/FavoritePill'
 import { MCP_TOOLS } from '../data/mcpTools'
+import { useFlipUp } from '../useFlipPosition'
 
 type Role = 'user' | 'assistant'
 
@@ -50,20 +52,6 @@ interface MemoryFact {
   updated_at: string
 }
 
-interface LogEntry {
-  id: string
-  created_at: string
-  model: string
-  provider: string
-  user_msg: string
-  ai_msg: string
-  actions: string
-  failed: number
-  fail_reason: string
-  tool_errors: string
-  tokens_in: number
-  tokens_out: number
-}
 interface SessionEntry {
   session_id: string
   preview: string
@@ -190,6 +178,9 @@ function ReactionBar({ logId }: { logId: string }) {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const flipUp = useFlipUp(triggerRef, pickerRef, open)
 
   useEffect(() => {
     if (!open) return
@@ -217,6 +208,7 @@ function ReactionBar({ logId }: { logId: string }) {
         </button>
       )}
       <button
+        ref={triggerRef}
         className={'ai-reaction-trigger' + (open ? ' ai-reaction-trigger--active' : '')}
         onClick={() => setOpen(o => !o)}
         title="Thả cảm xúc"
@@ -224,7 +216,7 @@ function ReactionBar({ logId }: { logId: string }) {
         😊
       </button>
       {open && (
-        <div className="ai-reaction-picker">
+        <div className={'ai-reaction-picker' + (!flipUp ? ' ai-reaction-picker--down' : '')} ref={pickerRef}>
           {REACTIONS.map(e => (
             <button
               key={e}
@@ -468,6 +460,7 @@ export default function AIAssistantPage() {
   const { t } = useTranslation()
   const player = usePlayer()
   const bgSounds = useBgSounds()
+  const dialogs = useDialogs()
   const location = useLocation()
   const [messages, setMessages] = useState<Message[]>([
     { id: msgSeq++, role: 'assistant', text: t('ai.greeting') },
@@ -480,13 +473,11 @@ export default function AIAssistantPage() {
   const [memoryOpen, setMemoryOpen] = useState(false)
   const [facts, setFacts] = useState<MemoryFact[]>([])
   const [memoryLoading, setMemoryLoading] = useState(false)
-  const [logsOpen, setLogsOpen] = useState(false)
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [logsLoading, setLogsLoading] = useState(false)
-  const [logsFailedOnly, setLogsFailedOnly] = useState(false)
   const [sessions, setSessions] = useState<SessionEntry[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const sessionIdRef = useRef<string>(crypto.randomUUID())
+  const [currentSessionId, setCurrentSessionId] = useState(sessionIdRef.current)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const importRef = useRef<HTMLInputElement>(null)
@@ -516,20 +507,6 @@ export default function AIAssistantPage() {
     if (memoryOpen) loadMemory()
   }, [memoryOpen, loadMemory])
 
-  const loadLogs = useCallback(async (failedOnly: boolean) => {
-    setLogsLoading(true)
-    try {
-      const url = failedOnly ? '/api/ai/logs?failed=1&limit=30' : '/api/ai/logs?limit=30'
-      const res = await fetch(url)
-      if (res.ok) {
-        const data = await res.json()
-        setLogs(data.logs || [])
-      }
-    } finally {
-      setLogsLoading(false)
-    }
-  }, [])
-
   const loadSessions = useCallback(async () => {
     setSessionsLoading(true)
     try {
@@ -544,8 +521,8 @@ export default function AIAssistantPage() {
   }, [])
 
   useEffect(() => {
-    if (logsOpen) loadSessions()
-  }, [logsOpen, loadSessions])
+    loadSessions()
+  }, [loadSessions])
 
   const deleteFact = async (key: string) => {
     await fetch(`/api/ai/memory/${encodeURIComponent(key)}`, { method: 'DELETE' })
@@ -581,22 +558,18 @@ export default function AIAssistantPage() {
     setMessages(restored)
     setHistory(hist)
     sessionIdRef.current = sessionId  // continue appending to same session
-    setLogsOpen(false)
+    setCurrentSessionId(sessionId)
+    setSidebarOpen(false)
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
-  const restoreLog = (log: LogEntry) => {
-    const actions: Action[] = (() => { try { const r = JSON.parse(log.actions); return Array.isArray(r) ? r : [] } catch { return [] } })()
-    setMessages([
-      { id: msgSeq++, role: 'assistant', text: t('ai.greeting') },
-      { id: msgSeq++, role: 'user', text: log.user_msg },
-      { id: msgSeq++, role: 'assistant', text: log.ai_msg, actions, model: log.model, provider: log.provider, tokensIn: log.tokens_in, tokensOut: log.tokens_out },
-    ])
-    setHistory([
-      { role: 'user', content: log.user_msg },
-      { role: 'assistant', content: log.ai_msg },
-    ])
-    setLogsOpen(false)
+  const startNewChat = () => {
+    setMessages([{ id: msgSeq++, role: 'assistant', text: t('ai.greeting') }])
+    setHistory([])
+    setInput('')
+    sessionIdRef.current = crypto.randomUUID()
+    setCurrentSessionId(sessionIdRef.current)
+    setSidebarOpen(false)
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
@@ -775,9 +748,34 @@ export default function AIAssistantPage() {
   }
 
   return (
-    <div className="ai-page">
-      <div className="library-tag">TRỢ LÝ</div>
-      <h1 className="page-title" style={{ marginBottom: 8 }}>Trợ lý AI</h1>
+    <div className="ai-shell">
+      {sidebarOpen && <div className="ai-history-backdrop" onClick={() => setSidebarOpen(false)} />}
+      <aside className={'ai-history-sidebar' + (sidebarOpen ? ' ai-history-sidebar--open' : '')}>
+        <button className="ai-new-chat-btn" onClick={startNewChat}>+ Đoạn chat mới</button>
+        <div className="ai-history-list">
+          {sessionsLoading ? (
+            <div className="ai-history-empty">Đang tải…</div>
+          ) : sessions.length === 0 ? (
+            <div className="ai-history-empty">Chưa có lịch sử.</div>
+          ) : (
+            sessions.map(s => (
+              <button
+                key={s.session_id}
+                className={'ai-history-item' + (s.session_id === currentSessionId ? ' ai-history-item--active' : '')}
+                onClick={() => restoreSession(s.session_id)}
+              >
+                <span className="ai-history-item-title">{(s.preview || '').slice(0, 60)}{(s.preview || '').length > 60 ? '…' : ''}</span>
+                <span className="ai-history-item-date">{(s.last_at || '').slice(5, 16)} · {s.turns} lượt</span>
+              </button>
+            ))
+          )}
+        </div>
+      </aside>
+      <div className="ai-page">
+      <div className="ai-page-header">
+        <button className="ai-history-toggle-btn" onClick={() => setSidebarOpen(o => !o)} title="Lịch sử chat">☰</button>
+        <h1 className="page-title" style={{ marginBottom: 8 }}>Trợ lý AI</h1>
+      </div>
       <div className="ai-messages">
         {messages.map(msg => (
           <div key={msg.id} className={`ai-bubble-group ai-bubble-group--${msg.role}`}>
@@ -858,9 +856,6 @@ export default function AIAssistantPage() {
         <button className="ai-ctrl-btn" onClick={() => setMemoryOpen(o => !o)}>
           🧠{facts.length > 0 ? ` ${facts.length}` : ''} {memoryOpen ? '▲' : '▼'}
         </button>
-        <button className="ai-ctrl-btn" onClick={() => { setLogsOpen(o => !o); if (!logsOpen) loadSessions() }}>
-          📋{sessions.length > 0 && logsOpen ? ` ${sessions.length}` : ''} {logsOpen ? '▲' : '▼'}
-        </button>
         <input
           className="ai-model-input"
           placeholder={t('ai.model_placeholder')}
@@ -879,6 +874,13 @@ export default function AIAssistantPage() {
             <button className="ai-memory-btn" onClick={() => importRef.current?.click()} title="Tải lên JSON">↑ Import</button>
             <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importMemory} />
             <button className="ai-memory-btn ai-memory-btn--danger" onClick={async () => {
+              const ok = await dialogs.confirm({
+                title: 'Xóa toàn bộ bộ nhớ AI?',
+                message: `Sẽ xóa vĩnh viễn ${facts.length} fact AI đã học về bạn. Không thể hoàn tác.`,
+                confirmLabel: 'Xóa tất cả',
+                danger: true,
+              })
+              if (!ok) return
               await fetch('/api/ai/memory', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: '{"facts":[]}' })
               setFacts([])
             }}>🗑 Xóa tất cả</button>
@@ -903,36 +905,6 @@ export default function AIAssistantPage() {
         </div>
       )}
 
-      {logsOpen && (
-        <div className="ai-memory-panel">
-          <div className="ai-memory-toolbar">
-            <button className="ai-memory-btn" onClick={loadSessions}>↻ Tải lại</button>
-          </div>
-          {sessionsLoading ? (
-            <div className="ai-memory-empty">Đang tải…</div>
-          ) : sessions.length === 0 ? (
-            <div className="ai-memory-empty">Chưa có lịch sử.</div>
-          ) : (
-            <div className="ai-memory-list">
-              {sessions.map(s => (
-                <div key={s.session_id} className="ai-memory-fact" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
-                    <span style={{ fontSize: '10px', opacity: 0.5 }}>{(s.last_at || '').slice(5, 16)}</span>
-                    <span style={{ fontSize: '10px', opacity: 0.35, marginLeft: 2 }}>{s.turns} lượt</span>
-                    <button
-                      onClick={() => restoreSession(s.session_id)}
-                      style={{ marginLeft: 'auto', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 4, cursor: 'pointer', fontSize: '10px', padding: '1px 8px', color: 'var(--accent)' }}
-                    >↩ Vào room</button>
-                  </div>
-                  <div className="ai-memory-key" style={{ fontSize: '12px' }}>
-                    {(s.preview || '').slice(0, 80)}{(s.preview || '').length > 80 ? '…' : ''}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
       {slashSuggestions.length > 0 && (
         <div className="slash-suggestions">
           {slashSuggestions.map((t, i) => (
@@ -1009,6 +981,7 @@ export default function AIAssistantPage() {
           </svg>
         </button>
         </div>
+      </div>
       </div>
     </div>
   )

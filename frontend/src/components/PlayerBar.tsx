@@ -98,6 +98,10 @@ export default function PlayerBar() {
   // comment on LyricsView's own `onReady` effect for why).
   const handleLyricsReady = (readyTrackId: string) => {
     if (!autoTranslate || trActive || readyTrackId !== track?.id) return
+    // A cached translation already proves this track is foreign — skip the
+    // fallible detect-language round trip and render it directly instead of
+    // letting a flaky detect call block an already-known answer.
+    if (sessionStorage.getItem(`lyr-tr:${readyTrackId}`)) { lyricsRef.current?.showTranslation(); return }
     // Use the track's own artist_name/album_title (synchronous, on the track
     // object already) rather than the separately-fetched `artistInfo` — that
     // fetch may still be in flight when lyrics finish loading, silently
@@ -110,7 +114,7 @@ export default function PlayerBar() {
     // unknown after retry) — never left hanging.
     detectLyricsLanguage(text)
       .catch(() => new Promise(r => setTimeout(r, 1000)).then(() => detectLyricsLanguage(text)))
-      .then(({ lang }) => { if (lang && lang !== 'vi') lyricsRef.current?.toggleTranslation() })
+      .then(({ lang }) => { if (lang && lang !== 'vi') lyricsRef.current?.showTranslation() })
       .catch(err => console.warn('[auto-translate] language detect failed after retry', err))
   }
 

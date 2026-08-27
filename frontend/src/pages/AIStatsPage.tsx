@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useDialogs } from '../DialogContext'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -44,15 +45,18 @@ const fmtNum = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n)
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 16px', textAlign: 'center', minWidth: 100 }}>
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
       <div style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>{label}</div>
     </div>
   )
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+// span = how many of the grid's 12 columns this card claims (see .stats-chart-grid) —
+// this is what turns the grid from a rigid 2-column stack into a Power BI-style
+// bento layout where card width matches how much the chart actually needs.
+function ChartCard({ title, children, span = 6 }: { title: string; children: React.ReactNode; span?: number }) {
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px' }}>
+    <div className="stats-chart-card" style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', gridColumn: `span ${span}` }}>
       <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>
       {children}
     </div>
@@ -60,6 +64,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export default function AIStatsPage() {
+  const { toast } = useDialogs()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'charts' | 'logs'>('charts')
@@ -205,7 +210,7 @@ export default function AIStatsPage() {
         }
       }
     } catch {}
-    alert('Không có ảnh trong clipboard')
+    toast('Không có ảnh trong clipboard', 'info')
   }
 
   useEffect(() => {
@@ -336,15 +341,15 @@ export default function AIStatsPage() {
     .sort((a, b) => (b.output + b.input) - (a.output + a.input))
 
   return (
-    <div style={{ padding: '16px 20px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="stats-page-body">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>AI Analytics</h2>
         <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
           {(['charts', 'logs'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-              background: tab === t ? 'var(--accent)' : 'var(--surface)',
-              color: tab === t ? '#fff' : 'inherit', fontWeight: tab === t ? 600 : 400,
+              background: tab === t ? 'var(--green)' : 'var(--surface)',
+              color: tab === t ? '#000' : 'inherit', fontWeight: tab === t ? 600 : 400,
             }}>{t === 'charts' ? 'Biểu đồ' : 'Logs'}</button>
           ))}
         </div>
@@ -474,7 +479,7 @@ export default function AIStatsPage() {
                 </div>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                   <button onClick={() => setOcrPending(null)} style={{ fontSize: 11, padding: '3px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>Hủy</button>
-                  <button onClick={submitOcr} disabled={ocrLoading} style={{ fontSize: 11, padding: '3px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: ocrLoading ? 'rgba(255,255,255,0.15)' : 'rgba(29,185,84,0.7)', color: '#fff', fontWeight: 600 }}>
+                  <button onClick={submitOcr} disabled={ocrLoading} style={{ fontSize: 11, padding: '3px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: ocrLoading ? 'rgba(255,255,255,0.15)' : 'var(--green)', color: ocrLoading ? '#fff' : '#000', fontWeight: 600 }}>
                     {ocrLoading ? '⏳ Đang gửi…' : 'Gửi'}
                   </button>
                 </div>
@@ -537,10 +542,10 @@ export default function AIStatsPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 14 }}>
+      <div className="stats-chart-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gridAutoFlow: 'dense', gap: 14 }}>
 
         {/* Messages per day */}
-        <ChartCard title="Tin nhắn theo ngày (30 ngày)">
+        <ChartCard title="Tin nhắn theo ngày (30 ngày)" span={6}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={dailyMsg} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -554,7 +559,7 @@ export default function AIStatsPage() {
         </ChartCard>
 
         {/* Token usage per day */}
-        <ChartCard title="Token sử dụng theo ngày">
+        <ChartCard title="Token sử dụng theo ngày" span={6}>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={dailyTokens} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -570,7 +575,7 @@ export default function AIStatsPage() {
 
         {/* Token spend + estimated cost per day per model */}
         {tokenCostChartData.length > 0 && (
-          <ChartCard title="Token tiêu thụ theo model + Chi phí ước tính">
+          <ChartCard title="Token tiêu thụ theo model + Chi phí ước tính" span={8}>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={tokenCostChartData} margin={{ top: 0, right: 44, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -591,7 +596,7 @@ export default function AIStatsPage() {
 
         {/* Price rate comparison $/1M tokens */}
         {modelRateData.length > 0 && (
-          <ChartCard title="Giá $/1M token theo model">
+          <ChartCard title="Giá $/1M token theo model" span={4}>
             <ResponsiveContainer width="100%" height={Math.max(120, modelRateData.length * 36)}>
               <BarChart data={modelRateData} layout="vertical" margin={{ top: 0, right: 60, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -609,7 +614,7 @@ export default function AIStatsPage() {
 
         {/* Response time */}
         {dailyMs.length > 0 && (
-          <ChartCard title="Thời gian phản hồi TB (ms)">
+          <ChartCard title="Thời gian phản hồi TB (ms)" span={6}>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={dailyMs} margin={{ top: 0, right: 8, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -623,7 +628,7 @@ export default function AIStatsPage() {
         )}
 
         {/* Hourly activity */}
-        <ChartCard title="Hoạt động theo giờ trong ngày">
+        <ChartCard title="Hoạt động theo giờ trong ngày" span={6}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={hourly} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -637,7 +642,7 @@ export default function AIStatsPage() {
 
         {/* Action types */}
         {actions.length > 0 && (
-          <ChartCard title="Loại hành động AI thực hiện">
+          <ChartCard title="Loại hành động AI thực hiện" span={6}>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={actions.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -654,7 +659,7 @@ export default function AIStatsPage() {
 
         {/* Model distribution */}
         {models.length > 0 && (
-          <ChartCard title="Model sử dụng">
+          <ChartCard title="Model sử dụng" span={4}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <ResponsiveContainer width={180} height={180}>
                 <PieChart>
@@ -679,7 +684,7 @@ export default function AIStatsPage() {
 
         {/* Failure reasons */}
         {failures.filter(f => f.name !== 'success').length > 0 && (
-          <ChartCard title="Lý do thất bại">
+          <ChartCard title="Lý do thất bại" span={4}>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={failures.filter(f => f.name !== 'success')} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />

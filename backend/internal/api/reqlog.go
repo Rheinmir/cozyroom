@@ -48,7 +48,11 @@ func (r *ringBuffer) snapshot() []RequestEntry {
 	return out
 }
 
-func handleRequestLog(w http.ResponseWriter, _ *http.Request) {
+func handleRequestLog(w http.ResponseWriter, r *http.Request) {
+	if !verifyOwnerPassword(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	entries := globalRing.snapshot()
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(entries); err != nil {

@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   searchMangaDex, searchEHentai,
   fetchMangaChapters, fetchMangaPages,
@@ -7,6 +8,7 @@ import {
   enqueueEHDownload, enqueueMDDownload, fetchLocalChapters,
   ComicResult, EHentaiPage, ComicsDownload, LocalChapter,
 } from '../api'
+import { useDialogs } from '../DialogContext'
 
 type Source = 'md' | 'eh'
 type ViewMode = 'scroll' | 'page'
@@ -51,7 +53,7 @@ function DownloadCard({ dl, onRead, onDelete, onRetry, onDownload }: {
         <FallbackCover />
         {dl.cover && (
           <img
-            src={dlCoverSrc(dl)} alt={dl.title}
+            src={dlCoverSrc(dl)} alt={dl.title} loading="lazy"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
             onError={e => { e.currentTarget.style.display = 'none' }}
           />
@@ -117,6 +119,7 @@ function DownloadCard({ dl, onRead, onDelete, onRetry, onDownload }: {
 }
 
 export default function ComicsPage() {
+  const { toast } = useDialogs()
   const [source, setSource] = useState<Source>('md')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ComicResult[]>([])
@@ -129,28 +132,24 @@ export default function ComicsPage() {
   const [loadError, setLoadError] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>('scroll')
   const [currentPageIdx, setCurrentPageIdx] = useState(0)
-  const [downloads, setDownloads] = useState<ComicsDownload[]>([])
+  const queryClient = useQueryClient()
+  const { data: downloads = [] } = useQuery({
+    queryKey: ['comics-downloads'],
+    queryFn: async () => (await fetchDownloads()) ?? [],
+    staleTime: 30_000,
+    // Keep polling while anything is actively queued/downloading; otherwise rely on cache.
+    refetchInterval: query => {
+      const list = query.state.data ?? []
+      return list.some(d => d.status === 'queued' || d.status === 'downloading') ? 5000 : false
+    },
+  })
   const [dlFilter, setDlFilter] = useState<DlFilter>('all')
+  const PAGE_SIZE = 60
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [imgErrors, setImgErrors] = useState(0)
   const [localChapters, setLocalChapters] = useState<LocalChapter[]>([])
   const [localChapterIdx, setLocalChapterIdx] = useState<number | null>(null)
   const [enqueueing, setEnqueueing] = useState<string | null>(null)
-
-  // Poll downloads; re-poll while any are in progress
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>
-    const load = async () => {
-      try {
-        const dl = await fetchDownloads()
-        setDownloads(dl ?? [])
-        if ((dl ?? []).some(d => d.status === 'queued' || d.status === 'downloading')) {
-          timer = setTimeout(load, 5000)
-        }
-      } catch {}
-    }
-    load()
-    return () => clearTimeout(timer)
-  }, [])
 
   // Keyboard nav in page mode
   useEffect(() => {
@@ -164,13 +163,16 @@ export default function ComicsPage() {
     return () => window.removeEventListener('keydown', handler)
   }, [reading, viewMode, pages.length])
 
+  // Reset pagination whenever the visible list itself changes
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [source, dlFilter, searchActive, results])
+
   const handleSourceChange = (s: Source) => {
     if (s === 'eh') {
       const password = localStorage.getItem('ebook-nsfw-pass')
       if (password !== 'owner712002') {
         const input = window.prompt('Nhập mật khẩu để truy cập nguồn NSFW (E-Hentai):')
         if (input === 'owner712002') { localStorage.setItem('ebook-nsfw-pass', input) }
-        else { if (input !== null) alert('Sai mật khẩu!'); return }
+        else { if (input !== null) toast('Sai mật khẩu!', 'error'); return }
       }
     }
     setSource(s)
@@ -319,13 +321,13 @@ export default function ComicsPage() {
   const handleDeleteDl = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     await deleteDownload(id)
-    setDownloads(prev => prev.filter(d => d.id !== id))
+    queryClient.setQueryData<ComicsDownload[]>(['comics-downloads'], prev => prev?.filter(d => d.id !== id))
   }
 
   const handleRetryDl = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     await retryDownload(id)
-    setDownloads(prev => prev.map(d => d.id === id ? { ...d, status: 'queued', error: '' } : d))
+    queryClient.setQueryData<ComicsDownload[]>(['comics-downloads'], prev => prev?.map(d => d.id === id ? { ...d, status: 'queued', error: '' } : d))
   }
 
   const handleDownloadDl = async (e: React.MouseEvent, dl: ComicsDownload) => {
@@ -340,7 +342,7 @@ export default function ComicsPage() {
         const mangaId = dl.id.replace('md_', '')
         await enqueueMDDownload(mangaId)
       }
-      setDownloads(prev => prev.map(d => d.id === dl.id ? { ...d, status: 'queued' } : d))
+      queryClient.setQueryData<ComicsDownload[]>(['comics-downloads'], prev => prev?.map(d => d.id === dl.id ? { ...d, status: 'queued' } : d))
     } catch (err) {
       console.error('enqueue error', err)
     } finally {
@@ -357,10 +359,10 @@ export default function ComicsPage() {
         const token = selected.token || ''
         await enqueueEHDownload(gid, token)
         // Update local record status if exists
-        setDownloads(prev => prev.map(d => d.id === 'eh_' + gid ? { ...d, status: 'queued' } : d))
+        queryClient.setQueryData<ComicsDownload[]>(['comics-downloads'], prev => prev?.map(d => d.id === 'eh_' + gid ? { ...d, status: 'queued' } : d))
       } else {
         await enqueueMDDownload(selected.id)
-        setDownloads(prev => prev.map(d => d.id === 'md_' + selected.id ? { ...d, status: 'queued' } : d))
+        queryClient.setQueryData<ComicsDownload[]>(['comics-downloads'], prev => prev?.map(d => d.id === 'md_' + selected.id ? { ...d, status: 'queued' } : d))
       }
     } catch (err) {
       console.error('enqueue error', err)
@@ -486,11 +488,23 @@ export default function ComicsPage() {
                 <div style={{ fontSize: 12 }}>Background discovery runs every 6 hours</div>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 20 }}>
-                {shownDownloads.map(dl => (
-                  <DownloadCard key={dl.id} dl={dl} onRead={handleReadLocal} onDelete={handleDeleteDl} onRetry={handleRetryDl} onDownload={handleDownloadDl} />
-                ))}
-              </div>
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 20 }}>
+                  {shownDownloads.slice(0, visibleCount).map(dl => (
+                    <DownloadCard key={dl.id} dl={dl} onRead={handleReadLocal} onDelete={handleDeleteDl} onRetry={handleRetryDl} onDownload={handleDownloadDl} />
+                  ))}
+                </div>
+                {visibleCount < shownDownloads.length && (
+                  <div style={{ textAlign: 'center', marginTop: 20 }}>
+                    <button
+                      onClick={() => setVisibleCount(n => n + PAGE_SIZE)}
+                      style={{ padding: '8px 20px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.15)', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
+                    >
+                      Xem thêm ({shownDownloads.length - visibleCount} còn lại)
+                    </button>
+                  </div>
+                )}
+              </>
             )
           )}
 
@@ -516,7 +530,7 @@ export default function ComicsPage() {
                     <FallbackCover />
                     {item.cover && (
                       <img
-                        src={item.cover} alt={item.title || item.name}
+                        src={item.cover} alt={item.title || item.name} loading="lazy"
                         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={e => { e.currentTarget.style.display = 'none' }}
                       />

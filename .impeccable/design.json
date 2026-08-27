@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-26T00:00:00Z",
+  "title": "Design System: Cozyroom",
+  "extensions": {
+    "colorMeta": {
+      "paper-white": { "role": "primary", "displayName": "Paper White", "canonical": "#ffffff", "tonalRamp": ["#050505", "#0e0e0e", "#1a1a1a", "#333333", "#5c5c5c", "#8c8c8c", "#c2c2c2", "#ffffff"] },
+      "void-black": { "role": "neutral", "displayName": "Void Black", "canonical": "#050505", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#111111", "#1a1a1a", "#2b2b2b", "#4a4a4a", "#6e6e6e"] },
+      "charcoal-panel": { "role": "neutral", "displayName": "Charcoal Panel", "canonical": "#0e0e0e", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#141414", "#1c1c1c", "#2e2e2e", "#4c4c4c", "#707070"] },
+      "raised-charcoal": { "role": "neutral", "displayName": "Raised Charcoal", "canonical": "#111111", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#111111", "#1e1e1e", "#303030", "#4e4e4e", "#727272"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles and hero headings only." },
+      "body": { "displayName": "Body", "purpose": "Default UI and reading text." },
+      "label": { "displayName": "Label / Mono", "purpose": "Data readouts: model names, timestamps, ranks, badges — set in Geist Mono." }
+    },
+    "shadows": [
+      { "name": "raised-glow", "value": "0 8px 20px -8px rgba(255,255,255,0.2)", "purpose": "Hover/focus lift for buttons, cards, avatars — the primary tactile-depth signal." },
+      { "name": "floating-shadow", "value": "0 6px 20px rgba(0,0,0,0.5)", "purpose": "Popovers, reaction picker, modals sitting above other UI." },
+      { "name": "hairline-inset", "value": "inset 0 0 0 1px rgba(255,255,255,0.07)", "purpose": "Resting structural border used instead of a visible stroke on most surfaces." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default transition easing for hover/lift/background state changes." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "900px" },
+      { "name": "fullhd", "value": "1920px" },
+      { "name": "2k", "value": "2560px" },
+      { "name": "4k", "value": "3840px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single accent-colored call-to-action button.",
+      "html": "<button class=\"ds-btn-primary\">Send</button>",
+      "css": ".ds-btn-primary { background: #ffffff; color: #000000; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; transition: background 0.15s, box-shadow 0.15s, transform 0.15s; } .ds-btn-primary:hover { background: #e0e0e0; box-shadow: 0 8px 20px -8px rgba(255,255,255,0.2); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Small secondary control-row button (toggle panels, icon actions).",
+      "html": "<button class=\"ds-btn-ghost\">🧠 3</button>",
+      "css": ".ds-btn-ghost { background: none; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.55); font-size: 11px; padding: 3px 8px; transition: color 0.15s, border-color 0.15s; } .ds-btn-ghost:hover { color: rgba(255,255,255,0.92); border-color: rgba(255,255,255,0.3); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Text input / textarea used across search and chat.",
+      "html": "<input class=\"ds-input\" placeholder=\"Hỏi gì đi…\" />",
+      "css": ".ds-input { background: #0e0e0e; color: rgba(255,255,255,0.92); border: none; border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); transition: box-shadow 0.15s; } .ds-input:focus { outline: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5); }"
+    },
+    {
+      "name": "History List Item",
+      "kind": "custom",
+      "refersTo": "ai-history-item",
+      "description": "Console-style list row: title + mono timestamp, active state marked by background wash only, no color or icon badge.",
+      "html": "<button class=\"ds-history-item\"><span class=\"ds-history-title\">tạo playlist Civilization 7</span><span class=\"ds-history-date\">08-25 09:07 · 2 lượt</span></button>",
+      "css": ".ds-history-item { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; background: none; border: none; border-radius: 8px; padding: 8px 10px; color: rgba(255,255,255,0.92); cursor: pointer; } .ds-history-item:hover, .ds-history-item.active { background: rgba(255,255,255,0.07); } .ds-history-title { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-history-date { font-family: 'Geist Mono', 'SFMono-Regular', monospace; font-size: 11px; color: rgba(255,255,255,0.55); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Generic content card (album, track, tool) — flat at rest, glows and lifts on hover.",
+      "html": "<div class=\"ds-card\">Card content</div>",
+      "css": ".ds-card { background: #0e0e0e; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px; transition: background 0.15s, box-shadow 0.15s, transform 0.15s; } .ds-card:hover { background: #111111; box-shadow: 0 8px 20px -8px rgba(255,255,255,0.2); transform: translateY(-2px); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Midnight Deck",
+    "overview": "Cozyroom reads as a DJ booth after hours: a near-black operator surface built to be lived in for hours at a time, not glanced at. It borrows the structure of a familiar dark music app (sidebar library, persistent player, dense list views) but rejects that app's color language entirely — there is no brand hue, no gradient wash, no colorful badge system. The only 'color' is paper-white against void-black, used sparingly as the single interactive signal in a field of near-black surfaces and three tiers of white-on-black text. This restraint is deliberate, not a placeholder: the owner runs Cozyroom as both a daily media console and a live testbed for scaling real infrastructure, so the interface should feel closer to an instrument panel than a consumer entertainment app — legible at a glance, low-decoration, confident about what's interactive.",
+    "keyCharacteristics": [
+      "Monochrome-first: void-black background, white the only accent, three text-opacity tiers for hierarchy.",
+      "Operator-console density: compact rows, tables, and dashboards over marketing-style whitespace.",
+      "Tactile, not flat: interactive elements lift and glow on hover/press rather than sitting inert.",
+      "Spotify-shaped chrome, Cozyroom-owned palette: the current icon is a placeholder, not a binding brand asset."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Paper White is the only accent color in the system. Anything that wants to look selected, primary, or on reaches for it — never a second brand hue.", "section": "colors" },
+      { "name": "The No-Accent-Token Rule", "body": "There is no --accent CSS variable — it silently resolves to nothing. The real accent token is var(--green), which is literally white, always paired with color: #000. --purple is currently also white and should be treated as an unused legacy alias.", "section": "colors" },
+      { "name": "The Mono-Means-Machine Rule", "body": "Switch to Geist Mono only for content that is literally data or system output — never for prose or UI copy.", "section": "typography" },
+      { "name": "The Light-Not-Color Rule", "body": "Depth is expressed with white ambient glow and subtle lift, never with a second color or a dark drop-shadow, which is invisible on a #050505 background.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do treat Paper White as the only accent in any new surface.",
+      "Do use the three explicit wide-monitor breakpoints (1920/2560/3840px) for any new reading-width column.",
+      "Do give interactive elements a hover glow + slight lift.",
+      "Do reserve Geist Mono for data/system readouts only."
+    ],
+    "donts": [
+      "Don't reference var(--accent) — it does not exist; use var(--green).",
+      "Don't add dark drop shadows — they're invisible on #050505; use the white ambient-glow pattern instead.",
+      "Don't treat the current Spotify-shaped play-button icon as a locked brand asset.",
+      "Don't touch backend/DB/k8s config as part of design work in this project — scope is frontend/src only."
+    ]
+  }
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
+import { useDialogs } from '../DialogContext'
 import {
   Playlist,
   fetchPlaylists,
@@ -10,6 +11,7 @@ import {
   deletePlaylist
 } from '../api'
 import FavoritePill, { getLocalPlaylists, saveLocalPlaylists } from '../components/FavoritePill'
+import { saveOfflineTrack, deleteOfflineTrack, listOfflineTrackIds } from '../offlineStore'
 import type { Track } from '../types'
 
 function useDominantColor(src: string | undefined): string {
@@ -98,6 +100,7 @@ const fmt = (s: number) => {
 export default function PlaylistsPage() {
   const { t } = useTranslation()
   const { play, track: current, isPlaying } = usePlayer()
+  const { confirm, toast } = useDialogs()
 
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null)
   const [localLists, setLocalLists] = useState<Playlist[]>([])
@@ -108,6 +111,39 @@ export default function PlaylistsPage() {
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Offline download state — which tracks are saved locally, which are mid-download
+  const [offlineIds, setOfflineIds] = useState<Set<string>>(new Set())
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    listOfflineTrackIds().then(ids => setOfflineIds(new Set(ids)))
+  }, [])
+
+  const handleToggleOffline = async (trackId: string) => {
+    if (offlineIds.has(trackId)) {
+      await deleteOfflineTrack(trackId)
+      setOfflineIds(prev => { const next = new Set(prev); next.delete(trackId); return next })
+      return
+    }
+    setDownloadingIds(prev => new Set(prev).add(trackId))
+    try {
+      const res = await fetch(`/stream/${trackId}?q=320`)
+      if (!res.ok) throw new Error('download failed')
+      const blob = await res.blob()
+      const result = await saveOfflineTrack(trackId, blob, '320')
+      if (result.ok) {
+        setOfflineIds(prev => new Set(prev).add(trackId))
+      } else {
+        toast(t('playlist.offline_quota', { defaultValue: 'Không đủ dung lượng lưu trữ để tải bài này' }), 'error')
+      }
+    } catch (e) {
+      console.error('offline download failed', e)
+      toast(t('playlist.offline_failed', { defaultValue: 'Tải bài hát để nghe offline thất bại' }), 'error')
+    } finally {
+      setDownloadingIds(prev => { const next = new Set(prev); next.delete(trackId); return next })
+    }
+  }
 
   // Load playlists
   const loadLists = async () => {
@@ -163,13 +199,14 @@ export default function PlaylistsPage() {
   const isLoadingTracks = isLocalSelected ? isLoadingAll : isLoadingPerm
 
   // Delete playlist handler
-  const handleDeleteClick = (e: React.MouseEvent, id: string, isLocal: boolean) => {
+  const handleDeleteClick = async (e: React.MouseEvent, id: string, isLocal: boolean) => {
     e.stopPropagation() // Prevent selecting the playlist
-    
+
     if (isLocal) {
-      const confirmDelete = window.confirm(
-        t('playlist.delete_confirm', { defaultValue: 'Bạn có chắc chắn muốn xóa playlist này không?' })
-      )
+      const confirmDelete = await confirm({
+        message: t('playlist.delete_confirm', { defaultValue: 'Bạn có chắc chắn muốn xóa playlist này không?' }),
+        danger: true,
+      })
       if (confirmDelete) {
         const updated = localLists.filter(l => l.id !== id)
         setLocalLists(updated)
@@ -207,7 +244,7 @@ export default function PlaylistsPage() {
         sessionStorage.removeItem('cozyroom_owner_password')
         setPasswordError('Mật khẩu sai!')
       } else {
-        alert(e.message || 'Xóa playlist thất bại')
+        toast(e.message || 'Xóa playlist thất bại', 'error')
         setShowPasswordModal(false)
         setDeletingId(null)
       }
@@ -278,6 +315,7 @@ export default function PlaylistsPage() {
                 <th className="col-num">#</th>
                 <th>{t('search.title_col')}</th>
                 <th className="col-fav"></th>
+                <th className="col-offline"></th>
                 <th className="col-dur">{t('search.duration_col')}</th>
               </tr>
             </thead>
@@ -289,6 +327,9 @@ export default function PlaylistsPage() {
                     key={tTrack.id}
                     className={'track-row' + (isCurrent ? ' track-row--active' : '')}
                     onClick={() => play(tTrack, tracks)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(tTrack, tracks) } }}
                   >
                     <td className="col-num">
                       {isCurrent && isPlaying ? (
@@ -309,6 +350,23 @@ export default function PlaylistsPage() {
                     <td className="col-fav" onClick={e => e.stopPropagation()}>
                       <FavoritePill trackId={tTrack.id} />
                     </td>
+                    <td className="col-offline" onClick={e => e.stopPropagation()}>
+                      {!tTrack.id.startsWith('yt:') && (
+                        <button
+                          className={'offline-download-btn' + (offlineIds.has(tTrack.id) ? ' offline-download-btn--done' : '')}
+                          disabled={downloadingIds.has(tTrack.id)}
+                          onClick={() => handleToggleOffline(tTrack.id)}
+                          aria-label={offlineIds.has(tTrack.id)
+                            ? t('playlist.offline_remove', { defaultValue: 'Xoá khỏi offline' })
+                            : t('playlist.offline_download', { defaultValue: 'Tải xuống nghe offline' })}
+                          title={offlineIds.has(tTrack.id)
+                            ? t('playlist.offline_remove', { defaultValue: 'Xoá khỏi offline' })
+                            : t('playlist.offline_download', { defaultValue: 'Tải xuống nghe offline' })}
+                        >
+                          {downloadingIds.has(tTrack.id) ? '…' : offlineIds.has(tTrack.id) ? '✓' : '⬇'}
+                        </button>
+                      )}
+                    </td>
                     <td className="col-dur">{fmt(tTrack.duration_s)}</td>
                   </tr>
                 )
@@ -322,7 +380,6 @@ export default function PlaylistsPage() {
 
   return (
     <div className="page">
-      <div className="library-tag">Bộ sưu tập</div>
       <h1 className="page-title">{t('nav.playlists', { defaultValue: 'Playlists' })}</h1>
       
       {allLists.length === 0 ? (

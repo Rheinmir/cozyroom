@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { PlayerProvider } from './PlayerContext'
 import { BgSoundsProvider } from './BgSoundsContext'
+import { DialogProvider } from './DialogContext'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import PlayerBar from './components/PlayerBar'
@@ -17,7 +18,6 @@ import TrendingPage from './pages/TrendingPage'
 import EbooksPage from './pages/EbooksPage'
 import EbookReaderPage from './pages/EbookReaderPage'
 import ComicsPage from './pages/ComicsPage'
-import ComicsPageMobile from './pages/ComicsPageMobile'
 import PlaylistsPage from './pages/PlaylistsPage'
 import NotesPage from './pages/NotesPage'
 import AIAssistantPage from './pages/AIAssistantPage'
@@ -28,6 +28,7 @@ import RequestLogPage from './pages/RequestLogPage'
 
 export default function AppRoutes() {
   return (
+    <DialogProvider>
     <BgSoundsProvider>
     <PlayerProvider>
       <div className="shell">
@@ -47,7 +48,6 @@ export default function AppRoutes() {
               <Route path="/ebooks"      element={<EbooksPage />} />
               <Route path="/ebook/:id"   element={<EbookReaderPage />} />
               <Route path="/comics"      element={<ComicsPage />} />
-              <Route path="/comics-mobile" element={<ComicsPageMobile />} />
               <Route path="/playlists"   element={<PlaylistsPage />} />
               <Route path="/notes"       element={<NotesPage />} />
               <Route path="/ai"          element={<AIAssistantPage />} />
@@ -64,5 +64,6 @@ export default function AppRoutes() {
       </div>
     </PlayerProvider>
     </BgSoundsProvider>
+    </DialogProvider>
   )
 }

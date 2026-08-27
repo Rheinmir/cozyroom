@@ -6,6 +6,7 @@ import { useBgSounds } from '../BgSoundsContext'
 import type { Playlist } from '../api'
 import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../api'
 import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
+import CozyroomMark from './CozyroomMark'
 
 const BUBBLE_R = 28   // half of 56px bubble
 const PETAL_R  = 22   // half of 44px petal
@@ -1317,6 +1318,7 @@ export default function RadialNav() {
         <button
           ref={bubbleRef}
           className={`radial-bubble${isPlaying && track && !calendarMode ? ' radial-bubble--spinning' : ''}${open ? ' radial-bubble--open' : ''}${calendarMode ? ' radial-bubble--calendar' : ''}${track && !calendarMode ? ' radial-bubble--vinyl' : ''}${snappedSelector ? ' radial-bubble--snapped' : ''}`}
+          aria-label={open ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'}
           style={{
             position: 'absolute',
             left: -BUBBLE_R,
@@ -1352,7 +1354,7 @@ export default function RadialNav() {
               <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
             </svg>
           ) : (
-            <img src="/favicon.png" alt="Cozyroom" draggable={false} />
+            <CozyroomMark size={24} />
           )}
         </button>
 

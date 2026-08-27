@@ -446,13 +446,20 @@ export default function SearchPage() {
             </thead>
             <tbody>
               {tracks.map((t2, i) => (
-                <tr key={t2.id} className="track-row" onClick={() => play(t2)}>
+                <tr
+                  key={t2.id}
+                  className="track-row"
+                  onClick={() => play(t2)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2) } }}
+                >
                   <td className="col-num"><span className="track-num-text">{i + 1}</span></td>
                   <td className="track-title">{t2.title}</td>
                   <td className="col-fav" onClick={e => e.stopPropagation()}>
                     <FavoritePill trackId={t2.id} />
                   </td>
-                  <td className="col-dur" style={{ textAlign: 'left' }}>
+                  <td className="col-album">
                     <Link
                       to={`/album/${t2.album_id}`}
                       className="text-muted"

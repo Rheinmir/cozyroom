@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts'
 import { imgSrc, fetchPlayStats, fetchLastfmStatus, backfillLastfmPlayCounts, fetchLastfmBackfillStatus, fetchMusicInsight } from '../api'
-import type { PlayStats, LastfmBackfillStatus } from '../api'
+import type { LastfmBackfillStatus } from '../api'
 
 const ACCENT = 'var(--green)'
 
@@ -15,19 +16,19 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export default function MusicStatsPage() {
-  const [stats, setStats] = useState<PlayStats | null>(null)
-  const [insight, setInsight] = useState<string | null>(null)
-  const [lastfmConnected, setLastfmConnected] = useState(false)
+  // staleTime ngắn (30s) — khác các trang danh sách tĩnh (5 phút) — vì đây là số liệu
+  // "lượt nghe" tăng theo thời gian thực khi user đang nghe nhạc; cache dài sẽ làm số liệu
+  // bị đứng khi quay lại tab này ngay sau khi vừa nghe xong một bài.
+  const statsQuery = useQuery({ queryKey: ['music-play-stats', 30], queryFn: () => fetchPlayStats(30), staleTime: 30_000 })
+  const lastfmQuery = useQuery({ queryKey: ['lastfm-status'], queryFn: fetchLastfmStatus, staleTime: 5 * 60_000, retry: false })
+  const insightQuery = useQuery({ queryKey: ['music-insight'], queryFn: fetchMusicInsight, staleTime: 5 * 60_000, retry: false })
+
+  const stats = statsQuery.data ?? null
+  const lastfmConnected = lastfmQuery.data?.connected ?? false
+  const insight = insightQuery.isLoading ? null : (insightQuery.data?.insight ?? '')
+
   const [backfill, setBackfill] = useState<LastfmBackfillStatus | null>(null)
   const [backfillError, setBackfillError] = useState('')
-
-  const loadStats = () => fetchPlayStats(30).then(setStats).catch(() => {})
-
-  useEffect(() => {
-    loadStats()
-    fetchLastfmStatus().then(s => setLastfmConnected(s.connected)).catch(() => {})
-    fetchMusicInsight().then(r => setInsight(r.insight)).catch(() => setInsight(''))
-  }, [])
 
   // Poll backfill status while a job is running, so progress + final counts update live.
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function MusicStatsPage() {
     const id = setInterval(() => {
       fetchLastfmBackfillStatus().then(s => {
         setBackfill(s)
-        if (!s.running) loadStats()
+        if (!s.running) statsQuery.refetch()
       }).catch(() => {})
     }, 2000)
     return () => clearInterval(id)
@@ -55,7 +56,7 @@ export default function MusicStatsPage() {
   const totalRecent = daily.reduce((s, d) => s + d.plays, 0)
 
   return (
-    <div style={{ padding: '16px 20px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="stats-page-body">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Số liệu nghe nhạc</h2>
         <button
@@ -74,7 +75,9 @@ export default function MusicStatsPage() {
 
       {backfillError && <p style={{ color: '#f87171', fontSize: 12, marginBottom: 12 }}>{backfillError}</p>}
 
-      {top.length === 0 ? (
+      {statsQuery.isLoading ? (
+        <p style={{ opacity: 0.5, fontSize: 13 }}>Đang tải…</p>
+      ) : top.length === 0 ? (
         <p style={{ opacity: 0.5, fontSize: 13 }}>
           Chưa có dữ liệu — nghe vài bài (đủ 30s trở lên) rồi quay lại đây.
         </p>
@@ -124,7 +127,7 @@ export default function MusicStatsPage() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), 1fr))', gap: 14 }}>
             <ChartCard title="Top 10 bài nghe nhiều nhất">
               <ResponsiveContainer width="100%" height={Math.max(120, top.length * 32)}>
                 <BarChart data={top} layout="vertical" margin={{ top: 0, right: 28, left: 10, bottom: 0 }}>

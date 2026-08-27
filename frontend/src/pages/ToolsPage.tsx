@@ -18,7 +18,14 @@ function ToolCard({ tool, onClick }: { tool: McpTool; onClick: () => void }) {
   }, [])
 
   return (
-    <div ref={cardRef} className="tool-card" onClick={onClick}>
+    <div
+      ref={cardRef}
+      className="tool-card"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+    >
       <div className="tool-card-iframe-wrap">
         {visible && (
           <iframe

@@ -1,0 +1,98 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "#f87171",
+        "files": [
+          "frontend/src/pages/AIStatsPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:14:30.661Z",
+        "reason": "semantic fail/error status color in AI request log — monochrome can't distinguish pass/fail at a glance, pre-existing not introduced by this edit"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#4ade80",
+        "files": [
+          "frontend/src/pages/AIStatsPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:14:30.757Z",
+        "reason": "semantic success status color in AI request log, pre-existing"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fca5a5",
+        "files": [
+          "frontend/src/pages/AIStatsPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:14:30.852Z",
+        "reason": "semantic tool-error text color, lighter tint of the fail-status red, pre-existing"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#facc15",
+        "files": [
+          "frontend/src/pages/AIStatsPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:15:29.169Z",
+        "reason": "chart series color (cost $ indicator), Data Needs Color Rule in DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f59e0b",
+        "files": [
+          "frontend/src/pages/AIStatsPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:15:29.296Z",
+        "reason": "chart series color (cost line, distinct from token-count lines), Data Needs Color Rule in DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f87171",
+        "files": [
+          "frontend/src/pages/RequestLogPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:17:09.108Z",
+        "reason": "HTTP status/latency-severity/reachability semantic color, Data Needs Color Rule in DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fb923c",
+        "files": [
+          "frontend/src/pages/RequestLogPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:17:09.199Z",
+        "reason": "HTTP status/latency-severity/reachability semantic color, Data Needs Color Rule in DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#facc15",
+        "files": [
+          "frontend/src/pages/RequestLogPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:17:09.293Z",
+        "reason": "HTTP status/latency-severity/reachability semantic color, Data Needs Color Rule in DESIGN.md"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#4ade80",
+        "files": [
+          "frontend/src/pages/RequestLogPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:17:09.389Z",
+        "reason": "HTTP status/latency-severity/reachability semantic color, Data Needs Color Rule in DESIGN.md"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/pages/AIStatsPage.tsx"
+        ],
+        "createdAt": "2026-08-26T17:38:01.815Z",
+        "reason": "pre-existing left-border on log-list cards encodes pass/fail status (red/green), same Data Needs Color Rule exception as design-system-color — functional status scanning like Sentry/error-tracker UIs, not decorative"
+      }
+    ]
+  }
+}

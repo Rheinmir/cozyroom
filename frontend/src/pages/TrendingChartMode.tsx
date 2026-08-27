@@ -56,9 +56,13 @@ function ch(desktop: number, mobile: number) { return isMobile() ? mobile : desk
 
 // ── Section wrapper ────────────────────────────────────────────────────────────
 
-function Section({ title, children, full }: { title: string; children: React.ReactNode; full?: boolean }) {
+// span = how many of the dashboard's 12 columns this card claims — lets wide
+// charts (time series, heatmaps) take the room they need while compact ones
+// (bar/pie/treemap) sit two or three to a row instead of every card
+// defaulting to full-width or an even half.
+function Section({ title, children, span = 6 }: { title: React.ReactNode; children: React.ReactNode; span?: number }) {
   return (
-    <div className={`tc-section${full ? ' tc-section--full' : ''}`}>
+    <div className={`tc-section tc-span-${span}`}>
       <div className="tc-section-title">{title}</div>
       {children}
     </div>
@@ -114,7 +118,7 @@ const CustomCrosshairCursor = (props: any) => {
 }
 
 // ── Momentum Bubble: X = star delta, Y = total stars (log), size = impact score ───
-function ChartMomentum({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilter }) {
+function ChartMomentum({ repos, onFilter, compact }: { repos: TrendingRepo[]; onFilter: OnFilter; compact?: boolean }) {
   const data = repos
     .filter(r => r.stars > 0 && r.star_delta > 0)
     .map(r => ({
@@ -129,8 +133,8 @@ function ChartMomentum({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: O
     }))
 
   return (
-    <ResponsiveContainer width="100%" height={ch(340, 240)}>
-      <ScatterChart margin={{ top: 16, right: 20, bottom: ch(40, 28), left: ch(56, 36) }}>
+    <ResponsiveContainer width="100%" height={compact ? ch(260, 200) : ch(340, 240)}>
+      <ScatterChart margin={compact ? { top: 12, right: 12, bottom: 30, left: 40 } : { top: 16, right: 20, bottom: ch(40, 28), left: ch(56, 36) }}>
         <CartesianGrid {...GR} />
         <XAxis
           dataKey="x" type="number" name="+Stars this week"
@@ -140,7 +144,7 @@ function ChartMomentum({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: O
         <YAxis
           dataKey="y" type="number" name="Total Stars" scale="log" domain={['auto', 'auto']}
           tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }}
-          label={{ value: 'Total Stars (log)', angle: -90, position: 'insideLeft', offset: 14, fill: '#666', fontSize: 11 }}
+          label={compact ? undefined : { value: 'Total Stars (log)', angle: -90, position: 'insideLeft', offset: 14, fill: '#666', fontSize: 11 }}
         />
         <ZAxis dataKey="z" range={[30, 500]} />
         <Tooltip cursor={<CustomCrosshairCursor />}
@@ -778,6 +782,7 @@ export default function TrendingChartMode({ repos, prevRepos = [] }: { repos: Tr
   const [selectedRepo, setSelectedRepo] = useState<TrendingRepo | null>(null)
   const [history, setHistory] = useState<Map<string, StarPoint[]>>(new Map())
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [bubbleExpanded, setBubbleExpanded] = useState(false)
 
   const openDrawer: OnFilter = (title, repos) => {
     if (repos.length === 1) { setSelectedRepo(repos[0]); return }
@@ -821,39 +826,47 @@ export default function TrendingChartMode({ repos, prevRepos = [] }: { repos: Tr
     <div className="tc-root">
       {/* Dashboard grid */}
       <div className="tc-dashboard">
-        <Section title="Momentum Bubble · ＋Stars vs Total Stars" full>
-          <ChartMomentum repos={repos} onFilter={openDrawer} />
+        <Section
+          title={
+            <button className="tc-section-toggle" onClick={() => setBubbleExpanded(v => !v)}>
+              Momentum Bubble · ＋Stars vs Total Stars
+              <span className="tc-section-toggle-icon">{bubbleExpanded ? '▲ Thu gọn' : '▼ Mở rộng'}</span>
+            </button>
+          }
+          span={bubbleExpanded ? 12 : 4}
+        >
+          <ChartMomentum repos={repos} onFilter={openDrawer} compact={!bubbleExpanded} />
         </Section>
 
-        <Section title={t('charts.top_star_gains')}>
+        <Section title={t('charts.top_star_gains')} span={6}>
           <ChartBar repos={repos} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.languages')}>
+        <Section title={t('charts.languages')} span={6}>
           <ChartLang repos={repos} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.star_delta_dist')} full>
+        <Section title={t('charts.star_delta_dist')} span={8}>
           <ChartDonut repos={repos} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.impact_dist')} full>
+        <Section title={t('charts.impact_dist')} span={4}>
           <ChartHistogram repos={repos} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.growth_lines')} full>
+        <Section title={t('charts.growth_lines')} span={8}>
           <ChartLines repos={repos} history={history} loading={historyLoading} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.net_velocity')}>
+        <Section title={t('charts.net_velocity')} span={4}>
           <ChartSlope repos={repos} history={history} loading={historyLoading} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.topics')}>
+        <Section title={t('charts.topics')} span={4}>
           <ChartTopics repos={repos} prevRepos={prevRepos} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.impact_lang')} full>
+        <Section title={t('charts.impact_lang')} span={6}>
           <ChartHeatmap repos={repos} onFilter={openDrawer} />
         </Section>
       </div>
