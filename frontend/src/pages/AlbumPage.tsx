@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { fetchTracks, fetchAlbum, imgSrc } from '../api'
 import { usePlayer } from '../PlayerContext'
 import FavoritePill from '../components/FavoritePill'
+import Spinner from '../components/Spinner'
+import BackButton from '../components/BackButton'
 
 function HeroCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
@@ -35,11 +37,11 @@ export default function AlbumPage() {
     staleTime: 5 * 60_000,
   })
 
-  if (isLoading) return <div className="loading">{t('library.loading')}</div>
+  if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
     <div className="page album-page">
-      <button className="back-btn" onClick={() => navigate(-1)}>{t('library.back')}</button>
+      <BackButton onClick={() => navigate(-1)} label={t('library.back')} />
 
       <div className="album-hero">
         <div className="album-hero-cover">

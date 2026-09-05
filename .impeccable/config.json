@@ -91,7 +91,103 @@
           "frontend/src/pages/AIStatsPage.tsx"
         ],
         "createdAt": "2026-08-26T17:38:01.815Z",
-        "reason": "pre-existing left-border on log-list cards encodes pass/fail status (red/green), same Data Needs Color Rule exception as design-system-color — functional status scanning like Sentry/error-tracker UIs, not decorative"
+        "reason": "Pre-existing borderLeft color-codes pass/fail status per log entry (red=failed, green=success) — semantic status indicator matching DESIGN.md's sanctioned Data Needs Color Rule exception, not a decorative side-tab accent. Not introduced by this session."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.55 0.20 285)",
+        "createdAt": "2026-08-28T16:48:36.053Z",
+        "reason": "Pre-existing PLAYLIST_GRADIENTS decorative cover-placeholder array in PlaylistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.58 0.18 160)",
+        "createdAt": "2026-08-28T16:48:36.125Z",
+        "reason": "Pre-existing PLAYLIST_GRADIENTS decorative cover-placeholder array in PlaylistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.60 0.19 45)",
+        "createdAt": "2026-08-28T16:48:36.197Z",
+        "reason": "Pre-existing PLAYLIST_GRADIENTS decorative cover-placeholder array in PlaylistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.52 0.19 240)",
+        "createdAt": "2026-08-28T16:48:36.280Z",
+        "reason": "Pre-existing PLAYLIST_GRADIENTS decorative cover-placeholder array in PlaylistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.56 0.20 345)",
+        "createdAt": "2026-08-28T16:48:36.357Z",
+        "reason": "Pre-existing PLAYLIST_GRADIENTS decorative cover-placeholder array in PlaylistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.60 0.17 185)",
+        "createdAt": "2026-08-28T16:48:36.436Z",
+        "reason": "Pre-existing PLAYLIST_GRADIENTS decorative cover-placeholder array in PlaylistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.64 0.17 262)",
+        "createdAt": "2026-08-28T16:48:45.927Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.70 0.18 45)",
+        "createdAt": "2026-08-28T16:48:46.007Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.65 0.14 185)",
+        "createdAt": "2026-08-28T16:48:46.080Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.67 0.19 345)",
+        "createdAt": "2026-08-28T16:48:46.215Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.65 0.15 145)",
+        "createdAt": "2026-08-28T16:48:46.301Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.55 0.20 240)",
+        "createdAt": "2026-08-28T16:48:46.372Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.60 0.22 290)",
+        "createdAt": "2026-08-28T16:48:46.465Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.62 0.20 20)",
+        "createdAt": "2026-08-28T16:48:46.538Z",
+        "reason": "Pre-existing AVATAR_GRADIENTS decorative avatar-placeholder array in ArtistsPage.tsx, not introduced by this session, sanctioned per-identity color variety exception"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#aaaaaa",
+        "createdAt": "2026-09-04T15:49:25.042Z",
+        "reason": "pre-existing neutral fallback color in RadialNav aura gradient when no track playing, predates this session's snap-removal fix, out of scope"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "9px",
+        "createdAt": "2026-09-04T15:49:25.120Z",
+        "reason": "pre-existing radial-petal-label font-size in RadialNav, predates this session's snap-removal fix, out of scope"
       }
     ]
   }

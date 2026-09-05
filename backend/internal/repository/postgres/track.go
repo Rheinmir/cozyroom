@@ -219,6 +219,130 @@ func (r *TrackRepo) RecordPlay(ctx context.Context, trackID string) error {
 	return err
 }
 
+// genreKeyExpr normalizes raw ID3 genre tags for grouping: real libraries tag
+// the same genre inconsistently (Pop / POP, V-POP / V.POP / V_POP), which
+// without normalization renders as near-duplicate tiles side by side in the
+// Browse-by-genre grid. Stripping punctuation/case merges those variants.
+const genreKeyExpr = `upper(regexp_replace(%s, '[^a-zA-Z0-9]+', '', 'g'))`
+
+// ListGenres returns every distinct genre in the library (grouped by
+// genreKeyExpr, displayed as the most common raw spelling within the group),
+// with a track count and a representative cover (the cover of the album
+// that has the most tracks tagged with that genre), ordered by track count
+// desc.
+func (r *TrackRepo) ListGenres(ctx context.Context) ([]domain.Genre, error) {
+	rows, err := r.q.QueryContext(ctx, fmt.Sprintf(`
+		WITH g AS (
+			SELECT genre, COUNT(*) AS cnt, `+genreKeyExpr+` AS key
+			FROM tracks
+			WHERE genre != ''
+			GROUP BY genre
+		), ranked AS (
+			SELECT key, genre AS display_name, cnt,
+			       SUM(cnt) OVER (PARTITION BY key)                              AS total_cnt,
+			       ROW_NUMBER() OVER (PARTITION BY key ORDER BY cnt DESC, genre) AS rn
+			FROM g
+		)
+		SELECT key, display_name, total_cnt FROM ranked WHERE rn = 1 ORDER BY total_cnt DESC`, "genre"))
+	if err != nil {
+		return nil, err
+	}
+	type genreRow struct {
+		key, name string
+		count     int
+	}
+	var list []genreRow
+	for rows.Next() {
+		var g genreRow
+		if err := rows.Scan(&g.key, &g.name, &g.count); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		list = append(list, g)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	covers := map[string]string{}
+	coverRows, err := r.q.QueryContext(ctx, fmt.Sprintf(`
+		SELECT DISTINCT ON (key) key, cover_path FROM (
+			SELECT `+genreKeyExpr+` AS key, COALESCE(al.cover_path,'') AS cover_path,
+			       al.id, COUNT(*) AS cnt
+			FROM tracks t JOIN albums al ON al.id = t.album_id
+			WHERE t.genre != ''
+			GROUP BY key, al.id, al.cover_path
+		) x
+		ORDER BY key, (cover_path != '') DESC, cnt DESC`, "t.genre"))
+	if err == nil {
+		for coverRows.Next() {
+			var key, cover string
+			if err := coverRows.Scan(&key, &cover); err != nil {
+				coverRows.Close()
+				return nil, err
+			}
+			covers[key] = cover
+		}
+		coverRows.Close()
+		if err := coverRows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	out := make([]domain.Genre, 0, len(list))
+	for _, g := range list {
+		out = append(out, domain.Genre{Name: g.name, TrackCount: g.count, CoverURL: covers[g.key]})
+	}
+	return out, nil
+}
+
+// GetByGenre returns the albums and tracks tagged with the given genre,
+// for the Browse-by-genre click-through in Search. Matches via genreKeyExpr
+// so it captures every raw spelling variant grouped under that tile by
+// ListGenres, not just the one exact string shown as its display name.
+func (r *TrackRepo) GetByGenre(ctx context.Context, genre string) (*domain.GenreDetail, error) {
+	d := &domain.GenreDetail{Albums: []domain.SearchAlbum{}, Tracks: []domain.SearchTrack{}}
+	genreKey := fmt.Sprintf(genreKeyExpr, "$1")
+
+	rows, err := r.q.QueryContext(ctx,
+		`SELECT DISTINCT al.id, al.artist_id, ar.name, al.title, COALESCE(al.year,0), COALESCE(al.cover_path,'')
+		 FROM albums al JOIN artists ar ON ar.id = al.artist_id JOIN tracks t ON t.album_id = al.id
+		 WHERE `+fmt.Sprintf(genreKeyExpr, "t.genre")+` = `+genreKey+` ORDER BY al.title`, genre)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var a domain.SearchAlbum
+		if err := rows.Scan(&a.ID, &a.ArtistID, &a.ArtistName, &a.Title, &a.Year, &a.CoverURL); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		d.Albums = append(d.Albums, a)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	rows, err = r.q.QueryContext(ctx,
+		`SELECT t.id, t.album_id, al.title, t.title, COALESCE(t.track_num,0), ar.name, COALESCE(t.duration_s,0), ar.id
+		 FROM tracks t JOIN albums al ON al.id = t.album_id JOIN artists ar ON ar.id = al.artist_id
+		 WHERE `+fmt.Sprintf(genreKeyExpr, "t.genre")+` = `+genreKey+` ORDER BY t.title LIMIT 200`, genre)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var t domain.SearchTrack
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.AlbumTitle, &t.Title, &t.TrackNum, &t.ArtistName, &t.DurationS, &t.ArtistID); err != nil {
+			return nil, err
+		}
+		d.Tracks = append(d.Tracks, t)
+	}
+	return d, rows.Err()
+}
+
 func (r *TrackRepo) Upsert(ctx context.Context, t domain.Track) error {
 	_, err := r.q.ExecContext(ctx,
 		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6)

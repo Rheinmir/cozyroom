@@ -1,41 +1,41 @@
 # L2 REPO BACKSTOP — vendor-neutral: agent/CLI nào commit cũng bị gate.
 # Cài: pipx install pre-commit && pre-commit install
 # Lưu ý: file này nằm ở repo root (pre-commit yêu cầu). Khi deploy llmwiki vào
-# project khác, copy sang root của project đó và sửa prefix đường dẫn (xem harness/recipe.md).
+# project khác, copy sang root của project đó và sửa prefix đường dẫn (xem .harness/recipe.md).
 repos:
   - repo: local
     hooks:
       - id: wiki-origin-required
         name: "R2: wiki file phai co '## Origin'"
-        entry: python harness/validators/origin_required.py
+        entry: python .harness/validators/origin_required.py
         language: system
-        files: ^llmwiki/wiki/(concepts|entities|sources|draft)/.*\.md$
+        files: ^.llmwiki/wiki/(concepts|entities|sources|draft)/.*\.md$
 
       - id: wiki-folder-structure
         name: "R5: file wiki dung subfolder"
-        entry: python harness/validators/folder_structure.py
+        entry: python .harness/validators/folder_structure.py
         language: system
-        files: ^llmwiki/wiki/.*\.md$
+        files: ^.llmwiki/wiki/.*\.md$
 
       - id: wiki-index-sync
         name: "R3: index.md khop tap file wiki"
-        entry: python harness/validators/index_sync.py --wiki-dir llmwiki/wiki
+        entry: python .harness/validators/index_sync.py --wiki-dir .llmwiki/wiki
         language: system
         always_run: true
         pass_filenames: false
 
       - id: wiki-health
         name: "L4: wiki health (broken wikilink = fail)"
-        entry: python harness/scripts/wiki-health.py --wiki-dir llmwiki/wiki --fail-on broken
+        entry: python .harness/scripts/wiki-health.py --wiki-dir .llmwiki/wiki --fail-on broken
         language: system
         always_run: true
         pass_filenames: false
 
       - id: frontend-map-verify
         name: "R8: frontend-component-map sanity (no unnorm paths, hub files have used-by)"
-        entry: python harness/scripts/index-frontend.py --verify
+        entry: python .harness/scripts/index-frontend.py --verify
         language: system
-        files: ^llmwiki/wiki/concepts/frontend-component-map\.md$
+        files: ^.llmwiki/wiki/concepts/frontend-component-map\.md$
         pass_filenames: false
 
   # Tùy chọn — bật khi đã cài binary (brew install lychee):
@@ -43,6 +43,6 @@ repos:
   #   hooks:
   #     - id: lychee-offline
   #       name: "link check offline"
-  #       entry: lychee --offline --no-progress llmwiki/wiki
+  #       entry: lychee --offline --no-progress .llmwiki/wiki
   #       language: system
   #       pass_filenames: false

@@ -64,3 +64,11 @@ func (u *LibraryUsecase) IsEmpty(ctx context.Context) bool {
 func (u *LibraryUsecase) TrackMeta(ctx context.Context, id string) (*domain.TrackMeta, error) {
 	return u.Tracks.GetMeta(ctx, id)
 }
+
+func (u *LibraryUsecase) ListGenres(ctx context.Context) ([]domain.Genre, error) {
+	return u.Tracks.ListGenres(ctx)
+}
+
+func (u *LibraryUsecase) GenreDetail(ctx context.Context, genre string) (*domain.GenreDetail, error) {
+	return u.Tracks.GetByGenre(ctx, genre)
+}

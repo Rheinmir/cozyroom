@@ -161,6 +161,8 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/artist-images/{id}", h.artistImage)
 	mux.HandleFunc("GET /api/smart-queue", h.smartQueue)
 	mux.HandleFunc("GET /api/search", h.search)
+	mux.HandleFunc("GET /api/genres", h.listGenres)
+	mux.HandleFunc("GET /api/genres/{genre}", h.genreDetail)
 	mux.HandleFunc("GET /api/lyrics/detect-language", h.detectLyricsLanguage)
 	mux.HandleFunc("GET /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("POST /api/lyrics/{id}", h.lyricsHandler)
@@ -253,6 +255,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/playlists/{id}/tracks", ph.listPlaylistTracks)
 	mux.HandleFunc("POST /api/playlists", ph.createPlaylist)
 	mux.HandleFunc("DELETE /api/playlists/{id}", ph.deletePlaylist)
+	mux.HandleFunc("PATCH /api/playlists/{id}", ph.renamePlaylist)
 	mux.HandleFunc("POST /api/playlists/{id}/tracks", ph.addTrackToPlaylist)
 	mux.HandleFunc("DELETE /api/playlists/{id}/tracks/{track_id}", ph.removeTrackFromPlaylist)
 

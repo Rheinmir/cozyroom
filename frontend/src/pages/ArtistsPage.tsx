@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchArtists, fetchStats, imgSrc } from '../api'
+import Spinner from '../components/Spinner'
 
 const AVATAR_GRADIENTS = [
   'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 262) 0%, oklch(0.4 0.13 300) 46%, oklch(0.17 0.06 340) 100%)',
@@ -55,25 +56,30 @@ export default function ArtistsPage() {
   // Track which letter each rendered artist starts, so the A-Z rail can jump to it
   let lastLetter = ''
 
-  if (isLoading) return <div className="loading">{t('library.loading')}</div>
+  if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
     <div className="page">
       {stats && (
         <div className="stats-bar">
           <span>{stats.artists} {t('search.artists').toLowerCase()}</span>
-          <span>{stats.albums} {t('search.albums').toLowerCase()}</span>
-          <span>{stats.tracks} {t('search.tracks').toLowerCase()}</span>
+          <Link to="/albums" className="stats-bar-link">{stats.albums} {t('search.albums').toLowerCase()}</Link>
+          <Link to="/tracks" className="stats-bar-link">{stats.tracks} {t('search.tracks').toLowerCase()}</Link>
         </div>
       )}
       <h1 className="page-title">{t('nav.artists')}</h1>
-      <input
-        type="text"
-        className="artist-filter-input"
-        placeholder={`Lọc trong ${sortedArtists.length} nghệ sĩ…`}
-        value={filterQuery}
-        onChange={e => setFilterQuery(e.target.value)}
-      />
+      <div className="artist-filter-wrap">
+        <svg className="artist-filter-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+        <input
+          type="text"
+          className="artist-filter-input"
+          placeholder="Lọc theo tên nghệ sĩ…"
+          value={filterQuery}
+          onChange={e => setFilterQuery(e.target.value)}
+        />
+      </div>
       <div className="artist-grid-wrap">
         <div className="artist-grid">
           {filtered.map(a => {

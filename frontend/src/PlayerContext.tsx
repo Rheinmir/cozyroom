@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import type { Track } from './types'
 import { fetchSmartQueue, lastfmNowPlaying, lastfmScrobble, recordPlay } from './api'
+import { getOfflineObjectURL } from './offlineStore'
 import pkg from '../package.json'
 
 export type RepeatMode  = 'off' | 'one' | 'all'
@@ -20,6 +22,7 @@ type PlayerCtx = {
   analyser:    AnalyserNode | null
   coverColors: string[]
   play:          (t: Track, queue?: Track[]) => void
+  playFromQueue: (idx: number) => void
   toggle:        () => void
   seek:          (s: number) => void
   prev:          () => void
@@ -30,6 +33,16 @@ type PlayerCtx = {
   setCoverColors:(c: string[])    => void
   playbackError:  { code: number; message: string; trackId: string } | null
   setPlaybackError: (err: { code: number; message: string; trackId: string } | null) => void
+  // Shared so the queue toggle button can live in more than one place
+  // (NPO controls, the mobile search island) and both open the same panel.
+  queueOpen:    boolean
+  setQueueOpen: Dispatch<SetStateAction<boolean>>
+  // Whether the fullscreen Now Playing overlay is open — also shared so
+  // MobileSearchBar (a separate always-mounted component) can tell whether
+  // NPO's own queue-panel is already showing, and skip rendering its own
+  // duplicate copy of the exact same panel underneath it.
+  npoOpen:    boolean
+  setNpoOpen: Dispatch<SetStateAction<boolean>>
 }
 
 const Ctx = createContext<PlayerCtx>({} as PlayerCtx)
@@ -182,6 +195,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [analyser,    setAnalyser]   = useState<AnalyserNode | null>(null)
   const [coverColors, setCoverColors] = useState<string[]>(['#1db954', '#191414']) // default palette
   const [playbackError, setPlaybackError] = useState<{ code: number; message: string; trackId: string } | null>(null)
+  const [queueOpen, setQueueOpen] = useState(false)
+  const [npoOpen, setNpoOpen] = useState(false)
 
   // Set crossOrigin + preload="auto" so browser buffers ahead aggressively
   useEffect(() => {
@@ -195,15 +210,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const s = init.current
     if (!s?.track) return
+    const trackId = s.track.id
     const q = s.quality ?? 'lossless'
-    audioA.current.src = streamUrl(s.track.id, resolveQuality(s.track.id, q))
-    audioA.current.preload = 'auto'
-    const seek = () => {
-      audioA.current.currentTime = s.progress ?? 0
-      audioA.current.play().then(() => setPlaying(true)).catch(() => {})
-    }
-    audioA.current.addEventListener('loadedmetadata', seek, { once: true })
-    audioA.current.load()
+    getOfflineObjectURL(trackId).then(offlineUrl => {
+      audioA.current.src = offlineUrl ?? streamUrl(trackId, resolveQuality(trackId, q))
+      audioA.current.preload = 'auto'
+      const seek = () => {
+        audioA.current.currentTime = s.progress ?? 0
+        audioA.current.play().then(() => setPlaying(true)).catch(() => {})
+      }
+      audioA.current.addEventListener('loadedmetadata', seek, { once: true })
+      audioA.current.load()
+    })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist state to localStorage (progress saved separately on pause)
@@ -273,6 +291,28 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     return () => { audioCtxRef.current?.close() }
   }, [])
+
+  // Browsers/OS can silently reclaim a backgrounded tab's audio decoder to
+  // free memory, then restart playback from scratch once the tab is visible
+  // again — outside any control this app has. When that happens, React's
+  // progress/duration/isPlaying state is left showing whatever it was right
+  // before backgrounding, frozen, while the audio element itself has already
+  // moved on — the progress bar looks stuck even though sound is playing.
+  // Re-reading the real state straight from the active element on every
+  // return-to-foreground keeps the UI honest regardless of what happened
+  // while the tab was hidden.
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return
+      if (!trackRef.current) return
+      const el = getActive()
+      if (isFinite(el.currentTime)) setProgress(el.currentTime)
+      if (isFinite(el.duration) && el.duration > 0) setDuration(el.duration)
+      setPlaying(!el.paused)
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [getActive])
 
   // mutable refs so audio event handlers always see current values
   const repeatRef      = useRef(repeat)
@@ -358,21 +398,59 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const active  = activeSlot.current === 'A' ? audioA.current : audioB.current
       const standby = activeSlot.current === 'A' ? audioB.current : audioA.current
 
-      // Check if this track is already preloaded in the standby audio
-      if (preloadedTrackId.current === t.id) {
-        // Seamless swap: standby already has data buffered
-        active.pause()
-        active.removeAttribute('src')
-        active.load()  // release the old stream
+      // Captured synchronously, before the async offline check below — reading
+      // preloadedTrackId.current *inside* the callback would always see null,
+      // since the synchronous `preloadedTrackId.current = null` further down
+      // in this same call runs before that microtask ever gets a chance to fire.
+      const wasPreloaded = preloadedTrackId.current === t.id
 
-        // Flip the slot
+      // Flip the slot NOW, synchronously, when we already know this will be a
+      // seamless swap — not later inside the async callback below. setTrack(t)
+      // (further down in this function) triggers the preload-lookahead effect
+      // to re-run immediately for "the track after this one", and that effect
+      // calls getStandby() to decide where to load it. If the flip hasn't
+      // happened yet, getStandby() still resolves to *this* element — the one
+      // this call is about to swap into and play — so the lookahead preload
+      // overwrites its buffered audio with a different track's stream before
+      // .play() below ever runs. Flipping here first means getStandby() always
+      // sees the correct (already-updated) slot, so that preload can never
+      // land on the element this call is using.
+      if (wasPreloaded) {
         activeSlot.current = activeSlot.current === 'A' ? 'B' : 'A'
-        standby.play().catch(console.error)
-      } else {
-        // Normal load (no preload available or different track)
-        active.src = streamUrl(t.id, resolveQuality(t.id, q), getClientId(), attemptIdRef.current)
-        active.play().catch(console.error)
       }
+
+      // Downloaded-for-offline tracks bypass the network entirely — no
+      // preload/quality-fallback cascade applies since there's no network
+      // fetch to preload or fall back on.
+      getOfflineObjectURL(t.id).then(offlineUrl => {
+        // Staleness guard: a newer startTrack() call may have already taken
+        // over (e.g. rapid track skips, or switching across the local/YouTube
+        // boundary) while this offline lookup was still in flight. Without this
+        // check, this orphaned callback would still call .play() on its captured
+        // element after a newer track has already started elsewhere — audible
+        // as two tracks playing at once.
+        if (trackRef.current?.id !== t.id) return
+
+        if (offlineUrl) {
+          active.pause()
+          active.src = offlineUrl
+          active.play().catch(console.error)
+          return
+        }
+        // Check if this track was already preloaded in the standby audio
+        if (wasPreloaded) {
+          // Seamless swap: standby already has data buffered. The slot was
+          // already flipped synchronously above, before this callback ran.
+          active.pause()
+          active.removeAttribute('src')
+          active.load()  // release the old stream
+          standby.play().catch(console.error)
+        } else {
+          // Normal load (no preload available or different track)
+          active.src = streamUrl(t.id, resolveQuality(t.id, q), getClientId(), attemptIdRef.current)
+          active.play().catch(console.error)
+        }
+      })
     }
 
     preloadedTrackId.current = null
@@ -700,6 +778,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
   }, [startTrack])
 
+  // Jump to a specific position in the CURRENT queue (Up Next list click).
+  // Deliberately bypasses `play()`'s newQueue path — passing the same queue
+  // back through there would flip lockedQueueRef.current to true, silently
+  // killing smart-radio auto-fill for a queue that was never meant to be
+  // locked. startTrack() alone updates track/queueIdx and leaves
+  // lockedQueueRef / the queue array untouched, exactly like a natural
+  // next()/prev() advance.
+  const playFromQueue = useCallback((idx: number) => {
+    const q = queueRef.current
+    if (idx < 0 || idx >= q.length) return
+    startTrack(q[idx], idx)
+  }, [startTrack])
+
   const toggle = () => {
     const active = getActive()
     if (isPlaying) { active.pause(); setPlaying(false) }
@@ -765,7 +856,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     })
 
     const active = getActive()
-    navigator.mediaSession.setActionHandler('play',          () => { active.play();  setPlaying(true)  })
+    navigator.mediaSession.setActionHandler('play',          () => { active.play().then(() => setPlaying(true)).catch(console.error) })
     navigator.mediaSession.setActionHandler('pause',         () => { active.pause(); setPlaying(false) })
     navigator.mediaSession.setActionHandler('nexttrack',     () => nextRef.current())
     navigator.mediaSession.setActionHandler('previoustrack', () => prevRef.current())
@@ -822,9 +913,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={{
       track, queue, queueIdx, isPlaying, progress, duration,
       repeat, shuffleMode, quality, analyser, coverColors,
-      play, toggle, seek, prev, next,
+      play, playFromQueue, toggle, seek, prev, next,
       setRepeat, setShuffleMode: handleSetShuffleMode, setQuality, setCoverColors,
       playbackError, setPlaybackError,
+      queueOpen, setQueueOpen,
+      npoOpen, setNpoOpen,
     }}>
       {children}
     </Ctx.Provider>

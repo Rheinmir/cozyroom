@@ -508,6 +508,32 @@ func (h *handlers) recordPlay(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// GET /api/genres — distinct genres for the Search page's Browse grid.
+func (h *handlers) listGenres(w http.ResponseWriter, r *http.Request) {
+	genres, err := h.lib.ListGenres(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(genres)
+}
+
+// GET /api/genres/{genre} — albums + tracks tagged with one genre, for the
+// Browse-by-genre click-through in Search.
+func (h *handlers) genreDetail(w http.ResponseWriter, r *http.Request) {
+	genre := r.PathValue("genre")
+	detail, err := h.lib.GenreDetail(r.Context(), genre)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(detail)
+}
+
 func (h *handlers) search(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	if len(q) >= 2 {

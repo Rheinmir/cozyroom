@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { fetchAlbums, imgSrc } from '../api'
+import Spinner from '../components/Spinner'
+import BackButton from '../components/BackButton'
 
 function AlbumCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
@@ -16,6 +19,7 @@ function ArtistHeroImg({ url, name }: { url: string; name: string }) {
 }
 
 export default function ArtistPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const { data: albums = [], isLoading } = useQuery({
     queryKey: ['albums', id],
@@ -26,11 +30,11 @@ export default function ArtistPage() {
   const artistName     = albums[0]?.artist_name ?? ''
   const artistImageUrl = albums[0]?.artist_image_url ?? ''
 
-  if (isLoading) return <div className="loading">Loading…</div>
+  if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
     <div className="page">
-      <Link to="/" className="back-btn">← Artists</Link>
+      <BackButton to="/" label="Artists" />
       <div className="artist-hero">
         <div className="artist-hero-avatar">
           <ArtistHeroImg url={artistImageUrl} name={artistName} />

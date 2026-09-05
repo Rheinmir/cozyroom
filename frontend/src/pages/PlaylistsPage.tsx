@@ -8,9 +8,12 @@ import {
   fetchPlaylists,
   fetchPlaylistTracks,
   fetchTracks,
-  deletePlaylist
+  deletePlaylist,
+  renamePlaylist
 } from '../api'
 import FavoritePill, { getLocalPlaylists, saveLocalPlaylists } from '../components/FavoritePill'
+import Spinner from '../components/Spinner'
+import BackButton from '../components/BackButton'
 import { saveOfflineTrack, deleteOfflineTrack, listOfflineTrackIds } from '../offlineStore'
 import type { Track } from '../types'
 
@@ -106,11 +109,17 @@ export default function PlaylistsPage() {
   const [localLists, setLocalLists] = useState<Playlist[]>([])
   const [permLists, setPermLists] = useState<Playlist[]>([])
 
-  // Password prompt state for deletion
+  // Password prompt state — shared between delete and rename
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [passwordAction, setPasswordAction] = useState<'delete' | 'rename' | null>(null)
+  const [renamePending, setRenamePending] = useState<{ id: string; name: string } | null>(null)
+
+  // Inline playlist name editing
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
 
   // Offline download state — which tracks are saved locally, which are mid-download
   const [offlineIds, setOfflineIds] = useState<Set<string>>(new Set())
@@ -221,6 +230,7 @@ export default function PlaylistsPage() {
         proceedDelete(id, pw)
       } else {
         setDeletingId(id)
+        setPasswordAction('delete')
         setPasswordInput('')
         setPasswordError('')
         setShowPasswordModal(true)
@@ -234,6 +244,7 @@ export default function PlaylistsPage() {
       setSessionPassword(pw)
       setShowPasswordModal(false)
       setDeletingId(null)
+      setPasswordAction(null)
       if (selectedPlaylistId === id) {
         setSelectedPlaylistId(null)
       }
@@ -247,6 +258,29 @@ export default function PlaylistsPage() {
         toast(e.message || 'Xóa playlist thất bại', 'error')
         setShowPasswordModal(false)
         setDeletingId(null)
+        setPasswordAction(null)
+      }
+    }
+  }
+
+  const proceedRename = async (id: string, name: string, pw: string) => {
+    try {
+      await renamePlaylist(id, name, pw)
+      setSessionPassword(pw)
+      setShowPasswordModal(false)
+      setRenamePending(null)
+      setPasswordAction(null)
+      loadLists()
+    } catch (e: any) {
+      console.error(e)
+      if (e.message?.includes('412') || e.message?.includes('401') || e.message?.includes('unauthorized')) {
+        sessionStorage.removeItem('cozyroom_owner_password')
+        setPasswordError('Mật khẩu sai!')
+      } else {
+        toast(e.message || 'Đổi tên playlist thất bại', 'error')
+        setShowPasswordModal(false)
+        setRenamePending(null)
+        setPasswordAction(null)
       }
     }
   }
@@ -254,8 +288,44 @@ export default function PlaylistsPage() {
   const handlePasswordSubmit = () => {
     const trimmed = passwordInput.trim()
     if (!trimmed) return
-    if (deletingId) {
+    if (passwordAction === 'rename' && renamePending) {
+      proceedRename(renamePending.id, renamePending.name, trimmed)
+    } else if (deletingId) {
       proceedDelete(deletingId, trimmed)
+    }
+  }
+
+  // Inline playlist name editing
+  const startEditName = () => {
+    if (!currentPlaylist) return
+    setNameDraft(currentPlaylist.name)
+    setEditingName(true)
+  }
+
+  const cancelEditName = () => setEditingName(false)
+
+  const saveEditName = () => {
+    if (!currentPlaylist) return
+    const trimmed = nameDraft.trim()
+    setEditingName(false)
+    if (!trimmed || trimmed === currentPlaylist.name) return
+
+    if (currentPlaylist.is_local) {
+      const updated = localLists.map(l => l.id === currentPlaylist.id ? { ...l, name: trimmed } : l)
+      setLocalLists(updated)
+      saveLocalPlaylists(updated)
+      return
+    }
+
+    const pw = getSessionPassword()
+    if (pw) {
+      proceedRename(currentPlaylist.id, trimmed, pw)
+    } else {
+      setRenamePending({ id: currentPlaylist.id, name: trimmed })
+      setPasswordAction('rename')
+      setPasswordInput('')
+      setPasswordError('')
+      setShowPasswordModal(true)
     }
   }
 
@@ -266,6 +336,46 @@ export default function PlaylistsPage() {
     }
   }
 
+  // Password modal — shared between the list view (delete) and the detail view (rename)
+  const passwordModal = showPasswordModal && (
+    <div className="password-modal-overlay" onClick={e => e.stopPropagation()}>
+      <div className="password-modal">
+        <h3>{t('playlist.password_required', { defaultValue: 'Yêu cầu Mật khẩu' })}</h3>
+        <p>{t('playlist.password_desc', { defaultValue: 'Vui lòng nhập mật khẩu chủ sở hữu để chỉnh sửa dữ liệu vĩnh viễn.' })}</p>
+        <input
+          className="dropdown-input"
+          type="password"
+          placeholder="Nhập mật khẩu..."
+          value={passwordInput}
+          onChange={e => { setPasswordInput(e.target.value); setPasswordError(''); }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handlePasswordSubmit()
+          }}
+          autoFocus
+        />
+        {passwordError && (
+          <span className="error-text">{passwordError}</span>
+        )}
+        <div className="password-modal-actions">
+          <button
+            type="button"
+            className="modal-btn modal-btn--cancel"
+            onClick={() => { setShowPasswordModal(false); setDeletingId(null); setRenamePending(null); setPasswordAction(null); }}
+          >
+            {t('playlist.cancel', { defaultValue: 'Hủy' })}
+          </button>
+          <button
+            type="button"
+            className="modal-btn modal-btn--confirm"
+            onClick={handlePasswordSubmit}
+          >
+            {t('playlist.confirm', { defaultValue: 'Xác nhận' })}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   if (selectedPlaylistId && currentPlaylist) {
     return (
       <div className="page" style={{ paddingTop: 0 }}>
@@ -273,9 +383,7 @@ export default function PlaylistsPage() {
           className="playlist-hero-wrapper"
           style={{ background: `linear-gradient(180deg, rgba(${dominantRgb}, 0.65) 0%, rgba(${dominantRgb}, 0.2) 70%, transparent 100%)` }}
         >
-          <button className="back-btn" onClick={() => setSelectedPlaylistId(null)}>
-            {t('library.back', { defaultValue: '← Quay lại' })}
-          </button>
+          <BackButton onClick={() => setSelectedPlaylistId(null)} label={t('library.back', { defaultValue: 'Quay lại' })} />
 
           <div className="album-hero">
             <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden', boxShadow: '0 20px 48px rgba(0,0,0,0.7)', flexShrink: 0 }}>
@@ -287,7 +395,34 @@ export default function PlaylistsPage() {
                   ? t('playlist.local', { defaultValue: 'Local Playlist' })
                   : t('playlist.permanent', { defaultValue: 'Permanent Playlist' })}
               </p>
-              <h1 className="hero-title">{currentPlaylist.name}</h1>
+              {editingName ? (
+                <input
+                  type="text"
+                  className="hero-title-input"
+                  value={nameDraft}
+                  autoFocus
+                  onChange={e => setNameDraft(e.target.value)}
+                  onBlur={saveEditName}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') e.currentTarget.blur()
+                    else if (e.key === 'Escape') cancelEditName()
+                  }}
+                />
+              ) : (
+                <div className="hero-title-wrap">
+                  <h1 className="hero-title">{currentPlaylist.name}</h1>
+                  <button
+                    className="hero-title-edit-btn"
+                    onClick={startEditName}
+                    aria-label={t('playlist.rename', { defaultValue: 'Đổi tên playlist' })}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <p className="hero-meta">
                 {t('library.tracks_count', { n: tracks.length })}
               </p>
@@ -303,7 +438,7 @@ export default function PlaylistsPage() {
         </div>
 
         {isLoadingTracks ? (
-          <div className="loading">{t('library.loading', { defaultValue: 'Đang tải...' })}</div>
+          <div className="loading"><Spinner size={28} label={t('library.loading', { defaultValue: 'Đang tải...' })} /></div>
         ) : tracks.length === 0 ? (
           <p className="text-muted" style={{ marginTop: 24 }}>
             {t('playlist.no_tracks', { defaultValue: 'Chưa có bài hát nào trong playlist này.' })}
@@ -374,6 +509,7 @@ export default function PlaylistsPage() {
             </tbody>
           </table>
         )}
+        {passwordModal}
       </div>
     )
   }
@@ -420,45 +556,7 @@ export default function PlaylistsPage() {
         </div>
       )}
 
-      {/* Password Modal for Deletion */}
-      {showPasswordModal && (
-        <div className="password-modal-overlay" onClick={e => e.stopPropagation()}>
-          <div className="password-modal">
-            <h3>{t('playlist.password_required', { defaultValue: 'Yêu cầu Mật khẩu' })}</h3>
-            <p>{t('playlist.password_desc', { defaultValue: 'Vui lòng nhập mật khẩu chủ sở hữu để chỉnh sửa dữ liệu vĩnh viễn.' })}</p>
-            <input
-              className="dropdown-input"
-              type="password"
-              placeholder="Nhập mật khẩu..."
-              value={passwordInput}
-              onChange={e => { setPasswordInput(e.target.value); setPasswordError(''); }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handlePasswordSubmit()
-              }}
-              autoFocus
-            />
-            {passwordError && (
-              <span className="error-text">{passwordError}</span>
-            )}
-            <div className="password-modal-actions">
-              <button
-                type="button"
-                className="modal-btn modal-btn--cancel"
-                onClick={() => { setShowPasswordModal(false); setDeletingId(null); }}
-              >
-                {t('playlist.cancel', { defaultValue: 'Hủy' })}
-              </button>
-              <button
-                type="button"
-                className="modal-btn modal-btn--confirm"
-                onClick={handlePasswordSubmit}
-              >
-                {t('playlist.confirm', { defaultValue: 'Xác nhận' })}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {passwordModal}
     </div>
   )
 }

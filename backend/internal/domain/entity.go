@@ -88,6 +88,19 @@ type SearchTrack struct {
 	ArtistID   string `json:"artist_id"`
 }
 
+// Genre is a distinct track genre with a representative cover for browse grids.
+type Genre struct {
+	Name       string `json:"name"`
+	TrackCount int    `json:"track_count"`
+	CoverURL   string `json:"cover_url"`
+}
+
+// GenreDetail groups the albums and tracks tagged with one genre.
+type GenreDetail struct {
+	Albums []SearchAlbum `json:"albums"`
+	Tracks []SearchTrack `json:"tracks"`
+}
+
 // Video represents a movie or video file.
 type Video struct {
 	ID             string `json:"id"`
