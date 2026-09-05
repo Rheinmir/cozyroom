@@ -16,6 +16,27 @@ type SearchResult = {
   tracks:  (Track & { album_title: string })[]
 }
 
+// Artist-avatar gradients — mirrors ArtistsPage.tsx so search-result avatars
+// read the same as the Artists library (deterministic hue per name). Kept as a
+// local copy on purpose: shares no code file, so the two surfaces stay
+// independent. /api/search returns artists without an image, so these avatars
+// are always the gradient + first-letter form.
+const AVATAR_GRADIENTS = [
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 262) 0%, oklch(0.4 0.13 300) 46%, oklch(0.17 0.06 340) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.70 0.18 45) 0%, oklch(0.46 0.15 20) 46%, oklch(0.20 0.06 355) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.65 0.14 185) 0%, oklch(0.42 0.12 210) 46%, oklch(0.18 0.05 230) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.67 0.19 345) 0%, oklch(0.43 0.14 310) 46%, oklch(0.18 0.06 280) 100%)',
+  'radial-gradient(125% 125% at 70% 22%, oklch(0.65 0.15 145) 0%, oklch(0.41 0.12 170) 46%, oklch(0.18 0.05 200) 100%)',
+  'radial-gradient(125% 125% at 30% 78%, oklch(0.55 0.20 240) 0%, oklch(0.35 0.15 270) 46%, oklch(0.15 0.07 300) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.60 0.22 290) 0%, oklch(0.38 0.16 320) 46%, oklch(0.16 0.07 350) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.62 0.20 20) 0%, oklch(0.40 0.15 350) 46%, oklch(0.18 0.06 320) 100%)',
+]
+function gradientFor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (Math.imul(31, h) + name.charCodeAt(i)) | 0
+  return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length]
+}
+
 const fetchSearch = (q: string): Promise<SearchResult> =>
   fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json())
 
@@ -415,8 +436,19 @@ export default function SearchPage() {
       const genreTracks = genreDetail?.tracks ?? []
       return (
         <div className="page">
-          <BackButton onClick={() => setSelectedGenre(null)} label={t('search.back_to_genres')} />
-          <h1 className="page-title">{selectedGenre}</h1>
+          <div className="genre-detail-head">
+            <button
+              type="button"
+              className="genre-back-pill"
+              onClick={() => setSelectedGenre(null)}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              {t('search.back_to_genres')}
+            </button>
+            <h1 className="page-title">{selectedGenre}</h1>
+          </div>
 
           {genreLoading ? (
             <div className="loading"><Spinner size={28} label={t('search.searching')} /></div>
@@ -425,7 +457,7 @@ export default function SearchPage() {
               {genreAlbums.length > 0 && (
                 <section className="search-section">
                   <h2 className="section-title">{t('search.albums')}</h2>
-                  <div className="album-grid">
+                  <div className="album-grid search-album-grid">
                     {genreAlbums.map(al => (
                       <Link key={al.id} to={`/album/${al.id}`} className="album-card">
                         <div className="album-cover">
@@ -536,7 +568,7 @@ export default function SearchPage() {
           <div className="search-artist-list">
             {artists.map(a => (
               <Link key={a.id} to={`/artist/${a.id}`} className="search-artist-row">
-                <div className="search-avatar">{a.name.charAt(0).toUpperCase()}</div>
+                <div className="search-avatar" style={{ background: gradientFor(a.name) }}>{a.name.charAt(0).toUpperCase()}</div>
                 <div>
                   <p className="search-row-title">{a.name}</p>
                   <p className="search-row-sub">{t('search.artist')}</p>
@@ -550,7 +582,7 @@ export default function SearchPage() {
       {albums.length > 0 && (
         <section className="search-section">
           <h2 className="section-title">{t('search.albums')}</h2>
-          <div className="album-grid">
+          <div className="album-grid search-album-grid">
             {albums.map(al => (
               <Link key={al.id} to={`/album/${al.id}`} className="album-card">
                 <div className="album-cover">

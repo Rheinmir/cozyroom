@@ -1219,7 +1219,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.6) 0%, rgba(0,0,0,0) 55%);
+  /* Strong bottom scrim so the genre label always separates from busy cover
+     art (tracklists, cover typography). Deep + wide enough that the label
+     zone is near-black regardless of what the photo shows there. */
+  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.5) 26%, rgba(0,0,0,0) 62%);
 }
 .genre-tile-label {
   position: relative;
@@ -1227,8 +1230,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   padding: 14px;
   font-size: 16px;
   font-weight: 800;
+  letter-spacing: -0.01em;
   color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 2px 12px rgba(0,0,0,.7);
 }
 .genre-tile--0 .genre-tile-overlay { background: linear-gradient(135deg, #ff453a, #ff2d55); }
 .genre-tile--1 .genre-tile-overlay { background: linear-gradient(135deg, #ff9f0a, #ff6a00); }
@@ -1668,7 +1672,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   justify-content: center;
   font-size: 20px;
   font-weight: 700;
-  color: rgba(255,255,255,.7);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.4);
+  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -1691,6 +1697,33 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   transition: opacity .15s;
 }
 .search-ask-ai-btn:hover { opacity: .85; }
+
+/* ── Genre-detail header ─────────────────────────────
+   Genre drill-down gets its own always-visible back affordance (the global
+   auto-hiding .app-back-btn hides on scroll-down and left users stranded).
+   Styled as a mica-glass pill to match the floating bottom bars. */
+.genre-detail-head { margin-bottom: 8px; }
+.genre-back-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px 0 13px;
+  margin-bottom: 14px;
+  border: none;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(28,28,30,.5);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.09);
+  transition: box-shadow .15s, transform .1s;
+}
+.genre-back-pill:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.genre-back-pill:active { transform: scale(.96); }
 
 /* ── YouTube search results ─────────────────────────── */
 .youtube-list {
@@ -2676,6 +2709,56 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
   /* search avatar smaller */
   .search-avatar { width: 40px; height: 40px; font-size: 16px; }
+
+  /* Search / genre-detail albums: force a compact 2-column grid instead of
+     the default auto-fill(180px) that collapses to one giant full-width card
+     per album on a phone. Matches the 2-up rhythm of the genre grid + empty
+     state so density is consistent across the whole Search page. */
+  .search-album-grid {
+    /* minmax(0,1fr) not 1fr: plain 1fr floors each column at its content's
+       min-content width, and one long unbreakable album title
+       ("CHẠY NGAY ĐI (ONIONN REMIX)|...") blew a column out to ~645px,
+       overflowing the 358px grid box (classic grid blowout). minmax(0,…)
+       removes that floor so the 2 columns stay equal and fit. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .search-album-grid .album-card { padding: 8px; border-radius: 16px; min-width: 0; }
+  .search-album-grid .album-cover { border-radius: 10px; margin-bottom: 8px; }
+  /* keep card text inside the column instead of forcing it wider */
+  .search-album-grid .album-title,
+  .search-album-grid .album-year {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* tighter section headers for phone density */
+  .section-title { font-size: 17px; margin: 22px 0 12px; }
+
+  /* Track table: default auto layout sizes columns to content, so long
+     track/album titles pushed the table to ~874px and it overflowed the
+     ~358px page (horizontal spill). Fixed layout + truncating cells keeps
+     it at 100% width; the album column is dropped on phones (secondary
+     info, no room) so the title gets the space. */
+  .track-table { table-layout: fixed; }
+  .track-table .track-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .track-table .col-album,
+  .track-table thead th:last-child { display: none; }
+  .col-num { width: 32px; }
+
+  /* YouTube rows: smaller thumb + tighter gap so the title has room and the
+     two action buttons still fit without wrapping on a ~390px screen. */
+  .youtube-result { gap: 10px; padding: 8px 6px; }
+  .youtube-thumb { width: 96px; height: 54px; }
+  .youtube-actions { gap: 6px; }
+  .youtube-btn { padding: 7px 12px; }
 
   /* hero title smaller */
   .hero-title { font-size: clamp(20px, 6vw, 36px); }
