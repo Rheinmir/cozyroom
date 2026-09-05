@@ -906,21 +906,36 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 /* ── Stats bar ──────────────────────────────────────── */
+/* Stat figures rendered as mica-glass chips to match the new floating
+   bottom bars (same tint / blur / inset-hairline language). Each figure is
+   its own pill; the album/track ones are tappable → their library pages. */
 .stats-bar {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 20px;
-  color: var(--text-muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
-.stats-bar span::before,
-.stats-bar .stats-bar-link::before { content: '· '; color: var(--text-faint); }
-.stats-bar span:first-child::before { content: ''; }
-/* album/track figures are now tappable → their own library pages. Inherit
-   the muted figure color, just brighten on hover to read as interactive. */
-.stats-bar-link { color: var(--text-muted); text-decoration: none; }
-.stats-bar-link:hover { color: var(--text); }
+.stats-bar span,
+.stats-bar .stats-bar-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: rgba(28,28,30,.5);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.09);
+}
+/* the tappable ones read as interactive: brighten text + border on hover */
+.stats-bar-link { transition: color .15s, box-shadow .15s; }
+.stats-bar-link:hover {
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+}
 
 /* ── Library breadcrumb tag ─────────────────────────── */
 .library-tag {
@@ -994,11 +1009,24 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   z-index: 210;
 }
 .app-back-btn:active { transform: scale(.92); }
-/* Desktop: pointer devices reveal the button by hovering the corner even
-   when scroll-hidden, so it's always reachable with a mouse. */
+/* Pointer devices (desktop/mouse): hidden by default, revealed ONLY on
+   hover — per request. Overrides the JS scroll `--visible` state (that
+   state drives touch devices, which have no hover and would otherwise be
+   stranded). Stays in place while hidden (transform:none, not slid away)
+   so the top-left corner is still hoverable to bring it back, and keeps
+   pointer-events so it's clickable. */
 @media (hover: hover) {
-  .app-back-btn { pointer-events: auto; }
-  .app-back-btn:hover { opacity: 1; transform: none; }
+  .app-back-btn,
+  .app-back-btn--visible {
+    opacity: 0;
+    transform: none;
+    pointer-events: auto;
+  }
+  .app-back-btn:hover,
+  .app-back-btn--visible:hover {
+    opacity: 1;
+    transform: none;
+  }
 }
 @media (max-width: 900px) {
   /* No sidebar / no top-header on mobile — pin to the true corner. */
@@ -2684,6 +2712,15 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
      clears both rows, on top of the same stack, regardless of how either
      row's height changes later. */
   .mobile-search-island .queue-panel {
+    /* position + z-index MUST be set here (0,2,0 specificity): the base
+       .queue-panel rule later in the file otherwise wins and leaves the
+       panel at position:absolute / z-index:30, sitting BELOW the
+       z-index:290 close-backdrop — which then swallowed every tap meant
+       for a queue row (couldn't switch tracks). Panel must sit above the
+       backdrop so its rows stay clickable; backdrop still closes on taps
+       outside the panel. */
+    position: fixed;
+    z-index: 300;
     bottom: calc(var(--player-h) + var(--search-island-h, 0px) + 6px);
   }
   /* Overrides the 190px guess for NPO's own copy of this panel too — that
@@ -2695,6 +2732,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
      with no pixel guess to go stale. */
   .npo-controls .queue-panel {
     position: absolute;
+    /* above the close-backdrop (z 290) so queue rows stay tappable */
+    z-index: 300;
     bottom: 100%;
     left: 12px;
     right: 12px;
