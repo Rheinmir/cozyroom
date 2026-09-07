@@ -592,7 +592,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
     <ResponsiveContainer width="100%" height={ch(280, 220)}>
       <Treemap data={data} dataKey="size" aspectRatio={isMobile() ? 4 / 3 : 16 / 5}
         content={(props: any) => {
-          const { x, y, width, height, name, size, depth } = props
+          const { x, y, width, height, name, size, index, depth } = props
           if (depth !== 1 || !name || !width || !height || width < 4 || height < 4) return null
           
           const pctVal = total > 0 ? (size / total) * 100 : 0
