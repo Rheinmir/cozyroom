@@ -10,6 +10,19 @@ colors:
   text-bright: "rgba(255,255,255,0.92)"
   text-dim: "rgba(255,255,255,0.55)"
   text-ghost: "rgba(255,255,255,0.32)"
+charts:
+  # Monochrome data ladder — lightness encodes importance (most important =
+  # highest contrast against the panel). Dark values used on Void Black; the
+  # ladder inverts to the ink values on the light-theme white cards. Scoped
+  # strictly to data/status visualization, never UI chrome. See "## Charts".
+  ladder-dark: ["#f0efeb", "#dcdad2", "#c9c7bd", "#b3b0a4", "#8f8e88", "#6a6963", "#4a4944"]
+  ladder-light: ["#1c1c1a", "#4a4944", "#6a6963", "#8f8e88", "#b0afa9", "#c6c5bf", "#d8d7d1"]
+  # Semantic status — the only hues allowed in charts, because red=fail /
+  # green=ok / amber=warn carry meaning, not decoration.
+  fail: "#f87171"
+  warn: "#fb923c"
+  caution: "#facc15"
+  ok: "#4ade80"
 typography:
   display:
     fontFamily: "Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
@@ -95,7 +108,7 @@ A single accent (paper-white) against three densities of near-black. No hue exis
 
 **The No-Accent-Token Rule.** There is no `--accent` CSS variable in the codebase — referencing it silently resolves to nothing (a confirmed, previously-shipped bug class). The real accent token is `var(--green)`, which is literally white, always paired with `color: #000` for legible text/icons on top of it. `--purple` is currently also white and should be treated as an unused legacy alias, not a second hue — don't build new work assuming it is distinct from `--green`.
 
-**The Data Needs Color Rule.** Status/semantic indicators (success vs. failure, error text) and multi-series chart data (recharts lines/bars distinguishing simultaneous data series, e.g. AIStatsPage/MusicStatsPage) are the one sanctioned exception to the One Accent Rule — monochrome cannot express "this failed" or separate two overlapping series. These colors stay local to their chart/status context (`#f87171` fail-red, `#4ade80` success-green, and a small categorical chart palette are already in use) and must never be promoted into a system-wide token or reused as a second brand accent outside data/status contexts.
+**The Data Needs Color Rule (narrowed 2026-09-06).** This exception used to cover both status *and* categorical multi-series. It no longer covers categorical series — those now use the monochrome ladder (see the Lightness-Is-Data Rule and `## Charts`). What remains sanctioned is **semantic status only**: red=failure, amber/yellow=warning severity, green=success — meaning monochrome genuinely cannot express. These live as the chart-scoped tokens `--chart-fail` / `--chart-warn` / `--chart-caution` / `--chart-ok` (index.css). They are namespaced to data/status visualization and must never be used for UI chrome or promoted to a second brand accent. The old ad-hoc per-page hue palettes (`#22d3ee`, `#f59e0b`, `#a78bfa`, tier/impact hues in TrendingChartMode, …) have been removed in favor of the ladder.
 
 **The Genre Tile Color Rule.** The Browse-by-genre grid on the Search page (empty-query state, `.genre-tile` in SearchPage.tsx) is the second, and only other, deliberate exception to the One Accent Rule — a rotating six-color duotone palette tints each genre's cover photo (grayscale image + a per-tile hue via `mix-blend-mode: color`), the way Apple Music's genre tiles work, because a wall of identical monochrome tiles gives the eye nothing to scan by. This palette is scoped strictly to that grid: it must never be promoted into a system-wide token, reused for album/artist/playlist artwork elsewhere, or extended to any other tile/card type outside Browse-by-genre.
 
@@ -170,6 +183,25 @@ Corner radius scales with a component's intent rather than following one fixed v
 
 ### Conversation Sidebar (signature component)
 The AI assistant's chat-history sidebar (`.ai-history-sidebar`) is the clearest expression of "console, not chat toy": a fixed 260px column, one-line-truncated session titles in Body weight over a Geist Mono timestamp, active session marked only by Surface Hover Wash — no color, no icon badge.
+
+## Charts
+
+Added 2026-09-06. The stats dashboards (AIStatsPage, MusicStatsPage, RequestLogPage, TrendingChartMode — all recharts) were redesigned to make data visualization obey the same monochrome discipline as the rest of the Midnight Deck. The charting language is distilled from the `lieflat-charts` Mono system (PolyForm-Noncommercial; re-expressed as our own tokens, never copied) and mapped onto our dark-first palette — density stays console-tight, *not* lieflat's editorial whitespace.
+
+### Named Rules
+
+**The Lightness-Is-Data Rule.** For ordinal or categorical multi-series data, importance is encoded by *lightness*, not hue: the most important series is the highest-contrast against the panel (near-paper on Void Black; near-ink on the light-theme white card), fading down a 7-step gray ladder (`--chart-1` … `--chart-7`). A chart with one series uses `var(--text)`. This replaces every ad-hoc categorical hue palette that used to live per-page. Two-series charts pick `--chart-1` + `--chart-4` for separation; a highlight/"answer" line over context bars uses `var(--text)`.
+
+**The Language-Identity Color Rule.** `TrendingChartMode`'s `LANG_COLORS` map (TypeScript blue, Rust orange-red, Go cyan, …) is a deliberate, documented exception to Lightness-Is-Data: these are GitHub's *canonical* language identity colors, recognized externally, and there are ~18 of them — more than a 7-step ladder can separate. They are treated like the genre-tile / playlist-gradient identity palettes: scoped strictly to the language dimension, registered as sanctioned `ignoreValues` in `.impeccable/config.json`, never promoted to a system token or reused elsewhere.
+
+### Chart chrome
+
+- **Grid:** hairline, `var(--chart-grid)` (= `var(--border)`), `strokeDasharray "3 3"`. Never a hardcoded dark-only hex — those vanished in light theme.
+- **Axis / ticks:** `var(--chart-axis)` (= `var(--text-muted)`); axis *labels* one tier fainter (`var(--text-faint)`).
+- **Bars:** capsule ends — `radius={[999,999,0,0]}` (vertical) / `[0,999,999,0]` (horizontal), matching lieflat's pill bar-caps.
+- **Tooltips:** `var(--elevated)` background, `1px solid var(--border)`, `var(--text)` copy — theme-aware, replacing the old `#1e1e2e`/`#333` hardcodes.
+- **Matrix heat** (lang × tier table): a single ink at `color-mix(in srgb, var(--text) N%, transparent)` where N encodes count; the cell number flips (`var(--bg)` vs `var(--text)`) to stay legible across the intensity range in both themes.
+- **Treemap:** color carries no data (area already encodes frequency), so every tile is one ink (`var(--text)`).
 
 ## Do's and Don'ts
 

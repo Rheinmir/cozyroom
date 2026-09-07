@@ -188,6 +188,177 @@
         "value": "9px",
         "createdAt": "2026-09-04T15:49:25.120Z",
         "reason": "pre-existing radial-petal-label font-size in RadialNav, predates this session's snap-removal fix, out of scope"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3178c6",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:18.741Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3572a5",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:18.866Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ce422b",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:18.992Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#00acd7",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.116Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f1e05a",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.241Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f34b7d",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.344Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#b07219",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.498Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#6a737d",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.616Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#178600",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.717Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#701516",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.836Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f05138",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:19.963Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#a97bff",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.064Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#4f5d95",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.183Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f7a41d",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.304Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000080",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.533Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#5e5086",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.649Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#6e4a7e",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.777Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#89e051",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:20.901Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#6b7280",
+        "files": [
+          "frontend/src/pages/TrendingChartMode.tsx"
+        ],
+        "createdAt": "2026-09-06T16:55:21.028Z",
+        "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
       }
     ]
   }

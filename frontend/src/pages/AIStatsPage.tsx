@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useDialogs } from '../DialogContext'
+import Spinner from '../components/Spinner'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -38,7 +39,10 @@ interface LogEntry {
   tokens_cached_in: number
 }
 
-const COLORS = ['#ffffff','#cccccc','#999999','#777777','#555555','#dddddd','#aaaaaa','#888888']
+// Monochrome data ladder — lightness = importance. Defined once in index.css
+// (--chart-1..7) so it inverts correctly per theme; see the Lightness-Is-Data
+// Rule in DESIGN.md. Works as both a recharts fill and an inline style value.
+const COLORS = ['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)','var(--chart-6)','var(--chart-7)']
 const fmtMs = (ms: number) => ms >= 1000 ? `${(ms/1000).toFixed(1)}s` : `${Math.round(ms)}ms`
 const fmtNum = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n)
 
@@ -286,7 +290,7 @@ export default function AIStatsPage() {
     if (tab === 'logs') loadLogs(logsFailedOnly, logsPage)
   }, [tab, logsFailedOnly, logsPage, loadLogs])
 
-  if (loading) return <div style={{ padding: 32, opacity: 0.5 }}>Đang tải…</div>
+  if (loading) return <div className="loading"><Spinner size={28} label="Đang tải…" /></div>
   if (!stats) return <div style={{ padding: 32, opacity: 0.5 }}>Không load được stats.</div>
 
   const { summary, daily, models, all_models, providers: _providers, failures, hourly, actions } = stats
@@ -368,7 +372,7 @@ export default function AIStatsPage() {
             <button disabled={logs.length < PAGE} onClick={() => setLogsPage(p => p + 1)} style={{ padding: '2px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 12, background: 'var(--surface)', opacity: logs.length < PAGE ? 0.3 : 1 }}>›</button>
           </div>
           {logsLoading ? (
-            <div style={{ opacity: 0.5, padding: 16 }}>Đang tải…</div>
+            <div style={{ opacity: 0.5, padding: 16 }}><Spinner size={20} label="Đang tải…" /></div>
           ) : logs.length === 0 ? (
             <div style={{ opacity: 0.5, padding: 16 }}>{logsFailedOnly ? 'Không có lỗi nào.' : 'Chưa có log.'}</div>
           ) : (
@@ -548,12 +552,12 @@ export default function AIStatsPage() {
         <ChartCard title="Tin nhắn theo ngày (30 ngày)" span={6}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={dailyMsg} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} />
-              <Bar dataKey="success" stackId="a" fill="#cccccc" name="Thành công" />
-              <Bar dataKey="failed"  stackId="a" fill="#555555" name="Thất bại" radius={[3,3,0,0]} />
+              <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+              <Bar dataKey="success" stackId="a" fill="var(--text)" name="Thành công" />
+              <Bar dataKey="failed"  stackId="a" fill="var(--chart-fail)" name="Thất bại" radius={[999,999,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -562,12 +566,12 @@ export default function AIStatsPage() {
         <ChartCard title="Token sử dụng theo ngày" span={6}>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={dailyTokens} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} tickFormatter={fmtNum} />
-              <Tooltip contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} formatter={(v) => fmtNum(v as number)} />
-              <Line type="monotone" dataKey="tokens_in"  stroke="#22d3ee" dot={false} name="Tokens vào" strokeWidth={2} />
-              <Line type="monotone" dataKey="tokens_out" stroke="#f59e0b" dot={false} name="Tokens ra"  strokeWidth={2} />
+              <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtNum(v as number)} />
+              <Line type="monotone" dataKey="tokens_in"  stroke="var(--chart-1)" dot={false} name="Tokens vào" strokeWidth={2} />
+              <Line type="monotone" dataKey="tokens_out" stroke="var(--chart-4)" dot={false} name="Tokens ra"  strokeWidth={2} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -578,16 +582,16 @@ export default function AIStatsPage() {
           <ChartCard title="Token tiêu thụ theo model + Chi phí ước tính" span={8}>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={tokenCostChartData} margin={{ top: 0, right: 44, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis yAxisId="tok" tick={{ fontSize: 10 }} tickFormatter={fmtNum} />
-                <YAxis yAxisId="cost" orientation="right" tick={{ fontSize: 10, fill: '#f59e0b' }} tickFormatter={v => `$${(v as number).toFixed(3)}`} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }}
+                <YAxis yAxisId="cost" orientation="right" tick={{ fontSize: 10, fill: 'var(--chart-axis)' }} tickFormatter={v => `$${(v as number).toFixed(3)}`} />
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                   formatter={(val, name) => name === 'cost' ? [`$${Number(val).toFixed(4)}`, 'Chi phí'] : [fmtNum(Number(val)), modelLabel(String(name))]} />
                 {dailyModelModels.map((m, i) => (
                   <Bar key={m} yAxisId="tok" dataKey={m} stackId="tok" fill={COLORS[i % COLORS.length]} name={m} />
                 ))}
-                <Line yAxisId="cost" type="monotone" dataKey="cost" stroke="#f59e0b" strokeWidth={2} dot={false} name="cost" />
+                <Line yAxisId="cost" type="monotone" dataKey="cost" stroke="var(--text)" strokeWidth={2} dot={false} name="cost" />
                 <Legend wrapperStyle={{ fontSize: 10 }} formatter={(v) => v === 'cost' ? 'Chi phí ($)' : modelLabel(String(v))} />
               </ComposedChart>
             </ResponsiveContainer>
@@ -599,14 +603,14 @@ export default function AIStatsPage() {
           <ChartCard title="Giá $/1M token theo model" span={4}>
             <ResponsiveContainer width="100%" height={Math.max(120, modelRateData.length * 36)}>
               <BarChart data={modelRateData} layout="vertical" margin={{ top: 0, right: 60, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `$${v}`} />
                 <YAxis type="category" dataKey="model" tick={{ fontSize: 10 }} width={110} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }}
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                   formatter={(val, name) => [`$${Number(val).toFixed(4)}/1M`, name === 'input' ? 'Input' : 'Output']} />
                 <Legend wrapperStyle={{ fontSize: 10 }} />
-                <Bar dataKey="input"  name="Input"  fill="#22d3ee" radius={[0, 2, 2, 0]} barSize={10} />
-                <Bar dataKey="output" name="Output" fill="#f59e0b" radius={[0, 2, 2, 0]} barSize={10} />
+                <Bar dataKey="input"  name="Input"  fill="var(--chart-1)" radius={[0, 999, 999, 0]} barSize={10} />
+                <Bar dataKey="output" name="Output" fill="var(--chart-4)" radius={[0, 999, 999, 0]} barSize={10} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -617,11 +621,11 @@ export default function AIStatsPage() {
           <ChartCard title="Thời gian phản hồi TB (ms)" span={6}>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={dailyMs} margin={{ top: 0, right: 8, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => fmtMs(v)} />
-                <Tooltip contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} formatter={(v) => fmtMs(v as number)} />
-                <Line type="monotone" dataKey="ms" stroke="#10b981" dot={false} strokeWidth={2} name="avg ms" />
+                <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtMs(v as number)} />
+                <Line type="monotone" dataKey="ms" stroke="var(--text)" dot={false} strokeWidth={2} name="avg ms" />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -631,11 +635,11 @@ export default function AIStatsPage() {
         <ChartCard title="Hoạt động theo giờ trong ngày" span={6}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={hourly} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="hour" tick={{ fontSize: 10 }} tickFormatter={h => `${h}h`} />
               <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} labelFormatter={h => `${h}:00`} />
-              <Bar dataKey="count" fill="#a78bfa" name="Tin nhắn" radius={[3,3,0,0]} />
+              <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} labelFormatter={h => `${h}:00`} />
+              <Bar dataKey="count" fill="var(--text)" name="Tin nhắn" radius={[999,999,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -645,11 +649,11 @@ export default function AIStatsPage() {
           <ChartCard title="Loại hành động AI thực hiện" span={6}>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={actions.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} />
-                <Bar dataKey="count" name="Lần" radius={[0,3,3,0]}>
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                <Bar dataKey="count" name="Lần" radius={[0,999,999,0]}>
                   {actions.slice(0, 10).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
               </BarChart>
@@ -666,7 +670,7 @@ export default function AIStatsPage() {
                   <Pie data={models} dataKey="count" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80}>
                     {models.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} />
+                  <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ flex: 1 }}>
@@ -687,11 +691,11 @@ export default function AIStatsPage() {
           <ChartCard title="Lý do thất bại" span={4}>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={failures.filter(f => f.name !== 'success')} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={80} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} />
-                <Bar dataKey="count" fill="#f87171" name="Lần" radius={[0,3,3,0]} />
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                <Bar dataKey="count" fill="var(--chart-fail)" name="Lần" radius={[0,999,999,0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>

@@ -17,11 +17,13 @@ type OnFilter = (title: string, repos: TrendingRepo[]) => void
 type DrawerState = { title: string; repos: TrendingRepo[] }
 
 const TIER_ORDER: Tier[] = ['transformative', 'significant', 'incremental', 'niche']
+// Tier is an ordinal importance scale → mono ladder, most important = brightest
+// (Lightness-Is-Data Rule). No hue: the ranking IS the data.
 const TIER_COLORS: Record<Tier, string> = {
-  transformative: '#f59e0b',
-  significant:    '#10b981',
-  incremental:    '#0ea5e9',
-  niche:          '#64748b',
+  transformative: 'var(--chart-1)',
+  significant:    'var(--chart-3)',
+  incremental:    'var(--chart-5)',
+  niche:          'var(--chart-7)',
 }
 
 const LANG_COLORS: Record<string, string> = {
@@ -48,8 +50,8 @@ function fmtK(n: number) {
   return String(n)
 }
 
-const TT = { background: '#1e1e2e', border: '1px solid rgba(255,255,255,.1)', fontSize: 12, borderRadius: 8 }
-const GR = { strokeDasharray: '3 3', stroke: 'rgba(255,255,255,.07)' }
+const TT = { background: 'var(--elevated)', border: '1px solid var(--border)', fontSize: 12, borderRadius: 8 }
+const GR = { strokeDasharray: '3 3', stroke: 'var(--chart-grid)' }
 
 const isMobile = () => window.innerWidth <= 767
 function ch(desktop: number, mobile: number) { return isMobile() ? mobile : desktop }
@@ -90,7 +92,7 @@ const CustomCrosshairCursor = (props: any) => {
   const chartWidth = width ?? 0
   const chartHeight = height ?? 0
 
-  const s = 'rgba(248,250,252,0.65)'
+  const s = 'var(--text-muted)'
   const sw = 1.2
 
   return (
@@ -138,13 +140,13 @@ function ChartMomentum({ repos, onFilter, compact }: { repos: TrendingRepo[]; on
         <CartesianGrid {...GR} />
         <XAxis
           dataKey="x" type="number" name="+Stars this week"
-          tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }}
-          label={{ value: '＋Stars this week', position: 'insideBottom', offset: -16, fill: '#666', fontSize: 11 }}
+          tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+          label={{ value: '＋Stars this week', position: 'insideBottom', offset: -16, fill: 'var(--text-faint)', fontSize: 11 }}
         />
         <YAxis
           dataKey="y" type="number" name="Total Stars" scale="log" domain={['auto', 'auto']}
-          tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }}
-          label={compact ? undefined : { value: 'Total Stars (log)', angle: -90, position: 'insideLeft', offset: 14, fill: '#666', fontSize: 11 }}
+          tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+          label={compact ? undefined : { value: 'Total Stars (log)', angle: -90, position: 'insideLeft', offset: 14, fill: 'var(--text-faint)', fontSize: 11 }}
         />
         <ZAxis dataKey="z" range={[30, 500]} />
         <Tooltip cursor={<CustomCrosshairCursor />}
@@ -193,15 +195,15 @@ function ChartBar({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilt
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid {...GR} horizontal={false} />
-        <XAxis type="number" tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }} />
-        <YAxis type="category" dataKey="name" tick={{ fill: '#ccc', fontSize: 11 }} width={168} />
+        <XAxis type="number" tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <YAxis type="category" dataKey="name" tick={{ fill: 'var(--text)', fontSize: 11 }} width={168} />
         <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Star Delta']} contentStyle={TT} cursor={false} />
-        <Bar dataKey="delta" radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}
+        <Bar dataKey="delta" radius={[0, 999, 999, 0]} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
             const found = repos.filter(r => r.name === d.fullName)
             if (found.length) onFilter(d.fullName, found)
           }}>
-          {data.map((d, i) => <Cell key={i} fill={d.tier ? TIER_COLORS[d.tier as Tier] : '#4b5563'} />)}
+          {data.map((d, i) => <Cell key={i} fill={d.tier ? TIER_COLORS[d.tier as Tier] : 'var(--chart-7)'} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -211,10 +213,10 @@ function ChartBar({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilt
 function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilter }) {
   const { t } = useTranslation()
   const buckets = [
-    { name: '<100',    min: 0,    max: 99,       color: '#64748b' },
-    { name: '100–500', min: 100,  max: 499,      color: '#0ea5e9' },
-    { name: '500–2k',  min: 500,  max: 1999,     color: '#10b981' },
-    { name: '2k+',     min: 2000, max: Infinity, color: '#f59e0b' },
+    { name: '<100',    min: 0,    max: 99,       color: 'var(--chart-7)' },
+    { name: '100–500', min: 100,  max: 499,      color: 'var(--chart-5)' },
+    { name: '500–2k',  min: 500,  max: 1999,     color: 'var(--chart-3)' },
+    { name: '2k+',     min: 2000, max: Infinity, color: 'var(--chart-1)' },
   ]
   
   const data = buckets.map(b => {
@@ -256,7 +258,7 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
     if (percent < 0.05) return null
     return (
-      <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+      <text x={x} y={y} fill="var(--bg)" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     )
@@ -306,7 +308,7 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
       {/* 1. Standard Donut (Angle = Repos count) */}
       <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-        <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 4 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 4 }}>
           Tỷ lệ số lượng Repositories (theo góc)
         </div>
         <ResponsiveContainer width="100%" height={chartHeight}>
@@ -340,7 +342,7 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
               iconType="circle"
               verticalAlign="bottom"
               height={36}
-              wrapperStyle={{ fontSize: isMobile() ? 9 : 11, color: '#aaa' }}
+              wrapperStyle={{ fontSize: isMobile() ? 9 : 11, color: 'var(--text-muted)' }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -349,7 +351,7 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
       {/* 2. Nightingale Rose (Radii = Star Delta / Total Stars) */}
       <div style={{ flex: '1 1 280px', minWidth: 0 }}>
 
-        <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 4 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 4 }}>
           Tăng trưởng & Tích lũy Stars (độ dài cánh hoa)
         </div>
         <ResponsiveContainer width="100%" height={chartHeight}>
@@ -394,8 +396,8 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
                 return (
                   <div style={{ ...TT, padding: '8px 12px', lineHeight: 1.6 }}>
                     <div style={{ fontWeight: 700, color: d.color, marginBottom: 4 }}>Nhóm {d.name} stars/tuần</div>
-                    <div>Tăng thêm (Inner): <span style={{ color: '#cccccc', fontWeight: 600 }}>+{fmtK(d.starDeltaSum)} ★</span></div>
-                    <div>Tích lũy (Outer): <span style={{ color: '#aaaaaa', fontWeight: 600 }}>{fmtK(d.starsSum)} ★</span></div>
+                    <div>Tăng thêm (Inner): <span style={{ color: 'var(--text)', fontWeight: 600 }}>+{fmtK(d.starDeltaSum)} ★</span></div>
+                    <div>Tích lũy (Outer): <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{fmtK(d.starsSum)} ★</span></div>
                   </div>
                 )
               }}
@@ -405,7 +407,7 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
               iconType="circle"
               verticalAlign="bottom"
               height={36}
-              wrapperStyle={{ fontSize: isMobile() ? 9 : 11, color: '#aaa' }}
+              wrapperStyle={{ fontSize: isMobile() ? 9 : 11, color: 'var(--text-muted)' }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -417,21 +419,21 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
 function ChartHistogram({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilter }) {
   const { t } = useTranslation()
   const buckets = [
-    { name: '1–3',     min: 1, max: 3,  filter: (r: TrendingRepo) => r.impact_score >= 1 && r.impact_score <= 3,  color: '#64748b' },
-    { name: '4–6',     min: 4, max: 6,  filter: (r: TrendingRepo) => r.impact_score >= 4 && r.impact_score <= 6,  color: '#0ea5e9' },
-    { name: '7–8',     min: 7, max: 8,  filter: (r: TrendingRepo) => r.impact_score >= 7 && r.impact_score <= 8,  color: '#10b981' },
-    { name: '9–10',    min: 9, max: 10, filter: (r: TrendingRepo) => r.impact_score >= 9,                          color: '#f59e0b' },
-    { name: 'Pending', min: 0, max: 0,  filter: (r: TrendingRepo) => r.impact_score === 0,                         color: '#374151' },
+    { name: '1–3',     min: 1, max: 3,  filter: (r: TrendingRepo) => r.impact_score >= 1 && r.impact_score <= 3,  color: 'var(--chart-6)' },
+    { name: '4–6',     min: 4, max: 6,  filter: (r: TrendingRepo) => r.impact_score >= 4 && r.impact_score <= 6,  color: 'var(--chart-4)' },
+    { name: '7–8',     min: 7, max: 8,  filter: (r: TrendingRepo) => r.impact_score >= 7 && r.impact_score <= 8,  color: 'var(--chart-2)' },
+    { name: '9–10',    min: 9, max: 10, filter: (r: TrendingRepo) => r.impact_score >= 9,                          color: 'var(--chart-1)' },
+    { name: 'Pending', min: 0, max: 0,  filter: (r: TrendingRepo) => r.impact_score === 0,                         color: 'var(--chart-7)' },
   ]
   const data = buckets.map(b => ({ name: b.name, color: b.color, count: repos.filter(b.filter).length, filter: b.filter }))
   return (
     <ResponsiveContainer width="100%" height={ch(260, 200)}>
       <BarChart data={data} margin={{ top: 12, right: 8, bottom: 8, left: 8 }}>
         <CartesianGrid {...GR} />
-        <XAxis dataKey="name" tick={{ fill: '#ccc', fontSize: 12 }} />
-        <YAxis tick={{ fill: '#888', fontSize: 11 }} />
+        <XAxis dataKey="name" tick={{ fill: 'var(--text)', fontSize: 12 }} />
+        <YAxis tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
         <Tooltip formatter={(v: any) => [v, 'Repos']} contentStyle={TT} cursor={false} />
-        <Bar dataKey="count" radius={[4, 4, 0, 0]} style={{ cursor: 'pointer' }}
+        <Bar dataKey="count" radius={[999, 999, 0, 0]} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
             const found = repos.filter(d.filter)
             onFilter(`${t('charts.impact_dist')} ${d.name}`, found)
@@ -460,11 +462,11 @@ function ChartLang({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFil
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: ch(76, 60) }}>
         <CartesianGrid {...GR} horizontal={false} />
-        <XAxis type="number" tick={{ fill: '#888', fontSize: 11 }} />
-        <YAxis type="category" dataKey="lang" tick={{ fill: '#ccc', fontSize: 11 }} width={72} />
+        <XAxis type="number" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <YAxis type="category" dataKey="lang" tick={{ fill: 'var(--text)', fontSize: 11 }} width={72} />
         <Tooltip contentStyle={TT} cursor={false}
           formatter={(v: any, name: any) => [name === 'count' ? `${v} repos` : `${v}/10`, name === 'count' ? 'Repos' : 'Avg Impact']} />
-        <Bar dataKey="count" radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}
+        <Bar dataKey="count" radius={[0, 999, 999, 0]} style={{ cursor: 'pointer' }}
           onClick={(d: any) => onFilter(d.lang, repos.filter(r => r.language === d.lang))}>
           {data.map((d, i) => <Cell key={i} fill={langColor(d.lang)} />)}
         </Bar>
@@ -504,15 +506,16 @@ function ChartLines({ repos, history, loading, onFilter }: { repos: TrendingRepo
     })
     return row
   })
-  const COLORS = ['#f59e0b', '#10b981', '#0ea5e9', '#8b5cf6', '#f43f5e']
+  // Top-5 repos ranked by star delta → ladder by rank (brightest = #1).
+  const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
   return (
     <ResponsiveContainer width="100%" height={ch(300, 200)}>
       <LineChart data={data} margin={{ top: 10, right: 8, bottom: 16, left: ch(40, 28) }}>
         <CartesianGrid {...GR} />
-        <XAxis dataKey="date" tick={{ fill: '#888', fontSize: 10 }} />
-        <YAxis tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }} />
+        <XAxis dataKey="date" tick={{ fill: 'var(--chart-axis)', fontSize: 10 }} />
+        <YAxis tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
         <Tooltip contentStyle={TT} formatter={(v: any) => [`+${fmtK(Number(v))} stars`, '']} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#aaa' }} />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--text-muted)' }} />
         {top.map((r, i) => (
           <Line key={r.id} type="monotone" dataKey={r.name}
             stroke={COLORS[i]} strokeWidth={2} dot={false} connectNulls
@@ -546,15 +549,15 @@ function ChartSlope({ repos, history, loading, onFilter }: { repos: TrendingRepo
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: ch(48, 16), bottom: 4, left: 4 }}>
         <CartesianGrid {...GR} horizontal={false} />
-        <XAxis type="number" tickFormatter={fmtK} tick={{ fill: '#888', fontSize: 11 }} />
-        <YAxis type="category" dataKey="name" tick={{ fill: '#ccc', fontSize: 11 }} width={168} />
+        <XAxis type="number" tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <YAxis type="category" dataKey="name" tick={{ fill: 'var(--text)', fontSize: 11 }} width={168} />
         <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Net Growth']} contentStyle={TT} cursor={false} />
-        <Bar dataKey="delta" radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}
+        <Bar dataKey="delta" radius={[0, 999, 999, 0]} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
             const found = repos.filter(r => r.name === d.fullName)
             if (found.length) onFilter(d.fullName, found)
           }}>
-          {data.map((d, i) => <Cell key={i} fill={d.delta >= 0 ? '#cccccc' : '#555555'} />)}
+          {data.map((d, i) => <Cell key={i} fill={d.delta >= 0 ? 'var(--chart-2)' : 'var(--chart-6)'} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -583,12 +586,13 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
   const { t } = useTranslation()
   if (data.length < 5) return <div className="tc-empty">{t('charts.no_topics')}</div>
 
-  const COLORS = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#f43f5e', '#64748b', '#94a3b8', '#475569']
+  // Treemap already encodes frequency as tile AREA, so color carries no data —
+  // one ink for every tile (Lightness-Is-Data: don't spend hue on nothing).
   return (
     <ResponsiveContainer width="100%" height={ch(280, 220)}>
       <Treemap data={data} dataKey="size" aspectRatio={isMobile() ? 4 / 3 : 16 / 5}
         content={(props: any) => {
-          const { x, y, width, height, name, size, index, depth } = props
+          const { x, y, width, height, name, size, depth } = props
           if (depth !== 1 || !name || !width || !height || width < 4 || height < 4) return null
           
           const pctVal = total > 0 ? (size / total) * 100 : 0
@@ -604,7 +608,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
             deltaPct = pctVal - prevPctVal
           }
 
-          const color = COLORS[index % COLORS.length]
+          const color = 'var(--text)'
 
           const isHovered = hovered === index
           const nameFontSize = Math.min(12, Math.floor(width / Math.max(name.length, 1) * 1.5))
@@ -628,7 +632,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                   <text
                     x={x + width / 2} y={y + height / 2 - (height > 36 ? 7 : 0)}
                     textAnchor="middle" dominantBaseline="middle"
-                    fontSize={nameFontSize} fontWeight={700} fill="#fff" fillOpacity={0.9}
+                    fontSize={nameFontSize} fontWeight={700} fill="var(--bg)" fillOpacity={0.9}
                     style={{ pointerEvents: 'none' }}
                   >{name}</text>
                   
@@ -637,12 +641,12 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="#fff"
+                        fontSize={10} fill="var(--bg)"
                         style={{ opacity: isHovered ? 0 : 0.75, transform: isHovered ? 'scaleX(0)' : 'scaleX(1)' }}
                       >
-                        <tspan fill="#fff">{pct}</tspan>
+                        <tspan fill="var(--bg)">{pct}</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaPct > 0 ? '#cccccc' : (deltaPct < 0 ? '#666666' : '#aaaaaa')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaPct > 0 ? 'var(--bg)' : (deltaPct < 0 ? 'var(--text-faint)' : 'var(--bg)')} dx={4} fontWeight="bold">
                             ({deltaPct > 0 ? '+' : (deltaPct < 0 ? '' : '+')}{deltaPct.toFixed(0)}%)
                           </tspan>
                         )}
@@ -651,12 +655,12 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="#fff"
+                        fontSize={10} fill="var(--bg)"
                         style={{ opacity: isHovered ? 0.85 : 0, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)' }}
                       >
-                        <tspan fill="#fff">{size} repos</tspan>
+                        <tspan fill="var(--bg)">{size} repos</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaSize > 0 ? '#cccccc' : (deltaSize < 0 ? '#666666' : '#aaaaaa')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaSize > 0 ? 'var(--bg)' : (deltaSize < 0 ? 'var(--text-faint)' : 'var(--bg)')} dx={4} fontWeight="bold">
                             ({deltaSize > 0 ? '+' : (deltaSize < 0 ? '' : '+')}{deltaSize})
                           </tspan>
                         )}
@@ -715,11 +719,14 @@ function ChartHeatmap({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: On
               </td>
               {tiers.map(tier => {
                 const v = grid[lang]?.[tier] ?? 0
-                const alpha = v === 0 ? 0 : Math.round((0.12 + (v / maxVal) * 0.75) * 255).toString(16).padStart(2, '0')
+                // Mono matrix-heat: a single ink whose intensity encodes count.
+                // color-mix keeps it theme-aware (ink = --text); text flips to
+                // stay legible across the whole intensity range in both themes.
+                const intensity = v === 0 ? 0 : Math.round((0.12 + (v / maxVal) * 0.75) * 100)
                 return (
                   <td key={tier} style={{
-                    background: v === 0 ? 'rgba(255,255,255,.03)' : `${TIER_COLORS[tier]}${alpha}`,
-                    color: v === 0 ? '#3a3a3a' : '#fff',
+                    background: v === 0 ? 'var(--surface-hover)' : `color-mix(in srgb, var(--text) ${intensity}%, transparent)`,
+                    color: v === 0 ? 'var(--text-faint)' : (intensity > 45 ? 'var(--bg)' : 'var(--text)'),
                     cursor: v > 0 ? 'pointer' : 'default',
                   }}
                     onClick={() => {

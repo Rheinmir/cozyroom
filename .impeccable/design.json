@@ -7,7 +7,10 @@
       "paper-white": { "role": "primary", "displayName": "Paper White", "canonical": "#ffffff", "tonalRamp": ["#050505", "#0e0e0e", "#1a1a1a", "#333333", "#5c5c5c", "#8c8c8c", "#c2c2c2", "#ffffff"] },
       "void-black": { "role": "neutral", "displayName": "Void Black", "canonical": "#050505", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#111111", "#1a1a1a", "#2b2b2b", "#4a4a4a", "#6e6e6e"] },
       "charcoal-panel": { "role": "neutral", "displayName": "Charcoal Panel", "canonical": "#0e0e0e", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#141414", "#1c1c1c", "#2e2e2e", "#4c4c4c", "#707070"] },
-      "raised-charcoal": { "role": "neutral", "displayName": "Raised Charcoal", "canonical": "#111111", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#111111", "#1e1e1e", "#303030", "#4e4e4e", "#727272"] }
+      "raised-charcoal": { "role": "neutral", "displayName": "Raised Charcoal", "canonical": "#111111", "tonalRamp": ["#050505", "#0a0a0a", "#0e0e0e", "#111111", "#1e1e1e", "#303030", "#4e4e4e", "#727272"] },
+      "chart-ladder": { "role": "data", "displayName": "Chart Ladder (dark)", "canonical": "#f0efeb", "tonalRamp": ["#f0efeb", "#dcdad2", "#c9c7bd", "#b3b0a4", "#8f8e88", "#6a6963", "#4a4944"] },
+      "chart-ladder-light": { "role": "data", "displayName": "Chart Ladder (light theme)", "canonical": "#1c1c1a", "tonalRamp": ["#1c1c1a", "#4a4944", "#6a6963", "#8f8e88", "#b0afa9", "#c6c5bf", "#d8d7d1"] },
+      "chart-status": { "role": "status", "displayName": "Chart Status (semantic, chart-scoped)", "canonical": "#f87171", "tonalRamp": ["#f87171", "#fb923c", "#facc15", "#4ade80"] }
     },
     "typographyMeta": {
       "display": { "displayName": "Display", "purpose": "Page titles and hero headings only." },
@@ -84,7 +87,10 @@
       { "name": "The One Accent Rule", "body": "Paper White is the only accent color in the system. Anything that wants to look selected, primary, or on reaches for it — never a second brand hue.", "section": "colors" },
       { "name": "The No-Accent-Token Rule", "body": "There is no --accent CSS variable — it silently resolves to nothing. The real accent token is var(--green), which is literally white, always paired with color: #000. --purple is currently also white and should be treated as an unused legacy alias.", "section": "colors" },
       { "name": "The Mono-Means-Machine Rule", "body": "Switch to Geist Mono only for content that is literally data or system output — never for prose or UI copy.", "section": "typography" },
-      { "name": "The Light-Not-Color Rule", "body": "Depth is expressed with white ambient glow and subtle lift, never with a second color or a dark drop-shadow, which is invisible on a #050505 background.", "section": "elevation" }
+      { "name": "The Light-Not-Color Rule", "body": "Depth is expressed with white ambient glow and subtle lift, never with a second color or a dark drop-shadow, which is invisible on a #050505 background.", "section": "elevation" },
+      { "name": "The Lightness-Is-Data Rule", "body": "Chart multi-series data encodes importance by lightness, not hue: the most important series is highest-contrast against the panel, fading down the 7-step gray ladder --chart-1..--chart-7 (single series = var(--text)). Replaces every ad-hoc categorical hue palette.", "section": "charts" },
+      { "name": "The Language-Identity Color Rule", "body": "TrendingChartMode's LANG_COLORS (GitHub canonical language colors, ~18 of them) are a documented exception to Lightness-Is-Data, scoped to the language dimension and registered as sanctioned ignoreValues — never promoted to a system token.", "section": "charts" },
+      { "name": "The Data Needs Color Rule (narrowed)", "body": "Narrowed 2026-09-06 to semantic status ONLY (red=fail, amber=warn, yellow=caution, green=ok), held in chart-scoped tokens --chart-fail/-warn/-caution/-ok. Categorical series moved to the monochrome ladder.", "section": "colors" }
     ],
     "dos": [
       "Do treat Paper White as the only accent in any new surface.",

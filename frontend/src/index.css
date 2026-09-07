@@ -590,6 +590,28 @@ button, a, [role="button"], input, select, textarea {
   --sidebar-collapsed-w: 56px;
   --player-h:      72px;
   --radius:        13px;
+
+  /* ── Chart data ladder ───────────────────────────────
+     Lightness encodes importance: the most important series is the
+     highest-contrast against the panel (near-paper on near-black), fading
+     to the darkest gray. Distilled from lieflat-charts' Mono system
+     (dark-card variant, PolyForm-Noncommercial — re-expressed as our own
+     tokens, not copied). Replaces the ad-hoc per-page hue palettes; see the
+     Lightness-Is-Data Rule in DESIGN.md. --chart-fail/--chart-ok are the only
+     hues, kept because red=failure / green=success carry meaning, not decoration. */
+  --chart-1: #f0efeb;
+  --chart-2: #dcdad2;
+  --chart-3: #c9c7bd;
+  --chart-4: #b3b0a4;
+  --chart-5: #8f8e88;
+  --chart-6: #6a6963;
+  --chart-7: #4a4944;
+  --chart-fail:    #f87171;
+  --chart-warn:    #fb923c;
+  --chart-caution: #facc15;
+  --chart-ok:      #4ade80;
+  --chart-grid: var(--border);
+  --chart-axis: var(--text-muted);
 }
 
 /* ── Light theme override ──────────────────────────────
@@ -616,6 +638,17 @@ button, a, [role="button"], input, select, textarea {
   --sidebar-glass: rgba(255,255,255,.85);
   --header-glass:  rgba(255,255,255,.7);
   --player-glass:  rgba(255,255,255,.88);
+
+  /* Ladder inverts on white cards: most important = darkest (highest
+     contrast against white), matching lieflat's light "ink" ladder.
+     --chart-fail/-ok/-grid/-axis inherit — they're semantic or var-based. */
+  --chart-1: #1c1c1a;
+  --chart-2: #4a4944;
+  --chart-3: #6a6963;
+  --chart-4: #8f8e88;
+  --chart-5: #b0afa9;
+  --chart-6: #c6c5bf;
+  --chart-7: #d8d7d1;
 }
 
 /* Sitewide keyboard-focus ring. Many components below set `outline: none`
@@ -1062,6 +1095,19 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   padding: 8px 12px 8px 34px;
 }
 .artist-filter-input:focus { outline: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5); }
+
+/* Compact header: page title + filter share ONE row (row 2), sitting under the
+   stats-bar (row 1) — collapses the old 3-stacked-rows header into 2. Title
+   hugs the left, the filter caps at 360px and hugs the right. */
+.artist-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.artist-head-row .page-title { margin: 0; flex-shrink: 0; }
+.artist-head-row .artist-filter-wrap { margin: 0; flex: 0 1 360px; }
 
 .artist-grid-wrap { display: flex; gap: 12px; align-items: flex-start; }
 
@@ -2251,16 +2297,17 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   /* hide whichever tab panel is inactive */
   .npo-panel--hidden { display: none; }
 
-  /* tap zones: left strip = back to player, right strip = go to lyrics */
-  .npo-back-zone, .npo-forward-zone {
+  /* tap zone: left strip in lyrics view = back to player (the right-side
+     "forward to lyrics" zone was removed — tapping empty space jumping to
+     lyrics was unwanted; the tab button is the deliberate way in). */
+  .npo-back-zone {
     position: absolute;
     top: 0; height: 100%;
+    left: 0;
     width: 35%;
     z-index: 2;
     cursor: pointer;
   }
-  .npo-back-zone { left: 0; }
-  .npo-forward-zone { right: 0; }
   .npo-tab {
     flex: 1;
     padding: 8px 0;
@@ -2342,6 +2389,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
        zone on notched iPhones (iPhone 12+), on top of its own 64px. */
     --player-h: 64px;
     --search-island-h: calc(64px + env(safe-area-inset-bottom, 0px));
+    /* Lifts the whole bottom stack (search island + player bar) up off the
+       screen's bottom edge so it floats instead of sitting flush. Threaded
+       into every anchor below (island bottom, player-bar bottom, .main
+       reserve, queue-panel) so the rows stay stacked without overlap. */
+    --bottom-lift: 24px;
     grid-template-columns: 1fr;
     /* Single content row only. The two bottom bars are NOT grid rows
        anymore — they FLOAT (position:fixed) over the content below, so the
@@ -2361,7 +2413,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   .player-bar {
     position: fixed;
     left: 0; right: 0;
-    bottom: var(--search-island-h);
+    bottom: calc(var(--search-island-h) + var(--bottom-lift));
     height: var(--player-h);
     z-index: 50;
     /* Keep the pill clear of the phone's rounded screen corners / notch
@@ -2372,11 +2424,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   }
   /* Reserve scroll room so the last content clears the floating bars
      (they no longer reserve layout space themselves). */
-  .main { padding-bottom: calc(var(--player-h) + var(--search-island-h)); }
+  .main { padding-bottom: calc(var(--player-h) + var(--search-island-h) + var(--bottom-lift)); }
   /* No track → player bar is gone, so only reserve the search island's
      height and don't render the empty player bar at all. */
   .player-bar--empty { display: none; }
-  .shell:has(.player-bar--empty) .main { padding-bottom: var(--search-island-h); }
+  .shell:has(.player-bar--empty) .main { padding-bottom: calc(var(--search-island-h) + var(--bottom-lift)); }
 
   .sidebar { display: none; }
 
@@ -2606,7 +2658,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
        previously re-pinning it to position:relative, undoing the float. */
     position: fixed;
     left: 0; right: 0;
-    bottom: 0;
+    bottom: var(--bottom-lift);
     height: var(--search-island-h);
     align-items: center;
     gap: 10px;
@@ -2804,7 +2856,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
        outside the panel. */
     position: fixed;
     z-index: 300;
-    bottom: calc(var(--player-h) + var(--search-island-h, 0px) + 6px);
+    bottom: calc(var(--player-h) + var(--search-island-h, 0px) + var(--bottom-lift, 0px) + 6px);
   }
   /* Overrides the 190px guess for NPO's own copy of this panel too — that
      number was tuned for one specific NPO controls layout and drifted out
@@ -4765,7 +4817,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .radial-menu-aura--open {
   transform: scale(1);
-  opacity: 0.95;
+  /* Calmed from .95 → .55: with the tiles now grouped on a solid frosted
+     sheet, a strong halo behind them re-introduced the "floating in fog" look
+     the sheet was meant to fix. */
+  opacity: 0.55;
 }
 
 /* Square grid menu — replaces the old arc-math (getSectorPath) Nightingale
@@ -4779,12 +4834,28 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  padding: 10px;
+  border-radius: 26px;
+  /* Transparent when CLOSED: the panel container is always mounted (cells just
+     scale to 0), so the frosted surface must be gated on --open or an empty
+     glass rectangle floats over the page. Fades in with the cells. */
+  background: transparent;
+  transition: background .18s ease, box-shadow .18s ease;
+}
+/* One cohesive frosted sheet that GROUPS the tiles when open, instead of
+   leaving each cell as an independent floating glass chip. Mica material
+   (rgba(28,28,30,.5) + blur(30) saturate(1.8)) matches .mobile-search-island. */
+.radial-menu-panel--open {
+  background: rgba(28,28,30,.5);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.09);
 }
 .radial-menu-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 56px);
   gap: 8px;
-  padding: 2px;
+  padding: 0;
 }
 .radial-menu-cell {
   position: relative;
@@ -4800,12 +4871,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  /* Glass surface matching .search-island-queue-btn so the menu reads as the
-     same material system as the rest of the mobile chrome. */
-  background: rgba(28, 28, 30, 0.5);
-  backdrop-filter: blur(30px) saturate(1.8);
-  -webkit-backdrop-filter: blur(30px) saturate(1.8);
-  box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+  /* Flat tile sitting ON the panel sheet — the cell no longer carries its own
+     backdrop-filter or drop-shadow (the panel is the single floating surface
+     now). Just a faint fill + inset hairline so it reads as a button rather
+     than a separate glass chip. */
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   transition: transform 250ms cubic-bezier(0.34,1.56,0.64,1), opacity 150ms ease, background 0.15s, color 0.15s, box-shadow 0.15s;
   -webkit-user-select: none;
   user-select: none;

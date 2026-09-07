@@ -5,14 +5,17 @@ import {
   fetchDebugInstance, fetchDebugServices, fetchDebugTraceroute,
   type DebugInstance, type DebugServiceCheck, type DebugTraceroute,
 } from '../api'
+import Spinner from '../components/Spinner'
 
 const OWNER_PW_KEY = 'cozyroom_owner_password'
 
 const fmtMs = (ms: number) => ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`
 const fmtTime = (ms: number) => new Date(ms).toLocaleTimeString('vi-VN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
+// Traffic-light severity ramp — semantic (5xx error → 2xx ok), not decoration;
+// keyed off the chart/status-scoped tokens in index.css so it tracks the theme.
 const statusColor = (s: number) =>
-  s >= 500 ? '#f87171' : s >= 400 ? '#fb923c' : s >= 300 ? '#facc15' : '#4ade80'
+  s >= 500 ? 'var(--chart-fail)' : s >= 400 ? 'var(--chart-warn)' : s >= 300 ? 'var(--chart-caution)' : 'var(--chart-ok)'
 
 function SummaryCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -134,11 +137,11 @@ export default function RequestLogPage() {
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchRequestLog()
+      const data = await fetchRequestLog(ownerPassword)
       setEntries(data)
     } catch {}
     setLoading(false)
-  }, [])
+  }, [ownerPassword])
 
   useEffect(() => { if (authorized) load() }, [authorized, load])
 
@@ -160,7 +163,7 @@ export default function RequestLogPage() {
   const stats = computeStats(entries)
   const topSlow = stats.endpointStats.slice(0, 12)
 
-  if (authChecking) return <div style={{ padding: 32, opacity: 0.5 }}>Đang kiểm tra quyền truy cập…</div>
+  if (authChecking) return <div className="loading">Đang kiểm tra quyền truy cập…</div>
 
   if (!authorized) {
     return (
@@ -186,7 +189,7 @@ export default function RequestLogPage() {
     )
   }
 
-  if (loading) return <div style={{ padding: 32, opacity: 0.5 }}>Đang tải…</div>
+  if (loading) return <div className="loading"><Spinner size={28} label="Đang tải…" /></div>
 
   const errorRate = stats.total > 0 ? ((stats.errors / stats.total) * 100).toFixed(1) : '0'
 
@@ -222,23 +225,23 @@ export default function RequestLogPage() {
           <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Endpoint chậm nhất (avg ms)</div>
           <ResponsiveContainer width="100%" height={Math.max(180, topSlow.length * 30)}>
             <BarChart data={topSlow} layout="vertical" margin={{ top: 0, right: 80, left: 8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => fmtMs(v as number)} />
               <YAxis type="category" dataKey="endpoint" tick={{ fontSize: 9 }} width={220} />
               <Tooltip
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 11 }}
+                cursor={{ fill: 'var(--surface-hover)' }}
+                contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 11 }}
                 formatter={(val, name) => [
                   name === 'avg' ? fmtMs(val as number) : name === 'p95' ? fmtMs(val as number) : fmtMs(val as number),
                   name === 'avg' ? 'Avg' : name === 'p95' ? 'P95' : 'Max',
                 ]}
               />
-              <Bar dataKey="avg" name="avg" radius={[0, 3, 3, 0]} barSize={10}>
+              <Bar dataKey="avg" name="avg" radius={[0, 999, 999, 0]} barSize={10}>
                 {topSlow.map((entry, i) => (
-                  <Cell key={i} fill={entry.avg > 1000 ? '#f87171' : entry.avg > 300 ? '#fb923c' : entry.avg > 100 ? '#facc15' : '#4ade80'} />
+                  <Cell key={i} fill={entry.avg > 1000 ? 'var(--chart-fail)' : entry.avg > 300 ? 'var(--chart-warn)' : entry.avg > 100 ? 'var(--chart-caution)' : 'var(--chart-ok)'} />
                 ))}
               </Bar>
-              <Bar dataKey="p95" name="p95" fill="rgba(255,255,255,0.15)" radius={[0, 3, 3, 0]} barSize={6} />
+              <Bar dataKey="p95" name="p95" fill="var(--text-faint)" radius={[0, 999, 999, 0]} barSize={6} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -292,7 +295,7 @@ export default function RequestLogPage() {
                 <span style={{ fontWeight: 600, fontSize: 10, opacity: 0.7 }}>{e.method}</span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85, fontFamily: 'monospace', fontSize: 11 }}>{e.path}</span>
                 <span style={{ textAlign: 'right', color: statusColor(e.status), fontWeight: 600, fontSize: 11 }}>{e.status}</span>
-                <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', opacity: 0.7, fontSize: 11, color: e.duration_ms > 1000 ? '#f87171' : e.duration_ms > 300 ? '#fb923c' : 'inherit' }}>{fmtMs(e.duration_ms)}</span>
+                <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', opacity: 0.7, fontSize: 11, color: e.duration_ms > 1000 ? 'var(--chart-fail)' : e.duration_ms > 300 ? 'var(--chart-warn)' : 'inherit' }}>{fmtMs(e.duration_ms)}</span>
               </div>
             ))
           )}
