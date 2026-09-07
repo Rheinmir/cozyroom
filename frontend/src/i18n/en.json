@@ -41,7 +41,9 @@
     "artist": "Artist",
     "title_col": "Title",
     "album_col": "Album",
-    "duration_col": "Duration"
+    "duration_col": "Duration",
+    "browse_genres": "Browse by Genre",
+    "back_to_genres": "Genres"
   },
   "trending": {
     "title": "Trending on GitHub",
@@ -95,6 +97,8 @@
     "auto_translate_on": "Auto-translate: on (non-Vietnamese songs auto-translate)",
     "auto_translate_off": "Auto-translate: off",
     "lyrics": "Lyrics",
+    "queue": "Up Next",
+    "queue_empty": "Queue is empty",
     "playback_failed": "Playback Failed",
     "playback_error": "Failed to play song. Error: {{message}} (Code: {{code}})"
   },

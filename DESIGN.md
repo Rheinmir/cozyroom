@@ -10,9 +10,23 @@ colors:
   text-bright: "rgba(255,255,255,0.92)"
   text-dim: "rgba(255,255,255,0.55)"
   text-ghost: "rgba(255,255,255,0.32)"
+charts:
+  # One cohesive, muted categorical palette (--chart-1..8) applied to EVERY
+  # chart — categorical series, ordinal buckets, the language dimension, and
+  # single-series marks — so the whole dashboard reads as one system. Muted
+  # mid-tones sit calmly on Void Black and read on the light-theme white card
+  # too (theme-agnostic, no per-theme override). Scoped to data viz, never UI
+  # chrome. See "## Charts".
+  palette: ["#6f8fd6", "#5cb8a0", "#d8a862", "#d3798f", "#9a8fd0", "#7f8c9e", "#c98f6a", "#8bb37a"]
+  # Semantic status — reserved hues that mean something (not a category),
+  # never mixed into the categorical rotation.
+  fail: "#f87171"
+  warn: "#fb923c"
+  caution: "#facc15"
+  ok: "#4ade80"
 typography:
   display:
-    fontFamily: "Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    fontFamily: "'Space Grotesk', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
     fontSize: "clamp(24px, 5vw, 52px)"
     fontWeight: 900
     lineHeight: 1.1
@@ -95,11 +109,23 @@ A single accent (paper-white) against three densities of near-black. No hue exis
 
 **The No-Accent-Token Rule.** There is no `--accent` CSS variable in the codebase — referencing it silently resolves to nothing (a confirmed, previously-shipped bug class). The real accent token is `var(--green)`, which is literally white, always paired with `color: #000` for legible text/icons on top of it. `--purple` is currently also white and should be treated as an unused legacy alias, not a second hue — don't build new work assuming it is distinct from `--green`.
 
-**The Data Needs Color Rule.** Status/semantic indicators (success vs. failure, error text) and multi-series chart data (recharts lines/bars distinguishing simultaneous data series, e.g. AIStatsPage/MusicStatsPage) are the one sanctioned exception to the One Accent Rule — monochrome cannot express "this failed" or separate two overlapping series. These colors stay local to their chart/status context (`#f87171` fail-red, `#4ade80` success-green, and a small categorical chart palette are already in use) and must never be promoted into a system-wide token or reused as a second brand accent outside data/status contexts.
+**The Data Needs Color Rule (narrowed).** Two distinct chart color systems, both scoped to data viz and never to UI chrome: (1) the **categorical palette** `--chart-1..8` for separating series/categories (see the Chart-Palette Rule); (2) **semantic status** — `--chart-fail` / `--chart-warn` / `--chart-caution` / `--chart-ok` — reserved for meaning monochrome can't express (red=failure, amber/yellow=warning severity, green=success), never mixed into the categorical rotation. The old ad-hoc per-page hue palettes (`#22d3ee`, `#f59e0b`, `#a78bfa`, GitHub language colors, tier/impact hues in TrendingChartMode, …) were all removed in favor of these two token sets.
+
+**The Genre Tile Color Rule.** The Browse-by-genre grid on the Search page (empty-query state, `.genre-tile` in SearchPage.tsx) is the second, and only other, deliberate exception to the One Accent Rule — a rotating six-color duotone palette tints each genre's cover photo (grayscale image + a per-tile hue via `mix-blend-mode: color`), the way Apple Music's genre tiles work, because a wall of identical monochrome tiles gives the eye nothing to scan by. This palette is scoped strictly to that grid: it must never be promoted into a system-wide token, reused for album/artist/playlist artwork elsewhere, or extended to any other tile/card type outside Browse-by-genre.
+
+### Light Theme
+
+Added 2026-09-02 as `:root[data-theme="light"]`, toggled from the Sidebar (persisted to `localStorage`, applied pre-paint via an inline script in `index.html` to avoid a flash of the wrong theme). Structural tokens invert; accent stays fixed.
+
+- **Smoke, not stark white.** `--bg` is `#eef0f2` — a soft cool-neutral gray, not `#ffffff`. A near-white page canvas under near-white cards reads as flat with no structure (confirmed the hard way: the first ship used `#f7f7f8` for `--bg` next to a `#ffffff` `--surface`, and every card blended into the page). `--surface` (`#ffffff`) is the brightest tier — cards pop off the canvas the same way Charcoal Panel pops off Void Black in dark mode. `--elevated` (`#f7f7f8`) sits between the two, for nested zones inside a white surface rather than "raised above" it — white is already the brightness ceiling, so elevation beyond a surface leans on shadow, not a lighter fill.
+- **Accent does not flip.** `--green`/`--purple` stay Paper White in both themes. Countless buttons pair `background: var(--green)` with a hardcoded `color: #000` — flipping the accent per-theme would silently turn that text invisible in whichever theme made the accent dark. This is a deliberate exception to naive "invert everything" theming.
+- **`--border` exists now.** Fifteen call sites across the stylesheet already referenced `var(--border)` before this token was ever defined — a latent bug (invisible borders in both themes, worse once cards stopped being near-black) that light mode's shipped screenshots surfaced. Defined as `rgba(255,255,255,.12)` dark / `rgba(0,0,0,.12)` light.
+- **Chart marks must key off `--text`, never `--green`.** A chart bar or line fill drawn directly on the page background needs contrast *with that background*, not a fixed accent color — `fill={ACCENT}` (`var(--green)`, always white) is invisible the instant the canvas turns light. `var(--text)` correctly tracks the background in both themes. Multi-series charts keep their sanctioned hue palette (Data Needs Color Rule) unmodified; only the single-series monochrome marks and shared chart chrome (grid lines, tooltip background/border) needed to move off hardcoded dark-mode hex values (`#ffffff10`, `#1e1e1e`, `#333`) onto `var(--border)` / `var(--elevated)` / `var(--surface-hover)`.
+- **Any element using a literal `#fff`/`white` fill instead of `currentColor` will vanish on this background.** Found and fixed in `CozyroomMark` (the wordmark logo) and `Spinner` (the loading equalizer) — both previously hardcoded white, both correct now via `currentColor` / `var(--text)`. Treat a hardcoded white fill anywhere in the codebase as a light-theme bug on sight.
 
 ## Typography
 
-**Display Font:** Geist (with -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif fallback)
+**Display Font:** Space Grotesk (token `--font-display`, falling back to Geist) — a distinctive grotesque used for report/dashboard titles (`.page-title`, `.tc-section-title`, chart-card labels) and big stat numbers, added 2026-09-07 to give the dashboards a more premium, "operator-console" character. Body/UI stays Geist.
 **Body Font:** Geist (same stack)
 **Label/Mono Font:** Geist Mono (falling back to 'SFMono-Regular', monospace)
 
@@ -158,6 +184,25 @@ Corner radius scales with a component's intent rather than following one fixed v
 
 ### Conversation Sidebar (signature component)
 The AI assistant's chat-history sidebar (`.ai-history-sidebar`) is the clearest expression of "console, not chat toy": a fixed 260px column, one-line-truncated session titles in Body weight over a Geist Mono timestamp, active session marked only by Surface Hover Wash — no color, no icon badge.
+
+## Charts
+
+Added 2026-09-06. The stats dashboards (AIStatsPage, MusicStatsPage, RequestLogPage, TrendingChartMode — all recharts) were redesigned to make data visualization obey the same monochrome discipline as the rest of the Midnight Deck. The charting language is distilled from the `lieflat-charts` Mono system (PolyForm-Noncommercial; re-expressed as our own tokens, never copied) and mapped onto our dark-first palette — density stays console-tight, *not* lieflat's editorial whitespace.
+
+### Named Rules
+
+**The Chart-Palette Rule.** Every chart draws from one cohesive, muted categorical palette — `--chart-1 … --chart-8` (index.css) — so the whole dashboard reads as one system. It covers *all* data marks: categorical series, ordinal buckets/tiers, the language dimension, and single-series bars/lines (a single series uses `--chart-1`). No chart mixes this palette with a different color scheme, and no chart falls back to a per-page ad-hoc hue set. The palette is intentionally muted/desaturated so it sits calmly on Void Black without becoming the loud, multi-hue "dashboard" look the Midnight Deck rejects elsewhere — this is the one sanctioned place color is used decoratively (to separate series), and it is deliberately restrained. The mid-tones are theme-agnostic (no per-theme override); text on a colored mark uses `var(--text)`, which stays legible on the mid-tones in both themes.
+
+> History: an earlier pass tried a strict monochrome gray ladder (lightness = importance) plus a GitHub `LANG_COLORS` identity exception. Shipped, it read as jarring — a couple of colored charts (momentum scatter, language bars) stranded among grayscale ones. Replaced 2026-09-07 by this single-palette rule. The stale `LANG_COLORS` `ignoreValues` in `.impeccable/config.json` are now dead (langColor hashes into the palette instead) and can be pruned.
+
+### Chart chrome
+
+- **Grid:** hairline, `var(--chart-grid)` (= `var(--border)`), `strokeDasharray "3 3"`. Never a hardcoded dark-only hex — those vanished in light theme.
+- **Axis / ticks:** `var(--chart-axis)` (= `var(--text-muted)`); axis *labels* one tier fainter (`var(--text-faint)`).
+- **Bars:** capsule ends — `radius={[999,999,0,0]}` (vertical) / `[0,999,999,0]` (horizontal), matching lieflat's pill bar-caps.
+- **Tooltips:** `var(--elevated)` background, `1px solid var(--border)`, `var(--text)` copy — theme-aware, replacing the old `#1e1e2e`/`#333` hardcodes.
+- **Matrix heat** (lang × tier table): a single-hue sequential — `color-mix(in srgb, var(--chart-1) N%, transparent)` where N encodes count; the cell number stays `var(--text)`, legible on the palette mid-tone in both themes.
+- **Treemap:** color carries no data (area already encodes frequency), so every tile is one palette hue (`--chart-1`); label text is `var(--text)`.
 
 ## Do's and Don'ts
 

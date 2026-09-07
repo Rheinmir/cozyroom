@@ -3,15 +3,38 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
-import { imgSrc, searchYoutube, fetchYouTubeChannel, downloadYoutube } from '../api'
+import { imgSrc, searchYoutube, fetchYouTubeChannel, downloadYoutube, fetchGenres, fetchGenreDetail } from '../api'
 import type { Artist, Album, Track } from '../types'
-import type { YouTubeResult } from '../api'
+import type { YouTubeResult, Genre } from '../api'
 import FavoritePill from '../components/FavoritePill'
+import Spinner from '../components/Spinner'
+import BackButton from '../components/BackButton'
 
 type SearchResult = {
   artists: Artist[]
   albums:  Album[]
   tracks:  (Track & { album_title: string })[]
+}
+
+// Artist-avatar gradients — mirrors ArtistsPage.tsx so search-result avatars
+// read the same as the Artists library (deterministic hue per name). Kept as a
+// local copy on purpose: shares no code file, so the two surfaces stay
+// independent. /api/search returns artists without an image, so these avatars
+// are always the gradient + first-letter form.
+const AVATAR_GRADIENTS = [
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 262) 0%, oklch(0.4 0.13 300) 46%, oklch(0.17 0.06 340) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.70 0.18 45) 0%, oklch(0.46 0.15 20) 46%, oklch(0.20 0.06 355) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.65 0.14 185) 0%, oklch(0.42 0.12 210) 46%, oklch(0.18 0.05 230) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.67 0.19 345) 0%, oklch(0.43 0.14 310) 46%, oklch(0.18 0.06 280) 100%)',
+  'radial-gradient(125% 125% at 70% 22%, oklch(0.65 0.15 145) 0%, oklch(0.41 0.12 170) 46%, oklch(0.18 0.05 200) 100%)',
+  'radial-gradient(125% 125% at 30% 78%, oklch(0.55 0.20 240) 0%, oklch(0.35 0.15 270) 46%, oklch(0.15 0.07 300) 100%)',
+  'radial-gradient(125% 125% at 30% 22%, oklch(0.60 0.22 290) 0%, oklch(0.38 0.16 320) 46%, oklch(0.16 0.07 350) 100%)',
+  'radial-gradient(125% 125% at 70% 78%, oklch(0.62 0.20 20) 0%, oklch(0.40 0.15 350) 46%, oklch(0.18 0.06 320) 100%)',
+]
+function gradientFor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (Math.imul(31, h) + name.charCodeAt(i)) | 0
+  return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length]
 }
 
 const fetchSearch = (q: string): Promise<SearchResult> =>
@@ -178,9 +201,7 @@ function ChannelView({
 
   return (
     <div className="page">
-      <button className="back-btn" onClick={onBack}>
-        ← {t('search.title')}
-      </button>
+      <BackButton onClick={onBack} label={t('search.title')} />
 
       <div className="channel-header">
         <div className="channel-avatar">{channelName.charAt(0).toUpperCase()}</div>
@@ -297,6 +318,32 @@ function ChannelView({
   )
 }
 
+// ── Browse-by-genre grid (Apple-Music-style duotone tiles) ────────────────
+// Deliberate, scoped exception to the One Accent Rule — see "The Genre Tile
+// Color Rule" in DESIGN.md. Palette is local to this grid only.
+const GENRE_PALETTE_SIZE = 6
+
+function GenreGrid({ genres, onSelect }: { genres: Genre[]; onSelect: (name: string) => void }) {
+  return (
+    <div className="genre-grid">
+      {genres.map((g, i) => (
+        <button
+          key={g.name}
+          type="button"
+          className={`genre-tile genre-tile--${i % GENRE_PALETTE_SIZE}`}
+          onClick={() => onSelect(g.name)}
+        >
+          {g.cover_url && (
+            <img className="genre-tile-img" src={imgSrc(g.cover_url, 300)} alt="" loading="lazy" />
+          )}
+          <div className="genre-tile-overlay" />
+          <span className="genre-tile-label">{g.name}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ── Main SearchPage ───────────────────────────────────────────────────────
 export default function SearchPage() {
   const { t } = useTranslation()
@@ -308,6 +355,22 @@ export default function SearchPage() {
 
   // channel mode state
   const [selectedChannel, setSelectedChannel] = useState<{ url: string; name: string } | null>(null)
+
+  // Browse-by-genre state (only relevant while the search box is empty)
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
+  useEffect(() => { if (q) setSelectedGenre(null) }, [q])
+
+  const { data: genres } = useQuery({
+    queryKey: ['genres'],
+    queryFn:  fetchGenres,
+    enabled:  !q,
+  })
+
+  const { data: genreDetail, isLoading: genreLoading } = useQuery({
+    queryKey: ['genre-detail', selectedGenre],
+    queryFn:  () => fetchGenreDetail(selectedGenre!),
+    enabled:  !q && !!selectedGenre,
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['search', q],
@@ -366,15 +429,121 @@ export default function SearchPage() {
     )
   }
 
-  // ── Normal search mode ───────────────────────────────────────────────────
-  if (!q) return (
-    <div className="page">
-      <h1 className="page-title">{t('search.title')}</h1>
-      <p className="text-muted">{t('search.hint')}</p>
-    </div>
-  )
+  // ── Empty query: Browse-by-genre (or genre drill-down) ───────────────────
+  if (!q) {
+    if (selectedGenre) {
+      const genreAlbums = genreDetail?.albums ?? []
+      const genreTracks = genreDetail?.tracks ?? []
+      return (
+        <div className="page">
+          <div className="genre-detail-head">
+            <button
+              type="button"
+              className="genre-back-pill"
+              onClick={() => setSelectedGenre(null)}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              {t('search.back_to_genres')}
+            </button>
+            <h1 className="page-title">{selectedGenre}</h1>
+          </div>
 
-  if (isLoading) return <div className="loading">{t('search.searching')}</div>
+          {genreLoading ? (
+            <div className="loading"><Spinner size={28} label={t('search.searching')} /></div>
+          ) : (
+            <>
+              {genreAlbums.length > 0 && (
+                <section className="search-section">
+                  <h2 className="section-title">{t('search.albums')}</h2>
+                  <div className="album-grid search-album-grid">
+                    {genreAlbums.map(al => (
+                      <Link key={al.id} to={`/album/${al.id}`} className="album-card">
+                        <div className="album-cover">
+                          {al.cover_url
+                            ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                            : <span className="no-cover">♪</span>
+                          }
+                        </div>
+                        <div className="album-info">
+                          <span className="album-title">{al.title}</span>
+                          <span className="album-year">{al.artist_name}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {genreTracks.length > 0 && (
+                <section className="search-section">
+                  <h2 className="section-title">{t('search.tracks')}</h2>
+                  <table className="track-table">
+                    <thead>
+                      <tr>
+                        <th className="col-num">#</th>
+                        <th>{t('search.title_col')}</th>
+                        <th className="col-fav"></th>
+                        <th>{t('search.album_col')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {genreTracks.map((t2, i) => (
+                        <tr
+                          key={t2.id}
+                          className="track-row"
+                          onClick={() => play(t2)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2) } }}
+                        >
+                          <td className="col-num"><span className="track-num-text">{i + 1}</span></td>
+                          <td className="track-title">{t2.title}</td>
+                          <td className="col-fav" onClick={e => e.stopPropagation()}>
+                            <FavoritePill trackId={t2.id} />
+                          </td>
+                          <td className="col-album">
+                            <Link
+                              to={`/album/${t2.album_id}`}
+                              className="text-muted"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              {t2.album_title}
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              )}
+
+              {genreAlbums.length === 0 && genreTracks.length === 0 && (
+                <p className="text-muted">{t('search.no_results')}</p>
+              )}
+            </>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="page">
+        <h1 className="page-title">{t('search.title')}</h1>
+        {genres && genres.length > 0 ? (
+          <>
+            <h2 className="section-title">{t('search.browse_genres')}</h2>
+            <GenreGrid genres={genres} onSelect={setSelectedGenre} />
+          </>
+        ) : (
+          <p className="text-muted">{t('search.hint')}</p>
+        )}
+      </div>
+    )
+  }
+
+  if (isLoading) return <div className="loading"><Spinner size={28} label={t('search.searching')} /></div>
 
   const { artists = [], albums = [], tracks = [] } = data ?? {}
   const empty = artists.length + albums.length + tracks.length === 0
@@ -399,7 +568,7 @@ export default function SearchPage() {
           <div className="search-artist-list">
             {artists.map(a => (
               <Link key={a.id} to={`/artist/${a.id}`} className="search-artist-row">
-                <div className="search-avatar">{a.name.charAt(0).toUpperCase()}</div>
+                <div className="search-avatar" style={{ background: gradientFor(a.name) }}>{a.name.charAt(0).toUpperCase()}</div>
                 <div>
                   <p className="search-row-title">{a.name}</p>
                   <p className="search-row-sub">{t('search.artist')}</p>
@@ -413,7 +582,7 @@ export default function SearchPage() {
       {albums.length > 0 && (
         <section className="search-section">
           <h2 className="section-title">{t('search.albums')}</h2>
-          <div className="album-grid">
+          <div className="album-grid search-album-grid">
             {albums.map(al => (
               <Link key={al.id} to={`/album/${al.id}`} className="album-card">
                 <div className="album-cover">

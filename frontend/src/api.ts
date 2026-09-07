@@ -12,6 +12,11 @@ const get = <T>(url: string): Promise<T> =>
     return r.json() as Promise<T>
   })
 
+// staleTime for personal-library listings (ebooks/videos/etc.) that only
+// change when the user adds files — user explicitly wants at most one
+// loading spinner per day, not a reload every tab switch.
+export const LIBRARY_STALE_TIME = 24 * 60 * 60_000
+
 export type ArtistDetail = { id: string; name: string; album_count: number; track_count: number; genres: string[] }
 
 export const fetchStats        = ()               => get<Stats>('/api/stats')
@@ -24,6 +29,36 @@ export const fetchTracks  = (albumId: string)   =>
   get<Track[]>(`/api/tracks?album_id=${albumId}`)
 export const streamUrl        = (trackId: string)   => `/stream/${trackId}`
 export const fetchSmartQueue  = (trackId: string)   => get<Track[]>(`/api/smart-queue?track_id=${trackId}&limit=30`)
+
+// ---- Genres (Browse grid in Search) ----
+export type Genre = { name: string; track_count: number; cover_url: string }
+export type GenreDetail = { albums: Album[]; tracks: (Track & { album_title: string })[] }
+
+export const fetchGenres = () => get<Genre[]>('/api/genres')
+export const fetchGenreDetail = (genre: string) => get<GenreDetail>(`/api/genres/${encodeURIComponent(genre)}`)
+
+export type Ebook = {
+  id: string
+  title: string
+  author: string
+  format: string
+  size_bytes: number
+  cover_url?: string
+  is_nsfw?: boolean
+  collection?: string
+}
+export const fetchEbooks = () => get<Ebook[]>('/api/ebooks')
+
+export type Video = {
+  id: string
+  title: string
+  duration_s: number
+  size_bytes: number
+  created_at: number
+  poster_url?: string
+  group_name?: string
+}
+export const fetchVideos = () => get<Video[]>('/api/videos')
 
 export type LyricLine    = { time: number; text: string }
 export type LyricsData   = { synced: LyricLine[]; plain: string; source: string }
@@ -277,6 +312,22 @@ export const deletePlaylist = (id: string, password?: string): Promise<void> =>
     }
   })
 
+export const renamePlaylist = (id: string, name: string, password?: string): Promise<Playlist> =>
+  fetch(`/api/playlists/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(password ? { 'X-Owner-Password': password } : {})
+    },
+    body: JSON.stringify({ name }),
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed to rename playlist: ${r.status}`)
+    }
+    return r.json() as Promise<Playlist>
+  })
+
 export const addTrackToPlaylist = (playlistId: string, trackId: string, password?: string): Promise<void> =>
   fetch(`/api/playlists/${encodeURIComponent(playlistId)}/tracks`, {
     method: 'POST',
@@ -481,4 +532,30 @@ export type RequestEntry = {
   duration_ms: number
 }
 
-export const fetchRequestLog = () => get<RequestEntry[]>('/api/debug/requests')
+export type DebugInstance = {
+  pod_name: string
+  node_name: string
+  pod_ip: string
+  cf_ray: string
+  cf_connecting_ip: string
+  cf_ip_country: string
+  x_real_ip: string
+  remote_addr: string
+}
+export type DebugServiceCheck = { name: string; addr: string; reachable: boolean; latency_ms: number; error?: string }
+export type DebugTraceroute = { target?: string; hops?: string[]; error?: string }
+
+const ownerFetch = <T>(url: string, ownerPassword: string): Promise<T> =>
+  fetch(url, { headers: { 'X-Owner-Password': ownerPassword } }).then(r => {
+    if (!r.ok) throw new Error(`${r.status} ${url}`)
+    return r.json() as Promise<T>
+  })
+
+export const fetchRequestLog = (ownerPassword: string) =>
+  ownerFetch<RequestEntry[]>('/api/debug/requests', ownerPassword)
+export const fetchDebugInstance = (ownerPassword: string) =>
+  ownerFetch<DebugInstance>('/api/debug/instance', ownerPassword)
+export const fetchDebugServices = (ownerPassword: string) =>
+  ownerFetch<DebugServiceCheck[]>('/api/debug/services', ownerPassword)
+export const fetchDebugTraceroute = (ownerPassword: string) =>
+  ownerFetch<DebugTraceroute>('/api/debug/traceroute', ownerPassword)

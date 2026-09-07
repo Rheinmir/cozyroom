@@ -9,6 +9,7 @@ import {
   ComicResult, EHentaiPage, ComicsDownload, LocalChapter,
 } from '../api'
 import { useDialogs } from '../DialogContext'
+import BackButton from '../components/BackButton'
 
 type Source = 'md' | 'eh'
 type ViewMode = 'scroll' | 'page'
@@ -647,13 +648,8 @@ export default function ComicsPage() {
       {/* Reader overlay */}
       {reading && (
         <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 200, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px 16px', background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-            <button
-              onClick={() => setReading(null)}
-              style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--elevated)', color: 'var(--text)', cursor: 'pointer', fontSize: 12 }}
-            >
-              ← Close
-            </button>
+          <div style={{ padding: '10px 16px 10px 68px', background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            <BackButton onClick={() => setReading(null)} label="Close" autoHide={false} overlay />
             <span style={{ fontSize: 13, opacity: 0.7, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {reading.title || reading.chapter || ''}
             </span>

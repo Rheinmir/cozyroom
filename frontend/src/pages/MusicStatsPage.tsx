@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts'
 import { imgSrc, fetchPlayStats, fetchLastfmStatus, backfillLastfmPlayCounts, fetchLastfmBackfillStatus, fetchMusicInsight } from '../api'
 import type { LastfmBackfillStatus } from '../api'
+import Spinner from '../components/Spinner'
 
 const ACCENT = 'var(--green)'
 
@@ -58,7 +59,7 @@ export default function MusicStatsPage() {
   return (
     <div className="stats-page-body">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Số liệu nghe nhạc</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, margin: 0 }}>Số liệu nghe nhạc</h2>
         <button
           onClick={handleBackfill}
           disabled={!lastfmConnected || backfill?.running}
@@ -73,10 +74,10 @@ export default function MusicStatsPage() {
         </button>
       </div>
 
-      {backfillError && <p style={{ color: '#f87171', fontSize: 12, marginBottom: 12 }}>{backfillError}</p>}
+      {backfillError && <p style={{ color: 'var(--chart-fail)', fontSize: 12, marginBottom: 12 }}>{backfillError}</p>}
 
       {statsQuery.isLoading ? (
-        <p style={{ opacity: 0.5, fontSize: 13 }}>Đang tải…</p>
+        <div style={{ opacity: 0.5, fontSize: 13 }}><Spinner size={18} label="Đang tải…" /></div>
       ) : top.length === 0 ? (
         <p style={{ opacity: 0.5, fontSize: 13 }}>
           Chưa có dữ liệu — nghe vài bài (đủ 30s trở lên) rồi quay lại đây.
@@ -86,7 +87,7 @@ export default function MusicStatsPage() {
           {/* Hero figure — the one headline number this page leads with */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 13, opacity: 0.6, marginBottom: 2 }}>Lượt nghe trong 30 ngày qua</div>
-            <div style={{ fontSize: 48, fontWeight: 700, fontVariantNumeric: 'proportional-nums', lineHeight: 1.1 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'proportional-nums', lineHeight: 1.1 }}>
               {totalRecent.toLocaleString('vi-VN')}
             </div>
           </div>
@@ -121,7 +122,7 @@ export default function MusicStatsPage() {
                 <div style={{ fontSize: 13, opacity: 0.6 }}>{topTrack.artist_name}</div>
               </div>
               <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 28, fontWeight: 700, fontVariantNumeric: 'proportional-nums', color: ACCENT }}>{topTrack.plays}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, fontVariantNumeric: 'proportional-nums', color: ACCENT }}>{topTrack.plays}</div>
                 <div style={{ fontSize: 11, opacity: 0.6 }}>lượt nghe</div>
               </div>
             </div>
@@ -131,15 +132,15 @@ export default function MusicStatsPage() {
             <ChartCard title="Top 10 bài nghe nhiều nhất">
               <ResponsiveContainer width="100%" height={Math.max(120, top.length * 32)}>
                 <BarChart data={top} layout="vertical" margin={{ top: 0, right: 28, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="title" tick={{ fontSize: 10 }} width={110} />
                   <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }}
+                    cursor={{ fill: 'var(--surface-hover)' }}
+                    contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                     formatter={(val, _name, item) => [`${val} lượt`, item.payload.artist_name]}
                   />
-                  <Bar dataKey="plays" fill={ACCENT} radius={[0, 4, 4, 0]} barSize={14} maxBarSize={24}>
+                  <Bar dataKey="plays" fill="var(--chart-1)" radius={[0, 999, 999, 0]} barSize={14} maxBarSize={24}>
                     <LabelList dataKey="plays" position="right" style={{ fontSize: 10, fill: 'var(--text)', opacity: 0.7 }} />
                   </Bar>
                 </BarChart>
@@ -149,11 +150,11 @@ export default function MusicStatsPage() {
             <ChartCard title="Lượt nghe theo ngày (30 ngày, local)">
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={daily} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: '#1e1e1e', border: '1px solid #333', fontSize: 12 }} />
-                  <Line type="monotone" dataKey="plays" stroke={ACCENT} dot={false} strokeWidth={2} />
+                  <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                  <Line type="monotone" dataKey="plays" stroke="var(--chart-1)" dot={false} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>

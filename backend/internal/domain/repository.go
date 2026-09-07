@@ -31,6 +31,8 @@ type TrackRepository interface {
 	IsEmpty(ctx context.Context) bool
 	Upsert(ctx context.Context, t Track) error
 	RecordPlay(ctx context.Context, trackID string) error
+	ListGenres(ctx context.Context) ([]Genre, error)
+	GetByGenre(ctx context.Context, genre string) (*GenreDetail, error)
 }
 
 // VideoRepository reads and writes videos.

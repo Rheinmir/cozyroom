@@ -8,9 +8,10 @@ import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../
 import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
 import CozyroomMark from './CozyroomMark'
 
-const BUBBLE_R = 28   // half of 56px bubble
-const PETAL_R  = 22   // half of 44px petal
-const PETAL_D  = 82   // px from bubble centre to petal centre
+// Was exactly 56px — the same height as the media-control pill next to it,
+// which read as coincidental/unintentional rather than a deliberate size
+// relationship. Sized down so the two are visibly different at a glance.
+const BUBBLE_R = 24   // half of 48px bubble
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const I = (d: string) => (
@@ -34,43 +35,21 @@ const IcPlaylistAdd = () => I('M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h
 const IcSounds = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
 
 
-type RadialItem = { route: string; label: string; icon: JSX.Element; r: number; onAction?: () => void }
+type RadialItem = { route: string; label: string; icon: JSX.Element; onAction?: () => void }
 
-// ── Arc math ─────────────────────────────────────────────────────────────────
-function calcArc(bx: number, by: number) {
-  const xR = bx / window.innerWidth
-  const yR = by / window.innerHeight
-  const L = xR < 0.30, R = xR > 0.70
-  const T = yR < 0.30, B = yR > 0.70
-  if (T && L) return { start:   0, span:  90 }
-  if (T && R) return { start:  90, span:  90 }
-  if (B && R) return { start: 180, span:  90 }
-  if (B && L) return { start: 270, span:  90 }
-  if (T)      return { start:   0, span: 180 }
-  if (B)      return { start: 180, span: 180 }
-  if (L)      return { start: 270, span: 180 }
-  if (R)      return { start:  90, span: 180 }
-  return { start: 315, span: 270 }
-}
-
-// ── Sector Path Math (Nightingale Chart) ──────────────────────────────────────
-function getSectorPath(cx: number, cy: number, rInner: number, rOuter: number, startDeg: number, endDeg: number) {
-  const startRad = (startDeg * Math.PI) / 180
-  const endRad = (endDeg * Math.PI) / 180
-
-  const x1_out = cx + rOuter * Math.cos(startRad)
-  const y1_out = cy + rOuter * Math.sin(startRad)
-  const x2_out = cx + rOuter * Math.cos(endRad)
-  const y2_out = cy + rOuter * Math.sin(endRad)
-
-  const x1_in = cx + rInner * Math.cos(startRad)
-  const y1_in = cy + rInner * Math.sin(startRad)
-  const x2_in = cx + rInner * Math.cos(endRad)
-  const y2_in = cy + rInner * Math.sin(endRad)
-
-  const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0
-
-  return `M ${x1_out} ${y1_out} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`
+// A menu item as rendered in the grid — flattened from whichever mode's item
+// list is active (main menu / trending / calendar / playlist picker) so they
+// can all share one square-grid layout instead of separate concentric rings.
+type MenuCell = {
+  key: string
+  icon: React.ReactNode
+  label?: string
+  active?: boolean
+  disabled?: boolean
+  dotColor?: string
+  spinning?: boolean
+  onClick?: () => void
+  onDoubleClick?: () => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -183,7 +162,16 @@ export default function RadialNav() {
       const s = localStorage.getItem('radial-nav-pos')
       if (s) return JSON.parse(s)
     } catch {}
-    return { x: window.innerWidth - BUBBLE_R - 20, y: window.innerHeight - BUBBLE_R - 100 }
+    // 100px clearance was tuned for the old full-width player bar. The
+    // mobile bottom stack is now two floating pills (media control ~64px +
+    // the search island below it, ~64px + safe-area), so the old default
+    // let the bubble's resting spot physically overlap the top of the
+    // upper pill — and since the pill uses backdrop-filter (a real glass
+    // blur, not just a dark tint), whatever sits behind it gets sampled
+    // and blurred/darkened, which read as the bubble being "clipped." Not
+    // touching the magnet-snap feature itself, only where it rests when
+    // nothing has been dragged yet.
+    return { x: window.innerWidth - BUBBLE_R - 20, y: window.innerHeight - BUBBLE_R - 190 }
   })
 
   const [snappedSelector, setSnappedSelector] = useState<string | null>(() => {
@@ -203,10 +191,10 @@ export default function RadialNav() {
   const getSnappedPos = (rawX: number, rawY: number) => {
     const selectors = ['.player-mini-play-btn', '.npo-play-btn']
     const SNAP_THRESHOLD = 50 // px
-    
+
     const npo = document.querySelector('.npo')
     const isNpoOpen = npo && npo.classList.contains('npo--open')
-    
+
     for (const selector of selectors) {
       if (selector === '.npo-play-btn' && !isNpoOpen) continue
       if (selector === '.player-mini-play-btn' && isNpoOpen) continue
@@ -215,16 +203,16 @@ export default function RadialNav() {
       if (!magnet) continue
       const rect = magnet.getBoundingClientRect()
       if (rect.width === 0 || rect.height === 0) continue
-      
+
       const mx = rect.left + rect.width / 2
       const my = rect.top + rect.height / 2
-      
+
       const dist = Math.hypot(rawX - mx, rawY - my)
       if (dist < SNAP_THRESHOLD) {
         return { x: mx, y: my, snapped: true, selector }
       }
     }
-    
+
     return { x: rawX, y: rawY, snapped: false, selector: null }
   }
 
@@ -248,11 +236,11 @@ export default function RadialNav() {
 
     const updateSnappedPos = () => {
       let activeSelector = snappedSelector
-      
+
       // Auto-snap between mini play button and NPO play button depending on which one is active/visible
       const npo = document.querySelector('.npo')
       const isNpoOpen = npo && npo.classList.contains('npo--open')
-      
+
       if (isNpoOpen) {
         activeSelector = '.npo-play-btn'
       } else {
@@ -270,22 +258,22 @@ export default function RadialNav() {
       if (rect.width === 0 || rect.height === 0) return
       const mx = rect.left + rect.width / 2
       const my = rect.top + rect.height / 2
-      
+
       setPos({ x: mx, y: my })
     }
 
     updateSnappedPos()
-    
+
     window.addEventListener('resize', updateSnappedPos)
     window.addEventListener('scroll', updateSnappedPos, { capture: true })
-    
+
     let frameId: number
     const tick = () => {
       updateSnappedPos()
       frameId = requestAnimationFrame(tick)
     }
     frameId = requestAnimationFrame(tick)
-    
+
     return () => {
       window.removeEventListener('resize', updateSnappedPos)
       window.removeEventListener('scroll', updateSnappedPos, { capture: true })
@@ -306,18 +294,18 @@ export default function RadialNav() {
     const dy = e.clientY - dragStart.current.py
     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved.current = true
     if (!moved.current) return
-    
+
     const rawX = dragStart.current.bx + dx
     const rawY = dragStart.current.by + dy
-    
+
     const snapped = getSnappedPos(rawX, rawY)
-    
+
     if (snapped.snapped && snapped.selector) {
       setSnappedSelector(snapped.selector)
     } else {
       setSnappedSelector(null)
     }
-    
+
     setPos({
       x: clamp(snapped.x, 0, window.innerWidth),
       y: clamp(snapped.y, 0, window.innerHeight),
@@ -414,34 +402,32 @@ export default function RadialNav() {
   }
 
   const innerItems: RadialItem[] = [
-    { route: '/',          label: t('nav.artists'),                     icon: <IcHome />,     r: 86 },
-    { route: '/ai',        label: 'AI',                                 icon: <IcAI />,       r: 80 },
-    { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist />, r: 92 },
-    { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, r: bgPlaying ? 88 : 84, onAction: () => { setBgPanelOpen(true); setOpen(false) } },
+    { route: '/',          label: t('nav.artists'),                     icon: <IcHome /> },
+    { route: '/ai',        label: 'AI',                                 icon: <IcAI /> },
+    { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist /> },
+    { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, onAction: () => { setBgPanelOpen(true); setOpen(false) } },
     ...(track ? [
-      { route: 'star-track',   label: isStarred ? t('nav.unstar', { defaultValue: 'Bỏ sao' }) : t('nav.star', { defaultValue: 'Yêu thích' }), icon: isStarred ? <IcStar /> : <IcStarBorder />, r: 84, onAction: handleStarToggle },
-      { route: 'playlist-add', label: t('nav.add_to_playlist', { defaultValue: 'Thêm vào' }), icon: <IcPlaylistAdd />, r: 88, onAction: () => setPlaylistPickerMode(true) },
+      { route: 'star-track',   label: isStarred ? t('nav.unstar', { defaultValue: 'Bỏ sao' }) : t('nav.star', { defaultValue: 'Yêu thích' }), icon: isStarred ? <IcStar /> : <IcStarBorder />, onAction: handleStarToggle },
+      { route: 'playlist-add', label: t('nav.add_to_playlist', { defaultValue: 'Thêm vào' }), icon: <IcPlaylistAdd />, onAction: () => setPlaylistPickerMode(true) },
     ] as RadialItem[] : []),
   ]
 
-  const outerItems = [
-    { route: '/videos',    label: t('nav.films'),                       icon: <IcVideo />,    r: 146 },
-    { route: '/ebooks',    label: t('nav.ebooks', { defaultValue: 'Sách' }), icon: <IcBook />,  r: 136 },
-    { route: '/comics',    label: t('nav.comics'),                      icon: <IcComics />,   r: 142 },
-    { route: '/trending',  label: t('nav.trending'),                    icon: <IcTrend />,    r: 132 },
-    { route: '/search',    label: t('nav.search'),                      icon: <IcSearch />,   r: 140 },
+  const outerItems: RadialItem[] = [
+    { route: '/videos',    label: t('nav.films'),                       icon: <IcVideo /> },
+    { route: '/ebooks',    label: t('nav.ebooks', { defaultValue: 'Sách' }), icon: <IcBook /> },
+    { route: '/comics',    label: t('nav.comics'),                      icon: <IcComics /> },
+    { route: '/trending',  label: t('nav.trending'),                    icon: <IcTrend /> },
+    { route: '/search',    label: t('nav.search'),                      icon: <IcSearch /> },
   ]
 
   const isTrending = location.pathname.startsWith('/trending')
-  const CX = 260
-  const CY = 260
   const auraSize = isTrending ? 560 : 300
   const auraOffset = auraSize / 2
 
   const trendingItems = [
-    { route: 'chart', label: t('trending.chart_mode'), icon: <IcChart />, r: 180 },
-    { route: 'grid',  label: t('trending.grid_mode'),  icon: <IcGrid />,  r: 172 },
-    { route: 'refresh', label: t('trending.refresh'),  icon: <IcRefresh />, r: 185 },
+    { route: 'chart', label: t('trending.chart_mode'), icon: <IcChart /> },
+    { route: 'grid',  label: t('trending.grid_mode'),  icon: <IcGrid /> },
+    { route: 'refresh', label: t('trending.refresh'),  icon: <IcRefresh /> },
   ]
 
   const formatShortDate = (dateStr: string) => {
@@ -453,14 +439,11 @@ export default function RadialNav() {
     return dateStr
   }
 
-  const IcPrevDate = () => <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-  const IcNextDate = () => <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-
   const layer4Items = [
-    { route: 'tier-transformative', label: t('trending.tiers.transformative'), icon: `🔥 ${trendingData.tierCounts.transformative ?? 0}`, r: 215, tier: 'transformative', disabled: (trendingData.tierCounts.transformative ?? 0) === 0 },
-    { route: 'tier-significant',    label: t('trending.tiers.significant'),    icon: `⚡ ${trendingData.tierCounts.significant ?? 0}`,    r: 210, tier: 'significant',    disabled: (trendingData.tierCounts.significant ?? 0) === 0 },
-    { route: 'tier-incremental',    label: t('trending.tiers.incremental'),    icon: `📈 ${trendingData.tierCounts.incremental ?? 0}`,    r: 218, tier: 'incremental',    disabled: (trendingData.tierCounts.incremental ?? 0) === 0 },
-    { route: 'tier-niche',          label: t('trending.tiers.niche'),          icon: `🔬 ${trendingData.tierCounts.niche ?? 0}`,          r: 208, tier: 'niche',          disabled: (trendingData.tierCounts.niche ?? 0) === 0 },
+    { route: 'tier-transformative', label: t('trending.tiers.transformative'), icon: `🔥 ${trendingData.tierCounts.transformative ?? 0}`, tier: 'transformative', disabled: (trendingData.tierCounts.transformative ?? 0) === 0 },
+    { route: 'tier-significant',    label: t('trending.tiers.significant'),    icon: `⚡ ${trendingData.tierCounts.significant ?? 0}`,    tier: 'significant',    disabled: (trendingData.tierCounts.significant ?? 0) === 0 },
+    { route: 'tier-incremental',    label: t('trending.tiers.incremental'),    icon: `📈 ${trendingData.tierCounts.incremental ?? 0}`,    tier: 'incremental',    disabled: (trendingData.tierCounts.incremental ?? 0) === 0 },
+    { route: 'tier-niche',          label: t('trending.tiers.niche'),          icon: `🔬 ${trendingData.tierCounts.niche ?? 0}`,          tier: 'niche',          disabled: (trendingData.tierCounts.niche ?? 0) === 0 },
   ]
 
   const maxOffset = Math.max(0, trendingData.dates.length - 5)
@@ -472,7 +455,6 @@ export default function RadialNav() {
       route: 'prev-date-window',
       label: t('trending.year', { defaultValue: 'Chọn Năm' }),
       icon: `${pickerYear}`,
-      r: 242,
       disabled: false,
       onClick: () => {
         setCalendarMode(true)
@@ -482,13 +464,12 @@ export default function RadialNav() {
         setIsEditingYear(true)
       }
     },
-    ...visibleDates.map((d, idx) => {
+    ...visibleDates.map((d) => {
       const isActive = d === trendingData.selectedDate
       return {
         route: `date-${d}`,
         label: isActive ? t('trending.active', { defaultValue: 'Đang chọn' }) : '',
         icon: formatShortDate(d),
-        r: 238 + (idx % 2) * 6,
         disabled: false,
         isActive: isActive,
         onClick: () => {
@@ -508,7 +489,6 @@ export default function RadialNav() {
       route: 'next-date-window',
       label: t('trending.calendar', { defaultValue: 'Chọn Lịch' }),
       icon: '📅',
-      r: 242,
       disabled: false,
       onClick: () => {
         setCalendarMode(true)
@@ -538,7 +518,6 @@ export default function RadialNav() {
       route: `month-${m}`,
       label: '',
       icon: monthLabels[m - 1],
-      r: 62 + (i % 2) * 6,
       isActive: m === pickerMonth,
       onClick: () => setPickerMonth(m)
     }
@@ -550,7 +529,6 @@ export default function RadialNav() {
       route: `month-${m}`,
       label: '',
       icon: monthLabels[m - 1],
-      r: 98 + (i % 2) * 6,
       isActive: m === pickerMonth,
       onClick: () => setPickerMonth(m)
     }
@@ -562,7 +540,6 @@ export default function RadialNav() {
       route: `day-${d}`,
       label: '',
       icon: `${d}`,
-      r: 144 + (i % 2) * 6,
       isActive: d === selDay && pickerMonth === selMonth && pickerYear === selYear,
       onClick: () => {
         const formattedMonth = String(pickerMonth).padStart(2, '0')
@@ -580,7 +557,6 @@ export default function RadialNav() {
       route: `day-${d}`,
       label: '',
       icon: `${d}`,
-      r: 186 + (i % 2) * 6,
       isActive: d === selDay && pickerMonth === selMonth && pickerYear === selYear,
       onClick: () => {
         const formattedMonth = String(pickerMonth).padStart(2, '0')
@@ -599,7 +575,6 @@ export default function RadialNav() {
       route: `day-${d}`,
       label: '',
       icon: `${d}`,
-      r: 222 + (i % 2) * 6,
       isActive: d === selDay && pickerMonth === selMonth && pickerYear === selYear,
       onClick: () => {
         const formattedMonth = String(pickerMonth).padStart(2, '0')
@@ -612,8 +587,8 @@ export default function RadialNav() {
   })
 
   const calendarLayer5Items = [
-    { route: 'cal-back', label: t('trending.back', { defaultValue: 'Quay lại' }), icon: '↩', r: 246, disabled: false, onClick: () => setCalendarMode(false) },
-    { route: 'cal-status', label: '', icon: `${String(pickerMonth).padStart(2, '0')}/${pickerYear}`, r: 242, disabled: true, onClick: undefined }
+    { route: 'cal-back', label: t('trending.back', { defaultValue: 'Quay lại' }), icon: '↩', disabled: false, onClick: () => setCalendarMode(false) },
+    { route: 'cal-status', label: '', icon: `${String(pickerMonth).padStart(2, '0')}/${pickerYear}`, disabled: true, onClick: undefined }
   ]
 
   const playlistPickerItems: (Playlist & { is_local: boolean; isBack?: boolean })[] = [
@@ -621,22 +596,129 @@ export default function RadialNav() {
     ...allLists,
   ]
 
-  const MENU_R = 260
   const isDragging = dragStart.current !== null
 
   // Expand right at its spot! Allow maximum corner-tucking.
   const activeX = pos.x
   const activeY = pos.y
 
-  // Dynamically scale down the menu on small viewports so it never overflows the screen boundaries
-  const scale = open ? Math.min(1, (window.innerWidth - 24) / 520) : 1
+  // ── Square grid layout ──────────────────────────────────────────────────
+  // Replaces the old arc-math (calcArc/getSectorPath) sector layout: menu
+  // items are laid out as a plain CSS grid of rounded squares, anchored to
+  // whichever side of the bubble has the most room so the grid grows into
+  // the viewport instead of off the edge of it.
+  const GRID_CELL = 56
+  const GRID_GAP = 8
+  const GRID_MARGIN = 12
 
-  const { start, span } = calcArc(activeX, activeY)
-  const n1 = innerItems.length
-  const n2 = outerItems.length
-  const n3 = trendingItems.length
-  const n4 = layer4Items.length
-  const n5 = layer5Items.length
+  const growRight = activeX < window.innerWidth / 2
+  const growDown  = activeY < window.innerHeight / 2
+
+  const availW = growRight
+    ? window.innerWidth  - activeX - BUBBLE_R - GRID_GAP - GRID_MARGIN
+    : activeX - BUBBLE_R - GRID_GAP - GRID_MARGIN
+  const availH = growDown
+    ? window.innerHeight - activeY - BUBBLE_R - GRID_GAP - GRID_MARGIN
+    : activeY - BUBBLE_R - GRID_GAP - GRID_MARGIN
+
+  // Cap at 4 columns / 5 visible rows for a compact, thumb-reachable grid;
+  // anything beyond that (e.g. the calendar's day cells) scrolls inside the
+  // panel rather than shrinking cells below the 56px touch target.
+  // `width` (not just `maxWidth`) is required here: CSS Grid's
+  // `repeat(auto-fill, 56px)` needs a definite container width to know how
+  // many columns fit — inside a shrink-to-fit (auto-width) absolutely
+  // positioned box it collapses to a single column instead of wrapping.
+  const panelWidth     = Math.max(GRID_CELL, Math.min(availW, GRID_CELL * 4 + GRID_GAP * 3))
+  const panelMaxHeight = Math.max(GRID_CELL, Math.min(availH, GRID_CELL * 5 + GRID_GAP * 4))
+
+  const mainCells: MenuCell[] = [
+    ...innerItems.map((item): MenuCell => ({
+      key: item.route,
+      icon: item.icon,
+      label: item.label,
+      active: item.route === 'star-track'
+        ? isStarred
+        : location.pathname === item.route || (item.route !== '/' && location.pathname.startsWith(item.route)),
+      onClick: () => { if (item.onAction) item.onAction(); else navigate(item.route) },
+    })),
+    ...outerItems.map((item): MenuCell => ({
+      key: item.route,
+      icon: item.icon,
+      label: item.label,
+      active: location.pathname === item.route || (item.route !== '/' && location.pathname.startsWith(item.route)),
+      onClick: () => navigate(item.route),
+    })),
+  ]
+
+  const trendingCells: MenuCell[] = isTrending ? [
+    ...trendingItems.map((item): MenuCell => ({
+      key: item.route,
+      icon: item.icon,
+      label: item.label,
+      active: item.route === 'chart' ? trendingMode === 'chart' : item.route === 'grid' ? trendingMode === 'grid' : false,
+      spinning: item.route === 'refresh' && trendingRefreshing,
+      onClick: () => {
+        if (item.route === 'refresh') window.dispatchEvent(new CustomEvent('trending-refresh-trigger'))
+        else window.dispatchEvent(new CustomEvent('trending-set-mode', { detail: item.route }))
+      },
+    })),
+    ...layer4Items.map((item): MenuCell => {
+      const tierColor = item.tier === 'transformative' ? '#ea580c' :
+                         item.tier === 'significant'    ? '#eab308' :
+                         item.tier === 'incremental'    ? '#2563eb' : '#7c3aed'
+      return {
+        key: item.route,
+        icon: item.icon,
+        label: item.label,
+        disabled: item.disabled,
+        dotColor: tierColor,
+        onClick: () => { if (!item.disabled) window.dispatchEvent(new CustomEvent('trending-click-chip', { detail: item.tier })) },
+      }
+    }),
+    ...layer5Items.map((item): MenuCell => {
+      const isActive = 'isActive' in item ? !!item.isActive : false
+      return {
+        key: item.route,
+        icon: item.icon,
+        label: item.label,
+        active: isActive,
+        disabled: !!item.disabled,
+        dotColor: item.route.startsWith('date-') ? (isActive ? 'var(--purple)' : 'rgba(255,255,255,0.3)') : undefined,
+        onClick: () => { if (!item.disabled && 'onClick' in item && typeof item.onClick === 'function') item.onClick() },
+        onDoubleClick: () => { if ('onDoubleClick' in item && typeof item.onDoubleClick === 'function') item.onDoubleClick() },
+      }
+    }),
+  ] : []
+
+  const calendarCells: MenuCell[] = [
+    ...monthRingA.map((item): MenuCell => ({ key: item.route, icon: item.icon, active: item.isActive, onClick: item.onClick })),
+    ...monthRingB.map((item): MenuCell => ({ key: item.route, icon: item.icon, active: item.isActive, onClick: item.onClick })),
+    ...daysRingA.map((item): MenuCell => ({ key: item.route, icon: item.icon, active: item.isActive, onClick: item.onClick })),
+    ...daysRingB.map((item): MenuCell => ({ key: item.route, icon: item.icon, active: item.isActive, onClick: item.onClick })),
+    ...daysRingC.map((item): MenuCell => ({ key: item.route, icon: item.icon, active: item.isActive, onClick: item.onClick })),
+    ...calendarLayer5Items.map((item): MenuCell => ({ key: item.route, icon: item.icon, label: item.label, disabled: item.disabled, onClick: item.onClick })),
+  ]
+
+  const playlistCells: MenuCell[] = playlistPickerItems.map((item): MenuCell => {
+    const inList = !item.isBack && track ? item.track_ids.includes(track.id) : false
+    return {
+      key: item.id,
+      icon: item.isBack ? '↩' : inList ? '✓' : '+',
+      label: item.name,
+      active: inList,
+      dotColor: item.isBack ? undefined : (inList ? 'var(--purple)' : 'rgba(255,255,255,0.3)'),
+      onClick: () => {
+        if (item.isBack) setPlaylistPickerMode(false)
+        else if (track) handlePlaylistToggle(item)
+      },
+    }
+  })
+
+  const activeCells: MenuCell[] = calendarMode
+    ? calendarCells
+    : playlistPickerMode
+    ? playlistCells
+    : [...mainCells, ...trendingCells]
 
   const color1 = coverColors && coverColors[0] ? coverColors[0] : '#ffffff'
   const color2 = coverColors && coverColors[1] ? coverColors[1] : '#aaaaaa'
@@ -646,7 +728,7 @@ export default function RadialNav() {
       {/* Click-outside overlay */}
       {open && <div className="radial-overlay" onClick={() => setOpen(false)} />}
 
-      {/* Fluid dynamic positioning and scaling wrapper */}
+      {/* Fluid dynamic positioning wrapper */}
       <div
         style={{
           position: 'fixed',
@@ -656,11 +738,9 @@ export default function RadialNav() {
           height: 0,
           zIndex: 99999,
           pointerEvents: 'none',
-          transform: `scale(${scale})`,
-          transformOrigin: '0 0',
           transition: (isDragging || snappedSelector)
             ? 'none'
-            : 'left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), top 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            : 'left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), top 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
         }}
       >
         {/* Aura Blur Glow (Liquidglass effect) */}
@@ -677,642 +757,43 @@ export default function RadialNav() {
           }}
         />
 
-        {/* Petals as a concentric Nightingale Rose chart inside an SVG */}
-        <svg
-          className={`radial-petals-svg${open ? ' radial-petals-svg--open' : ''}`}
+        {/* Menu items — symmetric rounded-square grid, anchored to whichever
+            side of the bubble has room so it never overflows the viewport. */}
+        <div
+          className={`radial-menu-panel${open ? ' radial-menu-panel--open' : ''}`}
           style={{
             position: 'absolute',
-            left: -260,
-            top:  -260,
+            ...(growRight ? { left: BUBBLE_R + GRID_GAP } : { right: BUBBLE_R + GRID_GAP }),
+            ...(growDown  ? { top:  BUBBLE_R + GRID_GAP } : { bottom: BUBBLE_R + GRID_GAP }),
+            width: panelWidth,
+            maxHeight: panelMaxHeight,
             pointerEvents: open ? 'auto' : 'none',
           }}
         >
-        {calendarMode ? (
-          <>
-            {/* Calendar Ring 1: Months 1 to 5 (Inner Months) */}
-            {monthRingA.map((item, i) => {
-              const sectorSpan = span / 5
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 34
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group${item.isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={item.onClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open ? `${i * 15}ms` : `${(5 - 1 - i) * 10}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: item.isActive ? 'bold' : 'normal' }}>
-                        {item.icon}
-                      </span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Calendar Ring 2: Months 6 to 12 (Outer Months) */}
-            {monthRingB.map((item, i) => {
-              const sectorSpan = span / 7
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 74
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group${item.isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={item.onClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open ? `${(5 + i) * 15}ms` : `${(7 - 1 - i) * 10}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: item.isActive ? 'bold' : 'normal' }}>
-                        {item.icon}
-                      </span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Calendar Ring 3: Days 1 to 10 */}
-            {daysRingA.map((item, i) => {
-              const sectorSpan = span / 10
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 110
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${item.isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={item.onClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open ? `${(12 + i) * 15}ms` : `${(10 - 1 - i) * 10}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: item.isActive ? 'bold' : 'normal' }}>
-                        {item.icon}
-                      </span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Calendar Ring 4: Days 11 to 20 */}
-            {daysRingB.map((item, i) => {
-              const sectorSpan = span / 10
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 156
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${item.isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={item.onClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open ? `${(22 + i) * 15}ms` : `${(10 - 1 - i) * 10}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: item.isActive ? 'bold' : 'normal' }}>
-                        {item.icon}
-                      </span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Calendar Ring 5: Days 21 to 28-31 */}
-            {daysRingC.map((item, i) => {
-              const divisor = daysCountC > 0 ? daysCountC : 1
-              const sectorSpan = span / divisor
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 198
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${item.isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={item.onClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open ? `${(32 + i) * 15}ms` : `${(daysCountC - 1 - i) * 10}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional radial-sector--tier"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: item.isActive ? 'bold' : 'normal' }}>
-                        {item.icon}
-                      </span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Calendar Ring 6: Controls & Status */}
-            {calendarLayer5Items.map((item, i) => {
-              const sectorSpan = span / 2
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 234
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${item.disabled ? ' radial-petal-group--disabled' : ''}`}
-                  onClick={item.onClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? (item.disabled ? 0.45 : 1) : 0,
-                    transitionDelay: open ? `${(32 + daysCountC + i) * 15}ms` : `${(2 - 1 - i) * 10}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional radial-sector--tier"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {item.icon}
-                      </span>
-                      <span className="radial-petal-label">{item.label}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-          </>
-        ) : playlistPickerMode ? (
-          <>
-            {/* Playlist Picker Ring */}
-            {playlistPickerItems.map((item, i) => {
-              const n = playlistPickerItems.length
-              const sectorSpan = span / n
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-              const rInner = 34
-              const rOuter = 140
-              const rMid = (rInner + rOuter) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-              const inList = !item.isBack && track ? item.track_ids.includes(track.id) : false
-              return (
-                <g
-                  key={item.id}
-                  className={`radial-petal-group radial-petal-group--optional${inList ? ' radial-petal-group--active' : ''}`}
-                  onClick={() => {
-                    if (item.isBack) {
-                      setPlaylistPickerMode(false)
-                    } else if (track) {
-                      handlePlaylistToggle(item)
-                    }
-                  }}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open ? `${i * 28}ms` : `${(n - 1 - i) * 18}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional"
-                    d={getSectorPath(CX, CY, rInner, rOuter, startDeg, endDeg)}
-                    style={{ stroke: inList ? 'rgba(255,255,255,0.44)' : undefined }}
-                  />
-                  <foreignObject x={mx - 25} y={my - 20} width={50} height={40} className="radial-petal-fo">
-                    <div className="radial-petal-content">
-                      {!item.isBack && (
-                        <span className="radial-petal-fo-dot" style={{ background: inList ? 'var(--purple)' : 'rgba(255,255,255,0.3)' }} />
-                      )}
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {item.isBack ? '↩' : inList ? '✓' : '+'}
-                      </span>
-                      <span className="radial-petal-label" style={{ fontSize: '9px' }}>{item.name}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-          </>
-        ) : (
-          <>
-            {/* Layer 1: Inner Concentric Ring */}
-            {innerItems.map((item, i) => {
-              const sectorSpan = span / n1
-              const startDeg = start + i * sectorSpan + 1.5
-              const endDeg = start + (i + 1) * sectorSpan - 1.5
-              const midDeg = start + (i + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 34
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              const isActive = item.route === 'star-track' ? isStarred
-                : location.pathname === item.route ||
-                  (item.route !== '/' && location.pathname.startsWith(item.route))
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group${isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={() => {
-                    if (item.onAction) item.onAction()
-                    else navigate(item.route)
-                  }}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open
-                      ? `${i * 28}ms`
-                      : `${(n1 + n2 - 1 - i) * 18}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      {item.icon}
-                      <span className="radial-petal-label">{item.label}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Layer 2: Outer Concentric Ring */}
-            {outerItems.map((item, j) => {
-              const sectorSpan = span / n2
-              const startDeg = start + j * sectorSpan + 1.5
-              const endDeg = start + (j + 1) * sectorSpan - 1.5
-              const midDeg = start + (j + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 98 // Leaves a concentric circular gap of 6px from inner items
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              const isActive =
-                location.pathname === item.route ||
-                (item.route !== '/' && location.pathname.startsWith(item.route))
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group${isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={() => {
-                    navigate(item.route)
-                  }}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open
-                      ? `${(n1 + j) * 28}ms`
-                      : `${(n2 - 1 - j) * 18}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      {item.icon}
-                      <span className="radial-petal-label">{item.label}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Layer 3: Contextual Outer Concentric Ring (Trending Only) */}
-            {isTrending && trendingItems.map((item, k) => {
-              const sectorSpan = span / n3
-              const startDeg = start + k * sectorSpan + 1.5
-              const endDeg = start + (k + 1) * sectorSpan - 1.5
-              const midDeg = start + (k + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 152 // Leaves a concentric circular gap of 6px from Layer 2
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              const isActive =
-                item.route === 'chart' ? trendingMode === 'chart' :
-                item.route === 'grid' ? trendingMode === 'grid' :
-                false
-
-              const handleLayer3Click = () => {
-                if (item.route === 'refresh') {
-                  window.dispatchEvent(new CustomEvent('trending-refresh-trigger'))
-                } else {
-                  window.dispatchEvent(new CustomEvent('trending-set-mode', { detail: item.route }))
-                }
-              }
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${isActive ? ' radial-petal-group--active' : ''}`}
-                  onClick={handleLayer3Click}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? 1 : 0,
-                    transitionDelay: open
-                      ? `${(n1 + n2 + k) * 28}ms`
-                      : `${(n3 - 1 - k) * 18}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className={`radial-petal-content${item.route === 'refresh' && trendingRefreshing ? ' radial-petal-fo-spin' : ''}`}>
-                      {item.icon}
-                      <span className="radial-petal-label">{item.label}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Layer 4: Concentric Ring 4 (Tiers - Trending Only) */}
-            {isTrending && layer4Items.map((item, m) => {
-              const sectorSpan = span / n4
-              const startDeg = start + m * sectorSpan + 1.5
-              const endDeg = start + (m + 1) * sectorSpan - 1.5
-              const midDeg = start + (m + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 191 // Leaves a concentric circular gap of 6px from Layer 3
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              const handleLayer4Click = () => {
-                if (item.disabled) return
-                window.dispatchEvent(new CustomEvent('trending-click-chip', { detail: item.tier }))
-              }
-
-              const tierColor = item.tier === 'transformative' ? '#ea580c' :
-                                item.tier === 'significant' ? '#eab308' :
-                                item.tier === 'incremental' ? '#2563eb' : '#7c3aed'
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${item.disabled ? ' radial-petal-group--disabled' : ''}`}
-                  onClick={handleLayer4Click}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? (item.disabled ? 0.35 : 1) : 0,
-                    transitionDelay: open
-                      ? `${(n1 + n2 + n3 + m) * 28}ms`
-                      : `${(n4 - 1 - m) * 18}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional radial-sector--tier"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                    style={{
-                      stroke: `${tierColor}33`,
-                    }}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      <span className="radial-petal-fo-dot" style={{ background: tierColor }} />
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {item.icon}
-                      </span>
-                      <span className="radial-petal-label">{item.label}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-
-            {/* Layer 5: Concentric Ring 5 (Dates selection - Trending Only) */}
-            {isTrending && layer5Items.map((item, p) => {
-              const sectorSpan = span / n5
-              const startDeg = start + p * sectorSpan + 1.5
-              const endDeg = start + (p + 1) * sectorSpan - 1.5
-              const midDeg = start + (p + 0.5) * sectorSpan
-              const midRad = (midDeg * Math.PI) / 180
-
-              const rInner = 226 // Leaves a concentric circular gap of 6px from Layer 4
-              const rMid = (rInner + item.r) / 2
-              const mx = CX + rMid * Math.cos(midRad)
-              const my = CY + rMid * Math.sin(midRad)
-
-              const handleLayer5Click = () => {
-                if (item.disabled) return
-                if ('onClick' in item && typeof item.onClick === 'function') {
-                  item.onClick()
-                }
-              }
-
-              const handleLayer5DoubleClick = () => {
-                if ('onDoubleClick' in item && typeof item.onDoubleClick === 'function') {
-                  item.onDoubleClick()
-                }
-              }
-
-              const isActive = 'isActive' in item ? item.isActive : false
-
-              return (
-                <g
-                  key={item.route}
-                  className={`radial-petal-group radial-petal-group--optional${isActive ? ' radial-petal-group--active' : ''}${item.disabled ? ' radial-petal-group--disabled' : ''}`}
-                  onClick={handleLayer5Click}
-                  onDoubleClick={handleLayer5DoubleClick}
-                  style={{
-                    transform: open ? 'scale(1)' : 'scale(0)',
-                    opacity: open ? (item.disabled ? 0.35 : 1) : 0,
-                    transitionDelay: open
-                      ? `${(n1 + n2 + n3 + n4 + p) * 28}ms`
-                      : `${(n5 - 1 - p) * 18}ms`,
-                  }}
-                >
-                  <path
-                    className="radial-sector radial-sector--optional radial-sector--tier"
-                    d={getSectorPath(CX, CY, rInner, item.r, startDeg, endDeg)}
-                    style={{
-                      stroke: isActive ? 'rgba(255, 255, 255, 0.44)' : undefined,
-                    }}
-                  />
-                  <foreignObject
-                    x={mx - 25}
-                    y={my - 20}
-                    width={50}
-                    height={40}
-                    className="radial-petal-fo"
-                  >
-                    <div className="radial-petal-content">
-                      {item.route.startsWith('date-') && (
-                        <span className="radial-petal-fo-dot" style={{ background: isActive ? 'var(--purple)' : 'rgba(255, 255, 255, 0.3)' }} />
-                      )}
-                      <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: isActive ? 'bold' : 'normal' }}>
-                        {item.icon}
-                      </span>
-                      <span className="radial-petal-label">{item.label}</span>
-                    </div>
-                  </foreignObject>
-                </g>
-              )
-            })}
-          </>
-        )}
-      </svg>
+          <div className="radial-menu-grid">
+            {activeCells.map((cell, i) => (
+              <button
+                key={cell.key}
+                type="button"
+                className={`radial-menu-cell${cell.active ? ' radial-menu-cell--active' : ''}${cell.disabled ? ' radial-menu-cell--disabled' : ''}`}
+                disabled={cell.disabled}
+                onClick={cell.onClick}
+                onDoubleClick={cell.onDoubleClick}
+                style={{
+                  transform: open ? 'scale(1)' : 'scale(0)',
+                  opacity: open ? (cell.disabled ? 0.4 : 1) : 0,
+                  transitionDelay: open ? `${i * 22}ms` : `${(activeCells.length - 1 - i) * 14}ms`,
+                }}
+              >
+                {cell.dotColor && <span className="radial-menu-cell-dot" style={{ background: cell.dotColor }} />}
+                <span className={`radial-menu-cell-icon${cell.spinning ? ' radial-menu-cell-icon--spin' : ''}`}>
+                  {cell.icon}
+                </span>
+                {cell.label && <span className="radial-menu-cell-label">{cell.label}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Bubble */}
         <button
