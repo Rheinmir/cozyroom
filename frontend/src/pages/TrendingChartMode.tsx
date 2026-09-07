@@ -610,11 +610,16 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
             deltaPct = pctVal - prevPctVal
           }
 
-          const color = 'var(--chart-1)'
+          const color = CAT[index % CAT.length]
 
           const isHovered = hovered === index
-          const nameFontSize = Math.min(12, Math.floor(width / Math.max(name.length, 1) * 1.5))
-          const canShow = width > 45 && height > 18 && nameFontSize >= 8
+          // Size the label to the TILE (not the name length) so it stays a
+          // readable 8–13px, then truncate the name to whatever fits the width —
+          // shows a (possibly clipped) name instead of hiding it entirely.
+          const nameFontSize = Math.min(13, Math.max(8, Math.round(width / 8)))
+          const canShow = width > 34 && height > 15
+          const maxChars = Math.max(1, Math.floor(width / (nameFontSize * 0.58)))
+          const label = name.length > maxChars ? name.slice(0, maxChars - 1) + '…' : name
 
           return (
             <g
@@ -625,8 +630,8 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
             >
               <rect x={x} y={y} width={width} height={height}
                 fill={color}
-                fillOpacity={isHovered ? 0.85 : 0.65}
-                stroke="rgba(0,0,0,.25)" strokeWidth={1}
+                fillOpacity={isHovered ? 1 : 0.9}
+                stroke="rgba(0,0,0,.28)" strokeWidth={1}
                 style={{ transition: 'fill-opacity 0.2s' }}
               />
               {canShow && (
@@ -634,35 +639,35 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                   <text
                     x={x + width / 2} y={y + height / 2 - (height > 36 ? 7 : 0)}
                     textAnchor="middle" dominantBaseline="middle"
-                    fontSize={nameFontSize} fontWeight={700} fill="var(--text)" fillOpacity={0.9}
+                    fontSize={nameFontSize} fontWeight={700} fill="rgba(0,0,0,.85)"
                     style={{ pointerEvents: 'none' }}
-                  >{name}</text>
-                  
+                  >{label}</text>
+
                   {height > 36 && (
                     <>
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="var(--text)"
-                        style={{ opacity: isHovered ? 0 : 0.75, transform: isHovered ? 'scaleX(0)' : 'scaleX(1)' }}
+                        fontSize={10} fill="rgba(0,0,0,.65)"
+                        style={{ opacity: isHovered ? 0 : 1, transform: isHovered ? 'scaleX(0)' : 'scaleX(1)' }}
                       >
-                        <tspan fill="var(--text)">{pct}</tspan>
+                        <tspan fill="rgba(0,0,0,.8)">{pct}</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaPct > 0 ? 'var(--text)' : (deltaPct < 0 ? 'var(--text-faint)' : 'var(--text)')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaPct < 0 ? 'rgba(0,0,0,.45)' : 'rgba(0,0,0,.8)'} dx={4} fontWeight="bold">
                             ({deltaPct > 0 ? '+' : (deltaPct < 0 ? '' : '+')}{deltaPct.toFixed(0)}%)
                           </tspan>
                         )}
                       </text>
-                      
+
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="var(--text)"
-                        style={{ opacity: isHovered ? 0.85 : 0, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)' }}
+                        fontSize={10} fill="rgba(0,0,0,.65)"
+                        style={{ opacity: isHovered ? 1 : 0, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)' }}
                       >
-                        <tspan fill="var(--text)">{size} repos</tspan>
+                        <tspan fill="rgba(0,0,0,.8)">{size} repos</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaSize > 0 ? 'var(--text)' : (deltaSize < 0 ? 'var(--text-faint)' : 'var(--text)')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaSize < 0 ? 'rgba(0,0,0,.45)' : 'rgba(0,0,0,.8)'} dx={4} fontWeight="bold">
                             ({deltaSize > 0 ? '+' : (deltaSize < 0 ? '' : '+')}{deltaSize})
                           </tspan>
                         )}
