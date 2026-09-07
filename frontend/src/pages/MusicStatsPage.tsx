@@ -140,7 +140,7 @@ export default function MusicStatsPage() {
                     contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                     formatter={(val, _name, item) => [`${val} lượt`, item.payload.artist_name]}
                   />
-                  <Bar dataKey="plays" fill="var(--text)" radius={[0, 999, 999, 0]} barSize={14} maxBarSize={24}>
+                  <Bar dataKey="plays" fill="var(--chart-1)" radius={[0, 999, 999, 0]} barSize={14} maxBarSize={24}>
                     <LabelList dataKey="plays" position="right" style={{ fontSize: 10, fill: 'var(--text)', opacity: 0.7 }} />
                   </Bar>
                 </BarChart>
@@ -154,7 +154,7 @@ export default function MusicStatsPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                   <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                   <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
-                  <Line type="monotone" dataKey="plays" stroke="var(--text)" dot={false} strokeWidth={2} />
+                  <Line type="monotone" dataKey="plays" stroke="var(--chart-1)" dot={false} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>

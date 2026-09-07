@@ -11,14 +11,15 @@ colors:
   text-dim: "rgba(255,255,255,0.55)"
   text-ghost: "rgba(255,255,255,0.32)"
 charts:
-  # Monochrome data ladder — lightness encodes importance (most important =
-  # highest contrast against the panel). Dark values used on Void Black; the
-  # ladder inverts to the ink values on the light-theme white cards. Scoped
-  # strictly to data/status visualization, never UI chrome. See "## Charts".
-  ladder-dark: ["#f0efeb", "#dcdad2", "#c9c7bd", "#b3b0a4", "#8f8e88", "#6a6963", "#4a4944"]
-  ladder-light: ["#1c1c1a", "#4a4944", "#6a6963", "#8f8e88", "#b0afa9", "#c6c5bf", "#d8d7d1"]
-  # Semantic status — the only hues allowed in charts, because red=fail /
-  # green=ok / amber=warn carry meaning, not decoration.
+  # One cohesive, muted categorical palette (--chart-1..8) applied to EVERY
+  # chart — categorical series, ordinal buckets, the language dimension, and
+  # single-series marks — so the whole dashboard reads as one system. Muted
+  # mid-tones sit calmly on Void Black and read on the light-theme white card
+  # too (theme-agnostic, no per-theme override). Scoped to data viz, never UI
+  # chrome. See "## Charts".
+  palette: ["#6f8fd6", "#5cb8a0", "#d8a862", "#d3798f", "#9a8fd0", "#7f8c9e", "#c98f6a", "#8bb37a"]
+  # Semantic status — reserved hues that mean something (not a category),
+  # never mixed into the categorical rotation.
   fail: "#f87171"
   warn: "#fb923c"
   caution: "#facc15"
@@ -108,7 +109,7 @@ A single accent (paper-white) against three densities of near-black. No hue exis
 
 **The No-Accent-Token Rule.** There is no `--accent` CSS variable in the codebase — referencing it silently resolves to nothing (a confirmed, previously-shipped bug class). The real accent token is `var(--green)`, which is literally white, always paired with `color: #000` for legible text/icons on top of it. `--purple` is currently also white and should be treated as an unused legacy alias, not a second hue — don't build new work assuming it is distinct from `--green`.
 
-**The Data Needs Color Rule (narrowed 2026-09-06).** This exception used to cover both status *and* categorical multi-series. It no longer covers categorical series — those now use the monochrome ladder (see the Lightness-Is-Data Rule and `## Charts`). What remains sanctioned is **semantic status only**: red=failure, amber/yellow=warning severity, green=success — meaning monochrome genuinely cannot express. These live as the chart-scoped tokens `--chart-fail` / `--chart-warn` / `--chart-caution` / `--chart-ok` (index.css). They are namespaced to data/status visualization and must never be used for UI chrome or promoted to a second brand accent. The old ad-hoc per-page hue palettes (`#22d3ee`, `#f59e0b`, `#a78bfa`, tier/impact hues in TrendingChartMode, …) have been removed in favor of the ladder.
+**The Data Needs Color Rule (narrowed).** Two distinct chart color systems, both scoped to data viz and never to UI chrome: (1) the **categorical palette** `--chart-1..8` for separating series/categories (see the Chart-Palette Rule); (2) **semantic status** — `--chart-fail` / `--chart-warn` / `--chart-caution` / `--chart-ok` — reserved for meaning monochrome can't express (red=failure, amber/yellow=warning severity, green=success), never mixed into the categorical rotation. The old ad-hoc per-page hue palettes (`#22d3ee`, `#f59e0b`, `#a78bfa`, GitHub language colors, tier/impact hues in TrendingChartMode, …) were all removed in favor of these two token sets.
 
 **The Genre Tile Color Rule.** The Browse-by-genre grid on the Search page (empty-query state, `.genre-tile` in SearchPage.tsx) is the second, and only other, deliberate exception to the One Accent Rule — a rotating six-color duotone palette tints each genre's cover photo (grayscale image + a per-tile hue via `mix-blend-mode: color`), the way Apple Music's genre tiles work, because a wall of identical monochrome tiles gives the eye nothing to scan by. This palette is scoped strictly to that grid: it must never be promoted into a system-wide token, reused for album/artist/playlist artwork elsewhere, or extended to any other tile/card type outside Browse-by-genre.
 
@@ -190,9 +191,9 @@ Added 2026-09-06. The stats dashboards (AIStatsPage, MusicStatsPage, RequestLogP
 
 ### Named Rules
 
-**The Lightness-Is-Data Rule.** For ordinal or categorical multi-series data, importance is encoded by *lightness*, not hue: the most important series is the highest-contrast against the panel (near-paper on Void Black; near-ink on the light-theme white card), fading down a 7-step gray ladder (`--chart-1` … `--chart-7`). A chart with one series uses `var(--text)`. This replaces every ad-hoc categorical hue palette that used to live per-page. Two-series charts pick `--chart-1` + `--chart-4` for separation; a highlight/"answer" line over context bars uses `var(--text)`.
+**The Chart-Palette Rule.** Every chart draws from one cohesive, muted categorical palette — `--chart-1 … --chart-8` (index.css) — so the whole dashboard reads as one system. It covers *all* data marks: categorical series, ordinal buckets/tiers, the language dimension, and single-series bars/lines (a single series uses `--chart-1`). No chart mixes this palette with a different color scheme, and no chart falls back to a per-page ad-hoc hue set. The palette is intentionally muted/desaturated so it sits calmly on Void Black without becoming the loud, multi-hue "dashboard" look the Midnight Deck rejects elsewhere — this is the one sanctioned place color is used decoratively (to separate series), and it is deliberately restrained. The mid-tones are theme-agnostic (no per-theme override); text on a colored mark uses `var(--text)`, which stays legible on the mid-tones in both themes.
 
-**The Language-Identity Color Rule.** `TrendingChartMode`'s `LANG_COLORS` map (TypeScript blue, Rust orange-red, Go cyan, …) is a deliberate, documented exception to Lightness-Is-Data: these are GitHub's *canonical* language identity colors, recognized externally, and there are ~18 of them — more than a 7-step ladder can separate. They are treated like the genre-tile / playlist-gradient identity palettes: scoped strictly to the language dimension, registered as sanctioned `ignoreValues` in `.impeccable/config.json`, never promoted to a system token or reused elsewhere.
+> History: an earlier pass tried a strict monochrome gray ladder (lightness = importance) plus a GitHub `LANG_COLORS` identity exception. Shipped, it read as jarring — a couple of colored charts (momentum scatter, language bars) stranded among grayscale ones. Replaced 2026-09-07 by this single-palette rule. The stale `LANG_COLORS` `ignoreValues` in `.impeccable/config.json` are now dead (langColor hashes into the palette instead) and can be pruned.
 
 ### Chart chrome
 
@@ -200,8 +201,8 @@ Added 2026-09-06. The stats dashboards (AIStatsPage, MusicStatsPage, RequestLogP
 - **Axis / ticks:** `var(--chart-axis)` (= `var(--text-muted)`); axis *labels* one tier fainter (`var(--text-faint)`).
 - **Bars:** capsule ends — `radius={[999,999,0,0]}` (vertical) / `[0,999,999,0]` (horizontal), matching lieflat's pill bar-caps.
 - **Tooltips:** `var(--elevated)` background, `1px solid var(--border)`, `var(--text)` copy — theme-aware, replacing the old `#1e1e2e`/`#333` hardcodes.
-- **Matrix heat** (lang × tier table): a single ink at `color-mix(in srgb, var(--text) N%, transparent)` where N encodes count; the cell number flips (`var(--bg)` vs `var(--text)`) to stay legible across the intensity range in both themes.
-- **Treemap:** color carries no data (area already encodes frequency), so every tile is one ink (`var(--text)`).
+- **Matrix heat** (lang × tier table): a single-hue sequential — `color-mix(in srgb, var(--chart-1) N%, transparent)` where N encodes count; the cell number stays `var(--text)`, legible on the palette mid-tone in both themes.
+- **Treemap:** color carries no data (area already encodes frequency), so every tile is one palette hue (`--chart-1`); label text is `var(--text)`.
 
 ## Do's and Don'ts
 

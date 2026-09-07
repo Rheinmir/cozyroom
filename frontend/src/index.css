@@ -591,21 +591,22 @@ button, a, [role="button"], input, select, textarea {
   --player-h:      72px;
   --radius:        13px;
 
-  /* ── Chart data ladder ───────────────────────────────
-     Lightness encodes importance: the most important series is the
-     highest-contrast against the panel (near-paper on near-black), fading
-     to the darkest gray. Distilled from lieflat-charts' Mono system
-     (dark-card variant, PolyForm-Noncommercial — re-expressed as our own
-     tokens, not copied). Replaces the ad-hoc per-page hue palettes; see the
-     Lightness-Is-Data Rule in DESIGN.md. --chart-fail/--chart-ok are the only
-     hues, kept because red=failure / green=success carry meaning, not decoration. */
-  --chart-1: #f0efeb;
-  --chart-2: #dcdad2;
-  --chart-3: #c9c7bd;
-  --chart-4: #b3b0a4;
-  --chart-5: #8f8e88;
-  --chart-6: #6a6963;
-  --chart-7: #4a4944;
+  /* ── Chart categorical palette ───────────────────────
+     One cohesive, muted palette applied to EVERY chart (categorical series,
+     ordinal buckets, language dimension, single-series) so the whole
+     dashboard reads as one system — no mono islands next to colored ones.
+     Muted/desaturated to sit calmly on the dark Midnight Deck surface;
+     the same mid-tones read on the light-theme cards too. See the
+     Chart-Palette Rule in DESIGN.md. --chart-fail/warn/caution/ok stay
+     reserved for semantic status (meaning, not category). */
+  --chart-1: #6f8fd6;
+  --chart-2: #5cb8a0;
+  --chart-3: #d8a862;
+  --chart-4: #d3798f;
+  --chart-5: #9a8fd0;
+  --chart-6: #7f8c9e;
+  --chart-7: #c98f6a;
+  --chart-8: #8bb37a;
   --chart-fail:    #f87171;
   --chart-warn:    #fb923c;
   --chart-caution: #facc15;
@@ -639,16 +640,9 @@ button, a, [role="button"], input, select, textarea {
   --header-glass:  rgba(255,255,255,.7);
   --player-glass:  rgba(255,255,255,.88);
 
-  /* Ladder inverts on white cards: most important = darkest (highest
-     contrast against white), matching lieflat's light "ink" ladder.
-     --chart-fail/-ok/-grid/-axis inherit — they're semantic or var-based. */
-  --chart-1: #1c1c1a;
-  --chart-2: #4a4944;
-  --chart-3: #6a6963;
-  --chart-4: #8f8e88;
-  --chart-5: #b0afa9;
-  --chart-6: #c6c5bf;
-  --chart-7: #d8d7d1;
+  /* Chart palette (--chart-1..8) is theme-agnostic — the muted mid-tones read
+     on both Void Black and the white light-theme card, so no override here.
+     --chart-fail/warn/caution/ok/-grid/-axis inherit (semantic or var-based). */
 }
 
 /* Sitewide keyboard-focus ring. Many components below set `outline: none`

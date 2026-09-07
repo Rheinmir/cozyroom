@@ -26,14 +26,16 @@ const TIER_COLORS: Record<Tier, string> = {
   niche:          'var(--chart-7)',
 }
 
-const LANG_COLORS: Record<string, string> = {
-  TypeScript: '#3178c6', Python: '#3572a5', Rust: '#ce422b',
-  Go: '#00acd7', JavaScript: '#f1e05a', 'C++': '#f34b7d',
-  Java: '#b07219', C: '#6a737d', 'C#': '#178600', Ruby: '#701516',
-  Swift: '#f05138', Kotlin: '#a97bff', PHP: '#4f5d95', Zig: '#f7a41d',
-  Lua: '#000080', Haskell: '#5e5086', Elixir: '#6e4a7e', Shell: '#89e051',
+// The language dimension shares the one cohesive chart palette (Chart-Palette
+// Rule) — a stable hash maps each language to a slot so the same language keeps
+// the same color across every chart, without the old GitHub identity hues that
+// clashed with the rest of the (now uniformly palette-colored) dashboard.
+const CAT = ['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)','var(--chart-6)','var(--chart-7)','var(--chart-8)']
+function langColor(l: string) {
+  let h = 0
+  for (let i = 0; i < l.length; i++) h = (h * 31 + l.charCodeAt(i)) >>> 0
+  return CAT[h % CAT.length]
 }
-function langColor(l: string) { return LANG_COLORS[l] ?? '#6b7280' }
 
 function getTier(repo: TrendingRepo): Tier | '' {
   if ((TIER_ORDER as string[]).includes(repo.impact_label)) return repo.impact_label as Tier
@@ -258,7 +260,7 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
     if (percent < 0.05) return null
     return (
-      <text x={x} y={y} fill="var(--bg)" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+      <text x={x} y={y} fill="var(--text)" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     )
@@ -608,7 +610,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
             deltaPct = pctVal - prevPctVal
           }
 
-          const color = 'var(--text)'
+          const color = 'var(--chart-1)'
 
           const isHovered = hovered === index
           const nameFontSize = Math.min(12, Math.floor(width / Math.max(name.length, 1) * 1.5))
@@ -632,7 +634,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                   <text
                     x={x + width / 2} y={y + height / 2 - (height > 36 ? 7 : 0)}
                     textAnchor="middle" dominantBaseline="middle"
-                    fontSize={nameFontSize} fontWeight={700} fill="var(--bg)" fillOpacity={0.9}
+                    fontSize={nameFontSize} fontWeight={700} fill="var(--text)" fillOpacity={0.9}
                     style={{ pointerEvents: 'none' }}
                   >{name}</text>
                   
@@ -641,12 +643,12 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="var(--bg)"
+                        fontSize={10} fill="var(--text)"
                         style={{ opacity: isHovered ? 0 : 0.75, transform: isHovered ? 'scaleX(0)' : 'scaleX(1)' }}
                       >
-                        <tspan fill="var(--bg)">{pct}</tspan>
+                        <tspan fill="var(--text)">{pct}</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaPct > 0 ? 'var(--bg)' : (deltaPct < 0 ? 'var(--text-faint)' : 'var(--bg)')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaPct > 0 ? 'var(--text)' : (deltaPct < 0 ? 'var(--text-faint)' : 'var(--text)')} dx={4} fontWeight="bold">
                             ({deltaPct > 0 ? '+' : (deltaPct < 0 ? '' : '+')}{deltaPct.toFixed(0)}%)
                           </tspan>
                         )}
@@ -655,12 +657,12 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="var(--bg)"
+                        fontSize={10} fill="var(--text)"
                         style={{ opacity: isHovered ? 0.85 : 0, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)' }}
                       >
-                        <tspan fill="var(--bg)">{size} repos</tspan>
+                        <tspan fill="var(--text)">{size} repos</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaSize > 0 ? 'var(--bg)' : (deltaSize < 0 ? 'var(--text-faint)' : 'var(--bg)')} dx={4} fontWeight="bold">
+                          <tspan fill={deltaSize > 0 ? 'var(--text)' : (deltaSize < 0 ? 'var(--text-faint)' : 'var(--text)')} dx={4} fontWeight="bold">
                             ({deltaSize > 0 ? '+' : (deltaSize < 0 ? '' : '+')}{deltaSize})
                           </tspan>
                         )}
@@ -725,8 +727,8 @@ function ChartHeatmap({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: On
                 const intensity = v === 0 ? 0 : Math.round((0.12 + (v / maxVal) * 0.75) * 100)
                 return (
                   <td key={tier} style={{
-                    background: v === 0 ? 'var(--surface-hover)' : `color-mix(in srgb, var(--text) ${intensity}%, transparent)`,
-                    color: v === 0 ? 'var(--text-faint)' : (intensity > 45 ? 'var(--bg)' : 'var(--text)'),
+                    background: v === 0 ? 'var(--surface-hover)' : `color-mix(in srgb, var(--chart-1) ${intensity}%, transparent)`,
+                    color: v === 0 ? 'var(--text-faint)' : 'var(--text)',
                     cursor: v > 0 ? 'pointer' : 'default',
                   }}
                     onClick={() => {

@@ -556,7 +556,7 @@ export default function AIStatsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
-              <Bar dataKey="success" stackId="a" fill="var(--text)" name="Thành công" />
+              <Bar dataKey="success" stackId="a" fill="var(--chart-ok)" name="Thành công" />
               <Bar dataKey="failed"  stackId="a" fill="var(--chart-fail)" name="Thất bại" radius={[999,999,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -625,7 +625,7 @@ export default function AIStatsPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => fmtMs(v)} />
                 <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtMs(v as number)} />
-                <Line type="monotone" dataKey="ms" stroke="var(--text)" dot={false} strokeWidth={2} name="avg ms" />
+                <Line type="monotone" dataKey="ms" stroke="var(--chart-1)" dot={false} strokeWidth={2} name="avg ms" />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -639,7 +639,7 @@ export default function AIStatsPage() {
               <XAxis dataKey="hour" tick={{ fontSize: 10 }} tickFormatter={h => `${h}h`} />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} labelFormatter={h => `${h}:00`} />
-              <Bar dataKey="count" fill="var(--text)" name="Tin nhắn" radius={[999,999,0,0]} />
+              <Bar dataKey="count" fill="var(--chart-1)" name="Tin nhắn" radius={[999,999,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
