@@ -59,7 +59,7 @@ export default function MusicStatsPage() {
   return (
     <div className="stats-page-body">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Số liệu nghe nhạc</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, margin: 0 }}>Số liệu nghe nhạc</h2>
         <button
           onClick={handleBackfill}
           disabled={!lastfmConnected || backfill?.running}
@@ -87,7 +87,7 @@ export default function MusicStatsPage() {
           {/* Hero figure — the one headline number this page leads with */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 13, opacity: 0.6, marginBottom: 2 }}>Lượt nghe trong 30 ngày qua</div>
-            <div style={{ fontSize: 48, fontWeight: 700, fontVariantNumeric: 'proportional-nums', lineHeight: 1.1 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 700, fontVariantNumeric: 'proportional-nums', lineHeight: 1.1 }}>
               {totalRecent.toLocaleString('vi-VN')}
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function MusicStatsPage() {
                 <div style={{ fontSize: 13, opacity: 0.6 }}>{topTrack.artist_name}</div>
               </div>
               <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 28, fontWeight: 700, fontVariantNumeric: 'proportional-nums', color: ACCENT }}>{topTrack.plays}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, fontVariantNumeric: 'proportional-nums', color: ACCENT }}>{topTrack.plays}</div>
                 <div style={{ fontSize: 11, opacity: 0.6 }}>lượt nghe</div>
               </div>
             </div>

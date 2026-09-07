@@ -49,7 +49,7 @@ const fmtNum = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n)
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 16px', textAlign: 'center', minWidth: 100 }}>
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
       <div style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>{label}</div>
     </div>
   )
@@ -61,7 +61,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 function ChartCard({ title, children, span = 6 }: { title: string; children: React.ReactNode; span?: number }) {
   return (
     <div className="stats-chart-card" style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', gridColumn: `span ${span}` }}>
-      <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>
       {children}
     </div>
   )
@@ -425,7 +425,7 @@ export default function AIStatsPage() {
       <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
         {/* Header row: title + date range + model filters */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Request đắt / rẻ nhất</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Request đắt / rẻ nhất</span>
           {/* Date range */}
           <input type="date" value={dateFrom} max={dateTo} onChange={e => setDateFrom(e.target.value)} style={{ fontSize: 10, background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: 6, color: '#fff', padding: '2px 6px', cursor: 'pointer' }} />
           <span style={{ fontSize: 10, opacity: 0.4 }}>→</span>

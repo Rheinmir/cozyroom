@@ -26,7 +26,7 @@ charts:
   ok: "#4ade80"
 typography:
   display:
-    fontFamily: "Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    fontFamily: "'Space Grotesk', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
     fontSize: "clamp(24px, 5vw, 52px)"
     fontWeight: 900
     lineHeight: 1.1
@@ -125,7 +125,7 @@ Added 2026-09-02 as `:root[data-theme="light"]`, toggled from the Sidebar (persi
 
 ## Typography
 
-**Display Font:** Geist (with -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif fallback)
+**Display Font:** Space Grotesk (token `--font-display`, falling back to Geist) — a distinctive grotesque used for report/dashboard titles (`.page-title`, `.tc-section-title`, chart-card labels) and big stat numbers, added 2026-09-07 to give the dashboards a more premium, "operator-console" character. Body/UI stays Geist.
 **Body Font:** Geist (same stack)
 **Label/Mono Font:** Geist Mono (falling back to 'SFMono-Regular', monospace)
 

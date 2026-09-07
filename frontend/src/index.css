@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 /* ── Slash command autocomplete ────────────────────────── */
 /* Ghost text inline completion */
@@ -590,6 +590,9 @@ button, a, [role="button"], input, select, textarea {
   --sidebar-collapsed-w: 56px;
   --player-h:      72px;
   --radius:        13px;
+  /* Display font — a distinctive grotesque for report/dashboard titles and big
+     numbers; body/UI stays Geist. Loaded via the Google Fonts @import above. */
+  --font-display: 'Space Grotesk', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* ── Chart categorical palette ───────────────────────
      One cohesive, muted palette applied to EVERY chart (categorical series,
@@ -981,7 +984,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 /* ── Page titles ────────────────────────────────────── */
-.page-title  { font-size: 28px; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.02em; }
+.page-title  { font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.02em; }
 .ai-page .library-tag {
   background: rgba(255,255,255,0.1);
   border-color: rgba(255,255,255,0.25);
@@ -3849,7 +3852,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   padding: 14px 16px 10px;
   overflow: hidden;
 }
-.tc-section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .04em; }
+.tc-section-title { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .04em; }
 
 /* Collapse/expand toggle for the Momentum Bubble section — reuses the
    .tc-section-title slot but as a full-width clickable button. */

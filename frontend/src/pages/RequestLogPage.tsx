@@ -20,7 +20,7 @@ const statusColor = (s: number) =>
 function SummaryCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 16px', textAlign: 'center', minWidth: 110 }}>
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>{sub}</div>}
       <div style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>{label}</div>
     </div>
@@ -222,7 +222,7 @@ export default function RequestLogPage() {
       {/* Slowest endpoints chart */}
       {topSlow.length > 0 && (
         <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Endpoint chậm nhất (avg ms)</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Endpoint chậm nhất (avg ms)</div>
           <ResponsiveContainer width="100%" height={Math.max(180, topSlow.length * 30)}>
             <BarChart data={topSlow} layout="vertical" margin={{ top: 0, right: 80, left: 8, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -306,7 +306,7 @@ export default function RequestLogPage() {
           state above; nothing here is a hardcoded placeholder value. */}
       {instance && (
         <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16, overflowX: 'auto' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sơ đồ topology (số liệu live)</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sơ đồ topology (số liệu live)</div>
           <svg width="100%" viewBox="0 0 920 260" style={{ minWidth: 820, display: 'block' }}>
             {/* Client node */}
             <rect x="10" y="90" width="150" height="80" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
@@ -365,7 +365,7 @@ export default function RequestLogPage() {
 
       {/* Instance — which pod/node is serving THIS request */}
       <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Instance đang serve request này</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Instance đang serve request này</div>
         {instance ? (
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 12 }}>
             <div><span style={{ opacity: 0.5 }}>Pod: </span><span style={{ fontFamily: 'monospace' }}>{instance.pod_name}</span></div>
@@ -381,7 +381,7 @@ export default function RequestLogPage() {
 
       {/* Services — reachability from this backend pod (Phương án A: TCP dial, không dùng k8s API) */}
       <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Service reachability (TCP dial từ backend pod)</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Service reachability (TCP dial từ backend pod)</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }}>
           {services.map(s => (
             <div key={s.name} style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', borderLeft: `2px solid ${s.reachable ? '#4ade80' : '#f87171'}` }}>
@@ -398,7 +398,7 @@ export default function RequestLogPage() {
       {/* Traceroute — server's-eye view outward, NOT the client's path */}
       <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Traceroute</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Traceroute</div>
           <button
             onClick={handleRunTraceroute}
             disabled={tracerouteLoading}
