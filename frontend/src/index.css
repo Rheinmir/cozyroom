@@ -2095,11 +2095,20 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .npo-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 20px 24px 0;
   flex-shrink: 0;
 }
-.npo-btn-back { display: none; color: var(--text-muted); }
+/* Desktop: an always-visible close/collapse control (top-left) — the overlay
+   is a fullscreen takeover, so it must have an obvious way out. Mobile keeps
+   its tap-to-reveal behavior via the media query below. */
+.npo-btn-back {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); transition: color .15s;
+}
+.npo-btn-back:hover { color: var(--text); }
 .npo-btn-dots {
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
@@ -3651,7 +3660,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   gap: 16px;
   margin-bottom: 24px;
 }
-.trending-title { font-size: 24px; font-weight: 700; }
+.trending-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
 .trending-date-select {
   background: var(--elevated);
   color: var(--text);
