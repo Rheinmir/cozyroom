@@ -646,7 +646,7 @@ button, a, [role="button"], input, select, textarea {
   --surface:       #ffffff;
   --surface-hover: rgba(0,0,0,.05);
   --elevated:      #f7f7f8;
-  --border:        rgba(0,0,0,.12);
+  --border:        rgba(0,0,0,.15);
   --text:          rgba(0,0,0,.87);
   --text-muted:    rgba(0,0,0,.55);
   --text-faint:    rgba(0,0,0,.32);
@@ -656,12 +656,12 @@ button, a, [role="button"], input, select, textarea {
 
   /* Glass surfaces flip to dark-alpha so fills/hairlines/borders read on the
      white canvas (restores the mica depth lost in light mode). */
-  --glass-fill:    rgba(0,0,0,.04);
-  --glass-fill-2:  rgba(0,0,0,.06);
-  --hairline:      rgba(0,0,0,.10);
-  --border-strong: rgba(0,0,0,.22);
-  --glass-fill-strong: rgba(0,0,0,.14);
-  --hairline-strong:   rgba(0,0,0,.2);
+  --glass-fill:    rgba(0,0,0,.06);
+  --glass-fill-2:  rgba(0,0,0,.09);
+  --hairline:      rgba(0,0,0,.14);
+  --border-strong: rgba(0,0,0,.26);
+  --glass-fill-strong: rgba(0,0,0,.19);
+  --hairline-strong:   rgba(0,0,0,.26);
 
   /* Chart palette (--chart-1..8) is theme-agnostic — the muted mid-tones read
      on both Void Black and the white light-theme card, so no override here.
