@@ -811,6 +811,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .sidebar-collapse-btn:hover { background: var(--surface-hover); color: var(--text); }
 .sidebar--collapsed .sidebar-collapse-btn { margin-left: 0; }
+/* The Dark/Light + VI/EN pills are wider than the 56px collapsed rail and got
+   clipped ("Dar", "VI"). Hide them when collapsed — expand the sidebar to
+   reach them (matches the icon-only collapsed rail). */
+.sidebar--collapsed .sidebar-toggles { display: none; }
 
 .sidebar-section { display: flex; flex-direction: column; gap: 4px; }
 
@@ -1118,6 +1122,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .artist-head-row .artist-filter-wrap { margin: 0; flex: 0 1 360px; }
 
 .artist-grid-wrap { display: flex; gap: 12px; align-items: flex-start; }
+/* The content (grid or table) must grow to fill the row; the A-Z rail is the
+   flex-shrink:0 second child. Without this, .album-grid / .track-table
+   collapsed to content width and left a huge gap before the rail. */
+.artist-grid-wrap > :first-child { flex: 1; min-width: 0; }
 
 .artist-az-rail {
   position: sticky;
