@@ -811,10 +811,14 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .sidebar-collapse-btn:hover { background: var(--surface-hover); color: var(--text); }
 .sidebar--collapsed .sidebar-collapse-btn { margin-left: 0; }
-/* The Dark/Light + VI/EN pills are wider than the 56px collapsed rail and got
-   clipped ("Dar", "VI"). Hide them when collapsed — expand the sidebar to
-   reach them (matches the icon-only collapsed rail). */
-.sidebar--collapsed .sidebar-toggles { display: none; }
+/* The Dark/Light + VI/EN pills overflowed the 56px collapsed rail (clipped to
+   "Dar"/"VI"). Instead of hiding them (loses access to theme/lang while
+   collapsed), compact each toggle to just its ACTIVE option — the whole pill
+   is still clickable, so it keeps cycling. Fits the narrow rail. */
+.sidebar--collapsed .sidebar-toggles { align-items: center; gap: 6px; padding: 12px 2px 4px; }
+.sidebar--collapsed .lang-toggle { padding: 3px 7px; }
+.sidebar--collapsed .lang-toggle .lang-sep,
+.sidebar--collapsed .lang-toggle .lang-opt:not(.lang-opt--active) { display: none; }
 
 .sidebar-section { display: flex; flex-direction: column; gap: 4px; }
 
