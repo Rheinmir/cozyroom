@@ -1,21 +1,46 @@
 import { useState, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { fetchTrending, fetchTrendingDates, triggerTrendingRefresh } from '../api'
-import type { TrendingRepo } from '../api'
 import TrendingChartMode from './TrendingChartMode'
 import { RepoCard, getTier } from '../components/TrendingRepoCard'
+import Spinner from '../components/Spinner'
 
 export default function TrendingPage() {
   const { t } = useTranslation()
-  const [dates, setDates] = useState<string[]>([])
+  const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState('')
-  const [repos, setRepos] = useState<TrendingRepo[]>([])
-  const [prevRepos, setPrevRepos] = useState<TrendingRepo[]>([])
-  const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [mode, setMode] = useState<'chart' | 'grid'>(
     () => (localStorage.getItem('trending-view-mode') as 'chart' | 'grid') ?? 'chart'
   )
+
+  const { data: dates = [] } = useQuery({
+    queryKey: ['trending-dates'],
+    queryFn: fetchTrendingDates,
+    staleTime: 5 * 60_000,
+  })
+
+  // Default to the newest date once the date list is known (mirrors old mount-only default)
+  useEffect(() => {
+    if (!selectedDate && dates.length > 0) setSelectedDate(dates[0])
+  }, [dates, selectedDate])
+
+  const { data: repos = [], isLoading: loading } = useQuery({
+    queryKey: ['trending-repos', selectedDate],
+    queryFn: () => fetchTrending(selectedDate || undefined),
+    staleTime: 5 * 60_000,
+  })
+
+  const currentIndex = dates.indexOf(selectedDate || '')
+  const prevDate = currentIndex >= 0 && currentIndex + 1 < dates.length ? dates[currentIndex + 1] : null
+
+  const { data: prevRepos = [] } = useQuery({
+    queryKey: ['trending-repos', prevDate],
+    queryFn: () => fetchTrending(prevDate || undefined),
+    enabled: !!prevDate,
+    staleTime: 5 * 60_000,
+  })
 
   function switchMode(m: 'chart' | 'grid') {
     setMode(m)
@@ -26,10 +51,12 @@ export default function TrendingPage() {
     if (refreshing) return
     setRefreshing(true)
     triggerTrendingRefresh()
-      .then(() => setTimeout(() => {
+      .then(() => setTimeout(async () => {
         setRefreshing(false)
-        fetchTrending(selectedDate || undefined).then(setRepos).catch(() => {})
-        fetchTrendingDates().then(d => { setDates(d); if (d.length > 0) setSelectedDate(d[0]) }).catch(() => {})
+        await queryClient.invalidateQueries({ queryKey: ['trending-dates'] })
+        const newDates = queryClient.getQueryData<string[]>(['trending-dates'])
+        if (newDates && newDates.length > 0) setSelectedDate(newDates[0])
+        queryClient.invalidateQueries({ queryKey: ['trending-repos'] })
       }, 8000))
       .catch(() => setRefreshing(false))
   }
@@ -89,49 +116,17 @@ export default function TrendingPage() {
     )
   }, [dates, selectedDate, repos])
 
-  useEffect(() => {
-    fetchTrendingDates()
-      .then(d => {
-        setDates(d)
-        if (d.length > 0) setSelectedDate(d[0])
-      })
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    setLoading(true)
-    fetchTrending(selectedDate || undefined)
-      .then(current => {
-        setRepos(current)
-        const currentIndex = dates.indexOf(selectedDate || '')
-        const prevDate = currentIndex >= 0 && currentIndex + 1 < dates.length ? dates[currentIndex + 1] : null
-        if (prevDate) {
-          fetchTrending(prevDate)
-            .then(setPrevRepos)
-            .catch(() => setPrevRepos([]))
-        } else {
-          setPrevRepos([])
-        }
-      })
-      .catch(() => {
-        setRepos([])
-        setPrevRepos([])
-      })
-      .finally(() => setLoading(false))
-  }, [selectedDate, dates])
-
   const champion = repos[0] ?? null
   const rest = repos.slice(1)
 
   return (
     <div className="page">
       <div className="trending-header">
-        <div className="library-tag">Bảng xếp hạng</div>
         <h1 className="trending-title">{t('trending.title')}</h1>
       </div>
 
       {loading ? (
-        <div className="loading">{t('library.loading')}</div>
+        <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
       ) : repos.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', marginTop: 40, textAlign: 'center' }}>
           {t('trending.no_data')}
