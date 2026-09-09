@@ -182,7 +182,9 @@ export default function PlayerBar() {
   }, [track, setCoverColors])
 
   const pct = duration > 0 ? (progress / duration) * 100 : 0
-  const progressStyle = { background: `linear-gradient(to right, #fff ${pct}%, #535353 ${pct}%)` }
+  // Played portion keys off var(--text) so it stays visible in both themes —
+  // a hardcoded #fff fill vanished on the light-theme canvas.
+  const progressStyle = { background: `linear-gradient(to right, var(--text) ${pct}%, #535353 ${pct}%)` }
 
   const cycleRepeat = () => {
     const n: RepeatMode = repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off'
