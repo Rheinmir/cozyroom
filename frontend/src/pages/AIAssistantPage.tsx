@@ -9,6 +9,7 @@ import { useDialogs } from '../DialogContext'
 import type { RepeatMode, ShuffleMode } from '../PlayerContext'
 import type { Track } from '../types'
 import FavoritePill from '../components/FavoritePill'
+import Spinner from '../components/Spinner'
 import { MCP_TOOLS } from '../data/mcpTools'
 import { useFlipUp } from '../useFlipPosition'
 
@@ -327,6 +328,12 @@ function AiTable({ node }: { node: any }) {
 
 const MD_COMPONENTS = { table: ({ node }: any) => <AiTable node={node} /> }
 
+// crypto.randomUUID exists only in secure contexts (HTTPS/localhost); fall back
+// so plain-HTTP access doesn't crash the whole AI page. (Mirrors PlayerContext.)
+function safeUUID(): string {
+  try { return safeUUID() } catch { return `${Date.now()}-${Math.random().toString(36).slice(2)}` }
+}
+
 function providerLogo(provider: string | undefined, model: string | undefined): React.ReactElement {
   let p = (provider || 'unknown').toLowerCase()
   if ((p === 'openrouter' || p === 'unknown') && model) {
@@ -476,7 +483,7 @@ export default function AIAssistantPage() {
   const [sessions, setSessions] = useState<SessionEntry[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const sessionIdRef = useRef<string>(crypto.randomUUID())
+  const sessionIdRef = useRef<string>(safeUUID())
   const [currentSessionId, setCurrentSessionId] = useState(sessionIdRef.current)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -567,7 +574,7 @@ export default function AIAssistantPage() {
     setMessages([{ id: msgSeq++, role: 'assistant', text: t('ai.greeting') }])
     setHistory([])
     setInput('')
-    sessionIdRef.current = crypto.randomUUID()
+    sessionIdRef.current = safeUUID()
     setCurrentSessionId(sessionIdRef.current)
     setSidebarOpen(false)
     setTimeout(() => inputRef.current?.focus(), 100)
@@ -754,7 +761,7 @@ export default function AIAssistantPage() {
         <button className="ai-new-chat-btn" onClick={startNewChat}>+ Đoạn chat mới</button>
         <div className="ai-history-list">
           {sessionsLoading ? (
-            <div className="ai-history-empty">Đang tải…</div>
+            <div className="ai-history-empty"><Spinner size={20} label="Đang tải…" /></div>
           ) : sessions.length === 0 ? (
             <div className="ai-history-empty">Chưa có lịch sử.</div>
           ) : (
@@ -886,7 +893,7 @@ export default function AIAssistantPage() {
             }}>🗑 Xóa tất cả</button>
           </div>
           {memoryLoading ? (
-            <div className="ai-memory-empty">Đang tải…</div>
+            <div className="ai-memory-empty"><Spinner size={20} label="Đang tải…" /></div>
           ) : facts.length === 0 ? (
             <div className="ai-memory-empty">Chưa có bộ nhớ nào. Hãy chat với AI để nó học về bạn.</div>
           ) : (
