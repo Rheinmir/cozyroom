@@ -1,17 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { imgSrc } from '../api'
-
-interface Ebook {
-  id: string
-  title: string
-  author: string
-  format: string
-  size_bytes: number
-  cover_url?: string
-  is_nsfw?: boolean
-  collection?: string
-}
+import { imgSrc, fetchEbooks, Ebook, LIBRARY_STALE_TIME } from '../api'
+import { useDialogs } from '../DialogContext'
+import Spinner from '../components/Spinner'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return '0 Bytes'
@@ -96,20 +88,14 @@ function EbookCard({
 }
 
 export default function EbooksPage() {
-  const [ebooks, setEbooks] = useState<Ebook[]>([])
-  const [loading, setLoading] = useState(true)
+  const { toast } = useDialogs()
+  const queryClient = useQueryClient()
+  const { data: ebooks = [], isLoading: loading } = useQuery({ queryKey: ['ebooks'], queryFn: fetchEbooks, staleTime: LIBRARY_STALE_TIME })
   const [filterNSFW, setFilterNSFW] = useState<'all' | 'nsfw' | 'clean'>('clean')
   const [selectedCollection, setSelectedCollection] = useState<string>('all')
 
-  useEffect(() => {
-    fetch('/api/ebooks')
-      .then(res => res.json())
-      .then(data => {
-        setEbooks(data || [])
-        setLoading(false)
-      })
-      .catch(console.error)
-  }, [])
+  const patchEbook = (id: string, patch: Partial<Ebook>) =>
+    queryClient.setQueryData<Ebook[]>(['ebooks'], prev => prev?.map(e => e.id === id ? { ...e, ...patch } : e))
 
   const handleToggleNSFW = (id: string, current: boolean) => {
     let password = localStorage.getItem('ebook-nsfw-pass')
@@ -126,10 +112,10 @@ export default function EbooksPage() {
     .then(res => {
       if (res.ok) {
         localStorage.setItem('ebook-nsfw-pass', password!)
-        setEbooks(prev => prev.map(e => e.id === id ? { ...e, is_nsfw: !current } : e))
+        patchEbook(id, { is_nsfw: !current })
       } else {
         localStorage.removeItem('ebook-nsfw-pass')
-        alert('Sai mật khẩu hoặc lỗi server!')
+        toast('Sai mật khẩu hoặc lỗi server!', 'error')
       }
     })
     .catch(console.error)
@@ -143,9 +129,9 @@ export default function EbooksPage() {
     })
     .then(res => {
       if (res.ok) {
-        setEbooks(prev => prev.map(e => e.id === id ? { ...e, collection } : e))
+        patchEbook(id, { collection })
       } else {
-        alert('Lỗi cập nhật bộ sưu tập!')
+        toast('Lỗi cập nhật bộ sưu tập!', 'error')
       }
     })
     .catch(console.error)
@@ -167,13 +153,13 @@ export default function EbooksPage() {
         localStorage.setItem('ebook-nsfw-pass', input)
         setFilterNSFW(val)
       } else {
-        if (input !== null) alert('Sai mật khẩu!')
+        if (input !== null) toast('Sai mật khẩu!', 'error')
         // Keep it at 'clean'
       }
     }
   }
 
-  if (loading) return <div className="ebooks-loading">Loading library…</div>
+  if (loading) return <div className="loading"><Spinner size={28} label="Loading library…" /></div>
 
   if (ebooks.length === 0) {
     return (
@@ -196,7 +182,6 @@ export default function EbooksPage() {
       <header className="ebooks-header">
         <div className="header-top">
           <div className="header-titles">
-            <div className="library-tag">Kệ sách</div>
             <h1>Your Bookshelf</h1>
             <span className="ebook-count-badge">{filteredEbooks.length} items</span>
           </div>

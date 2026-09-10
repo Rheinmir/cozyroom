@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { 
-  Playlist, 
-  fetchPlaylists, 
-  createPlaylist, 
-  addTrackToPlaylist, 
-  removeTrackFromPlaylist 
+import {
+  Playlist,
+  fetchPlaylists,
+  createPlaylist,
+  addTrackToPlaylist,
+  removeTrackFromPlaylist
 } from '../api'
+import { useDialogs } from '../DialogContext'
+import { useFlipUp } from '../useFlipPosition'
 
 // Helper for session password storage
 const getSessionPassword = () => sessionStorage.getItem('cozyroom_owner_password') || ''
@@ -38,6 +40,7 @@ type FavoritePillProps = {
 
 export default function FavoritePill({ trackId }: FavoritePillProps) {
   const { t } = useTranslation()
+  const { toast } = useDialogs()
   const [isOpen, setIsOpen] = useState(false)
   
   const [localLists, setLocalLists] = useState<Playlist[]>([])
@@ -55,6 +58,8 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
   const [onPasswordSuccess, setOnPasswordSuccess] = useState<((pw: string) => void) | null>(null)
   
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const pillRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   // Load playlists
   const loadLists = async () => {
@@ -89,6 +94,8 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
     ...permLists.map(l => ({ ...l, is_local: false }))
   ]
   
+  const flipUp = useFlipUp(pillRef, menuRef, isOpen)
+
   const activeLists = allLists.filter(l => l.track_ids.includes(trackId))
   const isStarred = activeLists.some(l => l.name === 'Favorites')
 
@@ -155,7 +162,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
             sessionStorage.removeItem('cozyroom_owner_password')
             promptPassword((newPw) => toggleTrack(listId, false, add, newPw))
           } else {
-            alert(e.message || 'Operation failed')
+            toast(e.message || 'Operation failed', 'error')
           }
         }
       }
@@ -214,7 +221,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
           sessionStorage.removeItem('cozyroom_owner_password')
           promptPassword((validPw) => handleCreatePlaylist(validPw))
         } else {
-          alert(e.message || 'Tạo playlist thất bại')
+          toast(e.message || 'Tạo playlist thất bại', 'error')
         }
       } finally {
         setCreating(false)
@@ -235,7 +242,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
 
   return (
     <div className="fav-pill-wrapper" style={{ display: 'inline-block' }} ref={dropdownRef}>
-      <div className="fav-pill" onClick={e => e.stopPropagation()}>
+      <div className="fav-pill" ref={pillRef} onClick={e => e.stopPropagation()}>
         <button 
           className={'fav-star' + (isStarred ? ' fav-star--active' : '')} 
           onClick={handleStarClick}
@@ -253,7 +260,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
         </button>
         
         {isOpen && (
-          <div className="fav-dropdown">
+          <div className={'fav-dropdown' + (flipUp ? ' fav-dropdown--up' : '')} ref={menuRef}>
             <div className="dropdown-header">{t('playlist.my_playlists', { defaultValue: 'Playlists' })}</div>
             
             <div className="dropdown-list">

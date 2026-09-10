@@ -31,6 +31,7 @@ export default function Header() {
           placeholder={t('search.placeholder')}
           defaultValue={params.get('q') ?? ''}
           onChange={handleInput}
+          onBlur={() => clearTimeout(timerRef.current)}
         />
       </div>
     </header>

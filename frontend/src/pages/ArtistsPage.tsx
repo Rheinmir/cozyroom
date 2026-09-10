@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { fetchArtists, fetchStats, imgSrc } from '../api'
+import { fetchArtists, imgSrc } from '../api'
+import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
 
 const AVATAR_GRADIENTS = [
@@ -38,7 +39,6 @@ function letterOf(name: string) {
 export default function ArtistsPage() {
   const { t } = useTranslation()
   const { data: artists = [], isLoading } = useQuery({ queryKey: ['artists'], queryFn: fetchArtists, staleTime: 5 * 60_000 })
-  const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: fetchStats, staleTime: 5 * 60_000 })
   const [filterQuery, setFilterQuery] = useState('')
 
   const sortedArtists = useMemo(
@@ -60,25 +60,21 @@ export default function ArtistsPage() {
 
   return (
     <div className="page">
-      {stats && (
-        <div className="stats-bar">
-          <span>{stats.artists} {t('search.artists').toLowerCase()}</span>
-          <Link to="/albums" className="stats-bar-link">{stats.albums} {t('search.albums').toLowerCase()}</Link>
-          <Link to="/tracks" className="stats-bar-link">{stats.tracks} {t('search.tracks').toLowerCase()}</Link>
+      <LibraryStatsBar current="artists" />
+      <div className="artist-head-row">
+        <h1 className="page-title">{t('nav.artists')}</h1>
+        <div className="artist-filter-wrap">
+          <svg className="artist-filter-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          <input
+            type="text"
+            className="artist-filter-input"
+            placeholder="Lọc theo tên nghệ sĩ…"
+            value={filterQuery}
+            onChange={e => setFilterQuery(e.target.value)}
+          />
         </div>
-      )}
-      <h1 className="page-title">{t('nav.artists')}</h1>
-      <div className="artist-filter-wrap">
-        <svg className="artist-filter-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-        <input
-          type="text"
-          className="artist-filter-input"
-          placeholder="Lọc theo tên nghệ sĩ…"
-          value={filterQuery}
-          onChange={e => setFilterQuery(e.target.value)}
-        />
       </div>
       <div className="artist-grid-wrap">
         <div className="artist-grid">
