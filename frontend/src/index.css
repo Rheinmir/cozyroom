@@ -1998,6 +1998,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .player-hint { color: var(--text-faint); font-size: 13px; }
 
 .player-left  { flex: 1; min-width: 0; }
+.player-left--clickable { cursor: pointer; }
 .player-right { flex: 1; }
 .player-title {
   font-size: 13px;
@@ -2268,7 +2269,16 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .npo-tabs { display: none; }
 .npo-tabs-mobile { display: none; }
-.npo-controls { display: none; }
+/* Desktop: the NPO is a fullscreen overlay that covers the persistent
+   player-bar, so it must carry its own transport controls (they used to be
+   display:none here, leaving no way to control playback in the view). */
+.npo-controls { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; gap: 6px; width: 100%; max-width: 640px; margin: 0 auto; padding: 14px 24px 30px; }
+.npo-controls .npo-progress { width: 100%; }
+.npo-controls .npo-progress .progress-bar { width: 100%; display: block; }
+.npo-controls .npo-times { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+.npo-controls .npo-btns { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 10px; }
+.npo-controls .npo-icon-row { display: flex; justify-content: center; align-items: center; gap: 14px; }
+.npo-play-btn { width: 52px; height: 52px; }
 .npo-lyrics-wrap { display: contents; }
 /* height propagation into LyricsView on desktop */
 .npo-content .lyrics-wrapper { flex: 1; min-height: 0; }

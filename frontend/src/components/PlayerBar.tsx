@@ -207,7 +207,7 @@ export default function PlayerBar() {
         <>
           {/* ── Desktop player bar ── */}
           <div className="player-full">
-            <div className="player-left">
+            <div className="player-left player-left--clickable" onClick={() => setOpen(true)} role="button" tabIndex={0} title={t('player.now_playing')}>
               <span className="player-title">{track.title}</span>
             </div>
 
@@ -239,8 +239,8 @@ export default function PlayerBar() {
                   <FavoritePill trackId={track.id} />
                 </span>
               )}
-              {/* hamburger — opens unified now-playing overlay */}
-              <button className={'ctrl-btn' + (open ? ' ctrl-btn--active' : '')} onClick={() => setOpen(o => !o)} title={t('player.now_playing')}>
+              {/* list icon — opens the play queue (inside the now-playing overlay) */}
+              <button className={'ctrl-btn' + (queueOpen && open ? ' ctrl-btn--active' : '')} onClick={() => { setOpen(true); setQueueOpen(true) }} title="Danh sách phát">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                   <rect x="3" y="6"  width="18" height="2" rx="1"/>
                   <rect x="3" y="11" width="14" height="2" rx="1"/>

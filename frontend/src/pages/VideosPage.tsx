@@ -1,15 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-
-interface Video {
-  id: string
-  title: string
-  duration_s: number
-  size_bytes: number
-  created_at: number
-  poster_url?: string
-  group_name?: string
-}
+import { fetchVideos, Video, LIBRARY_STALE_TIME } from '../api'
+import Spinner from '../components/Spinner'
 
 function formatDuration(s: number) {
   if (!s) return ''
@@ -47,25 +39,13 @@ function VideoCard({ v }: { v: Video }) {
 }
 
 export default function VideosPage() {
-  const [videos, setVideos] = useState<Video[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: videos = [], isLoading: loading } = useQuery({ queryKey: ['videos'], queryFn: fetchVideos, staleTime: LIBRARY_STALE_TIME })
 
-  useEffect(() => {
-    fetch('/api/videos')
-      .then(res => res.json())
-      .then(data => {
-        setVideos(data || [])
-        setLoading(false)
-      })
-      .catch(console.error)
-  }, [])
-
-  if (loading) return <div className="videos-loading">Đang tải…</div>
+  if (loading) return <div className="loading"><Spinner size={28} label="Đang tải…" /></div>
 
   if (videos.length === 0) {
     return (
       <div className="page">
-        <div className="library-tag">Bộ sưu tập</div>
         <h1 className="page-title">Phim</h1>
         <p className="videos-empty-note">Thả poster phim của bạn vào đây</p>
       </div>
@@ -82,7 +62,6 @@ export default function VideosPage() {
 
   return (
     <div className="page">
-      <div className="library-tag">Bộ sưu tập</div>
       <h1 className="page-title">Phim</h1>
 
       {groupEntries.map(([groupName, groupVideos]) => (

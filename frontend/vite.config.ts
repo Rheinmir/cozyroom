@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      filename: 'sw2.js',
+      filename: 'sw3.js',
       devOptions: { enabled: true },
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
@@ -58,15 +58,15 @@ export default defineConfig({
       manifest: {
         name: 'Cozyroom',
         short_name: 'Cozyroom',
-        theme_color: '#8B5CF6',
-        background_color: '#121212',
+        theme_color: '#050505',
+        background_color: '#050505',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
         icons: [
-          { src: '/icon-v2-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icon-v2-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/icon-v3-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-v3-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
     }),

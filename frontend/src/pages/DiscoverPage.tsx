@@ -33,7 +33,7 @@ export default function DiscoverPage() {
 
   return (
     <div className="page discover-page">
-      <LibraryStatsBar current="artists" />
+      <LibraryStatsBar />
 
       {hero.length > 0 && (
         <div className="discover-hero">

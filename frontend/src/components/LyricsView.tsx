@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation } from '../api'
+import { useFlipUp } from '../useFlipPosition'
 import type { LyricsData, SourceInfo } from '../api'
 
 const AUTH_KEY = 'hs-lyrics-auth'
@@ -39,7 +40,7 @@ const SOURCE_LABEL: Record<string, string> = {
   musixmatch: 'Musixmatch',
 }
 
-export type LyricsViewHandle = { toggleTranslation: () => void; toggleTools: () => void }
+export type LyricsViewHandle = { toggleTranslation: () => void; toggleTools: () => void; showTranslation: () => void }
 
 const LyricsView = forwardRef<LyricsViewHandle, {
   trackId: string
@@ -63,8 +64,18 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
   const [pw, setPw]               = useState('')
   const [saveMsg, setSaveMsg]     = useState('')
   const [sourceOpen, setSourceOpen]     = useState(false)
+  const sourceTriggerRef = useRef<HTMLDivElement>(null)
+  const sourceMenuRef = useRef<HTMLDivElement>(null)
+  const sourceFlipUp = useFlipUp(sourceTriggerRef, sourceMenuRef, sourceOpen)
   const [toolsOpen, setToolsOpen]       = useState(false)
   const [showTr, setShowTr]             = useState(false)
+  // 🌐 is now a sticky on/off switch (persists across tracks) instead of a
+  // per-track toggle that reset every time the track changed — once turned
+  // on it keeps translating every subsequent track until turned off again.
+  const [manualOn, setManualOn]         = useState(() => localStorage.getItem('lyrics-manual-translate') === '1')
+  useEffect(() => { localStorage.setItem('lyrics-manual-translate', manualOn ? '1' : '0') }, [manualOn])
+  const manualOnRef = useRef(manualOn)
+  manualOnRef.current = manualOn
   const [translations, setTranslations] = useState<string[]>([])
   const [translating, setTranslating]   = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
@@ -106,7 +117,10 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
         // Call directly from here (not from a `loading` watcher effect) — a
         // watcher would run in the same commit as the trackId change, seeing
         // the PREVIOUS track's stale `loading=false`, and fire early.
-        if (!silent && !signal?.aborted) onReadyRef.current?.(id)
+        if (!silent && !signal?.aborted) {
+          onReadyRef.current?.(id)
+          if (manualOnRef.current) showFnRef.current()
+        }
       })
   }
 
@@ -125,7 +139,10 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
       // queued update; calling onReady synchronously here would let the
       // parent's guard read the PREVIOUS track's stale trActive=true before
       // onTranslateActiveChange(false) has propagated up.
-      setTimeout(() => onReadyRef.current?.(trackId), 0)
+      setTimeout(() => {
+        onReadyRef.current?.(trackId)
+        if (manualOnRef.current) showFnRef.current()
+      }, 0)
       return
     }
     const controller = new AbortController()
@@ -165,14 +182,17 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
     if (pairs[i].orig.time <= progress) { currentPairIdx = i; break }
   }
 
-  const handleToggleTranslation = async () => {
-    if (isBilingual) { setShowTr(o => !o); return }
-    if (showTr) { setShowTr(false); return }
+  // Fetches (or reads from cache) and FORCES the translation to show —
+  // idempotent, unlike the toggle below. Auto-translate must use this: if
+  // it were routed through the toggle and somehow fired twice for the same
+  // track, the second call would flip showTr back off even though
+  // `translations` still held valid data — data present, nothing rendered.
+  const loadAndShowTranslation = async () => {
+    if (isBilingual) { setShowTr(true); return }
     const ssKey = `lyr-tr:${trackId}`
     const cached = sessionStorage.getItem(ssKey)
     if (cached) {
-      try { setTranslations(JSON.parse(cached)); setShowTr(true) } catch { /* ignore */ }
-      return
+      try { setTranslations(JSON.parse(cached)); setShowTr(true); return } catch { /* fall through to refetch */ }
     }
     setTranslating(true)
     try {
@@ -184,9 +204,22 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
     finally { setTranslating(false) }
   }
 
+  const handleToggleTranslation = () => {
+    const next = !manualOn
+    setManualOn(next)
+    if (next) loadAndShowTranslation()
+    else setShowTr(false)
+  }
+
   const toggleFnRef = useRef(handleToggleTranslation)
   toggleFnRef.current = handleToggleTranslation
-  useImperativeHandle(ref, () => ({ toggleTranslation: () => toggleFnRef.current(), toggleTools: () => setToolsOpen(o => !o) }), [])
+  const showFnRef = useRef(loadAndShowTranslation)
+  showFnRef.current = loadAndShowTranslation
+  useImperativeHandle(ref, () => ({
+    toggleTranslation: () => toggleFnRef.current(),
+    toggleTools: () => setToolsOpen(o => !o),
+    showTranslation: () => showFnRef.current(),
+  }), [])
   useEffect(() => { onTranslateActiveChange?.(showTr) }, [showTr])
 
   useEffect(() => {
@@ -303,7 +336,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
       {toolsOpen && (
         <div className="lyrics-tools-panel">
           <div className="lyrics-toolbar">
-            <div className="lyrics-source-picker">
+            <div className="lyrics-source-picker" ref={sourceTriggerRef}>
               <button
                 className="lyrics-source-trigger"
                 onClick={() => setSourceOpen(o => !o)}
@@ -315,7 +348,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
                 </svg>
               </button>
               {sourceOpen && (
-                <div className="lyrics-source-dropdown">
+                <div className={'lyrics-source-dropdown' + (sourceFlipUp ? ' lyrics-source-dropdown--up' : '')} ref={sourceMenuRef}>
                   {results.map((r, i) => (
                     <button
                       key={r.source}
