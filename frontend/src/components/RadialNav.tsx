@@ -15,7 +15,7 @@ const BUBBLE_R = 24   // half of 48px bubble
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const I = (d: string) => (
-  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d={d}/></svg>
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round"><path d={d}/></svg>
 )
 const IcHome     = () => I('M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z')
 const IcSearch   = () => I('M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z')
@@ -26,13 +26,13 @@ const IcTrend    = () => I('M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 
 const IcPlaylist = () => I('M4 10h12v2H4zm0-4h12v2H4zm0 8h8v2H4zm10 0v6l5-3z')
 
 const IcAI       = () => I('M12 2L13.09 9.26L20 12L13.09 14.74L12 22L10.91 14.74L4 12L10.91 9.26Z M19 3L19.5 5.5L22 6L19.5 6.5L19 9L18.5 6.5L16 6L18.5 5.5Z')
-const IcChart    = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
-const IcGrid     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M4 4h7v7H4zm10 0h7v7h-7zM4 14h7v7H4zm10 0h7v7h-7z"/></svg>
-const IcRefresh     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+const IcChart    = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
+const IcGrid     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round"><path d="M4 4h7v7H4zm10 0h7v7h-7zM4 14h7v7H4zm10 0h7v7h-7z"/></svg>
+const IcRefresh     = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
 const IcStar        = () => I('M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z')
 const IcStarBorder  = () => I('M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zm-10 6.73l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 7.1l1.71 3.61 4.38.38-3.32 2.88 1 4.28L12 15.97z')
 const IcPlaylistAdd = () => I('M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z')
-const IcSounds = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+const IcSounds = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
 
 
 type RadialItem = { route: string; label: string; icon: JSX.Element; onAction?: () => void }
@@ -603,33 +603,23 @@ export default function RadialNav() {
   const activeY = pos.y
 
   // ── Square grid layout ──────────────────────────────────────────────────
-  // Replaces the old arc-math (calcArc/getSectorPath) sector layout: menu
-  // items are laid out as a plain CSS grid of rounded squares, anchored to
-  // whichever side of the bubble has the most room so the grid grows into
-  // the viewport instead of off the edge of it.
+  // Menu items are laid out as a plain CSS grid of rounded squares. The open
+  // panel is centered on the viewport (not anchored to the bubble), so it
+  // sits dead-center regardless of where the draggable bubble rests.
   const GRID_CELL = 56
   const GRID_GAP = 8
   const GRID_MARGIN = 12
+  // Inner padding of the frosted panel sheet (see .radial-menu-panel). The
+  // width/height caps below add it back so the grid still fits up to 4×5
+  // cells inside the now-padded sheet instead of dropping a column.
+  const PANEL_PAD = 10
 
-  const growRight = activeX < window.innerWidth / 2
-  const growDown  = activeY < window.innerHeight / 2
-
-  const availW = growRight
-    ? window.innerWidth  - activeX - BUBBLE_R - GRID_GAP - GRID_MARGIN
-    : activeX - BUBBLE_R - GRID_GAP - GRID_MARGIN
-  const availH = growDown
-    ? window.innerHeight - activeY - BUBBLE_R - GRID_GAP - GRID_MARGIN
-    : activeY - BUBBLE_R - GRID_GAP - GRID_MARGIN
-
-  // Cap at 4 columns / 5 visible rows for a compact, thumb-reachable grid;
-  // anything beyond that (e.g. the calendar's day cells) scrolls inside the
-  // panel rather than shrinking cells below the 56px touch target.
-  // `width` (not just `maxWidth`) is required here: CSS Grid's
-  // `repeat(auto-fill, 56px)` needs a definite container width to know how
-  // many columns fit — inside a shrink-to-fit (auto-width) absolutely
-  // positioned box it collapses to a single column instead of wrapping.
-  const panelWidth     = Math.max(GRID_CELL, Math.min(availW, GRID_CELL * 4 + GRID_GAP * 3))
-  const panelMaxHeight = Math.max(GRID_CELL, Math.min(availH, GRID_CELL * 5 + GRID_GAP * 4))
+  // Size from the viewport, clamped to a compact 4-col / 5-row grid. `width`
+  // (not just maxWidth) is required: CSS Grid's repeat(auto-fill, 56px) needs
+  // a definite container width to know how many columns fit — with an auto
+  // width it collapses to a single column instead of wrapping.
+  const panelWidth     = Math.min(window.innerWidth  - GRID_MARGIN * 2, GRID_CELL * 4 + GRID_GAP * 3 + PANEL_PAD * 2)
+  const panelMaxHeight = Math.min(window.innerHeight - GRID_MARGIN * 2, GRID_CELL * 5 + GRID_GAP * 4 + PANEL_PAD * 2)
 
   const mainCells: MenuCell[] = [
     ...innerItems.map((item): MenuCell => ({
@@ -757,14 +747,15 @@ export default function RadialNav() {
           }}
         />
 
-        {/* Menu items — symmetric rounded-square grid, anchored to whichever
-            side of the bubble has room so it never overflows the viewport. */}
+        {/* Menu items — one frosted sheet, centered on the viewport when open
+            (independent of where the draggable bubble currently rests). */}
         <div
           className={`radial-menu-panel${open ? ' radial-menu-panel--open' : ''}`}
           style={{
-            position: 'absolute',
-            ...(growRight ? { left: BUBBLE_R + GRID_GAP } : { right: BUBBLE_R + GRID_GAP }),
-            ...(growDown  ? { top:  BUBBLE_R + GRID_GAP } : { bottom: BUBBLE_R + GRID_GAP }),
+            position: 'fixed',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
             width: panelWidth,
             maxHeight: panelMaxHeight,
             pointerEvents: open ? 'auto' : 'none',
@@ -823,7 +814,7 @@ export default function RadialNav() {
           ) : track && track.album_id ? (
             <img
               key={track.id}
-              src={track.album_id.startsWith('yt:')
+              src={track.album_id?.startsWith('yt:')
                 ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
                 : `/api/covers/${track.album_id}?w=80`}
               alt={track.title}
