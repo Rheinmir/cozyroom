@@ -3068,6 +3068,19 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .lyrics-toolbar-spacer { flex: 1; }
 
 /* ── Queue list (Up Next) panel — same visual language as lyrics-tools-panel ── */
+/* Standalone play-queue panel opened from the player bar (NPO closed): a fixed
+   panel above the bottom-right of the bar, with a full-screen backdrop so a
+   click outside closes it. */
+.queue-bar-backdrop { position: fixed; inset: 0; z-index: 200; }
+.queue-panel.queue-panel--bar {
+  position: fixed;
+  inset: auto 16px calc(var(--player-h) + 10px) auto;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: 55vh;
+  z-index: 201;
+}
+
 .queue-panel {
   position: absolute;
   bottom: 12px;
