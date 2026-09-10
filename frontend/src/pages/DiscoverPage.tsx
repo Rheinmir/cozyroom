@@ -1,35 +1,91 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { fetchPlayStats, fetchAlbums, fetchArtists, imgSrc } from '../api'
+import { fetchPlayStats, fetchAlbums, fetchArtists, fetchTracks, fetchSmartQueue, imgSrc } from '../api'
 import type { Track } from '../types'
 import { usePlayer } from '../PlayerContext'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
 
-// "Khám phá" — an editorial landing page (Apple Music /new-inspired): a hero row
-// of featured albums, a multi-column "most played" track list, and horizontal
-// album/artist shelves. Keeps the Midnight Deck palette; just borrows the
-// section-layout variety (hero / multi-col list / shelf) so it isn't one flat grid.
+const cover = (albumId: string, w: number) => imgSrc(`/api/covers/${albumId}`, w)
+
+// Fisher-Yates, seeded off the array length + a rotating salt so the mix is
+// fresh-ish per mount but stable across a render pass (not re-shuffled on every
+// re-render, which would make rows jump around).
+function shuffle<T>(arr: T[], salt: number): T[] {
+  const a = [...arr]
+  let seed = a.length * 2654435761 + salt
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff }
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1));[a[i], a[j]] = [a[j], a[i]] }
+  return a
+}
+
+function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; onPlay: (t: Track) => void }) {
+  if (!tracks.length) return null
+  return (
+    <section className="discover-section">
+      <h2 className="discover-section-title">{title}</h2>
+      <div className="discover-tracks">
+        {tracks.map((t, i) => (
+          <button key={t.id + i} className="discover-track" onClick={() => onPlay(t)}>
+            <span className="discover-track-num">{i + 1}</span>
+            <span className="discover-track-cover">
+              {t.album_id ? <img src={cover(t.album_id, 80)} alt="" loading="lazy" /> : <span className="no-cover">♪</span>}
+            </span>
+            <span className="discover-track-meta">
+              <span className="discover-track-title">{t.title}</span>
+              <span className="discover-track-artist">{t.artist_name}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// "Khám phá" — a discovery landing page. The centrepiece is an algorithmic mix
+// (mostly tracks the listener has NOT been playing, sprinkled with a few
+// familiar ones) plus a song-analysis row from the smart-queue engine — not
+// just a "most played" list.
 export default function DiscoverPage() {
   const { t } = useTranslation()
   const { play } = usePlayer()
-  const { data: playStats } = useQuery({ queryKey: ['stats', 'plays', 30], queryFn: () => fetchPlayStats(30), staleTime: 5 * 60_000 })
-  const { data: albums = [], isLoading: albumsLoading } = useQuery({ queryKey: ['albums', 'all'], queryFn: () => fetchAlbums(), staleTime: 5 * 60_000 })
+  const { data: playStats } = useQuery({ queryKey: ['stats', 'plays', 90], queryFn: () => fetchPlayStats(90), staleTime: 5 * 60_000 })
+  const { data: allTracks = [], isLoading } = useQuery({ queryKey: ['tracks', 'all'], queryFn: () => fetchTracks(''), staleTime: 5 * 60_000 })
+  const { data: albums = [] } = useQuery({ queryKey: ['albums', 'all'], queryFn: () => fetchAlbums(), staleTime: 5 * 60_000 })
   const { data: artists = [] } = useQuery({ queryKey: ['artists'], queryFn: fetchArtists, staleTime: 5 * 60_000 })
 
-  if (albumsLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
-
-  // TopPlayedTrack lacks album_id (the player needs it, e.g. for cover art);
-  // derive it from cover_url (= /api/covers/<album_id>) so playing works.
-  const toTrack = (tk: { id: string; title: string; artist_name: string; album_title: string; cover_url: string }): Track =>
-    ({ ...tk, album_id: (tk.cover_url || '').split('/').pop() || '' }) as unknown as Track
-
   const top = playStats?.top ?? []
+  const seed = top[0]
+  const { data: smart = [] } = useQuery({
+    queryKey: ['smart-queue', seed?.id],
+    queryFn: () => fetchSmartQueue(seed!.id),
+    enabled: !!seed?.id,
+    staleTime: 5 * 60_000,
+  })
+
+  // The discovery mix: unplayed tracks shuffled, with a few familiar ones
+  // sprinkled in so it feels grounded, not random noise.
+  const discovery = useMemo(() => {
+    if (!allTracks.length) return []
+    const topIds = new Set(top.map(x => x.id))
+    const familiar = allTracks.filter(x => topIds.has(x.id))
+    const fresh = shuffle(allTracks.filter(x => !topIds.has(x.id)), top.length)
+    const mix: Track[] = []
+    let fi = 0
+    fresh.slice(0, 12).forEach((tk, i) => {
+      mix.push(tk)
+      if ((i + 1) % 4 === 0 && fi < familiar.length && fi < 3) mix.push(familiar[fi++])
+    })
+    return mix.slice(0, 14)
+  }, [allTracks, top])
+
+  if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
+
   const hero = albums.slice(0, 3)
   const shelfAlbums = albums.slice(3, 21)
   const shelfArtists = artists.slice(0, 18)
-  const topTracks = top.slice(0, 12)
 
   return (
     <div className="page discover-page">
@@ -51,28 +107,10 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {topTracks.length > 0 && (
-        <section className="discover-section">
-          <h2 className="discover-section-title">Nghe nhiều</h2>
-          <div className="discover-tracks">
-            {topTracks.map((tk, i) => (
-              <button
-                key={tk.id}
-                className="discover-track"
-                onClick={() => play(toTrack(tk), topTracks.map(toTrack))}
-              >
-                <span className="discover-track-num">{i + 1}</span>
-                <span className="discover-track-cover">
-                  {tk.cover_url ? <img src={imgSrc(tk.cover_url, 80)} alt="" loading="lazy" /> : <span className="no-cover">♪</span>}
-                </span>
-                <span className="discover-track-meta">
-                  <span className="discover-track-title">{tk.title}</span>
-                  <span className="discover-track-artist">{tk.artist_name}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+      <TrackList title="Khám phá cho bạn" tracks={discovery} onPlay={tk => play(tk, discovery)} />
+
+      {seed && smart.length > 0 && (
+        <TrackList title={`Gợi ý từ "${seed.title}"`} tracks={smart.slice(0, 12)} onPlay={tk => play(tk, smart)} />
       )}
 
       {shelfAlbums.length > 0 && (
