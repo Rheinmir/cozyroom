@@ -206,8 +206,12 @@ export default function PlayerBar() {
       ) : (
         <>
           {/* ── Desktop player bar ── */}
-          <div className="player-full">
-            <div className="player-left player-left--clickable" onClick={() => setOpen(true)} role="button" tabIndex={0} title={t('player.now_playing')}>
+          <div
+            className="player-full"
+            onClick={e => { if (!(e.target as HTMLElement).closest('button, input, a, .fav-pill-wrapper')) setOpen(true) }}
+            title={t('player.now_playing')}
+          >
+            <div className="player-left">
               <span className="player-title">{track.title}</span>
             </div>
 
