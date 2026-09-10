@@ -1501,7 +1501,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .discover-section { margin-bottom: 30px; }
 .discover-section-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 14px; }
 
-.discover-tracks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 20px; }
+/* minmax(0,1fr) so a long nowrap title can't blow out the column min-content
+   (which overflowed the 4th column off-screen and defeated the ellipsis). */
+.discover-tracks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 20px; }
 .discover-track { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; background: none; border: none; cursor: pointer; text-align: left; width: 100%; color: var(--text); }
 .discover-track:hover { background: var(--surface-hover); }
 .discover-track-num { width: 18px; flex-shrink: 0; color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
@@ -1525,11 +1527,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 @media (max-width: 1100px) {
   .discover-hero { grid-template-columns: 1fr 1fr; }
-  .discover-tracks { grid-template-columns: repeat(2, 1fr); }
+  .discover-tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .discover-hero { grid-template-columns: 1fr; }
-  .discover-tracks { grid-template-columns: 1fr; }
+  .discover-tracks { grid-template-columns: minmax(0, 1fr); }
 }
 .track-title--active { color: var(--green); font-weight: 600; }
 .track-num-text { color: var(--text-muted); font-size: 14px; }
