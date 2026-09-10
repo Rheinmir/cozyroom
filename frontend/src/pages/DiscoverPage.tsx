@@ -20,6 +20,11 @@ export default function DiscoverPage() {
 
   if (albumsLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
+  // TopPlayedTrack lacks album_id (the player needs it, e.g. for cover art);
+  // derive it from cover_url (= /api/covers/<album_id>) so playing works.
+  const toTrack = (tk: { id: string; title: string; artist_name: string; album_title: string; cover_url: string }): Track =>
+    ({ ...tk, album_id: (tk.cover_url || '').split('/').pop() || '' }) as unknown as Track
+
   const top = playStats?.top ?? []
   const hero = albums.slice(0, 3)
   const shelfAlbums = albums.slice(3, 21)
@@ -54,7 +59,7 @@ export default function DiscoverPage() {
               <button
                 key={tk.id}
                 className="discover-track"
-                onClick={() => play(tk as unknown as Track, topTracks as unknown as Track[])}
+                onClick={() => play(toTrack(tk), topTracks.map(toTrack))}
               >
                 <span className="discover-track-num">{i + 1}</span>
                 <span className="discover-track-cover">
