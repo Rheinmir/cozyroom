@@ -62,7 +62,7 @@ export default function TracksPage() {
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2, sorted) } }}
                 >
                   <td className="col-num"><span className="track-num-text">{i + 1}</span></td>
-                  <td className="track-title">{t2.title}</td>
+                  <td className="track-title"><span className="tt-clamp">{t2.title}</span></td>
                   <td className="col-fav" onClick={e => e.stopPropagation()}>
                     <FavoritePill trackId={t2.id} />
                   </td>
