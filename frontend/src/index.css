@@ -2000,7 +2000,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .player-hint { color: var(--text-faint); font-size: 13px; }
 
 .player-left  { flex: 1; min-width: 0; }
-.player-left--clickable { cursor: pointer; }
+/* The whole player-bar background opens the now-playing detail on click
+   (interactive children opt out via the JS guard), so show the pointer. */
+.player-full { cursor: pointer; }
 .player-right { flex: 1; }
 .player-title {
   font-size: 13px;
