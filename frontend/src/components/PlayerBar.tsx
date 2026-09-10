@@ -239,8 +239,8 @@ export default function PlayerBar() {
                   <FavoritePill trackId={track.id} />
                 </span>
               )}
-              {/* list icon — opens the play queue (inside the now-playing overlay) */}
-              <button className={'ctrl-btn' + (queueOpen && open ? ' ctrl-btn--active' : '')} onClick={() => { setOpen(true); setQueueOpen(true) }} title="Danh sách phát">
+              {/* list icon — opens ONLY the play-queue panel (not the detail view) */}
+              <button className={'ctrl-btn' + (queueOpen && !open ? ' ctrl-btn--active' : '')} onClick={() => setQueueOpen(v => !v)} title={t('player.queue')}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                   <rect x="3" y="6"  width="18" height="2" rx="1"/>
                   <rect x="3" y="11" width="14" height="2" rx="1"/>
@@ -299,6 +299,16 @@ export default function PlayerBar() {
                 <button className="ctrl-btn" onClick={e => { e.stopPropagation(); next() }} aria-label="Next"><IconNext /></button>
               </div>
             </div>
+          )}
+
+          {/* Standalone play-queue panel from the player bar (independent of the
+              fullscreen overlay). Rendered only when the NPO is closed — the NPO
+              has its own copy. Click-outside closes it. */}
+          {queueOpen && !open && (
+            <>
+              <div className="queue-bar-backdrop" onClick={() => setQueueOpen(false)} />
+              <div className="queue-panel queue-panel--bar"><QueueList /></div>
+            </>
           )}
 
           {/* ── Unified Now Playing overlay (desktop + mobile) ── */}
