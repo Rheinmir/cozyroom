@@ -1,20 +1,33 @@
 import { useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 export default function Header() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { pathname } = useLocation()
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+
+  // Search the CURRENT tab's own content instead of always jumping to the music
+  // search. Each list page reads ?q= and filters its own list; music is default.
+  const ctx =
+    pathname.startsWith('/ebooks') ? { path: '/ebooks', label: t('nav.ebooks') } :
+    pathname.startsWith('/comics') ? { path: '/comics', label: t('nav.comics') } :
+    pathname.startsWith('/videos') || pathname.startsWith('/video/') ? { path: '/videos', label: t('nav.films') } :
+    pathname.startsWith('/albums') ? { path: '/albums', label: t('search.albums') } :
+    pathname.startsWith('/tracks') ? { path: '/tracks', label: t('search.tracks') } :
+    { path: '/search', label: '' }
+
+  const placeholder = ctx.path === '/search' ? t('search.placeholder') : `Tìm trong ${ctx.label}…`
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      if (q.trim()) navigate(`/search?q=${encodeURIComponent(q)}`, { replace: true })
-      else navigate(-1)
+      if (q.trim()) navigate(`${ctx.path}?q=${encodeURIComponent(q)}`, { replace: true })
+      else navigate(ctx.path, { replace: true })
     }, 300)
   }
 
@@ -28,7 +41,7 @@ export default function Header() {
           ref={inputRef}
           className="search-input"
           type="search"
-          placeholder={t('search.placeholder')}
+          placeholder={placeholder}
           defaultValue={params.get('q') ?? ''}
           onChange={handleInput}
           onBlur={() => clearTimeout(timerRef.current)}

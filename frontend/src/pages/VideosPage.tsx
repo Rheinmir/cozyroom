@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { fetchVideos, Video, LIBRARY_STALE_TIME } from '../api'
 import Spinner from '../components/Spinner'
 
@@ -40,6 +40,8 @@ function VideoCard({ v }: { v: Video }) {
 
 export default function VideosPage() {
   const { data: videos = [], isLoading: loading } = useQuery({ queryKey: ['videos'], queryFn: fetchVideos, staleTime: LIBRARY_STALE_TIME })
+  const [params] = useSearchParams()
+  const q = params.get('q')?.trim().toLowerCase() ?? ''
 
   if (loading) return <div className="loading"><Spinner size={28} label="Đang tải…" /></div>
 
@@ -53,7 +55,7 @@ export default function VideosPage() {
   }
 
   const groups: Record<string, Video[]> = {}
-  for (const v of videos) {
+  for (const v of (q ? videos.filter(v => v.title.toLowerCase().includes(q)) : videos)) {
     const key = v.group_name || 'Phim'
     if (!groups[key]) groups[key] = []
     groups[key].push(v)
