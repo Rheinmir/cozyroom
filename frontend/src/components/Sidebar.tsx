@@ -94,6 +94,14 @@ export default function Sidebar() {
 
       <div className="sidebar-section">
         {!collapsed && <p className="sidebar-label">{t('nav.library')}</p>}
+        <NavLink to="/discover" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.discover')}>
+          <span className="nav-link-icon">
+            <svg viewBox="0 0 20 20" width="18" height="18">
+              <path d="M10 1.5 L11.7 8.3 L18.5 10 L11.7 11.7 L10 18.5 L8.3 11.7 L1.5 10 L8.3 8.3 Z" fill="currentColor" />
+            </svg>
+          </span>
+          {!collapsed && <span className="nav-link-text">{t('nav.discover')}</span>}
+        </NavLink>
         <NavLink to="/" end className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.artists')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">

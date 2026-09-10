@@ -12,6 +12,7 @@ import MobileNav from './components/MobileNav'
 import RadialNav from './components/RadialNav'
 import InstallBanner from './components/InstallBanner'
 import ArtistsPage from './pages/ArtistsPage'
+import DiscoverPage from './pages/DiscoverPage'
 import ArtistPage from './pages/ArtistPage'
 import AlbumPage from './pages/AlbumPage'
 import AlbumsPage from './pages/AlbumsPage'
@@ -47,6 +48,7 @@ export default function AppRoutes() {
           <main className="main" ref={mainRef}>
             <Routes>
               <Route path="/"            element={<ArtistsPage />} />
+              <Route path="/discover"    element={<DiscoverPage />} />
               <Route path="/artist/:id"  element={<ArtistPage />} />
               <Route path="/album/:id"   element={<AlbumPage />} />
               <Route path="/albums"      element={<AlbumsPage />} />
