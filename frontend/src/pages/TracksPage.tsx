@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchTracks } from '../api'
 import { usePlayer } from '../PlayerContext'
@@ -28,6 +28,9 @@ export default function TracksPage() {
 
   const sorted = useMemo(() => [...tracks].sort((a, b) => a.title.localeCompare(b.title)), [tracks])
   const availableLetters = useMemo(() => new Set(sorted.map(t2 => letterOf(t2.title))), [sorted])
+  const [params] = useSearchParams()
+  const q = params.get('q')?.trim().toLowerCase() ?? ''
+  const shown = q ? sorted.filter(t2 => t2.title.toLowerCase().includes(q) || (t2.artist_name ?? '').toLowerCase().includes(q) || (t2.album_title ?? '').toLowerCase().includes(q)) : sorted
   let lastLetter = ''
 
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
@@ -47,19 +50,19 @@ export default function TracksPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((t2, i) => {
+            {shown.map((t2, i) => {
               const letter = letterOf(t2.title)
-              const isFirstOfLetter = letter !== lastLetter
+              const isFirstOfLetter = !q && letter !== lastLetter
               if (isFirstOfLetter) lastLetter = letter
               return (
                 <tr
                   key={t2.id}
                   className="track-row"
                   id={isFirstOfLetter ? `track-letter-${letter}` : undefined}
-                  onClick={() => play(t2, sorted)}
+                  onClick={() => play(t2, shown)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2, sorted) } }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2, shown) } }}
                 >
                   <td className="col-num"><span className="track-num-text">{i + 1}</span></td>
                   <td className="track-title"><span className="tt-clamp">{t2.title}</span></td>
@@ -80,18 +83,20 @@ export default function TracksPage() {
             })}
           </tbody>
         </table>
-        <div className="artist-az-rail">
-          {AZ.map(letter => (
-            <button
-              key={letter}
-              className="artist-az-btn"
-              disabled={!availableLetters.has(letter)}
-              onClick={() => document.getElementById(`track-letter-${letter}`)?.scrollIntoView({ block: 'start' })}
-            >
-              {letter}
-            </button>
-          ))}
-        </div>
+        {!q && (
+          <div className="artist-az-rail">
+            {AZ.map(letter => (
+              <button
+                key={letter}
+                className="artist-az-btn"
+                disabled={!availableLetters.has(letter)}
+                onClick={() => document.getElementById(`track-letter-${letter}`)?.scrollIntoView({ block: 'start' })}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

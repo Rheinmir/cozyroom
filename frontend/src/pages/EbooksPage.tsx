@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { imgSrc, fetchEbooks, Ebook, LIBRARY_STALE_TIME } from '../api'
 import { useDialogs } from '../DialogContext'
 import Spinner from '../components/Spinner'
@@ -91,6 +91,7 @@ export default function EbooksPage() {
   const { toast } = useDialogs()
   const queryClient = useQueryClient()
   const { data: ebooks = [], isLoading: loading } = useQuery({ queryKey: ['ebooks'], queryFn: fetchEbooks, staleTime: LIBRARY_STALE_TIME })
+  const [searchParams] = useSearchParams()
   const [filterNSFW, setFilterNSFW] = useState<'all' | 'nsfw' | 'clean'>('clean')
   const [selectedCollection, setSelectedCollection] = useState<string>('all')
 
@@ -171,10 +172,12 @@ export default function EbooksPage() {
 
   const collections = Array.from(new Set(ebooks.map(e => e.collection).filter(Boolean))) as string[]
 
+  const q = searchParams.get('q')?.trim().toLowerCase() ?? ''
   const filteredEbooks = ebooks.filter(e => {
     const nsfwMatch = filterNSFW === 'all' || (filterNSFW === 'nsfw' ? e.is_nsfw : !e.is_nsfw)
     const collectionMatch = selectedCollection === 'all' || e.collection === selectedCollection
-    return nsfwMatch && collectionMatch
+    const qMatch = !q || (e.title ?? '').toLowerCase().includes(q)
+    return nsfwMatch && collectionMatch && qMatch
   })
 
   return (

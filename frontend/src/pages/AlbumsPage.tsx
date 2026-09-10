@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchAlbums, imgSrc } from '../api'
 import LibraryStatsBar from '../components/LibraryStatsBar'
@@ -28,6 +28,9 @@ export default function AlbumsPage() {
     [albums]
   )
   const availableLetters = useMemo(() => new Set(sorted.map(a => letterOf(a.title))), [sorted])
+  const [params] = useSearchParams()
+  const q = params.get('q')?.trim().toLowerCase() ?? ''
+  const shown = q ? sorted.filter(a => a.title.toLowerCase().includes(q) || (a.artist_name ?? '').toLowerCase().includes(q)) : sorted
   let lastLetter = ''
 
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
@@ -38,9 +41,9 @@ export default function AlbumsPage() {
       <h1 className="page-title">{t('search.albums')}</h1>
       <div className="artist-grid-wrap">
         <div className="album-grid">
-          {sorted.map(al => {
+          {shown.map(al => {
             const letter = letterOf(al.title)
-            const isFirstOfLetter = letter !== lastLetter
+            const isFirstOfLetter = !q && letter !== lastLetter
             if (isFirstOfLetter) lastLetter = letter
             return (
               <Link key={al.id} to={`/album/${al.id}`} className="album-card" id={isFirstOfLetter ? `album-letter-${letter}` : undefined}>
@@ -58,18 +61,20 @@ export default function AlbumsPage() {
             )
           })}
         </div>
-        <div className="artist-az-rail">
-          {AZ.map(letter => (
-            <button
-              key={letter}
-              className="artist-az-btn"
-              disabled={!availableLetters.has(letter)}
-              onClick={() => document.getElementById(`album-letter-${letter}`)?.scrollIntoView({ block: 'start' })}
-            >
-              {letter}
-            </button>
-          ))}
-        </div>
+        {!q && (
+          <div className="artist-az-rail">
+            {AZ.map(letter => (
+              <button
+                key={letter}
+                className="artist-az-btn"
+                disabled={!availableLetters.has(letter)}
+                onClick={() => document.getElementById(`album-letter-${letter}`)?.scrollIntoView({ block: 'start' })}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
