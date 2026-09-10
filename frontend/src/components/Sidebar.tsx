@@ -97,20 +97,11 @@ export default function Sidebar() {
         <NavLink to="/discover" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.discover')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
-              <path d="M10 1.5 L11.7 8.3 L18.5 10 L11.7 11.7 L10 18.5 L8.3 11.7 L1.5 10 L8.3 8.3 Z" fill="currentColor" />
+              <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <polygon points="13.6 6.4 11 11 6.4 13.6 9 9" fill="currentColor" />
             </svg>
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.discover')}</span>}
-        </NavLink>
-        <NavLink to="/" end className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.artists')}>
-          <span className="nav-link-icon">
-            <svg viewBox="0 0 20 20" width="18" height="18">
-              <rect x="7" y="2" width="6" height="10" rx="3" fill="currentColor" />
-              <path d="M4 9a6 6 0 0 0 12 0" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-              <rect x="9" y="15" width="2" height="3" rx="1" fill="currentColor" />
-            </svg>
-          </span>
-          {!collapsed && <span className="nav-link-text">{t('nav.artists')}</span>}
         </NavLink>
         <NavLink to="/videos" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.films')}>
           <span className="nav-link-icon">
@@ -175,7 +166,10 @@ export default function Sidebar() {
         <NavLink to="/ai" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ai')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
-              <path d="M10 1l1.8 5.2L17 8l-5.2 1.8L10 15l-1.8-5.2L3 8l5.2-1.8z" fill="currentColor" />
+              <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9A2.5 2.5 0 0 1 17 5.5v5A2.5 2.5 0 0 1 14.5 13H8l-3.5 3v-3H5.5A2.5 2.5 0 0 1 3 10.5z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              <circle cx="7" cy="8" r="1" fill="currentColor" />
+              <circle cx="10" cy="8" r="1" fill="currentColor" />
+              <circle cx="13" cy="8" r="1" fill="currentColor" />
             </svg>
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.ai')}</span>}
