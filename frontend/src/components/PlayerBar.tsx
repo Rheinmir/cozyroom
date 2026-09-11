@@ -12,6 +12,7 @@ import LyricsView from './LyricsView'
 import type { LyricsViewHandle } from './LyricsView'
 import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
+import VinylDisc from './VinylDisc'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -181,6 +182,15 @@ export default function PlayerBar() {
     }
   }, [track, setCoverColors])
 
+  // Cover URL for the vinyl play-disc (yt: ids resolve to a YouTube thumb,
+  // otherwise the covers API; null when there's no album so VinylDisc shows its
+  // audiophile placeholder instead of an empty black disc).
+  const coverUrl = !track?.album_id
+    ? null
+    : track.album_id.startsWith('yt:')
+      ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg`
+      : `/api/covers/${track.album_id}?w=80`
+
   const pct = duration > 0 ? (progress / duration) * 100 : 0
   // Played portion keys off var(--text) so it stays visible in both themes —
   // a hardcoded #fff fill vanished on the light-theme canvas.
@@ -221,8 +231,14 @@ export default function PlayerBar() {
                   <ShuffleModeIcon mode={shuffleMode} />
                 </button>
                 <button className="ctrl-btn" onClick={prev} title="Previous"><IconPrev /></button>
-                <button className="play-btn" onClick={toggle} aria-label={isPlaying ? 'Pause' : 'Play'}>
-                  {isPlaying ? <IconPause /> : <IconPlay />}
+                <button
+                  className={'vinyl-play-btn' + (isPlaying ? '' : ' vinyl-play-btn--paused')}
+                  onClick={toggle}
+                  aria-label={isPlaying ? 'Pause' : 'Play'}
+                  title={isPlaying ? 'Pause' : 'Play'}
+                >
+                  <VinylDisc cover={coverUrl} spinning={isPlaying} size={48} alt={track.title} />
+                  <span className="vinyl-play-btn-overlay">{isPlaying ? <IconPause /> : <IconPlay />}</span>
                 </button>
                 <button className="ctrl-btn" onClick={next} title="Next"><IconNext /></button>
                 <button className={'ctrl-btn' + (repeat !== 'off' ? ' ctrl-btn--active' : '')} onClick={cycleRepeat} title={`Repeat: ${repeat}`}>

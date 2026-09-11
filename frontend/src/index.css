@@ -919,7 +919,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   background: var(--header-glass);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,.04);
-  padding: 12px 24px;
+  /* Left padding matched to .page (32px) so the search's left edge sits on the
+     same vertical axis as the stats pills / hero below it. Top padding raised
+     12→21 so the search input's vertical centre lines up with the sidebar's
+     "Cozyroom" brand row (sidebar padding-top 24 + brand min-height 32 → centre
+     ~40px; header 21 + input ~37/2 → centre ~40px). */
+  padding: 21px 32px 12px;
   flex-shrink: 0;
   z-index: 10;
 }
@@ -932,6 +937,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   margin: 0 auto;
   width: 100%;
 }
+/* Desktop: left-align the search to the content column instead of centering it.
+   A centered search floating above left-aligned page content read as two
+   disconnected blocks; sharing one left axis makes search + stats + hero a
+   single masthead (the Spotify/Apple-Music pattern). Scoped to .top-header so
+   the mobile search island (.mobile-search-island .search-bar) is untouched. */
+.top-header .search-bar { margin: 0; }
 
 .search-icon {
   position: absolute;
@@ -962,7 +973,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 340px);
 }
 
-.page { padding: 32px 32px 80px; }
+/* Top padding trimmed 32→14: under the top-header the old 32px left the first
+   content (stats pills on Discover, page titles elsewhere) floating far below
+   the search, reading as a disconnected block. Sides/bottom unchanged. */
+.page { padding: 14px 32px 80px; }
 
 .loading {
   display: flex;
@@ -3076,6 +3090,16 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
    panel above the bottom-right of the bar, with a full-screen backdrop so a
    click outside closes it. */
 .queue-bar-backdrop { position: fixed; inset: 0; z-index: 200; }
+/* Desktop counterpart of the mobile .queue-panel-backdrop (defined inside the
+   max-width:900 block at z-index 290). On desktop there was NO rule at all, so
+   the backdrop <div> rendered with zero size and clicking outside the NPO queue
+   panel never closed it. Full-viewport click-catcher that sits above the NPO
+   content (cover/lyrics, static → low layer) but below the panel (z 30) so its
+   rows stay clickable. Scoped min-width:901 so it can't override the mobile
+   rule. */
+@media (min-width: 901px) {
+  .queue-panel-backdrop { position: fixed; inset: 0; z-index: 29; }
+}
 .queue-panel.queue-panel--bar {
   position: fixed;
   inset: auto 16px calc(var(--player-h) + 10px) auto;
@@ -4913,6 +4937,150 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   z-index: 3;
   pointer-events: none;
 }
+
+/* ── Reusable vinyl disc (VinylDisc.tsx) ──────────────────────────────────────
+   Same optical construction as .radial-bubble--vinyl (grooves + centered label
+   + hole + vinyl-spin) but standalone, so it can be the desktop player-bar
+   play/pause control without the nav bubble's drag/menu behaviour. */
+.vinyl-disc {
+  position: relative;
+  display: inline-block;
+  border-radius: 50%;
+  background: #060604;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,.6), 0 0 0 2px rgba(255,255,255,.08);
+  animation: vinyl-spin 12s linear infinite;
+  animation-play-state: paused;
+}
+.vinyl-disc--spinning { animation-play-state: running; }
+/* grooves: 4-quadrant conic optical illusion (2 dark + 2 gray alternating) */
+.vinyl-disc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 45deg,
+    #060604  0deg,
+    #282826  70deg,
+    #060604 180deg,
+    #282826 250deg,
+    #060604 360deg
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+/* tiny center hole */
+.vinyl-disc::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6.5%; height: 6.5%;
+  border-radius: 50%;
+  background: #0a0a0a;
+  box-shadow: 0 0 0 0.5px rgba(255,255,255,0.2);
+  z-index: 3;
+  pointer-events: none;
+}
+/* label window — album art or the audiophile placeholder */
+.vinyl-disc-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 46%; height: 46%;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 1;
+  /* container-query unit source so placeholder text scales with disc size */
+  container-type: inline-size;
+}
+.vinyl-disc-label img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 2;   /* covers the placeholder underneath when a cover loads */
+}
+/* audiophile placeholder — a white record label with black micro-text, shown
+   whenever there's no cover (fixes the old empty-black-disc look). Paper White
+   + black ink is the DESIGN.md primary pairing; it sits on the dark vinyl so it
+   is theme-independent. */
+.vinyl-disc-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3cqw;
+  background: radial-gradient(circle at 50% 42%, #ffffff 0%, #f1f1f1 68%, #dedede 100%);
+  color: #0a0a0a;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.16);
+  line-height: 1;
+  text-align: center;
+}
+.vinyl-disc-mark    { font-size: 52cqw; opacity: 0.85; }
+.vinyl-disc-wordmark{ font-size: 15cqw; font-weight: 700; letter-spacing: 0.08em; }
+.vinyl-disc-subtext { font-size: 11cqw; font-weight: 600; letter-spacing: 0.06em; opacity: 0.55; }
+
+/* Vinyl-disc-as-play/pause control on the desktop player bar. Click toggles
+   playback (it is NOT a menu opener); the spinning disc signals "playing", and
+   a play/pause icon fades in over a scrim on hover (or stays up while paused)
+   so the affordance stays legible. */
+.vinyl-play-btn {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform .12s;
+}
+.vinyl-play-btn:hover { transform: scale(1.05); }
+.vinyl-play-btn-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.28) 100%);
+  transition: opacity .15s;
+  pointer-events: none;
+  z-index: 5;
+}
+.vinyl-play-btn:hover .vinyl-play-btn-overlay,
+.vinyl-play-btn:focus-visible .vinyl-play-btn-overlay,
+.vinyl-play-btn--paused .vinyl-play-btn-overlay { opacity: 1; }
+
+/* Audiophile placeholder for the nav bubble's own vinyl label — same white
+   record-label look as VinylDisc, shown when the current track has no cover (or
+   it 404s) instead of the old empty black groove. Sits under the cover img
+   (z-index 0 vs img's 1) so a real cover still wins. */
+.radial-bubble--vinyl .radial-bubble-ph {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 46%; height: 46%;
+  border-radius: 50%;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 42%, #ffffff 0%, #f1f1f1 68%, #dedede 100%);
+  color: #0a0a0a;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.16);
+}
+.radial-bubble-ph-mark { font-size: 11px; line-height: 1; opacity: 0.85; }
 
 /* Click-outside overlay */
 .radial-overlay {

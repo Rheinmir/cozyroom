@@ -811,20 +811,26 @@ export default function RadialNav() {
               <span style={{ fontSize: '9px', opacity: 0.5, display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Năm</span>
               <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{pickerYear}</span>
             </div>
-          ) : track && track.album_id ? (
-            <img
-              key={track.id}
-              src={track.album_id?.startsWith('yt:')
-                ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
-                : `/api/covers/${track.album_id}?w=80`}
-              alt={track.title}
-              draggable={false}
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            />
           ) : track ? (
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style={{ opacity: 0.7 }}>
-              <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
-            </svg>
+            <>
+              {/* audiophile placeholder — always underneath; a real cover (below)
+                  paints over it, and if the cover is missing/404s the white
+                  label shows instead of an empty black disc. */}
+              <span className="radial-bubble-ph" aria-hidden="true">
+                <span className="radial-bubble-ph-mark">♪</span>
+              </span>
+              {track.album_id && (
+                <img
+                  key={track.id}
+                  src={track.album_id.startsWith('yt:')
+                    ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
+                    : `/api/covers/${track.album_id}?w=80`}
+                  alt={track.title}
+                  draggable={false}
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                />
+              )}
+            </>
           ) : (
             <CozyroomMark size={24} />
           )}
