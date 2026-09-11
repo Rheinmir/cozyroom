@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { fetchPlayStats, fetchAlbums, fetchArtists, fetchTracks, fetchSmartQueue, imgSrc } from '../api'
+import { fetchPlayStats, fetchAlbums, fetchArtists, fetchTracks, fetchSmartQueue, imgSrc, COVER_PLACEHOLDER } from '../api'
 import type { Track } from '../types'
 import { usePlayer } from '../PlayerContext'
 import LibraryStatsBar from '../components/LibraryStatsBar'
@@ -31,7 +31,12 @@ function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; 
           <button key={t.id + i} className="discover-track" onClick={() => onPlay(t)}>
             <span className="discover-track-num">{i + 1}</span>
             <span className="discover-track-cover">
-              {t.album_id ? <img src={cover(t.album_id, 80)} alt="" loading="lazy" /> : <span className="no-cover">♪</span>}
+              <img
+                src={t.album_id ? cover(t.album_id, 80) : COVER_PLACEHOLDER}
+                alt=""
+                loading="lazy"
+                onError={e => { const img = e.currentTarget; if (!img.src.endsWith(COVER_PLACEHOLDER)) img.src = COVER_PLACEHOLDER }}
+              />
             </span>
             <span className="discover-track-meta">
               <span className="discover-track-title">{t.title}</span>
@@ -95,9 +100,12 @@ export default function DiscoverPage() {
         <div className="discover-hero">
           {hero.map(al => (
             <Link key={al.id} to={`/album/${al.id}`} className="discover-hero-card">
-              {al.cover_url
-                ? <img src={imgSrc(al.cover_url, 600)} alt={al.title} loading="lazy" />
-                : <div className="discover-hero-nocover">♪</div>}
+              <img
+                src={al.cover_url ? imgSrc(al.cover_url, 600) : COVER_PLACEHOLDER}
+                alt={al.title}
+                loading="lazy"
+                onError={e => { const img = e.currentTarget; if (!img.src.endsWith(COVER_PLACEHOLDER)) img.src = COVER_PLACEHOLDER }}
+              />
               <div className="discover-hero-cap">
                 <div className="discover-hero-title">{al.title}</div>
                 <div className="discover-hero-sub">{al.artist_name}</div>
@@ -120,7 +128,12 @@ export default function DiscoverPage() {
             {shelfAlbums.map(al => (
               <Link key={al.id} to={`/album/${al.id}`} className="discover-shelf-album">
                 <div className="discover-shelf-cover">
-                  {al.cover_url ? <img src={imgSrc(al.cover_url, 240)} alt={al.title} loading="lazy" /> : <span className="no-cover">♪</span>}
+                  <img
+                    src={al.cover_url ? imgSrc(al.cover_url, 240) : COVER_PLACEHOLDER}
+                    alt={al.title}
+                    loading="lazy"
+                    onError={e => { const img = e.currentTarget; if (!img.src.endsWith(COVER_PLACEHOLDER)) img.src = COVER_PLACEHOLDER }}
+                  />
                 </div>
                 <div className="discover-shelf-title">{al.title}</div>
                 <div className="discover-shelf-sub">{al.artist_name}</div>

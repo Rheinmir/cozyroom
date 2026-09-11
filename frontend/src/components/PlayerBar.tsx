@@ -237,7 +237,7 @@ export default function PlayerBar() {
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                   title={isPlaying ? 'Pause' : 'Play'}
                 >
-                  <VinylDisc cover={coverUrl} spinning={isPlaying} size={48} alt={track.title} />
+                  <VinylDisc cover={coverUrl} spinning={isPlaying} size={40} alt={track.title} />
                   <span className="vinyl-play-btn-overlay">{isPlaying ? <IconPause /> : <IconPlay />}</span>
                 </button>
                 <button className="ctrl-btn" onClick={next} title="Next"><IconNext /></button>

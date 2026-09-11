@@ -1560,7 +1560,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   align-items: center;
   gap: 8px;
   justify-content: center;
-  margin-bottom: 8px;
+  /* Trimmed 8→4 so the vinyl disc + progress row stack sits well inside the
+     72px player bar — the disc (and its white ring) clears the bar's top
+     border instead of touching it. */
+  margin-bottom: 4px;
 }
 
 .ctrl-btn {
@@ -2295,7 +2298,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .npo-controls .npo-progress .progress-bar { width: 100%; display: block; }
 .npo-controls .npo-times { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
 .npo-controls .npo-btns { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 10px; }
-.npo-controls .npo-icon-row { display: flex; justify-content: center; align-items: center; gap: 14px; }
+.npo-controls .npo-icon-row { display: flex; justify-content: center; align-items: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; }
+/* Desktop: the queue / translate / auto-translate icons are secondary — hidden
+   until the pointer is over the controls strip (or controls are touch-revealed
+   on mobile via .npo--ctrls-active), like a video player's chrome. */
+.npo-controls:hover .npo-icon-row,
+.npo--ctrls-active .npo-icon-row { opacity: 1; pointer-events: auto; }
 .npo-play-btn { width: 52px; height: 52px; }
 .npo-lyrics-wrap { display: contents; }
 /* height propagation into LyricsView on desktop */
@@ -5041,9 +5049,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: inline-flex;
   border-radius: 50%;
   flex-shrink: 0;
-  transition: transform .12s;
+  transition: transform .12s, box-shadow .12s;
+  /* Paper-white outer ring so the dark vinyl disc reads as a distinct control
+     instead of sinking into the near-black player bar. */
+  box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 2px 10px rgba(0,0,0,.5);
 }
-.vinyl-play-btn:hover { transform: scale(1.05); }
+.vinyl-play-btn:hover { transform: scale(1.05); box-shadow: 0 0 0 2px #fff, 0 4px 14px rgba(0,0,0,.55); }
 .vinyl-play-btn-overlay {
   position: absolute;
   inset: 0;

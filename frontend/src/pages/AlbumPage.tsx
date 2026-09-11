@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { fetchTracks, fetchAlbum, imgSrc } from '../api'
+import { fetchTracks, fetchAlbum, imgSrc, COVER_PLACEHOLDER } from '../api'
 import { usePlayer } from '../PlayerContext'
 import FavoritePill from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
@@ -10,7 +10,7 @@ import BackButton from '../components/BackButton'
 
 function HeroCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
-  if (!url || err) return <span className="no-cover-lg">♪</span>
+  if (!url || err) return <img src={COVER_PLACEHOLDER} alt={title} />
   return <img src={imgSrc(url, 400)} alt={title} onError={() => setErr(true)} />
 }
 

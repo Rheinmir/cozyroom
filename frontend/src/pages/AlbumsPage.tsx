@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { fetchAlbums, imgSrc } from '../api'
+import { fetchAlbums, imgSrc, COVER_PLACEHOLDER } from '../api'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
 
@@ -48,10 +48,12 @@ export default function AlbumsPage() {
             return (
               <Link key={al.id} to={`/album/${al.id}`} className="album-card" id={isFirstOfLetter ? `album-letter-${letter}` : undefined}>
                 <div className="album-cover">
-                  {al.cover_url
-                    ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                    : <span className="no-cover">♪</span>
-                  }
+                  <img
+                    src={al.cover_url ? imgSrc(al.cover_url, 200) : COVER_PLACEHOLDER}
+                    alt={al.title}
+                    loading="lazy"
+                    onError={e => { const img = e.currentTarget; if (!img.src.endsWith(COVER_PLACEHOLDER)) img.src = COVER_PLACEHOLDER }}
+                  />
                 </div>
                 <div className="album-info">
                   <span className="album-title">{al.title}</span>

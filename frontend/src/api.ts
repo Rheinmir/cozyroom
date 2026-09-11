@@ -6,6 +6,11 @@ export const imgSrc = (url: string | undefined, w: number): string => {
   return RESIZABLE_RE.test(url) ? `${url}?w=${w}` : url
 }
 
+// Shown when a track/album has no cover, or its cover 404s — a "Your Music on
+// CD" jewel-case mockup (frontend/public/cover-placeholder.png) instead of a
+// bare ♪ glyph or a broken-image icon.
+export const COVER_PLACEHOLDER = '/cover-placeholder.png'
+
 const get = <T>(url: string): Promise<T> =>
   fetch(url).then(r => {
     if (!r.ok) throw new Error(`${r.status} ${url}`)
