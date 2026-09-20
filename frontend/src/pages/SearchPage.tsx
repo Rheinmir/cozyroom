@@ -610,7 +610,7 @@ export default function SearchPage() {
                 <th className="col-num">#</th>
                 <th>{t('search.title_col')}</th>
                 <th className="col-fav"></th>
-                <th>{t('search.album_col')}</th>
+                <th className="col-album">{t('search.album_col')}</th>
               </tr>
             </thead>
             <tbody>

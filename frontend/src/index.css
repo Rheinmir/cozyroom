@@ -582,23 +582,24 @@ button, a, [role="button"], input, select, textarea {
   --surface-hover: rgba(255,255,255,.07);
   --elevated:      #111111;
   --border:        rgba(255,255,255,.12);
-  --green:         #a9c6ff;
-  --green-hover:   #8aacf0;
-  --purple:        #c3b6ff;
+  --green:         #ffffff;
+  --green-hover:   #e0e0e0;
+  --purple:        #ffffff;
   --text:          rgba(255,255,255,.92);
   --text-muted:    rgba(255,255,255,.55);
   --text-faint:    rgba(255,255,255,.32);
   --sidebar-glass: rgba(5,5,15,.5);
   --header-glass:  rgba(5,5,15,.32);
   --player-glass:  rgba(5,5,15,.55);
-  /* Glassmorphism ambient field — the "nebula" that the frosted panels above
-     refract through backdrop-filter. Recolored 2026-09-20 from a flat
-     void-black + white-only orbs (see raw/glassmorphism ingest); the existing
-     blur/saturate infra on sidebar/header/player/modals needed no changes —
-     giving it a colored background to blur is what turns mica into true glass. */
-  --orb-a: rgba(79,140,255,.7);    /* electric blue bloom, top-left */
-  --orb-b: rgba(139,92,246,.58);   /* violet bloom, bottom-right */
-  --orb-c: rgba(45,212,191,.4);    /* teal bloom, center, third layer */
+  /* Glassmorphism ambient field — the "atmosphere" the frosted panels above
+     refract through backdrop-filter, so mica reads as real glass instead of
+     tinted-flat-black. Monochrome by design (2026-09-20 revert): an earlier
+     pass tried colored blue/violet/teal blooms, which read fine on the dark
+     canvas but turned into a harsh hard-edged color band against the light
+     theme's white surfaces — the owner's palette is white/black/gray only. */
+  --orb-a: rgba(255,255,255,.55);  /* bright bloom, top-left */
+  --orb-b: rgba(255,255,255,.4);   /* bloom, bottom-right */
+  --orb-c: rgba(255,255,255,.25);  /* dimmest bloom, center — depth via intensity, not hue */
   --sidebar-w:          220px;
   --sidebar-collapsed-w: 56px;
   --player-h:      72px;
@@ -622,9 +623,9 @@ button, a, [role="button"], input, select, textarea {
      player's own play control, a playlist's hero play button) that should
      read as real glass rather than a solid accent-fill disc. Not for
      anything that repeats per row in a list (backdrop-filter cost). */
-  --accent-glass-fill:        rgba(79,140,255,.28);
-  --accent-glass-fill-hover:  rgba(79,140,255,.4);
-  --accent-glass-border:      rgba(79,140,255,.5);
+  --accent-glass-fill:        rgba(255,255,255,.14);
+  --accent-glass-fill-hover:  rgba(255,255,255,.22);
+  --accent-glass-border:      rgba(255,255,255,.4);
 
   /* ── Chart categorical palette ───────────────────────
      One cohesive, muted palette applied to EVERY chart (categorical series,
@@ -684,15 +685,15 @@ button, a, [role="button"], input, select, textarea {
   --glass-fill-strong: rgba(0,0,0,.19);
   --hairline-strong:   rgba(0,0,0,.26);
 
-  --accent-glass-fill:        rgba(79,140,255,.16);
-  --accent-glass-fill-hover:  rgba(79,140,255,.24);
-  --accent-glass-border:      rgba(79,140,255,.45);
+  --accent-glass-fill:        rgba(0,0,0,.08);
+  --accent-glass-fill-hover:  rgba(0,0,0,.14);
+  --accent-glass-border:      rgba(0,0,0,.3);
 
-  /* Ambient field stays the same hue family, gentler so the color blooms
-     read as a soft aurora under white cards instead of overpowering them. */
-  --orb-a: rgba(79,140,255,.4);
-  --orb-b: rgba(139,92,246,.32);
-  --orb-c: rgba(45,212,191,.22);
+  /* Dark-based (not white-on-white) so the blooms actually show against the
+     light canvas — same monochrome family as --glass-fill's light-theme flip. */
+  --orb-a: rgba(0,0,0,.14);
+  --orb-b: rgba(0,0,0,.1);
+  --orb-c: rgba(0,0,0,.06);
 
   /* Chart palette (--chart-1..8) is theme-agnostic — the muted mid-tones read
      on both Void Black and the white light-theme card, so no override here.
@@ -730,7 +731,7 @@ body::before {
   top: -100px; left: -140px;
   width: 1300px; height: 1300px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--orb-a), rgba(79,140,255,0) 80%);
+  background: radial-gradient(circle, var(--orb-a), rgba(255,255,255,0) 80%);
   filter: blur(80px);
   opacity: 1;
   z-index: 0;
@@ -743,7 +744,7 @@ body::after {
   bottom: -160px; right: -160px;
   width: 1300px; height: 1300px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--orb-b), rgba(139,92,246,0) 80%);
+  background: radial-gradient(circle, var(--orb-b), rgba(255,255,255,0) 80%);
   filter: blur(90px);
   opacity: 1;
   z-index: 0;
@@ -758,7 +759,7 @@ html::before {
   top: 20%; left: 50%;
   width: 1100px; height: 1100px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--orb-c), rgba(45,212,191,0) 80%);
+  background: radial-gradient(circle, var(--orb-c), rgba(255,255,255,0) 80%);
   filter: blur(100px);
   opacity: 1;
   z-index: 0;
@@ -901,7 +902,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .nav-link.active { color: var(--green); }
 .nav-link.active {
   background: var(--glass-fill-2);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 28px -12px rgba(79,140,255,.6);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 28px -12px rgba(255,255,255,.6);
 }
 
 .sidebar-lastfm {
@@ -1244,7 +1245,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .artist-card:hover {
   transform: translateY(-5px);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(79,140,255,.4);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(255,255,255,.4);
 }
 
 .artist-avatar {
@@ -1388,7 +1389,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .album-card:hover {
   transform: translateY(-5px);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(79,140,255,.4);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(255,255,255,.4);
 }
 
 .album-cover {
@@ -1804,7 +1805,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .smart-badge--active {
   background: var(--purple);
   color: #000;
-  box-shadow: 0 0 12px rgba(139,92,246,.5);
+  box-shadow: 0 0 12px rgba(255,255,255,.4);
 }
 
 /* ── Quality badge ──────────────────────────────────── */
@@ -1822,7 +1823,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .quality-btn--lossless {
   color: #000;
   background: var(--green);
-  box-shadow: 0 0 12px rgba(79,140,255,.4);
+  box-shadow: 0 0 12px rgba(255,255,255,.4);
 }
 .quality-btn--lossless:hover { background: var(--green-hover); transform: scale(1.05); }
 .quality-btn--320 {
@@ -2111,7 +2112,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex-shrink: 0;
   cursor: pointer;
   transition: transform .1s, background .15s, border-color .15s;
-  box-shadow: 0 14px 30px -12px rgba(79,140,255,.5);
+  box-shadow: 0 14px 30px -12px rgba(255,255,255,.5);
 }
 .hero-play-btn:hover { background: var(--accent-glass-fill-hover); border-color: var(--green); transform: scale(1.06); }
 .hero-play-btn svg { margin-left: 3px; }
@@ -3494,7 +3495,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .video-poster-card:hover {
   box-shadow: inset 0 0 0 1px var(--hairline-strong),
-              0 0 50px -14px rgba(79,140,255,.4);
+              0 0 50px -14px rgba(255,255,255,.4);
   transform: translateY(-3px);
 }
 
