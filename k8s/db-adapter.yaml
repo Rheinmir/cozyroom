@@ -1,7 +1,39 @@
-# DB Adapter — PgBouncer connection pooler between Backend and Postgres
-# pool_mode=transaction: connection returned to pool after each txn
-# Backend sees 5000 client slots; Postgres sees at most 50 server connections
-# Backend DATABASE_URL unchanged: postgres://cozyroom:...@db-adapter:5432/cozyroom
+# DB Adapter — HAProxy round-robin across 3 bare-metal CockroachDB nodes
+# (Tailscale mesh, insecure mode). Replaces the PgBouncer→Postgres pooler as
+# part of the CockroachDB migration (see llmwiki postmortem/proposal
+# 100726-cockroachdb-migration-db.md). Service name + port 5432 kept
+# unchanged so backend's DATABASE_URL (db-adapter:5432) needs no edit.
+# ROLLBACK: `kubectl apply -f k8s/db-adapter.yaml.postgres-backup` restores
+# the PgBouncer→Postgres version — Postgres itself is untouched and still running.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-adapter-haproxy-config
+  namespace: cozyroom-k8s
+data:
+  haproxy.cfg: |
+    global
+        maxconn 5000
+        log stdout format raw local0
+
+    defaults
+        mode tcp
+        timeout connect 5s
+        timeout client 300s
+        timeout server 300s
+        log global
+
+    frontend cozyroom_db
+        bind *:5432
+        default_backend crdb_nodes
+
+    backend crdb_nodes
+        balance roundrobin
+        option tcp-check
+        server crdb1 100.88.197.64:26257 check inter 3s fall 2 rise 2
+        server crdb2 100.97.8.41:26257 check inter 3s fall 2 rise 2
+        server crdb3 100.114.107.68:26257 check inter 3s fall 2 rise 2
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,48 +67,14 @@ spec:
                     app: db-adapter
                 topologyKey: kubernetes.io/hostname
       containers:
-        - name: pgbouncer
-          image: pgbouncer/pgbouncer:latest
+        - name: haproxy
+          image: haproxy:2.9-alpine
           ports:
             - containerPort: 5432
-          env:
-            - name: DATABASES_HOST
-              value: "postgres.cozyroom-k8s.svc.cluster.local"
-            - name: DATABASES_PORT
-              value: "5432"
-            - name: DATABASES_DBNAME
-              value: "cozyroom"
-            - name: DATABASES_USER
-              value: "cozyroom"
-            - name: DATABASES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: cozyroom-secret
-                  key: POSTGRES_PASSWORD
-            - name: PGBOUNCER_POOL_MODE
-              value: "transaction"
-            - name: PGBOUNCER_MAX_CLIENT_CONN
-              value: "5000"
-            - name: PGBOUNCER_DEFAULT_POOL_SIZE
-              value: "50"
-            - name: PGBOUNCER_MIN_POOL_SIZE
-              value: "5"
-            - name: PGBOUNCER_RESERVE_POOL_SIZE
-              value: "10"
-            - name: PGBOUNCER_RESERVE_POOL_TIMEOUT
-              value: "3"
-            - name: PGBOUNCER_SERVER_IDLE_TIMEOUT
-              value: "600"
-            - name: PGBOUNCER_SERVER_CONNECT_TIMEOUT
-              value: "5"
-            - name: PGBOUNCER_IGNORE_STARTUP_PARAMETERS
-              value: "extra_float_digits"
-            - name: PGBOUNCER_LOG_CONNECTIONS
-              value: "0"
-            - name: PGBOUNCER_LOG_DISCONNECTIONS
-              value: "0"
-            - name: PGBOUNCER_LISTEN_PORT
-              value: "5432"
+          volumeMounts:
+            - name: haproxy-config
+              mountPath: /usr/local/etc/haproxy
+              readOnly: true
           readinessProbe:
             tcpSocket:
               port: 5432
@@ -94,6 +92,10 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
+      volumes:
+        - name: haproxy-config
+          configMap:
+            name: db-adapter-haproxy-config
 ---
 apiVersion: v1
 kind: Service

@@ -371,8 +371,11 @@ func (sh *ScraperHandlers) mdChapters(w http.ResponseWriter, r *http.Request) {
 				PublishAt string `json:"publishAt"`
 			} `json:"attributes"`
 			Relationships []struct {
-				Type string `json:"type"`
-				ID   string `json:"id"`
+				Type       string `json:"type"`
+				ID         string `json:"id"`
+				Attributes struct {
+					Name string `json:"name"`
+				} `json:"attributes"`
 			} `json:"relationships"`
 		} `json:"data"`
 	}
@@ -380,21 +383,16 @@ func (sh *ScraperHandlers) mdChapters(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 502)
 		return
 	}
+	// `includes[]=scanlation_group` in the query above already inlines each
+	// group's attributes on the relationship — previously this discarded
+	// that and re-fetched /group/{id} per chapter (up to 100 sequential
+	// external HTTP calls for one page load). Read the inlined name instead.
 	chapters := make([]map[string]any, 0, len(res.Data))
 	for _, c := range res.Data {
 		var group string
 		for _, rel := range c.Relationships {
 			if rel.Type == "scanlation_group" {
-				gb, _ := mdFetch("/group/" + rel.ID)
-				var gr struct {
-					Data struct {
-						Attributes struct {
-							Name string `json:"name"`
-						} `json:"attributes"`
-					} `json:"data"`
-				}
-				json.Unmarshal(gb, &gr)
-				group = gr.Data.Attributes.Name
+				group = rel.Attributes.Name
 				break
 			}
 		}
@@ -479,12 +477,18 @@ func mdPickTitle(titles map[string]string) string {
 	return ""
 }
 
+// mdFetch had no client-level timeout — the default http.Client blocks
+// until the OS TCP timeout (minutes) if MangaDex stalls, hanging every
+// search/chapter-list/page request. 15s covers a slow-but-alive API; a
+// genuinely dead upstream now fails fast instead of hanging the request.
+var mdClient = &http.Client{Timeout: 15 * time.Second}
+
 func mdFetch(path string) ([]byte, error) {
 	u := path
 	if !strings.HasPrefix(u, "http") {
 		u = "https://api.mangadex.org" + path
 	}
-	resp, err := http.Get(u)
+	resp, err := mdClient.Get(u)
 	if err != nil {
 		return nil, err
 	}

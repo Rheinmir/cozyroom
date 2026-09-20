@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lieflat-charts · doyourmagic workflows</title>
+<style>
+  :root {
+    --bg: #f7f7f8; --card: #ffffff; --ink: #1a1a1c; --mut: #6b6b70;
+    --line: #e3e3e6; --accent: #2f2f33; --code: #f0f0f2; --warn: #8a5a00; --warnbg: #fff6e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131316; --card: #1c1c20; --ink: #ececee; --mut: #9a9aa0;
+      --line: #2c2c31; --accent: #d8d8dc; --code: #242429; --warn: #ffce7a; --warnbg: #332a12;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
+  .sub { color: var(--mut); margin: 0 0 6px; }
+  .meta { color: var(--mut); font-size: 13px; margin: 0 0 28px; }
+  .meta code { background: var(--code); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--mut); margin-right: 6px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; margin: 0 0 16px; }
+  .card h2 { font-size: 17px; margin: 0 0 2px; }
+  .card h2 a { color: var(--ink); text-decoration: none; }
+  .card h2 a:hover { text-decoration: underline; }
+  .track { float: right; font-size: 11px; color: var(--mut); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 9px; }
+  .card p { margin: 8px 0 0; color: var(--ink); }
+  .card .out { color: var(--mut); font-size: 13px; margin-top: 8px; }
+  .step { font-variant-numeric: tabular-nums; color: var(--mut); font-size: 13px; margin-right: 8px; }
+  .warn { background: var(--warnbg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 20px; margin: 0 0 16px; }
+  .warn strong { color: var(--warn); }
+  .warn code { background: var(--code); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  .order { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 20px; margin: 24px 0 0; font-size: 14px; }
+  .order b { color: var(--accent); }
+  footer { margin-top: 34px; color: var(--mut); font-size: 12px; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>lieflat-charts</h1>
+  <p class="sub">Bộ sinh biểu đồ + báo cáo HTML một-file, template-driven — dạng Agent Skill (<code style="all:unset;font-family:monospace">SKILL.md</code>), không phải CLI.</p>
+  <p class="meta">
+    63 loại biểu đồ · 12 template báo cáo song ngữ · PolyForm Noncommercial 1.0.0 ·
+    pin <code>eace082</code><br>
+    <span class="badge">Consumer = dùng công cụ</span>
+    <span class="badge">Contributor = sửa công cụ</span>
+    <span class="badge">Chat ≠ Shell (tách riêng)</span>
+  </p>
+
+  <div class="card">
+    <span class="track">Consumer · Shell</span>
+    <h2><span class="step">01</span><a href="01-install.md">Cài vào agent của bạn</a></h2>
+    <p>Một lệnh <code style="all:unset;font-family:monospace">npx skills add …</code> đưa skill vào
+      <code style="all:unset;font-family:monospace">~/.claude/skills/</code> (hoặc đường Codex), cộng cách cập nhật bằng <code style="all:unset;font-family:monospace">git pull</code>. Không cần Node/Playwright để dùng.</p>
+    <p class="out">→ Ra: thư mục skill sẵn sàng gọi bằng <code style="all:unset;font-family:monospace">$lieflat-charts</code> ở phiên agent kế tiếp.</p>
+  </div>
+
+  <div class="card">
+    <span class="track">Consumer · Chat-only</span>
+    <h2><span class="step">02</span><a href="02-generate-charts-and-reports.md">Sinh biểu đồ / báo cáo</a></h2>
+    <p>Nói ngôn ngữ đời thường với agent (mục đích + nơi đăng); nó tự dịch sang loại biểu đồ đúng. Mặc định ra biểu đồ; chỉ khi nói rõ "báo cáo/annual/white paper/poster" mới vào report mode (R01–R12). Đây là câu chat, <b>đừng dán vào terminal</b>.</p>
+    <p class="out">→ Ra: 1 file <code style="all:unset;font-family:monospace">.html</code> đơn, double-click mở. Lưu ý online/offline: Lupi/Basics là SVG offline; Glance/Circular/Force/R11/R12 cần mạng (CDN + font).</p>
+  </div>
+
+  <div class="card">
+    <span class="track">Contributor · Shell</span>
+    <h2><span class="step">03</span><a href="03-contributor-verify.md">Kiểm chứng khi sửa tool</a></h2>
+    <p>Chạy <code style="all:unset;font-family:monospace">node scripts/validate.mjs</code> (tĩnh, zero-dep) và <code style="all:unset;font-family:monospace">node scripts/smoke-new-charts.mjs</code> (cần Playwright global) trước khi mở PR. Cả hai: exit 0 = pass, 1 = fail.</p>
+    <p class="out">→ Ra: pass/fail + danh sách vi phạm theo file:dòng. Không sinh file.</p>
+  </div>
+
+  <div class="warn">
+    <strong>⚠️ Đã kiểm chứng bằng chạy thật:</strong> <code>validate.mjs</code> báo <strong>sai 722 lỗi trên Windows</strong>
+    (721 "màu rõ rệt" + 1 <code>Math.random</code>) vì so path hardcode dấu <code>/</code> trong khi
+    <code>path.relative()</code> trả <code>\</code>. Trên WSL/Linux/macOS cùng repo thì
+    <em>检查通过 · exit 0</em>. Trên máy này: chạy qua <code>wsl bash -lc "… node scripts/validate.mjs"</code>. Chi tiết trong <a href="03-contributor-verify.md">03</a>.
+  </div>
+
+  <div class="order">
+    <b>Thứ tự đề nghị.</b>
+    Chỉ dùng công cụ → <b>01</b> (một lần) rồi <b>02</b> (mỗi lần cần biểu đồ); bỏ qua 03.
+    Sửa/thêm template → clone → sửa → <b>03</b> để verify trước khi PR.
+  </div>
+
+  <footer>
+    Bundle sinh bởi skill <code style="all:unset;font-family:monospace">doyourmagic</code>. Bản clone khám phá nằm trong sandbox và không bị sửa (exploration read-only).
+    Mọi khẳng định ở đây được kiểm với source thật / chạy thật — xem bảng "How this was verified" trong
+    <a href="workflows.md">workflows.md</a>.
+  </footer>
+</div>
+</body>
+</html>

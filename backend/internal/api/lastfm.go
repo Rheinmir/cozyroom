@@ -19,6 +19,12 @@ import (
 
 const lfmAPI = "https://ws.audioscrobbler.com/2.0/"
 
+// http.PostForm/http.Get use the no-timeout default client — if Last.fm
+// stalls, a scrobble/now-playing call (fired on every track start/finish
+// for any user with Last.fm connected) hangs until the OS TCP timeout
+// instead of failing fast.
+var lfmClient = &http.Client{Timeout: 10 * time.Second}
+
 // lastfmLogin authenticates via auth.getMobileSession (username + password, no redirect needed).
 func (h *handlers) lastfmLogin(w http.ResponseWriter, r *http.Request) {
 	if h.lastfmKey == "" {
@@ -47,7 +53,7 @@ func (h *handlers) lastfmLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	params["api_sig"] = lfmSign(params, h.lastfmSecret)
 
-	resp, err := http.PostForm(lfmAPI, lfmValues(params))
+	resp, err := lfmClient.PostForm(lfmAPI, lfmValues(params))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -118,7 +124,7 @@ func (h *handlers) lastfmNowPlaying(w http.ResponseWriter, r *http.Request) {
 	}
 	params["api_sig"] = lfmSign(params, h.lastfmSecret)
 
-	resp, err := http.PostForm(lfmAPI, lfmValues(params))
+	resp, err := lfmClient.PostForm(lfmAPI, lfmValues(params))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -162,7 +168,7 @@ func (h *handlers) lastfmScrobble(w http.ResponseWriter, r *http.Request) {
 	}
 	params["api_sig"] = lfmSign(params, h.lastfmSecret)
 
-	resp, err := http.PostForm(lfmAPI, lfmValues(params))
+	resp, err := lfmClient.PostForm(lfmAPI, lfmValues(params))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -294,7 +300,7 @@ func lfmTrackPlayCount(apiKey, artist, track, username string) (int, error) {
 	v.Set("username", username)
 	v.Set("format", "json")
 
-	resp, err := http.Get(lfmAPI + "?" + v.Encode())
+	resp, err := lfmClient.Get(lfmAPI + "?" + v.Encode())
 	if err != nil {
 		return 0, err
 	}

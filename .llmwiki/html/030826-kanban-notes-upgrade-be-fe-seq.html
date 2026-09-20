@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>030826 — Kanban nâng cấp: board giàu tính năng + đăng ký/approve kiểu Gitea</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:220px;height:100vh;z-index:100;overflow:hidden}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px;overflow-y:auto;max-height:100vh}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:220px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px;max-width:760px;line-height:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}
+section{margin-bottom:64px;scroll-margin-top:80px}
+h2{font-size:16px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 .badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600;background:#ddd6fe;color:#5b21b6}
+p.desc{font-size:13px;color:#374151;line-height:1.7;margin-bottom:14px;max-width:760px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08);margin-bottom:16px}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.5px;opacity:.82}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}
+.step-box{rx:6;opacity:.15}.step-box.active{opacity:.28}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:12px;color:#4338ca}
+.callout{background:rgba(99,102,241,.06);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12.5px;color:#312e81;margin-bottom:16px;max-width:760px;line-height:1.6}
+.callout.warn{background:rgba(245,158,11,.08);border-left-color:#f59e0b;color:#92400e}
+table.tt{width:100%;max-width:760px;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+table.tt th,table.tt td{border:1px solid rgba(99,102,241,.18);padding:6px 10px;text-align:left}
+table.tt th{background:rgba(99,102,241,.08);color:#312e81}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">Kanban Upgrade</div>
+    <a href="#t1">T1 · Migration schema</a>
+    <a href="#t2">T2 · Auth register/login</a>
+    <a href="#t3">T3 · notes.go gate + field</a>
+    <a href="#t4">T4 · boards.go CRUD</a>
+    <a href="#t5">T5 · Wire routes</a>
+    <a href="#t6">T6 · api.ts client</a>
+    <a href="#t7">T7 · NotesPage redesign</a>
+    <a href="#t8">T8 · CSS + verify</a>
+  </div>
+</nav>
+<main>
+<h1>030826 — Kanban: board giàu tính năng + đăng ký/approve kiểu Gitea</h1>
+<p class="subtitle">Nâng cấp <code>/notes</code> lấy cảm hứng board-level từ <code>usekaneo/kaneo</code> (nhiều board, cột động, label/priority/due-date/subtask/comment) — cộng thêm hệ thống đăng ký tài khoản riêng cho kanban, phải chờ owner (<code>owner712002</code>) approve mới đăng nhập được. Auth mới chỉ áp dụng cho kanban — Playlists/Ebook NSFW giữ nguyên.</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng hiện có / không đổi</span>
+  <span><span class="dot emerald"></span> thêm mới / thay đổi</span>
+  <span><span class="dot amber"></span> nhánh chặn / từ chối</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="t1">
+<h2>T1 · Migration schema mới (users/sessions/boards/...) + backfill <span class="badge">Claude Code</span></h2>
+<p class="desc">Gộp 2 rủi ro: mất note cũ khi chuyển từ <code>column_key</code> tự do sang <code>board_id</code>/<code>column_id</code>, và thiết kế sai schema auth mới. <code>kanban_users</code>/<code>kanban_sessions</code> tách biệt hoàn toàn khỏi <code>OwnerPassword</code> (hằng số Go) để không tạo 2 nguồn sự thật về quyền owner — <code>is_owner</code> trên bảng chỉ mang tính hiển thị, quyền admin thật vẫn đến từ biết đúng <code>owner712002</code>.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="230" viewBox="0 0 640 230">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Claude Code</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">db.go (migrate)</text>
+  <text x="550" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Postgres</text>
+  <line x1="90" y1="32" x2="90" y2="215" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="215" class="lifeline-line"/>
+  <line x1="550" y1="32" x2="550" y2="215" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t1s1b"/>
+  <line x1="90" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t1s1m">CREATE kanban_users + kanban_sessions</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t1s2b"/>
+  <line x1="320" y1="93" x2="540" y2="93" class="arr emerald"/>
+  <polygon points="540,89 550,93 540,97" class="arr-head emerald"/>
+  <text x="430" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t1s2m">CREATE kanban_boards/columns/labels/subtasks/comments</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t1s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#065f46" id="t1s3m">ALTER kanban_notes ADD board_id/column_id/priority/due_date/assigned_user_id</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box amber" id="t1s4b"/>
+  <line x1="320" y1="161" x2="540" y2="161" class="arr amber"/>
+  <polygon points="540,157 550,161 540,165" class="arr-head amber"/>
+  <text x="430" y="156" class="msg" text-anchor="middle" fill="#92400e" id="t1s4m">Backfill: mọi note cũ PHẢI có board_id/column_id ≠ NULL sau bước này</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box indigo" id="t1s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#312e81" id="t1s5m">Không đụng playlists/ebooks/tracks đã có</text>
+</svg>
+</div>
+</section>
+
+<section id="t2">
+<h2>T2 · <code>auth_kanban.go</code> — register/login/session + admin approve <span class="badge">Claude Code</span></h2>
+<p class="desc">Phần nhạy cảm bảo mật nhất: <code>verifyKanbanAccess</code> phải là <strong>superset</strong> đúng nghĩa của <code>verifyOwnerPassword</code> cũ — owner không bao giờ tự khoá mình ra khỏi board. Endpoint admin approve/reject cố tình <strong>không</strong> chấp nhận session user thường (dù đã approve), chỉ chấp nhận <code>owner712002</code> — nếu không, một user có thể tự approve tài khoản khác, phá vỡ approval flow.</p>
+<div class="callout warn">Login khi <code>status='pending'</code> hoặc <code>'rejected'</code> → 403, không tiết lộ lý do chi tiết (tránh dò username tồn tại).</div>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="264" viewBox="0 0 640 264">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">User mới</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">auth_kanban.go (mới)</text>
+  <text x="560" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">owner (owner712002)</text>
+  <line x1="80" y1="32" x2="80" y2="249" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="249" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="249" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t2s1b"/>
+  <line x1="80" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="200" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t2s1m">POST /register {username,password} → hash bcrypt, status=pending</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t2s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#92400e" id="t2s2m">POST /login khi còn pending → 403, không login được</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t2s3b"/>
+  <line x1="320" y1="127" x2="550" y2="127" class="arr emerald"/>
+  <polygon points="550,123 560,127 550,131" class="arr-head emerald"/>
+  <text x="440" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t2s3m">GET /admin/pending — CHỈ owner712002 xem được</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t2s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t2s4m">owner POST /admin/users/{id}/approve → status=approved</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box emerald" id="t2s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#065f46" id="t2s5m">User login lại → bcrypt khớp + approved → token crypto/rand, lưu kanban_sessions</text>
+
+  <rect x="25" y="216" width="590" height="26" class="step-box indigo" id="t2s6b"/>
+  <text x="320" y="232" class="msg" text-anchor="middle" fill="#312e81" id="t2s6m">verifyKanbanAccess = verifyOwnerPassword(r) OR session hợp lệ — owner luôn qua được</text>
+</svg>
+</div>
+</section>
+
+<section id="t3">
+<h2>T3 · <code>notes.go</code> — đổi gate + mở rộng field + subtask/comment <span class="badge">Claude Code</span></h2>
+<p class="desc">Comment giờ có "tác giả thật" — <code>author_user_id</code> lấy từ identity đã xác thực bởi <code>verifyKanbanAccess</code>, không phải trường tự do từ client (tránh mạo danh). Đổi gate chỉ ở đúng 1 điều kiện gọi hàm, giữ nguyên toàn bộ logic 401 xung quanh — surgical change, không viết lại handler.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="196" viewBox="0 0 640 196">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Client (owner/user)</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">notes.go</text>
+  <text x="560" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">verifyKanbanAccess</text>
+  <line x1="80" y1="32" x2="80" y2="181" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="181" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="181" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t3s1b"/>
+  <line x1="80" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="200" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t3s1m">verifyOwnerPassword → verifyKanbanAccess trong mọi handler</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t3s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#065f46" id="t3s2m">note nhận thêm board_id/column_id/priority/due_date/assigned_user_id/label_ids</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t3s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#065f46" id="t3s3m">subtask + comment handlers mới, author_user_id từ identity đã xác thực</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box indigo" id="t3s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t3s4m">Không đụng verifyOwnerPassword/OwnerPassword gốc ở playlists.go</text>
+</svg>
+</div>
+</section>
+
+<section id="t4">
+<h2>T4 · <code>boards.go</code> mới — board/column/label CRUD <span class="badge">Claude Code</span></h2>
+<p class="desc">Nhiều user thật giờ chia sẻ 1 không gian board — chặn xoá cascade board/cột còn task bên trong ở tầng API, không chỉ dựa cảnh báo UI, để 1 người không thể vô tình xoá mất task của người khác.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="160" viewBox="0 0 640 160">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Client</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">boards.go (mới)</text>
+  <text x="560" y="24" class="lifeline-label" fill="#f59e0b" text-anchor="middle">Postgres</text>
+  <line x1="80" y1="32" x2="80" y2="145" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="145" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="145" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t4s1b"/>
+  <line x1="80" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="200" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t4s1m">CRUD boards/columns/labels, qua verifyKanbanAccess</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t4s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#92400e" id="t4s2m">Xoá board/cột còn task bên trong → chặn, yêu cầu chuyển task trước</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box indigo" id="t4s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#312e81" id="t4s3m">Không ảnh hưởng route khác</text>
+</svg>
+</div>
+</section>
+
+<section id="t5">
+<h2>T5 · Wire <code>routes.go</code> <span class="badge">OpenCode</span></h2>
+<p class="desc">Thuần đăng ký route theo khuôn mẫu <code>/api/notes*</code> đã có, không cần phân tích nghiệp vụ — phù hợp CLI rẻ.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="130" viewBox="0 0 640 130">
+  <text x="90" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">OpenCode</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">routes.go</text>
+  <line x1="90" y1="32" x2="90" y2="115" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="115" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t5s1b"/>
+  <line x1="90" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t5s1m">đăng ký route auth/boards/columns/labels/subtasks/comments</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box indigo" id="t5s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#312e81" id="t5s2m">Không đổi route khác đã có</text>
+</svg>
+</div>
+</section>
+
+<section id="t6">
+<h2>T6 · <code>frontend/src/api.ts</code> mở rộng <span class="badge">OpenCode</span></h2>
+<p class="desc">Client giờ phân biệt 2 "chế độ" gửi header — admin mode (<code>X-Owner-Password</code>, giữ nguyên) và user mode (<code>X-Kanban-Session</code>, mới) — cả hai đều lớp mỏng bọc <code>fetch</code>, phù hợp CLI rẻ.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="160" viewBox="0 0 640 160">
+  <text x="90" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">OpenCode</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">api.ts</text>
+  <text x="550" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">NotesPage (dùng sau)</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="145" class="lifeline-line"/>
+  <line x1="550" y1="32" x2="550" y2="145" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t6s1b"/>
+  <line x1="90" y1="59" x2="310" y2="59" class="arr emerald"/>
+  <polygon points="310,55 320,59 310,63" class="arr-head emerald"/>
+  <text x="205" y="54" class="msg" text-anchor="middle" fill="#065f46" id="t6s1m">registerKanbanUser/loginKanbanUser/logout + admin approve/reject</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t6s2b"/>
+  <line x1="320" y1="93" x2="540" y2="93" class="arr emerald"/>
+  <polygon points="540,89 550,93 540,97" class="arr-head emerald"/>
+  <text x="430" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t6s2m">mọi hàm note/board/... tự đính X-Kanban-Session hoặc X-Owner-Password</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box indigo" id="t6s3b"/>
+  <text x="320" y="130" class="msg" text-anchor="middle" fill="#312e81" id="t6s3m">Không đổi hàm API khác trong file</text>
+</svg>
+</div>
+</section>
+
+<section id="t7">
+<h2>T7 · Redesign <code>NotesPage.tsx</code> <span class="badge">Claude Code</span></h2>
+<p class="desc">"Gate trước khi render" từ bản gốc được giữ và mở rộng: không gọi API board/note nào cho tới khi có credential hợp lệ (owner712002 hoặc session user đã approve). Panel admin duyệt user chỉ hiện ở admin mode — user thường không được thấy hàng đợi đăng ký của người khác.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="264" viewBox="0 0 640 264">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">User</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">NotesPage (redesign)</text>
+  <text x="560" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">api.ts → backend</text>
+  <line x1="80" y1="32" x2="80" y2="249" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="249" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="249" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t7s1b"/>
+  <text x="320" y="62" class="msg" text-anchor="middle" fill="#065f46" id="t7s1m">Gate screen: tab Đăng nhập/Đăng ký + ô mật khẩu owner (admin mode)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box amber" id="t7s2b"/>
+  <text x="320" y="96" class="msg" text-anchor="middle" fill="#92400e" id="t7s2m">Đăng ký xong → màn "Đang chờ owner duyệt", KHÔNG vào board</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box emerald" id="t7s3b"/>
+  <line x1="320" y1="127" x2="550" y2="127" class="arr emerald"/>
+  <polygon points="550,123 560,127 550,131" class="arr-head emerald"/>
+  <text x="440" y="122" class="msg" text-anchor="middle" fill="#065f46" id="t7s3m">Approved → login → lưu token → gọi listBoards/listNotes...</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box emerald" id="t7s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#065f46" id="t7s4m">Board switcher, cột động, card giàu field, task detail panel</text>
+
+  <rect x="25" y="182" width="590" height="26" class="step-box emerald" id="t7s5b"/>
+  <text x="320" y="198" class="msg" text-anchor="middle" fill="#065f46" id="t7s5m">Admin mode: panel duyệt user pending (Approve/Reject)</text>
+
+  <rect x="25" y="216" width="590" height="26" class="step-box indigo" id="t7s6b"/>
+  <text x="320" y="232" class="msg" text-anchor="middle" fill="#312e81" id="t7s6m">Giữ session key cũ cho admin mode, key riêng cho user token</text>
+</svg>
+</div>
+</section>
+
+<section id="t8">
+<h2>T8 · <code>index.css</code> + verify toàn diện <span class="badge">Claude Code</span></h2>
+<p class="desc">Verify cả nhánh "thành công" và nhánh "thất bại" — một approval flow chỉ test được nhánh cho-qua thì chưa chứng minh được gì, vì lý do chính để xây flow này là chặn đúng nhánh chưa được duyệt.</p>
+<table class="tt">
+<tr><th>Kiểm tra</th><th>Kỳ vọng</th></tr>
+<tr><td>Migration note cũ</td><td>100% hiển thị đúng board/cột mặc định</td></tr>
+<tr><td>owner712002 (mọi endpoint mới)</td><td>Vẫn qua được như trước — không tự khoá owner</td></tr>
+<tr><td>User status=pending gọi API</td><td>401/403, không lộ dữ liệu board</td></tr>
+<tr><td>Đăng ký → owner approve → login</td><td>Thành công, nhận session token</td></tr>
+<tr><td>Đăng ký khác → owner reject → login</td><td>Thất bại, không vào được</td></tr>
+<tr><td>/api/playlists*, /api/ebooks/*/nsfw</td><td>Không regression</td></tr>
+</table>
+<div class="diagram diagram-box">
+<svg class="seq" width="640" height="196" viewBox="0 0 640 196">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Claude Code</text>
+  <text x="320" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">index.css + verify</text>
+  <text x="560" y="24" class="lifeline-label" fill="#f59e0b" text-anchor="middle">curl (cả 2 nhánh)</text>
+  <line x1="80" y1="32" x2="80" y2="181" class="lifeline-line"/>
+  <line x1="320" y1="32" x2="320" y2="181" class="lifeline-line"/>
+  <line x1="560" y1="32" x2="560" y2="181" class="lifeline-line"/>
+
+  <rect x="25" y="46" width="590" height="26" class="step-box emerald" id="t8s1b"/>
+  <text x="320" y="62" class="msg" text-anchor="middle" fill="#065f46" id="t8s1m">Style theme đen-trắng-xám, dùng var(--green) không dùng var(--accent)</text>
+
+  <rect x="25" y="80" width="590" height="26" class="step-box emerald" id="t8s2b"/>
+  <line x1="320" y1="93" x2="550" y2="93" class="arr emerald"/>
+  <polygon points="550,89 560,93 550,97" class="arr-head emerald"/>
+  <text x="440" y="88" class="msg" text-anchor="middle" fill="#065f46" id="t8s2m">verify: owner712002 vẫn qua mọi endpoint mới</text>
+
+  <rect x="25" y="114" width="590" height="26" class="step-box amber" id="t8s3b"/>
+  <line x1="320" y1="127" x2="550" y2="127" class="arr amber"/>
+  <polygon points="550,123 560,127 550,131" class="arr-head amber"/>
+  <text x="440" y="122" class="msg" text-anchor="middle" fill="#92400e" id="t8s3m">verify: user pending bị chặn ở MỌI endpoint</text>
+
+  <rect x="25" y="148" width="590" height="26" class="step-box indigo" id="t8s4b"/>
+  <text x="320" y="164" class="msg" text-anchor="middle" fill="#312e81" id="t8s4m">verify: Playlists/Ebook NSFW không regression</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={
+  t1:['t1s1','t1s2','t1s3','t1s4','t1s5'],
+  t2:['t2s1','t2s2','t2s3','t2s4','t2s5','t2s6'],
+  t3:['t3s1','t3s2','t3s3','t3s4'],
+  t4:['t4s1','t4s2','t4s3'],
+  t5:['t5s1','t5s2'],
+  t6:['t6s1','t6s2','t6s3'],
+  t7:['t7s1','t7s2','t7s3','t7s4','t7s5','t7s6'],
+  t8:['t8s1','t8s2','t8s3','t8s4']
+}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

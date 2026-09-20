@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Toàn bộ request khi phát 1 bài nhạc — local library vs YouTube</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 45%,#e8f0fe 100%);min-height:100vh;color:#1a1a2e}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#93c5fd22 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+nav{position:fixed;left:0;top:0;width:220px;height:100vh;z-index:100;overflow-y:auto}
+nav::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,248,255,.65));backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.55)}
+nav::after{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,#6366f1,#3b82f6,#06b6d4);opacity:.7;z-index:2}
+.nav-sheen{position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);pointer-events:none;z-index:3}
+.nav-inner{position:relative;z-index:4;padding:20px 0 20px 14px}
+.nav-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#6366f1;text-transform:uppercase;margin-bottom:18px;padding-left:8px}
+nav a{display:block;padding:8px 10px 8px 12px;font-size:12.5px;color:#374151;text-decoration:none;border-radius:8px 0 0 8px;margin-bottom:3px;transition:background .15s,color .15s;border-left:3px solid transparent}
+nav a:hover{background:rgba(99,102,241,.1);color:#4f46e5}
+nav a.active{background:rgba(99,102,241,.15);color:#4f46e5;border-left-color:#6366f1;font-weight:600}
+.nav-toggle{position:fixed;left:8px;top:12px;z-index:200;background:rgba(255,255,255,.8);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:15px;color:#6366f1;backdrop-filter:blur(10px);display:none}
+@media(max-width:760px){nav{transform:translateX(-100%);transition:transform .25s}.nav-open nav{transform:none}.nav-toggle{display:block}}
+main{margin-left:220px;padding:40px 36px 60px}
+@media(max-width:760px){main{margin-left:0;padding:60px 16px 40px}}
+h1{font-size:22px;font-weight:700;color:#1e1b4b;margin-bottom:6px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:14px;max-width:800px;line-height:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;margin-bottom:36px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot.indigo{background:#6366f1}.dot.emerald{background:#10b981}.dot.amber{background:#f59e0b}.dot.rose{background:#f43f5e}
+section{margin-bottom:56px;scroll-margin-top:80px}
+h2{font-size:17px;font-weight:700;color:#312e81;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h3{font-size:13px;font-weight:700;color:#4338ca;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.04em}
+p.desc{font-size:13px;color:#374151;line-height:1.7;margin-bottom:14px;max-width:780px}
+.diagram.diagram-box{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:14px;padding:20px 16px;overflow-x:auto;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 2px 16px rgba(99,102,241,.08);margin-bottom:16px}
+svg.seq{display:block;margin:0 auto}
+.lifeline-label{font-size:11px;font-weight:600}
+.lifeline-line{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4,3}
+.msg{font-size:10.3px;opacity:.85}
+.msg.active{opacity:1;font-weight:600}
+.arr{stroke-width:1.6;fill:none}
+.arr.indigo{stroke:#6366f1}.arr.emerald{stroke:#10b981}.arr.amber{stroke:#f59e0b}.arr.rose{stroke:#f43f5e}
+.arr-head{stroke:none}.arr-head.indigo{fill:#6366f1}.arr-head.emerald{fill:#10b981}.arr-head.amber{fill:#f59e0b}.arr-head.rose{fill:#f43f5e}
+.step-box{rx:6;opacity:.14}.step-box.active{opacity:.26}
+.step-box.indigo{fill:#6366f1}.step-box.emerald{fill:#10b981}.step-box.amber{fill:#f59e0b}.step-box.rose{fill:#f43f5e}
+code{background:rgba(99,102,241,.09);border-radius:4px;padding:1px 5px;font-size:11.5px;color:#4338ca}
+.callout{background:rgba(99,102,241,.06);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:9px 13px;font-size:12px;color:#312e81;margin-bottom:14px;max-width:780px;line-height:1.6}
+.callout.bug{background:rgba(244,63,94,.07);border-left-color:#f43f5e;color:#9f1239}
+</style>
+</head>
+<body>
+<button class="nav-toggle" id="navToggle">☰</button>
+<nav id="sideNav">
+  <div class="nav-sheen"></div>
+  <div class="nav-inner">
+    <div class="nav-title">Music Streaming Flow</div>
+    <a href="#a1">A · Bấm play (local)</a>
+    <a href="#a2">A · Song song ngay</a>
+    <a href="#a3">A · Lyrics detect+dịch</a>
+    <a href="#a4">A · Threshold scrobble</a>
+    <a href="#a5">A · Lỗi + preload cuối</a>
+    <a href="#b1">B · Bấm play (YouTube)</a>
+    <a href="#b2">B · Cache hit/miss yt-dlp</a>
+    <a href="#b3">B · Song song + khác biệt</a>
+    <a href="#b4">B · 2 bug tìm thấy</a>
+  </div>
+</nav>
+<main>
+<h1>Toàn bộ request khi phát 1 bài nhạc</h1>
+<p class="subtitle">Đọc trực tiếp <code>PlayerContext.tsx</code>, <code>PlayerBar.tsx</code>, <code>LyricsView.tsx</code>, <code>handler.go</code>, <code>youtube.go</code>, <code>lastfm.go</code> — không suy đoán. 2 luồng khác nhau đáng kể: track thư viện local (A) và track YouTube (B).</p>
+<div class="legend">
+  <span><span class="dot indigo"></span> luồng chính / tuần tự</span>
+  <span><span class="dot emerald"></span> chạy song song, không điều kiện</span>
+  <span><span class="dot amber"></span> có điều kiện mới chạy</span>
+  <span><span class="dot rose"></span> bug thật tìm thấy khi đọc code</span>
+  <span>· click vào diagram để bước thủ công</span>
+</div>
+
+<section id="a1">
+<h2>A1 · Bấm play → check offline → GET /stream/{id}</h2>
+<p class="desc">Nếu track đã tải offline (IndexedDB, không phải HTTP) thì dừng ở đây, không có request stream nào cả.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="150" viewBox="0 0 720 150">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">User bấm Play</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">PlayerContext.startTrack()</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend handler.go</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="145" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="145" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box indigo" id="a1s1b"/>
+  <line x1="90" y1="59" x2="350" y2="59" class="arr indigo"/><polygon points="350,55 360,59 350,63" class="arr-head indigo"/>
+  <text x="225" y="54" class="msg" text-anchor="middle" fill="#312e81" id="a1s1m">play(t, queue) → startTrack(t, idx) — PlayerContext.tsx:340,700-716</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box amber" id="a1s2b"/>
+  <text x="360" y="96" class="msg" text-anchor="middle" fill="#92400e" id="a1s2m">Check IndexedDB offline (client-side) — có file offline → DỪNG, không gọi /stream nào</text>
+  <rect x="25" y="114" width="670" height="26" class="step-box indigo" id="a1s3b"/>
+  <line x1="360" y1="127" x2="620" y2="127" class="arr indigo"/><polygon points="620,123 630,127 620,131" class="arr-head indigo"/>
+  <text x="495" y="122" class="msg" text-anchor="middle" fill="#312e81" id="a1s3m">GET /stream/{id}?q=...&client_id=...&attempt_id=... — Range/transcode, handler.go:390,415-468</text>
+</svg>
+</div>
+</section>
+
+<section id="a2">
+<h2>A2 · Chạy song song ngay khi track đổi (không chờ /stream)</h2>
+<p class="desc">6 effect độc lập, mỗi effect có điều kiện riêng — không phải mọi request đều xảy ra mỗi lần play.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="220" viewBox="0 0 720 220">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Component mounted</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Request song song</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend / Last.fm</text>
+  <line x1="90" y1="32" x2="90" y2="215" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="215" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="215" class="lifeline-line"/>
+  <rect x="25" y="40" width="670" height="24" class="step-box emerald" id="a2s1b"/>
+  <text x="360" y="55" class="msg" text-anchor="middle" fill="#065f46" id="a2s1m">POST /api/lastfm/now-playing — luôn gọi, không điều kiện — PlayerContext.tsx:805-810</text>
+  <rect x="25" y="68" width="670" height="24" class="step-box amber" id="a2s2b"/>
+  <text x="360" y="83" class="msg" text-anchor="middle" fill="#92400e" id="a2s2m">GET /stream/{nextId} preload standby — trừ khi repeat='one' hoặc shuffle='shuffle' — tsx:655-676</text>
+  <rect x="25" y="96" width="670" height="24" class="step-box amber" id="a2s3b"/>
+  <text x="360" y="111" class="msg" text-anchor="middle" fill="#92400e" id="a2s3m">GET /api/artists/{artist_id} — chỉ nếu track có artist_id — PlayerBar.tsx:87-90</text>
+  <rect x="25" y="124" width="670" height="24" class="step-box emerald" id="a2s4b"/>
+  <text x="360" y="139" class="msg" text-anchor="middle" fill="#065f46" id="a2s4m">GET /api/covers/{album_id}?w=80 (màu chủ đạo) + ?w=512 (bg overlay) — PlayerBar.tsx:124-129,273</text>
+  <rect x="25" y="152" width="670" height="24" class="step-box emerald" id="a2s5b"/>
+  <text x="360" y="167" class="msg" text-anchor="middle" fill="#065f46" id="a2s5m">GET /api/lyrics/{id} — LyricsView luôn mounted (ẩn CSS) — LyricsView.tsx:144-146</text>
+  <rect x="25" y="180" width="670" height="24" class="step-box amber" id="a2s6b"/>
+  <text x="360" y="195" class="msg" text-anchor="middle" fill="#92400e" id="a2s6m">GET /api/smart-queue?track_id=...&limit=30 — chỉ khi shuffleMode='smart' — tsx:710-715,299-318</text>
+</svg>
+</div>
+</section>
+
+<section id="a3">
+<h2>A3 · Lyrics: detect ngôn ngữ rồi mới quyết dịch</h2>
+<p class="desc">2 bước tuần tự, bước 2 CÓ ĐIỀU KIỆN — chỉ dịch khi phát hiện không phải tiếng Việt.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="150" viewBox="0 0 720 150">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Lyrics đã load (A2)</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">autoTranslate (default ON)</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend lyrics.go</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="145" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="145" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box indigo" id="a3s1b"/>
+  <line x1="360" y1="59" x2="620" y2="59" class="arr indigo"/><polygon points="620,55 630,59 620,63" class="arr-head indigo"/>
+  <text x="495" y="54" class="msg" text-anchor="middle" fill="#312e81" id="a3s1m">GET /api/lyrics/detect-language?text=... (retry 1 lần sau 1s nếu lỗi) — PlayerBar.tsx:99-114</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box amber" id="a3s2b"/>
+  <line x1="360" y1="93" x2="620" y2="93" class="arr amber"/><polygon points="620,89 630,93 620,97" class="arr-head amber"/>
+  <text x="495" y="88" class="msg" text-anchor="middle" fill="#92400e" id="a3s2m">CHỈ khi lang ≠ 'vi': GET /api/lyrics/{id}/translate?lang=vi (trừ khi cache sessionStorage) — LyricsView.tsx:186-201</text>
+  <rect x="25" y="114" width="670" height="26" class="step-box indigo" id="a3s3b"/>
+  <text x="360" y="130" class="msg" text-anchor="middle" fill="#312e81" id="a3s3m">Nếu lang = 'vi' → DỪNG, không có request dịch nào</text>
+</svg>
+</div>
+</section>
+
+<section id="a4">
+<h2>A4 · Threshold scrobble + record play (không phải lúc bấm play)</h2>
+<p class="desc">Chỉ gửi khi nghe đủ lâu — điều kiện chính xác trích từ code, không phải ước lượng.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="150" viewBox="0 0 720 150">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">progress đạt ngưỡng</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">PlayerContext.tsx:812-825</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend lastfm.go / handler.go</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="145" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="145" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box amber" id="a4s1b"/>
+  <text x="360" y="62" class="msg" text-anchor="middle" fill="#92400e" id="a4s1m">Điều kiện: duration≥30s AND progress≥min(duration×0.5, 240) AND progress≥30</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box indigo" id="a4s2b"/>
+  <line x1="360" y1="93" x2="620" y2="93" class="arr indigo"/><polygon points="620,89 630,93 620,97" class="arr-head indigo"/>
+  <text x="495" y="88" class="msg" text-anchor="middle" fill="#312e81" id="a4s2m">POST /api/lastfm/scrobble — lastfm.go:131</text>
+  <rect x="25" y="114" width="670" height="26" class="step-box indigo" id="a4s3b"/>
+  <line x1="360" y1="127" x2="620" y2="127" class="arr indigo"/><polygon points="620,123 630,127 620,131" class="arr-head indigo"/>
+  <text x="495" y="122" class="msg" text-anchor="middle" fill="#312e81" id="a4s3m">POST /api/tracks/{id}/play (recordPlay) — id phải khớp ^[0-9a-f]{16}$ — handler.go:499,49</text>
+</svg>
+</div>
+</section>
+
+<section id="a5">
+<h2>A5 · Lỗi audio + preload lần cuối trước khi hết bài</h2>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="150" viewBox="0 0 720 150">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Audio error event</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">PlayerContext.tsx</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend</text>
+  <line x1="90" y1="32" x2="90" y2="145" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="145" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="145" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box amber" id="a5s1b"/>
+  <line x1="360" y1="59" x2="620" y2="59" class="arr amber"/><polygon points="620,55 630,59 620,63" class="arr-head amber"/>
+  <text x="495" y="54" class="msg" text-anchor="middle" fill="#92400e" id="a5s1m">POST /api/playback/error (network/decode) — tsx:494-508</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box amber" id="a5s2b"/>
+  <line x1="360" y1="93" x2="620" y2="93" class="arr amber"/><polygon points="620,89 630,93 620,97" class="arr-head amber"/>
+  <text x="495" y="88" class="msg" text-anchor="middle" fill="#92400e" id="a5s2m">Fallback: GET /stream/{id}?q=lossless-clean rồi ?q=320 — tsx:556-614</text>
+  <rect x="25" y="114" width="670" height="26" class="step-box indigo" id="a5s3b"/>
+  <text x="360" y="130" class="msg" text-anchor="middle" fill="#312e81" id="a5s3m">~30s trước khi hết bài: preload lại nếu chưa xong (A2 bước 2) — tsx:679-698</text>
+</svg>
+</div>
+</section>
+
+<section id="b1">
+<h2>B1 · Bấm play track YouTube — khác hẳn A1</h2>
+<p class="desc">Không dùng 2 audio element A/B như local — dùng riêng 1 <code>audioYT</code>, và URL không có tham số q/client_id/attempt_id.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="120" viewBox="0 0 720 120">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">id bắt đầu "yt:"</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">audioYT.src = ...</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend youtube.go</text>
+  <line x1="90" y1="32" x2="90" y2="115" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="115" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="115" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box indigo" id="b1s1b"/>
+  <line x1="360" y1="59" x2="620" y2="59" class="arr indigo"/><polygon points="620,55 630,59 620,63" class="arr-head indigo"/>
+  <text x="495" y="54" class="msg" text-anchor="middle" fill="#312e81" id="b1s1m">audioYT.src = "/api/youtube/stream/{videoId}" → play() kích hoạt GET — tsx:348-355,60-63</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box indigo" id="b1s2b"/>
+  <text x="360" y="96" class="msg" text-anchor="middle" fill="#312e81" id="b1s2m">pause audioA/audioB trước đó — nhánh yt hoàn toàn tách biệt luồng local</text>
+</svg>
+</div>
+</section>
+
+<section id="b2">
+<h2>B2 · youtube.go: cache hit/miss quyết định có gọi yt-dlp không</h2>
+<p class="desc"><code>yt-dlp -g</code> là subprocess local (không phải HTTP call ra ngoài) — chỉ chạy khi cache miss hoặc URL cache đã hết hạn.</p>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="185" viewBox="0 0 720 185">
+  <text x="80" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">youtube.go stream handler</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Cache TTL 4h / yt-dlp -g</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">googlevideo.com</text>
+  <line x1="80" y1="32" x2="80" y2="171" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="171" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="171" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box emerald" id="b2s1b"/>
+  <text x="360" y="62" class="msg" text-anchor="middle" fill="#065f46" id="b2s1m">Cache hit → dùng URL cũ, proxyStream forward Range header — youtube.go:47-56,181-221</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box amber" id="b2s2b"/>
+  <text x="360" y="96" class="msg" text-anchor="middle" fill="#92400e" id="b2s2m">Cache miss → subprocess yt-dlp -g -f bestaudio (local, không phải HTTP) → cache lại — youtube.go:165-179,236-243</text>
+  <rect x="25" y="114" width="670" height="26" class="step-box amber" id="b2s3b"/>
+  <text x="360" y="130" class="msg" text-anchor="middle" fill="#92400e" id="b2s3m">URL cache hết hạn khi proxy → xoá cache, gọi lại yt-dlp -g 1 lần, proxy lại — youtube.go:246-268</text>
+  <rect x="25" y="148" width="670" height="26" class="step-box indigo" id="b2s4b"/>
+  <line x1="360" y1="161" x2="620" y2="161" class="arr indigo"/><polygon points="620,157 630,161 620,165" class="arr-head indigo"/>
+  <text x="495" y="156" class="msg" text-anchor="middle" fill="#312e81" id="b2s4m">Reverse-proxy Range request thật tới URL đã ký của Google</text>
+</svg>
+</div>
+</section>
+
+<section id="b3">
+<h2>B3 · Các effect song song — giống A2 nhưng có khác biệt quan trọng</h2>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="185" viewBox="0 0 720 185">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Component mounted</text>
+  <text x="360" y="24" class="lifeline-label" fill="#10b981" text-anchor="middle">Request song song</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Backend</text>
+  <line x1="90" y1="32" x2="90" y2="171" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="171" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="171" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box emerald" id="b3s1b"/>
+  <text x="360" y="62" class="msg" text-anchor="middle" fill="#065f46" id="b3s1m">POST /api/lastfm/now-playing — giống A, không đổi</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box amber" id="b3s2b"/>
+  <text x="360" y="96" class="msg" text-anchor="middle" fill="#92400e" id="b3s2m">artist_id='' cho track yt: → guard chặn sớm → KHÔNG gọi /api/artists — PlayerBar.tsx:88</text>
+  <rect x="25" y="114" width="670" height="26" class="step-box emerald" id="b3s3b"/>
+  <text x="360" y="130" class="msg" text-anchor="middle" fill="#065f46" id="b3s3m">GET /api/covers/yt:{id} — handler.go có nhánh riêng tải i.ytimg.com + cache lại — handler.go:224-232</text>
+  <rect x="25" y="148" width="670" height="26" class="step-box emerald" id="b3s4b"/>
+  <text x="360" y="164" class="msg" text-anchor="middle" fill="#065f46" id="b3s4m">GET /api/lyrics/yt:{id} — gọi bình thường, không khác local</text>
+</svg>
+</div>
+</section>
+
+<section id="b4">
+<h2>B4 · 2 bug thật phát hiện khi đọc code (chưa fix, chỉ ghi lại)</h2>
+<p class="desc">Không phải suy đoán — cả 2 do cùng 1 nguyên nhân: regex <code>hexID</code> validate ID 16 ký tự hex, không khớp format <code>"yt:videoId"</code>.</p>
+<div class="callout bug"><b>Bug 1 (xác nhận):</b> <code>POST /api/tracks/yt:{id}/play</code> (recordPlay) → backend trả <b>400</b> vì <code>hexID</code> regex <code>^[0-9a-f]{16}$</code> không khớp — handler.go:499,49. Lỗi này bị <code>.catch()</code> ở frontend nuốt im lặng, nên track YouTube <b>không bao giờ được record play count</b>, không có thông báo lỗi nào hiện ra.</div>
+<div class="callout bug"><b>Bug 2 (chưa xác nhận 100%, cần verify runtime):</b> <code>GET /api/smart-queue?track_id=yt:{id}</code> — handler <code>smartQueue</code> cũng validate qua <code>hexID</code> (handler.go:473), khả năng cao cũng trả 400 cho track_id dạng <code>yt:</code>, nhưng Explore agent không tìm thấy nhánh xử lý riêng nào cho prefix này trong handler — cần test thật (không đoán thêm) trước khi coi là bug chắc chắn.</div>
+<div class="diagram diagram-box">
+<svg class="seq" width="720" height="120" viewBox="0 0 720 120">
+  <text x="90" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Threshold đạt (A4)</text>
+  <text x="360" y="24" class="lifeline-label" fill="#f43f5e" text-anchor="middle">recordPlay cho track yt:</text>
+  <text x="630" y="24" class="lifeline-label" fill="#6366f1" text-anchor="middle">Frontend .catch()</text>
+  <line x1="90" y1="32" x2="90" y2="115" class="lifeline-line"/><line x1="360" y1="32" x2="360" y2="115" class="lifeline-line"/><line x1="630" y1="32" x2="630" y2="115" class="lifeline-line"/>
+  <rect x="25" y="46" width="670" height="26" class="step-box rose" id="b4s1b"/>
+  <line x1="90" y1="59" x2="350" y2="59" class="arr rose"/><polygon points="350,55 360,59 350,63" class="arr-head rose"/>
+  <text x="225" y="54" class="msg" text-anchor="middle" fill="#9f1239" id="b4s1m">POST /api/tracks/yt:{id}/play → 400 (hexID không khớp)</text>
+  <rect x="25" y="80" width="670" height="26" class="step-box rose" id="b4s2b"/>
+  <line x1="360" y1="93" x2="620" y2="93" class="arr rose"/><polygon points="620,89 630,93 620,97" class="arr-head rose"/>
+  <text x="495" y="88" class="msg" text-anchor="middle" fill="#9f1239" id="b4s2m">Lỗi bị nuốt im lặng — user không thấy gì, play count YouTube luôn = 0</text>
+</svg>
+</div>
+</section>
+</main>
+<script>
+const toggle=document.getElementById('navToggle'),nav=document.getElementById('sideNav')
+toggle.addEventListener('click',()=>{document.body.classList.toggle('nav-open');toggle.textContent=document.body.classList.contains('nav-open')?'✕':'☰'})
+const links=document.querySelectorAll('nav a[href^="#"]')
+document.querySelectorAll('section[id]').forEach(sec=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id))})},{threshold:.4}).observe(sec)
+})
+const stepsMap={a1:['a1s1','a1s2','a1s3'],a2:['a2s1','a2s2','a2s3','a2s4','a2s5','a2s6'],a3:['a3s1','a3s2','a3s3'],a4:['a4s1','a4s2','a4s3'],a5:['a5s1','a5s2','a5s3'],b1:['b1s1','b1s2'],b2:['b2s1','b2s2','b2s3','b2s4'],b3:['b3s1','b3s2','b3s3','b3s4'],b4:['b4s1','b4s2']}
+Object.entries(stepsMap).forEach(([sec,ids])=>{
+  let cur=0,timer
+  const section=document.getElementById(sec)
+  function tick(){ids.forEach(id=>{const b=document.getElementById(id+'b'),m=document.getElementById(id+'m');if(b)b.classList.remove('active');if(m)m.classList.remove('active')});const b=document.getElementById(ids[cur]+'b'),m=document.getElementById(ids[cur]+'m');if(b)b.classList.add('active');if(m)m.classList.add('active');cur=(cur+1)%ids.length;timer=setTimeout(tick,900)}
+  new IntersectionObserver(([e])=>{if(e.isIntersecting)tick();else clearTimeout(timer)},{threshold:.3}).observe(section)
+  section.addEventListener('click',()=>{clearTimeout(timer);cur=(cur+1)%ids.length;tick()})
+})
+</script>
+</body>
+</html>

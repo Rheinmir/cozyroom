@@ -1,0 +1,109 @@
+# DB Adapter — PgBouncer connection pooler between Backend and Postgres
+# pool_mode=transaction: connection returned to pool after each txn
+# Backend sees 5000 client slots; Postgres sees at most 50 server connections
+# Backend DATABASE_URL unchanged: postgres://cozyroom:...@db-adapter:5432/cozyroom
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-adapter
+  namespace: cozyroom-k8s
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: db-adapter
+  template:
+    metadata:
+      labels:
+        app: db-adapter
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - rhein-e2144g-p630-16-256
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: db-adapter
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: pgbouncer
+          image: pgbouncer/pgbouncer:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: DATABASES_HOST
+              value: "postgres.cozyroom-k8s.svc.cluster.local"
+            - name: DATABASES_PORT
+              value: "5432"
+            - name: DATABASES_DBNAME
+              value: "cozyroom"
+            - name: DATABASES_USER
+              value: "cozyroom"
+            - name: DATABASES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGBOUNCER_POOL_MODE
+              value: "transaction"
+            - name: PGBOUNCER_MAX_CLIENT_CONN
+              value: "5000"
+            - name: PGBOUNCER_DEFAULT_POOL_SIZE
+              value: "50"
+            - name: PGBOUNCER_MIN_POOL_SIZE
+              value: "5"
+            - name: PGBOUNCER_RESERVE_POOL_SIZE
+              value: "10"
+            - name: PGBOUNCER_RESERVE_POOL_TIMEOUT
+              value: "3"
+            - name: PGBOUNCER_SERVER_IDLE_TIMEOUT
+              value: "600"
+            - name: PGBOUNCER_SERVER_CONNECT_TIMEOUT
+              value: "5"
+            - name: PGBOUNCER_IGNORE_STARTUP_PARAMETERS
+              value: "extra_float_digits"
+            - name: PGBOUNCER_LOG_CONNECTIONS
+              value: "0"
+            - name: PGBOUNCER_LOG_DISCONNECTIONS
+              value: "0"
+            - name: PGBOUNCER_LISTEN_PORT
+              value: "5432"
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-adapter
+  namespace: cozyroom-k8s
+spec:
+  selector:
+    app: db-adapter
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432

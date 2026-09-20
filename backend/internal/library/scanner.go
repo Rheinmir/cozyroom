@@ -9,8 +9,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -207,6 +209,30 @@ func IsEmpty(db *sql.DB) bool {
 	return n == 0
 }
 
+// probeDurationS returns a media file's duration in whole seconds via ffprobe,
+// or 0 if it can't be determined. The tag reader used above only reads ID3
+// fields and never yields a stream length, so opus/wav/etc. downloads landed at
+// 0 duration ("--:--" in the UI) until this was added. Bounded so a corrupt
+// file can't hang a scan.
+func probeDurationS(path string) int {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, "ffprobe",
+		"-v", "error",
+		"-show_entries", "format=duration",
+		"-of", "default=nw=1:nk=1",
+		path,
+	).Output()
+	if err != nil {
+		return 0
+	}
+	f, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
+	if err != nil || f <= 0 {
+		return 0
+	}
+	return int(f + 0.5)
+}
+
 func indexFile(tx *sql.Tx, path, coversDir string) error {
 	base := filepath.Base(path)
 	ext := filepath.Ext(base)
@@ -286,9 +312,14 @@ func indexFile(tx *sql.Tx, path, coversDir string) error {
 		return err
 	}
 
+	// Probe the real stream length (tag metadata never carries it). On a
+	// re-index, only overwrite an existing duration when the fresh probe
+	// actually produced one — a failed probe (0) must not wipe a good value.
+	durationS := probeDurationS(path)
+
 	_, err = tx.Exec(
-		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT(id) DO UPDATE SET album_id=excluded.album_id, title=excluded.title, track_num=excluded.track_num, file_path=excluded.file_path, genre=excluded.genre`,
-		trackID, albumID, trackTitle, trackNum, path, genre,
+		`INSERT INTO tracks(id, album_id, title, track_num, file_path, genre, duration_s) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT(id) DO UPDATE SET album_id=excluded.album_id, title=excluded.title, track_num=excluded.track_num, file_path=excluded.file_path, genre=excluded.genre, duration_s=CASE WHEN excluded.duration_s > 0 THEN excluded.duration_s ELSE tracks.duration_s END`,
+		trackID, albumID, trackTitle, trackNum, path, genre, durationS,
 	)
 	return err
 }

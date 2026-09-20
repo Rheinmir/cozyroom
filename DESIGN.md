@@ -1,25 +1,25 @@
 ---
 name: Cozyroom
-description: Self-hosted personal media hub — music, video, ebooks, comics, and an AI assistant, run as a monochrome operator console.
+description: Self-hosted personal media hub — music, video, ebooks, comics, and an AI assistant, run as a glass operator console over a living color field.
 colors:
-  void-black: "#050505"
+  void-black: "#07070f"
   charcoal-panel: "#0e0e0e"
   raised-charcoal: "#111111"
   surface-hover-wash: "rgba(255,255,255,0.07)"
-  paper-white: "#ffffff"
+  signature-blue: "#a9c6ff"
+  signature-blue-hover: "#8aacf0"
+  signature-violet: "#c3b6ff"
+  orb-blue: "rgba(79,140,255,.7)"
+  orb-violet: "rgba(139,92,246,.58)"
+  orb-teal: "rgba(45,212,191,.4)"
   text-bright: "rgba(255,255,255,0.92)"
   text-dim: "rgba(255,255,255,0.55)"
   text-ghost: "rgba(255,255,255,0.32)"
 charts:
-  # One cohesive, muted categorical palette (--chart-1..8) applied to EVERY
-  # chart — categorical series, ordinal buckets, the language dimension, and
-  # single-series marks — so the whole dashboard reads as one system. Muted
-  # mid-tones sit calmly on Void Black and read on the light-theme white card
-  # too (theme-agnostic, no per-theme override). Scoped to data viz, never UI
-  # chrome. See "## Charts".
+  # Unchanged by the glassmorphism redesign — one cohesive, muted categorical
+  # palette (--chart-1..8) applied to EVERY chart. Scoped to data viz, never
+  # UI chrome. See "## Charts".
   palette: ["#6f8fd6", "#5cb8a0", "#d8a862", "#d3798f", "#9a8fd0", "#7f8c9e", "#c98f6a", "#8bb37a"]
-  # Semantic status — reserved hues that mean something (not a category),
-  # never mixed into the categorical rotation.
   fail: "#f87171"
   warn: "#fb923c"
   caution: "#facc15"
@@ -54,12 +54,12 @@ spacing:
   xl: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.paper-white}"
+    backgroundColor: "{colors.signature-blue}"
     textColor: "#000000"
     rounded: "{rounded.md}"
     padding: "10px 16px"
   button-primary-hover:
-    backgroundColor: "#e0e0e0"
+    backgroundColor: "{colors.signature-blue-hover}"
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.text-dim}"
@@ -76,148 +76,135 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Midnight Deck"**
+**Creative North Star: "The Instrument Panel"**
 
-Cozyroom reads as a DJ booth after hours: a near-black operator surface built to be lived in for hours at a time, not glanced at. It borrows the *structure* of a familiar dark music app (sidebar library, persistent player, dense list views) but rejects that app's color language entirely — there is no brand hue, no gradient wash, no colorful badge system. The only "color" is paper-white against void-black, used sparingly as the single interactive signal in a field of near-black surfaces and three tiers of white-on-black text.
+Cozyroom reads as an instrument panel lit from within, not an unlit room: the same operator-console structure as before (sidebar library, persistent player, dense list views) now floats over a living, slow-drifting color field instead of a flat void-black canvas. The sidebar, header, player bar, modals, and cards are frosted glass — `backdrop-filter` blur over three layered ambient blooms (electric blue, violet, teal) — so depth and atmosphere come from real light and color passing through material, not from a second flat brand hue painted on top of black.
 
-This restraint is deliberate, not a placeholder: the owner runs Cozyroom as both a daily media console and a live testbed for scaling real infrastructure, so the interface should feel closer to an instrument panel than a consumer entertainment app — legible at a glance, low-decoration, confident about what's interactive.
+This is a deliberate identity replacement, not an incremental tweak: the prior "Midnight Deck" system's absolute monochrome (a single white accent, zero background color) is retired. The console discipline — legible at a glance, low-decoration, confident about what's interactive — is preserved; the color language around it is not. The mica/blur plumbing itself was already mostly built (sidebar/header/player/modals used `backdrop-filter` before this redesign); what changed is giving it something colorful to blur, and one signature accent to replace paper-white.
 
 **Key Characteristics:**
-- Monochrome-first: void-black background, white the only accent, three text-opacity tiers for hierarchy.
-- Operator-console density: compact rows, tables, and dashboards over marketing-style whitespace.
-- Tactile, not flat: interactive elements lift and glow on hover/press rather than sitting inert (see Elevation & Depth — this is a deliberate evolution from the incumbent purely-flat system).
-- Spotify-shaped chrome, Cozyroom-owned palette: the current in-app icon is a placeholder borrowed from Spotify's mark; it is not a binding brand asset and should be replaced with a Cozyroom-original mark during polish/new-work passes.
+- Glass-first: frosted, blurred panels over a multi-layer ambient color field — not flat opaque rectangles.
+- Scoped material: glass applies to floating/elevated surfaces only (sidebar, header, player bar, modals, dropdowns, cards). Dense rows — the track table, list views — stay flat by design, for scan speed and scroll performance.
+- One signature accent family (bright periwinkle-blue / soft violet) replaces the old paper-white-only accent; semantic status colors and the chart categorical palette are untouched.
+- Operator-console density is unchanged: compact rows, tables, and dashboards over marketing-style whitespace.
+- Spotify-shaped chrome, Cozyroom-owned palette: the in-app icon is still a placeholder borrowed from Spotify's mark; unchanged by this redesign, still fair game to replace later.
 
 ## Colors
 
-A single accent (paper-white) against three densities of near-black. No hue exists anywhere in the base system — any color that appears (status reds/greens/blues on charts, provider badges) is local to that one context, never promoted to a system color.
+A cool blue/violet/teal ambient field behind frosted glass panels, with one signature accent carrying every interactive/primary/active element. Semantic and chart colors are reserved for meaning and untouched by this redesign.
 
 ### Primary
-- **Paper White** (`#ffffff`, token `paper-white`): the only accent. Used for primary buttons, active/selected states, the single interactive underline/highlight. Always paired with black or near-black foreground text on top of it — never white text over it.
+- **Signature Blue** (`#a9c6ff`, token `signature-blue`, CSS var `--green`): the accent — primary buttons (including the player's own play/hero-play controls), active nav state, active/selected chips and badges, focus rings, links. Chosen bright enough to keep the existing `background: var(--green); color: #000` pairing (used at ~65 call sites) legible without touching every site individually.
+- **Signature Violet** (`#c3b6ff`, token `signature-violet`, CSS var `--purple`): a secondary tint used where the codebase already had a distinct `--purple` slot (e.g. `.smart-badge--active`) — not a second system accent, a sibling hue from the same family.
+
+### Ambient Field
+- **Orb Blue / Orb Violet / Orb Teal** (`--orb-a` / `--orb-b` / `--orb-c`): three large, slow-drifting radial blooms (`body::before`, `body::after`, `html::before`) sized and positioned to reach behind the sidebar, header, and player bar specifically — not decoration confined to empty corners. This is what the glass panels' `backdrop-filter: blur()` actually blurs; without it, the mica reads as tinted black.
 
 ### Neutral
-- **Void Black** (`#050505`, token `void-black`): the app background (`--bg`).
-- **Charcoal Panel** (`#0e0e0e`, token `charcoal-panel`): resting surfaces — cards, inputs, dropdowns (`--surface`).
-- **Raised Charcoal** (`#111111`, token `raised-charcoal`): a slightly lighter tier for elements that sit above a Charcoal Panel surface (`--elevated`).
-- **Surface Hover Wash** (`rgba(255,255,255,0.07)`, token `surface-hover-wash`): the hover/pressed state for rows and panels (`--surface-hover`).
-- **Bright Text** (`rgba(255,255,255,0.92)`): primary reading text (`--text`).
-- **Dim Text** (`rgba(255,255,255,0.55)`): secondary/meta text — timestamps, labels, muted rows (`--text-muted`).
-- **Ghost Text** (`rgba(255,255,255,0.32)`): tertiary/disabled-weight text (`--text-faint`).
+- **Void Black** (`#07070f`, token `void-black`): the app's base canvas (`--bg`) — deepened from the old pure `#050505` with a cool undertone so the ambient blooms have something moody to sit on.
+- **Charcoal Panel** (`#0e0e0e`, token `charcoal-panel`): resting surfaces that are *not* glass — table rows, plain list items (`--surface`).
+- **Raised Charcoal** (`#111111`, token `raised-charcoal`): a slightly lighter tier for elements above a Charcoal Panel surface (`--elevated`).
+- **Bright / Dim / Ghost Text**: unchanged three-tier white-opacity text hierarchy (`--text` / `--text-muted` / `--text-faint`).
 
 ### Named Rules
-**The One Accent Rule.** Paper White is the only accent color in the system. Anything that wants to look "selected," "primary," or "on" reaches for it — never a second brand hue.
+**The Signature Accent Rule.** Signature Blue is the one accent that means "selected," "primary," or "on" — it replaces the old One Accent Rule's paper-white in that exact role. Anything that used to reach for white as an interactive signal now reaches for `var(--green)` instead; anything that was genuinely decorative white (text, icons at rest) stays white.
 
-**The No-Accent-Token Rule.** There is no `--accent` CSS variable in the codebase — referencing it silently resolves to nothing (a confirmed, previously-shipped bug class). The real accent token is `var(--green)`, which is literally white, always paired with `color: #000` for legible text/icons on top of it. `--purple` is currently also white and should be treated as an unused legacy alias, not a second hue — don't build new work assuming it is distinct from `--green`.
+**The Glass-Is-Scoped Rule.** `backdrop-filter` glass applies to floating/elevated surfaces only: sidebar, header, player bar, modals, dropdowns, popovers, cards. Dense list/table rows (the track table, queue rows) stay flat — this was an explicit, deliberate scope decision, not an oversight, made to protect scroll performance and operator-console scan speed. Don't add `backdrop-filter` to a per-row element in a long list.
 
-**The Data Needs Color Rule (narrowed).** Two distinct chart color systems, both scoped to data viz and never to UI chrome: (1) the **categorical palette** `--chart-1..8` for separating series/categories (see the Chart-Palette Rule); (2) **semantic status** — `--chart-fail` / `--chart-warn` / `--chart-caution` / `--chart-ok` — reserved for meaning monochrome can't express (red=failure, amber/yellow=warning severity, green=success), never mixed into the categorical rotation. The old ad-hoc per-page hue palettes (`#22d3ee`, `#f59e0b`, `#a78bfa`, GitHub language colors, tier/impact hues in TrendingChartMode, …) were all removed in favor of these two token sets.
+**The Ambient-Not-Corner Rule.** The three ambient orbs are sized (1100–1300px) and positioned to actually reach the panels that need to refract them (sidebar, header strip, player bar band), not just glow in an empty corner of the viewport. A glass panel with no color reaching it through the blur is a bug, not a subtler look — caught once already during this redesign's own finish review (the first pass shipped orbs too small/faint/off-target and near-opaque panel fills that ate what little color reached them).
 
-**The Genre Tile Color Rule.** The Browse-by-genre grid on the Search page (empty-query state, `.genre-tile` in SearchPage.tsx) is the second, and only other, deliberate exception to the One Accent Rule — a rotating six-color duotone palette tints each genre's cover photo (grayscale image + a per-tile hue via `mix-blend-mode: color`), the way Apple Music's genre tiles work, because a wall of identical monochrome tiles gives the eye nothing to scan by. This palette is scoped strictly to that grid: it must never be promoted into a system-wide token, reused for album/artist/playlist artwork elsewhere, or extended to any other tile/card type outside Browse-by-genre.
+**The No-Accent-Token Rule.** There is still no `--accent` CSS variable — referencing it silently resolves to nothing. The real accent token is `var(--green)`.
+
+**The Data Needs Color Rule (unchanged).** Two chart color systems, scoped to data viz and never UI chrome: the categorical palette `--chart-1..8`, and semantic status `--chart-fail/warn/caution/ok`. Untouched by this redesign.
+
+**The Genre Tile Color Rule (unchanged).** The Browse-by-genre grid's rotating duotone palette (SearchPage.tsx) remains its own scoped exception, unrelated to the signature accent or the ambient field.
 
 ### Light Theme
 
-Added 2026-09-02 as `:root[data-theme="light"]`, toggled from the Sidebar (persisted to `localStorage`, applied pre-paint via an inline script in `index.html` to avoid a flash of the wrong theme). Structural tokens invert; accent stays fixed.
-
-- **Smoke, not stark white.** `--bg` is `#eef0f2` — a soft cool-neutral gray, not `#ffffff`. A near-white page canvas under near-white cards reads as flat with no structure (confirmed the hard way: the first ship used `#f7f7f8` for `--bg` next to a `#ffffff` `--surface`, and every card blended into the page). `--surface` (`#ffffff`) is the brightest tier — cards pop off the canvas the same way Charcoal Panel pops off Void Black in dark mode. `--elevated` (`#f7f7f8`) sits between the two, for nested zones inside a white surface rather than "raised above" it — white is already the brightness ceiling, so elevation beyond a surface leans on shadow, not a lighter fill.
-- **Accent does not flip.** `--green`/`--purple` stay Paper White in both themes. Countless buttons pair `background: var(--green)` with a hardcoded `color: #000` — flipping the accent per-theme would silently turn that text invisible in whichever theme made the accent dark. This is a deliberate exception to naive "invert everything" theming.
-- **`--border` exists now.** Fifteen call sites across the stylesheet already referenced `var(--border)` before this token was ever defined — a latent bug (invisible borders in both themes, worse once cards stopped being near-black) that light mode's shipped screenshots surfaced. Defined as `rgba(255,255,255,.12)` dark / `rgba(0,0,0,.12)` light.
-- **Chart marks must key off `--text`, never `--green`.** A chart bar or line fill drawn directly on the page background needs contrast *with that background*, not a fixed accent color — `fill={ACCENT}` (`var(--green)`, always white) is invisible the instant the canvas turns light. `var(--text)` correctly tracks the background in both themes. Multi-series charts keep their sanctioned hue palette (Data Needs Color Rule) unmodified; only the single-series monochrome marks and shared chart chrome (grid lines, tooltip background/border) needed to move off hardcoded dark-mode hex values (`#ffffff10`, `#1e1e1e`, `#333`) onto `var(--border)` / `var(--elevated)` / `var(--surface-hover)`.
-- **Any element using a literal `#fff`/`white` fill instead of `currentColor` will vanish on this background.** Found and fixed in `CozyroomMark` (the wordmark logo) and `Spinner` (the loading equalizer) — both previously hardcoded white, both correct now via `currentColor` / `var(--text)`. Treat a hardcoded white fill anywhere in the codebase as a light-theme bug on sight.
+`:root[data-theme="light"]` (toggle from the Sidebar, persisted to `localStorage`) also gets the glass treatment — the ambient orbs and the accent hue are the same identity in both themes, only intensities differ:
+- `--bg` stays the soft cool-neutral `#eef0f2` from the prior system (unchanged — already correctly reasoned to avoid a stark-white flat canvas).
+- Glass panel fills (`--sidebar-glass`/`--header-glass`/`--player-glass`) flip to white-based translucency, at lower opacity than dark mode (`.5`/`.32`/`.55`) so the same ambient blooms still read through on a bright canvas.
+- Orb tokens keep the same hue family at reduced alpha (`.4`/`.32`/`.22` vs dark mode's `.7`/`.58`/`.4`) so the color reads as a soft aurora under white cards rather than overpowering them.
+- Signature Blue/Violet do not flip between themes (same rationale as the old system: countless buttons hardcode `color: #000` paired with the accent, so a per-theme accent swap would silently make that text illegible in whichever theme darkened the accent).
 
 ## Typography
 
-**Display Font:** Space Grotesk (token `--font-display`, falling back to Geist) — a distinctive grotesque used for report/dashboard titles (`.page-title`, `.tc-section-title`, chart-card labels) and big stat numbers, added 2026-09-07 to give the dashboards a more premium, "operator-console" character. Body/UI stays Geist.
-**Body Font:** Geist (same stack)
-**Label/Mono Font:** Geist Mono (falling back to 'SFMono-Regular', monospace)
-
-**Character:** A single humanist grotesque (Geist) carries almost everything — display, body, and UI chrome all read as one calm voice. Geist Mono is reserved for anything that wants to feel like raw data or a technical readout (chat model names, provider badges, chart ranks, log timestamps), which is what actually creates hierarchy in a system with only one color.
+Unchanged by this redesign. **Display Font:** Space Grotesk (falling back to Geist). **Body Font:** Geist. **Label/Mono Font:** Geist Mono.
 
 ### Hierarchy
-- **Display** (900, `clamp(24px, 5vw, 52px)`, line-height 1.1): page titles (`.page-title`, hero titles).
+- **Display** (900, `clamp(24px, 5vw, 52px)`, line-height 1.1): page titles.
 - **Title** (700, 18px): section headers, card titles.
 - **Body** (400, 14px, line-height 1.5): default reading and UI text.
-- **Label** (600, 11px, letter-spacing 0.08em, uppercase where used): table headers, small buttons, badges — frequently set in Geist Mono instead of Geist to read as "system" text.
+- **Label** (600, 11px, letter-spacing 0.08em): table headers, small buttons, badges — often Geist Mono.
 
 ### Named Rules
-**The Mono-Means-Machine Rule.** Switch to Geist Mono only for content that is literally data or system output (model names, token counts, timestamps, ranks) — never for prose or UI copy. Mono is how this system signals "this is a readout," not a decorative typographic accent.
+**The Mono-Means-Machine Rule (unchanged).** Geist Mono only for content that is literally data or system output.
 
 ## Layout
 
-Two-tier structure: a persistent app sidebar (`--sidebar-w: 220px`, collapsible to `--sidebar-collapsed-w: 56px`) plus a persistent bottom player bar (`--player-h: 72px`, `56px` on mobile), with the routed page filling the remainder. Content pages default to full-width with `32px` padding (`.page`); a small number of reading-focused surfaces (the AI chat column, the Now Playing overlay, the ebook reader body) instead cap to a centered, readable column and scale that cap up in three explicit steps at 1920px/2560px/3840px so wide monitors don't strand the content in a fixed mobile-era width — established today via `.ai-page`, `.npo-body`, `.stats-page-body`, `.debug-page-body`, `.album-page` in `index.css`. New reading-width surfaces should follow the same three-breakpoint scaling pattern rather than a single static `max-width`.
-
-Mobile breakpoint is `900px`: sidebar hides in favor of a bottom mini-player + radial/mobile nav, and any page-level secondary sidebar (e.g. the AI conversation history panel) collapses into a slide-in overlay behind a toggle rather than disappearing outright.
+Unchanged by this redesign. Persistent sidebar (`--sidebar-w: 220px`, collapsible to `56px`) plus persistent bottom player bar (`--player-h: 72px`, `56px` mobile), routed page filling the remainder. Reading-focused surfaces (AI chat column, Now Playing overlay, ebook reader) cap to a centered column scaling at 1920px/2560px/3840px. Mobile breakpoint `900px`.
 
 ## Elevation & Depth
 
-The incumbent implementation was almost entirely flat, using a 1px inset hairline (`inset 0 0 0 1px rgba(255,255,255,0.05–0.3)`) in place of drop shadows for structure — a reasonable choice on a void-black background, where dark shadows don't read at all. The owner asked for a more **tactile and confident** feel going forward, so this system commits to a real (if restrained) elevation model rather than staying purely flat:
+Depth now comes from two sources working together: the pre-existing white ambient-glow-on-hover lift (unchanged — buttons/cards/rows still lift with `box-shadow: 0 8px 20px -8px rgba(...)` plus `1–2px` translateY on hover), and the new glass material itself, where `backdrop-filter: blur()+saturate()` over the colored ambient field gives floating surfaces real visual depth independent of any shadow.
 
-- **Resting:** Charcoal Panel surface, hairline inset border only (as today) — no shadow.
-- **Raised (hover-capable elements: buttons, cards, list rows):** on hover/focus, lift with a soft ambient glow — `box-shadow: 0 8px 20px -8px rgba(255,255,255,0.2)` (already used on the AI avatar and send button) — plus a `1–2px` translateY. Light, not color, reads as depth here.
-- **Floating (popovers, the reaction picker, modals):** a heavier ambient shadow against the page behind it — `box-shadow: 0 6px 20px rgba(0,0,0,0.5)` (already used by `.ai-reaction-picker`) — since floating surfaces sit above other UI, not directly on void-black.
+- **Resting:** Charcoal Panel surface (non-glass elements) or frosted glass (floating elements) — hairline inset border, no drop shadow either way.
+- **Raised (hover-capable elements):** lift with a soft glow, tinted toward the signature accent family (`rgba(79,140,255,...)` / `rgba(139,92,246,...)`) rather than plain white, plus a `1–2px` translateY.
+- **Floating (popovers, modals):** heavier ambient shadow, `box-shadow: 0 6px 20px rgba(0,0,0,0.5)`, since floating surfaces sit above the glass, not directly on the ambient field.
 
 ### Named Rules
-**The Light-Not-Color Rule.** Depth is expressed with white ambient glow and subtle lift, never with a second color or a dark drop-shadow (dark shadows are invisible on a `#050505` background). This is what makes elevation feel tactile without breaking the monochrome rule.
+**The Light-Not-Only-Color Rule.** Superseding the old system's "Light-Not-Color Rule": depth still primarily comes from white ambient glow and lift, but hover/active glows on accent-bearing elements (nav active state, primary buttons, active badges) now tint toward the signature accent instead of staying pure white — the accent's presence in elevation is a feature, not a One-Accent-Rule violation, since it only applies to elements that are already accent-colored at rest.
 
 ## Shapes
 
-Corner radius scales with a component's intent rather than following one fixed value: small chips/badges/inline controls use `4–8px`; cards, panels, and bubbles use `11–20px`; anything meant to feel like a discrete "pill" (badges, small icon buttons, avatars, the reaction trigger) goes fully round (`999px` / `50%`). Borders are rare and always a hairline `1px solid rgba(255,255,255,0.07–0.15)` — never a heavier stroke.
+Unchanged by this redesign. Corner radius scales with intent: `4–8px` for chips/inline controls, `11–20px` for cards/panels/bubbles, `999px`/`50%` for pills. Borders stay hairline `1px`.
 
 ## Components
 
 ### Buttons
-- **Shape:** `8px` radius by default (`{rounded.md}`); fully round for icon-only buttons.
-- **Primary:** Paper White background, black text, `10px 16px` padding.
-- **Hover / Focus:** background steps down to `#e0e0e0`; add the Raised elevation glow.
-- **Ghost / Secondary:** transparent background, `1px` hairline border, Dim Text color; used for the many small control-row buttons (🧠, 📋-equivalent, model input, etc.).
+- **Shape:** `8px` radius by default; fully round for icon-only buttons (including `.play-btn` / `.hero-play-btn`, the player's primary controls).
+- **Primary:** Signature Blue background, black text, `10px 16px` padding — this now includes the player's own play button and the playlist hero "Phát" CTA, both previously hardcoded paper-white.
+- **Hover / Focus:** background steps to Signature Blue Hover (`#8aacf0`); Raised elevation glow, tinted blue.
+- **Ghost / Secondary:** transparent background, hairline border, Dim Text — unchanged.
 
 ### Cards / Containers
-- **Corner Style:** `11–16px`.
-- **Background:** Charcoal Panel at rest, Raised Charcoal or Surface Hover Wash on hover.
-- **Shadow Strategy:** none at rest; Raised elevation glow on hover for interactive cards.
-- **Border:** `1px` hairline, `rgba(255,255,255,0.07)`.
+- **Corner Style:** `11–16px`, unchanged.
+- **Background:** non-floating cards keep Charcoal Panel; floating cards (the ones already using `--glass-fill`) are frosted glass over the ambient field.
+- **Shadow Strategy:** Raised elevation glow on hover, now blue-tinted instead of white on artist/album/video hover cards.
+- **Border:** `1px` hairline, unchanged.
 
 ### Inputs / Fields
-- **Style:** Charcoal Panel background, `8px` radius, no visible border at rest.
-- **Focus:** inset hairline brightens to `rgba(255,255,255,0.5)` (see `.ai-input-wrap:focus-within`) rather than an outline ring — consistent with the hairline-as-structure language.
+- **Style:** Charcoal Panel background, `8px` radius — unchanged. The header search bar sits inside the header's own glass strip.
+- **Focus:** inset hairline brightens — unchanged.
 
 ### Navigation
-- Sidebar items: Body-weight label text, Dim Text at rest, Bright Text + Surface Hover Wash background when active/hovered, generous `12–16px` row padding for a console-like scan rhythm. Mobile drops the sidebar for a bottom mini-player and radial nav; secondary in-page navigation (e.g. AI chat history) becomes a slide-in overlay behind a toggle.
+- Sidebar items: Body-weight label text, Dim Text at rest. **Active state now carries the Signature Accent Rule**: active nav link text is Signature Blue (was `--text`/white), with a blue-tinted glow (was hardcoded white) — this closes a gap found during this redesign's finish review, where the sidebar's own active indicator had been missed on the first pass.
+- The sidebar itself is frosted glass (`--sidebar-glass`, pre-existing `backdrop-filter: blur(20px)`), now over the ambient field instead of flat black.
 
-### Conversation Sidebar (signature component)
-The AI assistant's chat-history sidebar (`.ai-history-sidebar`) is the clearest expression of "console, not chat toy": a fixed 260px column, one-line-truncated session titles in Body weight over a Geist Mono timestamp, active session marked only by Surface Hover Wash — no color, no icon badge.
+### Player Bar (signature surface)
+The persistent bottom player bar is frosted glass (`--player-glass`, `backdrop-filter: blur(24px)`) positioned to sit directly over the violet ambient bloom — the single clearest "instrument panel lit from within" moment in the app. Its play button carries the Signature Accent Rule.
 
 ## Charts
 
-Added 2026-09-06. The stats dashboards (AIStatsPage, MusicStatsPage, RequestLogPage, TrendingChartMode — all recharts) were redesigned to make data visualization obey the same monochrome discipline as the rest of the Midnight Deck. The charting language is distilled from the `lieflat-charts` Mono system (PolyForm-Noncommercial; re-expressed as our own tokens, never copied) and mapped onto our dark-first palette — density stays console-tight, *not* lieflat's editorial whitespace.
-
-### Named Rules
-
-**The Chart-Palette Rule.** Every chart draws from one cohesive, muted categorical palette — `--chart-1 … --chart-8` (index.css) — so the whole dashboard reads as one system. It covers *all* data marks: categorical series, ordinal buckets/tiers, the language dimension, and single-series bars/lines (a single series uses `--chart-1`). No chart mixes this palette with a different color scheme, and no chart falls back to a per-page ad-hoc hue set. The palette is intentionally muted/desaturated so it sits calmly on Void Black without becoming the loud, multi-hue "dashboard" look the Midnight Deck rejects elsewhere — this is the one sanctioned place color is used decoratively (to separate series), and it is deliberately restrained. The mid-tones are theme-agnostic (no per-theme override); text on a colored mark uses `var(--text)`, which stays legible on the mid-tones in both themes.
-
-> History: an earlier pass tried a strict monochrome gray ladder (lightness = importance) plus a GitHub `LANG_COLORS` identity exception. Shipped, it read as jarring — a couple of colored charts (momentum scatter, language bars) stranded among grayscale ones. Replaced 2026-09-07 by this single-palette rule. The stale `LANG_COLORS` `ignoreValues` in `.impeccable/config.json` are now dead (langColor hashes into the palette instead) and can be pruned.
-
-### Chart chrome
-
-- **Grid:** hairline, `var(--chart-grid)` (= `var(--border)`), `strokeDasharray "3 3"`. Never a hardcoded dark-only hex — those vanished in light theme.
-- **Axis / ticks:** `var(--chart-axis)` (= `var(--text-muted)`); axis *labels* one tier fainter (`var(--text-faint)`).
-- **Bars:** capsule ends — `radius={[999,999,0,0]}` (vertical) / `[0,999,999,0]` (horizontal), matching lieflat's pill bar-caps.
-- **Tooltips:** `var(--elevated)` background, `1px solid var(--border)`, `var(--text)` copy — theme-aware, replacing the old `#1e1e2e`/`#333` hardcodes.
-- **Matrix heat** (lang × tier table): a single-hue sequential — `color-mix(in srgb, var(--chart-1) N%, transparent)` where N encodes count; the cell number stays `var(--text)`, legible on the palette mid-tone in both themes.
-- **Treemap:** color carries no data (area already encodes frequency), so every tile is one palette hue (`--chart-1`); label text is `var(--text)`.
+Unchanged by this redesign — the `--chart-1..8` categorical palette and `--chart-fail/warn/caution/ok` semantic set are explicitly out of scope (see The Data Needs Color Rule). All Chart-Palette Rule and chart-chrome guidance from the prior system stands as-is.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** treat Paper White as the only accent in any new surface — resist the urge to add a second color for "variety."
-- **Do** use the three explicit wide-monitor breakpoints (1920/2560/3840px) for any new reading-width column, matching `.ai-page`.
-- **Do** give interactive elements a hover glow + slight lift (Raised elevation) — flat-and-static now reads as unfinished, not minimal.
-- **Do** reserve Geist Mono for data/system readouts only.
+- **Do** treat Signature Blue (`var(--green)`) as the one accent for "selected/primary/on" — the same discipline as the old One Accent Rule, just with an actual hue instead of white.
+- **Do** keep glass (`backdrop-filter`) scoped to floating/elevated surfaces — sidebar, header, player bar, modals, dropdowns, cards. Never add it to individual rows in a dense list.
+- **Do** size and position new ambient decoration so it actually reaches the surfaces meant to refract it — verify with a screenshot, not just by reading the token file (this redesign's own finish review caught orbs that existed in CSS but were too small/off-target/behind-too-opaque-a-fill to be visible).
+- **Do** tint hover/active glows on already-accent-colored elements toward the signature blue/violet family instead of leaving them hardcoded white.
+- **Do** keep the three explicit wide-monitor breakpoints (1920/2560/3840px) for reading-width columns — unchanged.
 
 ### Don't:
 - **Don't** reference `var(--accent)` — it does not exist; use `var(--green)`.
-- **Don't** add drop shadows in dark colors — they're invisible on `#050505`; use the white ambient-glow pattern instead.
-- **Don't** treat the current Spotify-shaped play-button icon as a locked brand asset — it's an acknowledged placeholder, fair game to replace with a Cozyroom-original mark.
-- **Don't** touch backend/DB/k8s config as part of design work in this project — impeccable's scope here is `frontend/src` only (owner-confirmed constraint).
+- **Don't** add `backdrop-filter` blur to dense table/list rows — reserved for floating surfaces only.
+- **Don't** hardcode `#fff`/`white` for a primary button or active-state fill or glow — that is the specific bug class this redesign fixed twice (`.play-btn`/`.hero-play-btn`, `.nav-link.active`) and it regresses silently if reintroduced.
+- **Don't** touch the chart categorical palette or semantic chart colors as part of any glass/accent work — they are explicitly out of scope.
+- **Don't** touch backend/DB/k8s config as part of design work in this project (owner-confirmed constraint, unchanged).
 
 ## Origin
 
-- Created by `/impeccable document` (scan mode), 2026-08-26, from `frontend/src/index.css` custom properties and rendered component patterns, plus a qualitative interview with the owner (Creative North Star, logo status, elevation direction, component feel).
+- Created by `/impeccable document` (scan mode), 2026-08-26, as the "Midnight Deck" monochrome system.
+- Replaced 2026-09-20 via `/impeccable` new-work (brief-pinned, no direction roll — the owner supplied a concrete glassmorphism reference implementation, ingested at `.llmwiki/raw/glassmorphism/`), following an independent finish-review pass that caught two hardcoded-white primary controls and an under-powered ambient field before this document was written. Verification gap disclosed at time of writing: confirmed visually in the loading/empty-state chrome (sidebar, header, player bar, both themes' token math) via Playwright screenshots; **not yet confirmed against real library content** (populated track/album cards, light-theme toggle rendered live) because the local dev backend requires Postgres credentials unavailable in this environment, and this project's hard rule against touching the production database means that gap was not worked around. Recommended before shipping: one more visual pass once real data is reachable.

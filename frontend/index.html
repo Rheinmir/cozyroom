@@ -8,11 +8,36 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Cozyroom" />
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="theme-color" content="#07070f" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/favicon-v2.png" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('cozyroom-theme')
+          if (t === 'light') document.documentElement.setAttribute('data-theme', 'light')
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
+    <!--
+      THESIS: Trade the flat void-black monochrome console for true glass — frosted
+      panels that refract a living color field, not tinted-black rectangles on nothing.
+      OWN-WORLD: multi-layer blue/violet/teal ambient blooms (--orb-a/b/c) behind
+      existing backdrop-filter mica (sidebar/header/player/modals); one bright signature
+      accent (--green: #a9c6ff periwinkle, --purple: #c3b6ff) replaces paper-white;
+      status/chart hues untouched. Dense rows (track tables) stay flat by design.
+      STORY: same operator console, now reads as an instrument panel lit from within
+      rather than an unlit room.
+      FIRST VIEWPORT: sidebar + player bar visibly frosted over a moving color field;
+      primary buttons/active states carry the new accent instead of white.
+      FORM: glassmorphism, extracted from .llmwiki/raw/glassmorphism/ (owner-provided
+      reference) via /impeccable new-work, brief pinned — no direction roll.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the
+      finish review, the verdict, DESIGN.md, and every shipping raster carrying its
+      provenance.
+    -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

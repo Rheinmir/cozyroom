@@ -577,20 +577,28 @@ button, a, [role="button"], input, select, textarea {
 
 /* ── Design tokens ─────────────────────────────────── */
 :root {
-  --bg:            #050505;
+  --bg:            #07070f;
   --surface:       #0e0e0e;
   --surface-hover: rgba(255,255,255,.07);
   --elevated:      #111111;
   --border:        rgba(255,255,255,.12);
-  --green:         #ffffff;
-  --green-hover:   #e0e0e0;
-  --purple:        #ffffff;
+  --green:         #a9c6ff;
+  --green-hover:   #8aacf0;
+  --purple:        #c3b6ff;
   --text:          rgba(255,255,255,.92);
   --text-muted:    rgba(255,255,255,.55);
   --text-faint:    rgba(255,255,255,.32);
-  --sidebar-glass: rgba(5,5,5,.85);
-  --header-glass:  rgba(5,5,5,.7);
-  --player-glass:  rgba(5,5,5,.88);
+  --sidebar-glass: rgba(5,5,15,.5);
+  --header-glass:  rgba(5,5,15,.32);
+  --player-glass:  rgba(5,5,15,.55);
+  /* Glassmorphism ambient field — the "nebula" that the frosted panels above
+     refract through backdrop-filter. Recolored 2026-09-20 from a flat
+     void-black + white-only orbs (see raw/glassmorphism ingest); the existing
+     blur/saturate infra on sidebar/header/player/modals needed no changes —
+     giving it a colored background to blur is what turns mica into true glass. */
+  --orb-a: rgba(79,140,255,.7);    /* electric blue bloom, top-left */
+  --orb-b: rgba(139,92,246,.58);   /* violet bloom, bottom-right */
+  --orb-c: rgba(45,212,191,.4);    /* teal bloom, center, third layer */
   --sidebar-w:          220px;
   --sidebar-collapsed-w: 56px;
   --player-h:      72px;
@@ -655,9 +663,9 @@ button, a, [role="button"], input, select, textarea {
   --text:          rgba(0,0,0,.87);
   --text-muted:    rgba(0,0,0,.55);
   --text-faint:    rgba(0,0,0,.32);
-  --sidebar-glass: rgba(255,255,255,.85);
-  --header-glass:  rgba(255,255,255,.7);
-  --player-glass:  rgba(255,255,255,.88);
+  --sidebar-glass: rgba(255,255,255,.5);
+  --header-glass:  rgba(255,255,255,.32);
+  --player-glass:  rgba(255,255,255,.55);
 
   /* Glass surfaces flip to dark-alpha so fills/hairlines/borders read on the
      white canvas (restores the mica depth lost in light mode). */
@@ -667,6 +675,12 @@ button, a, [role="button"], input, select, textarea {
   --border-strong: rgba(0,0,0,.26);
   --glass-fill-strong: rgba(0,0,0,.19);
   --hairline-strong:   rgba(0,0,0,.26);
+
+  /* Ambient field stays the same hue family, gentler so the color blooms
+     read as a soft aurora under white cards instead of overpowering them. */
+  --orb-a: rgba(79,140,255,.4);
+  --orb-b: rgba(139,92,246,.32);
+  --orb-c: rgba(45,212,191,.22);
 
   /* Chart palette (--chart-1..8) is theme-agnostic — the muted mid-tones read
      on both Void Black and the white light-theme card, so no override here.
@@ -701,12 +715,12 @@ body {
 body::before {
   content: '';
   position: fixed;
-  top: -220px; left: -160px;
-  width: 680px; height: 680px;
+  top: -100px; left: -140px;
+  width: 1300px; height: 1300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 62%);
-  filter: blur(70px);
-  opacity: .42;
+  background: radial-gradient(circle, var(--orb-a), rgba(79,140,255,0) 80%);
+  filter: blur(80px);
+  opacity: 1;
   z-index: 0;
   pointer-events: none;
   animation: cz-orbA 18s ease-in-out infinite;
@@ -714,18 +728,34 @@ body::before {
 body::after {
   content: '';
   position: fixed;
-  bottom: -260px; right: -180px;
-  width: 700px; height: 700px;
+  bottom: -160px; right: -160px;
+  width: 1300px; height: 1300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,.13), rgba(255,255,255,0) 62%);
-  filter: blur(80px);
-  opacity: .30;
+  background: radial-gradient(circle, var(--orb-b), rgba(139,92,246,0) 80%);
+  filter: blur(90px);
+  opacity: 1;
   z-index: 0;
   pointer-events: none;
   animation: cz-orbB 22s ease-in-out infinite;
 }
+/* Third ambient layer — the teal bloom that makes the field read as a
+   multi-layer gradient rather than two spotlights on black. */
+html::before {
+  content: '';
+  position: fixed;
+  top: 20%; left: 50%;
+  width: 1100px; height: 1100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--orb-c), rgba(45,212,191,0) 80%);
+  filter: blur(100px);
+  opacity: 1;
+  z-index: 0;
+  pointer-events: none;
+  animation: cz-orbC 26s ease-in-out infinite;
+}
 @keyframes cz-orbA { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(40px,-30px,0) scale(1.12)} }
 @keyframes cz-orbB { 0%,100%{transform:translate3d(0,0,0) scale(1.05)} 50%{transform:translate3d(-50px,30px,0) scale(.92)} }
+@keyframes cz-orbC { 0%,100%{transform:translate3d(-50%,-50%,0) scale(1)} 50%{transform:translate3d(calc(-50% + 30px),calc(-50% - 20px),0) scale(1.08)} }
 
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; background: none; color: inherit; font: inherit; }
@@ -856,10 +886,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .nav-link-text { overflow: hidden; text-overflow: ellipsis; }
 .sidebar--collapsed .nav-link { justify-content: center; padding: 8px 0; }
 .nav-link:hover { color: var(--text); background: var(--glass-fill); }
-.nav-link.active { color: var(--text); }
+.nav-link.active { color: var(--green); }
 .nav-link.active {
   background: var(--glass-fill-2);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 28px -12px rgba(255,255,255,.6);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 28px -12px rgba(79,140,255,.6);
 }
 
 .sidebar-lastfm {
@@ -1202,7 +1232,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .artist-card:hover {
   transform: translateY(-5px);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(255,255,255,.45);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(79,140,255,.4);
 }
 
 .artist-avatar {
@@ -1346,7 +1376,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .album-card:hover {
   transform: translateY(-5px);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(255,255,255,.45);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(79,140,255,.4);
 }
 
 .album-cover {
@@ -1762,7 +1792,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .smart-badge--active {
   background: var(--purple);
   color: #000;
-  box-shadow: 0 0 12px rgba(255,255,255,.4);
+  box-shadow: 0 0 12px rgba(139,92,246,.5);
 }
 
 /* ── Quality badge ──────────────────────────────────── */
@@ -1780,7 +1810,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .quality-btn--lossless {
   color: #000;
   background: var(--green);
-  box-shadow: 0 0 12px rgba(255,255,255,.3);
+  box-shadow: 0 0 12px rgba(79,140,255,.4);
 }
 .quality-btn--lossless:hover { background: var(--green-hover); transform: scale(1.05); }
 .quality-btn--320 {
@@ -2041,7 +2071,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--green);
   color: #070708;
   display: flex;
   align-items: center;
@@ -2049,13 +2079,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex-shrink: 0;
   transition: transform .1s, background .15s;
 }
-.play-btn:hover { background: #f0f0f0; transform: scale(1.06); }
+.play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
 
 .hero-play-btn {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--green);
   color: #070708;
   border: none;
   display: flex;
@@ -2064,9 +2094,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex-shrink: 0;
   cursor: pointer;
   transition: transform .1s, background .15s;
-  box-shadow: 0 14px 30px -12px rgba(255,255,255,.5);
+  box-shadow: 0 14px 30px -12px rgba(79,140,255,.5);
 }
-.hero-play-btn:hover { background: #f0f0f0; transform: scale(1.06); }
+.hero-play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
 .hero-play-btn svg { margin-left: 3px; }
 
 .player-time {
@@ -2926,8 +2956,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .track-table .col-album,
-  .track-table thead th:last-child { display: none; }
+  /* Hide the album column (header + body) by class — never by
+     thead th:last-child, which would also hide the duration header on
+     AlbumPage/PlaylistsPage (last col there is col-dur, not album) and,
+     under table-layout:fixed, leave the body's 4th column with no width
+     anchor → the FavoritePill drifts and the row misaligns. */
+  .track-table .col-album { display: none; }
   .col-num { width: 32px; }
 
   /* YouTube rows: smaller thumb + tighter gap so the title has room and the
@@ -3443,7 +3477,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .video-poster-card:hover {
   box-shadow: inset 0 0 0 1px var(--hairline-strong),
-              0 0 50px -14px rgba(255,255,255,.45);
+              0 0 50px -14px rgba(79,140,255,.4);
   transform: translateY(-3px);
 }
 

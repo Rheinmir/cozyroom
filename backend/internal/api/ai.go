@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	cozydb "cozyroom/internal/db"
@@ -197,38 +198,61 @@ func (h *AIHandlers) chat(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		// Tool calls in one round are independent (the system prompt above
+		// tells the model to batch same-type calls, e.g. N download_youtube in
+		// one round instead of N rounds) — run them concurrently instead of
+		// one at a time. Capped at 4 in flight so a burst of many calls (e.g.
+		// a 24-track bulk download) doesn't spawn 24 simultaneous yt-dlp
+		// subprocesses and thrash the pod's CPU/network.
 		results := make([]string, len(calls))
+		sem := make(chan struct{}, 4)
+		var mu sync.Mutex
+		var wg sync.WaitGroup
 		for j, tc := range calls {
-			tool, found := byName[tc.Name]
-			if !found {
-				msg := tc.Name + ": tool not found"
-				toolErrors = append(toolErrors, msg)
-				results[j] = fmt.Sprintf(`{"error":"tool %s not found"}`, tc.Name)
-				continue
-			}
-			result, err := tool.Handler(tc.Input)
-			if err != nil {
-				toolErrors = append(toolErrors, tc.Name+": "+err.Error())
-				results[j] = fmt.Sprintf(`{"error":"%s"}`, err.Error())
-				continue
-			}
-			if rm, ok := result.(map[string]any); ok {
-				if action, ok := rm["_frontend_action"].(string); ok {
-					actions = append(actions, map[string]any{
-						"type":       action,
-						"id":         rm["id"],
-						"title":      rm["title"],
-						"artist":     rm["artist"],
-						"album_id":   rm["album_id"],
-						"duration_s": rm["duration_s"],
-						"mode":       rm["mode"],
-						"tracks":     rm["tracks"],
-					})
+			wg.Add(1)
+			go func(j int, tc toolCall) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				tool, found := byName[tc.Name]
+				if !found {
+					msg := tc.Name + ": tool not found"
+					mu.Lock()
+					toolErrors = append(toolErrors, msg)
+					mu.Unlock()
+					results[j] = fmt.Sprintf(`{"error":"tool %s not found"}`, tc.Name)
+					return
 				}
-			}
-			b, _ := json.Marshal(result)
-			results[j] = string(b)
+				result, err := tool.Handler(tc.Input)
+				if err != nil {
+					mu.Lock()
+					toolErrors = append(toolErrors, tc.Name+": "+err.Error())
+					mu.Unlock()
+					results[j] = fmt.Sprintf(`{"error":"%s"}`, err.Error())
+					return
+				}
+				if rm, ok := result.(map[string]any); ok {
+					if action, ok := rm["_frontend_action"].(string); ok {
+						mu.Lock()
+						actions = append(actions, map[string]any{
+							"type":       action,
+							"id":         rm["id"],
+							"title":      rm["title"],
+							"artist":     rm["artist"],
+							"album_id":   rm["album_id"],
+							"duration_s": rm["duration_s"],
+							"mode":       rm["mode"],
+							"tracks":     rm["tracks"],
+						})
+						mu.Unlock()
+					}
+				}
+				b, _ := json.Marshal(result)
+				results[j] = string(b)
+			}(j, tc)
 		}
+		wg.Wait()
 
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
@@ -369,44 +393,68 @@ func (h *AIHandlers) chatStream(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		// Same reasoning as the non-streaming handler: run this round's tool
+		// calls concurrently (capped at 4) instead of one at a time. `send`
+		// writes SSE frames to the same http.ResponseWriter from every
+		// goroutine, so it — and the shared toolErrors/actions slices — must
+		// go through the mutex.
 		results := make([]string, len(calls))
+		sem := make(chan struct{}, 4)
+		var mu sync.Mutex
+		var wg sync.WaitGroup
 		for j, tc := range calls {
-			if s, ok := toolStatusVN[tc.Name]; ok {
-				send(map[string]any{"status": s})
-			}
-			tool, found := byName[tc.Name]
-			if !found {
-				msg := tc.Name + ": tool not found"
-				toolErrors = append(toolErrors, msg)
-				send(map[string]any{"status": "⚠️ " + msg})
-				results[j] = fmt.Sprintf(`{"error":"tool %s not found"}`, tc.Name)
-				continue
-			}
-			result, err := tool.Handler(tc.Input)
-			if err != nil {
-				msg := tc.Name + ": " + err.Error()
-				toolErrors = append(toolErrors, msg)
-				send(map[string]any{"status": "⚠️ Lỗi " + tc.Name + ": " + err.Error()})
-				results[j] = fmt.Sprintf(`{"error":"%s"}`, err.Error())
-				continue
-			}
-			if rm, ok := result.(map[string]any); ok {
-				if action, ok := rm["_frontend_action"].(string); ok {
-					actions = append(actions, map[string]any{
-						"type":       action,
-						"id":         rm["id"],
-						"title":      rm["title"],
-						"artist":     rm["artist"],
-						"album_id":   rm["album_id"],
-						"duration_s": rm["duration_s"],
-						"mode":       rm["mode"],
-						"tracks":     rm["tracks"],
-					})
+			wg.Add(1)
+			go func(j int, tc toolCall) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				if s, ok := toolStatusVN[tc.Name]; ok {
+					mu.Lock()
+					send(map[string]any{"status": s})
+					mu.Unlock()
 				}
-			}
-			b, _ := json.Marshal(result)
-			results[j] = string(b)
+				tool, found := byName[tc.Name]
+				if !found {
+					msg := tc.Name + ": tool not found"
+					mu.Lock()
+					toolErrors = append(toolErrors, msg)
+					send(map[string]any{"status": "⚠️ " + msg})
+					mu.Unlock()
+					results[j] = fmt.Sprintf(`{"error":"tool %s not found"}`, tc.Name)
+					return
+				}
+				result, err := tool.Handler(tc.Input)
+				if err != nil {
+					msg := tc.Name + ": " + err.Error()
+					mu.Lock()
+					toolErrors = append(toolErrors, msg)
+					send(map[string]any{"status": "⚠️ Lỗi " + tc.Name + ": " + err.Error()})
+					mu.Unlock()
+					results[j] = fmt.Sprintf(`{"error":"%s"}`, err.Error())
+					return
+				}
+				if rm, ok := result.(map[string]any); ok {
+					if action, ok := rm["_frontend_action"].(string); ok {
+						mu.Lock()
+						actions = append(actions, map[string]any{
+							"type":       action,
+							"id":         rm["id"],
+							"title":      rm["title"],
+							"artist":     rm["artist"],
+							"album_id":   rm["album_id"],
+							"duration_s": rm["duration_s"],
+							"mode":       rm["mode"],
+							"tracks":     rm["tracks"],
+						})
+						mu.Unlock()
+					}
+				}
+				b, _ := json.Marshal(result)
+				results[j] = string(b)
+			}(j, tc)
 		}
+		wg.Wait()
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
 	}
@@ -1255,38 +1303,57 @@ func (h *AIHandlers) ExecutePrompt(sessionID, message string, history []ChatMess
 			break
 		}
 
+		// Same reasoning as the HTTP handlers above — run this round's tool
+		// calls concurrently, capped at 4 in flight.
 		results := make([]string, len(calls))
+		sem := make(chan struct{}, 4)
+		var mu sync.Mutex
+		var wg sync.WaitGroup
 		for j, tc := range calls {
-			tool, found := byName[tc.Name]
-			if !found {
-				msg := tc.Name + ": tool not found"
-				toolErrors = append(toolErrors, msg)
-				results[j] = fmt.Sprintf(`{"error":"tool %s not found"}`, tc.Name)
-				continue
-			}
-			result, err := tool.Handler(tc.Input)
-			if err != nil {
-				toolErrors = append(toolErrors, tc.Name+": "+err.Error())
-				results[j] = fmt.Sprintf(`{"error":"%s"}`, err.Error())
-				continue
-			}
-			if rm, ok := result.(map[string]any); ok {
-				if action, ok := rm["_frontend_action"].(string); ok {
-					actions = append(actions, map[string]any{
-						"type":       action,
-						"id":         rm["id"],
-						"title":      rm["title"],
-						"artist":     rm["artist"],
-						"album_id":   rm["album_id"],
-						"duration_s": rm["duration_s"],
-						"mode":       rm["mode"],
-						"tracks":     rm["tracks"],
-					})
+			wg.Add(1)
+			go func(j int, tc toolCall) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				tool, found := byName[tc.Name]
+				if !found {
+					msg := tc.Name + ": tool not found"
+					mu.Lock()
+					toolErrors = append(toolErrors, msg)
+					mu.Unlock()
+					results[j] = fmt.Sprintf(`{"error":"tool %s not found"}`, tc.Name)
+					return
 				}
-			}
-			b, _ := json.Marshal(result)
-			results[j] = string(b)
+				result, err := tool.Handler(tc.Input)
+				if err != nil {
+					mu.Lock()
+					toolErrors = append(toolErrors, tc.Name+": "+err.Error())
+					mu.Unlock()
+					results[j] = fmt.Sprintf(`{"error":"%s"}`, err.Error())
+					return
+				}
+				if rm, ok := result.(map[string]any); ok {
+					if action, ok := rm["_frontend_action"].(string); ok {
+						mu.Lock()
+						actions = append(actions, map[string]any{
+							"type":       action,
+							"id":         rm["id"],
+							"title":      rm["title"],
+							"artist":     rm["artist"],
+							"album_id":   rm["album_id"],
+							"duration_s": rm["duration_s"],
+							"mode":       rm["mode"],
+							"tracks":     rm["tracks"],
+						})
+						mu.Unlock()
+					}
+				}
+				b, _ := json.Marshal(result)
+				results[j] = string(b)
+			}(j, tc)
 		}
+		wg.Wait()
 
 		msgs = provider.appendAssistant(msgs, text, calls)
 		msgs = provider.appendToolResults(msgs, calls, results)
