@@ -109,7 +109,7 @@ A cool blue/violet/teal ambient field behind frosted glass panels, with one sign
 ### Named Rules
 **The Signature Accent Rule.** Signature Blue is the one accent that means "selected," "primary," or "on" — it replaces the old One Accent Rule's paper-white in that exact role. Anything that used to reach for white as an interactive signal now reaches for `var(--green)` instead; anything that was genuinely decorative white (text, icons at rest) stays white.
 
-**The Glass-Is-Scoped Rule.** `backdrop-filter` glass applies to floating/elevated surfaces only: sidebar, header, player bar, modals, dropdowns, popovers, cards. Dense list/table rows (the track table, queue rows) stay flat — this was an explicit, deliberate scope decision, not an oversight, made to protect scroll performance and operator-console scan speed. Don't add `backdrop-filter` to a per-row element in a long list.
+**The Glass-Is-Scoped Rule.** `backdrop-filter` glass applies to floating/elevated surfaces only: sidebar, header, player bar, modals, dropdowns, popovers, cards, and the single non-repeating signature buttons (`.play-btn`, `.hero-play-btn`). Dense list/table rows (the track table, queue rows) stay flat — this was an explicit, deliberate scope decision, not an oversight, made to protect scroll performance and operator-console scan speed. Don't add `backdrop-filter` to a per-row element in a long list, including a button that repeats per row.
 
 **The Ambient-Not-Corner Rule.** The three ambient orbs are sized (1100–1300px) and positioned to actually reach the panels that need to refract them (sidebar, header strip, player bar band), not just glow in an empty corner of the viewport. A glass panel with no color reaching it through the blur is a bug, not a subtler look — caught once already during this redesign's own finish review (the first pass shipped orbs too small/faint/off-target and near-opaque panel fills that ate what little color reached them).
 
@@ -162,9 +162,10 @@ Unchanged by this redesign. Corner radius scales with intent: `4–8px` for chip
 ## Components
 
 ### Buttons
-- **Shape:** `8px` radius by default; fully round for icon-only buttons (including `.play-btn` / `.hero-play-btn`, the player's primary controls).
-- **Primary:** Signature Blue background, black text, `10px 16px` padding — this now includes the player's own play button and the playlist hero "Phát" CTA, both previously hardcoded paper-white.
-- **Hover / Focus:** background steps to Signature Blue Hover (`#8aacf0`); Raised elevation glow, tinted blue.
+- **Shape:** `8px` radius by default; fully round for icon-only buttons.
+- **Primary (opaque):** Signature Blue background, black text, `10px 16px` padding — most primary/CTA buttons (`.confirm-btn--primary`, tab-active pills, etc.).
+- **Primary (glass) — the single, non-repeating signature controls:** `.play-btn` (player bar) and `.hero-play-btn` (playlist hero "Phát") are real frosted glass, not opaque fill — `--accent-glass-fill` + `backdrop-filter: blur(16px) saturate(1.8)` + `--accent-glass-border` hairline, icon in Signature Blue (`color: var(--green)`, SVG `fill="currentColor"`) so it glows against the translucent disc instead of sitting on a solid one. Reserved for buttons that appear once on screen at a time — never applied to a button that repeats per row in a list (backdrop-filter cost).
+- **Hover / Focus:** opaque buttons step to Signature Blue Hover (`#8aacf0`); glass buttons step to `--accent-glass-fill-hover` + border brightens to full Signature Blue — both add the Raised elevation glow, tinted blue.
 - **Ghost / Secondary:** transparent background, hairline border, Dim Text — unchanged.
 
 ### Cards / Containers

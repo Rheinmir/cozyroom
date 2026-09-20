@@ -618,6 +618,14 @@ button, a, [role="button"], input, select, textarea {
   --glass-fill-strong: rgba(255,255,255,.2);  /* prominent/active fills (.16–.4) */
   --hairline-strong:   rgba(255,255,255,.3);  /* strong inset highlights (.16+) */
 
+  /* Accent-tinted glass — for the handful of single, prominent buttons (the
+     player's own play control, a playlist's hero play button) that should
+     read as real glass rather than a solid accent-fill disc. Not for
+     anything that repeats per row in a list (backdrop-filter cost). */
+  --accent-glass-fill:        rgba(79,140,255,.28);
+  --accent-glass-fill-hover:  rgba(79,140,255,.4);
+  --accent-glass-border:      rgba(79,140,255,.5);
+
   /* ── Chart categorical palette ───────────────────────
      One cohesive, muted palette applied to EVERY chart (categorical series,
      ordinal buckets, language dimension, single-series) so the whole
@@ -675,6 +683,10 @@ button, a, [role="button"], input, select, textarea {
   --border-strong: rgba(0,0,0,.26);
   --glass-fill-strong: rgba(0,0,0,.19);
   --hairline-strong:   rgba(0,0,0,.26);
+
+  --accent-glass-fill:        rgba(79,140,255,.16);
+  --accent-glass-fill-hover:  rgba(79,140,255,.24);
+  --accent-glass-border:      rgba(79,140,255,.45);
 
   /* Ambient field stays the same hue family, gentler so the color blooms
      read as a soft aurora under white cards instead of overpowering them. */
@@ -2071,32 +2083,37 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--green);
-  color: #070708;
+  background: var(--accent-glass-fill);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid var(--accent-glass-border);
+  color: var(--green);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform .1s, background .15s;
+  transition: transform .1s, background .15s, border-color .15s;
 }
-.play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
+.play-btn:hover { background: var(--accent-glass-fill-hover); border-color: var(--green); transform: scale(1.06); }
 
 .hero-play-btn {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--green);
-  color: #070708;
-  border: none;
+  background: var(--accent-glass-fill);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid var(--accent-glass-border);
+  color: var(--green);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform .1s, background .15s;
+  transition: transform .1s, background .15s, border-color .15s;
   box-shadow: 0 14px 30px -12px rgba(79,140,255,.5);
 }
-.hero-play-btn:hover { background: var(--green-hover); transform: scale(1.06); }
+.hero-play-btn:hover { background: var(--accent-glass-fill-hover); border-color: var(--green); transform: scale(1.06); }
 .hero-play-btn svg { margin-left: 3px; }
 
 .player-time {
