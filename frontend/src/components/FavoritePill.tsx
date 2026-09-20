@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   Playlist,
@@ -42,10 +43,21 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
   const { t } = useTranslation()
   const { toast } = useDialogs()
   const [isOpen, setIsOpen] = useState(false)
-  
+  const queryClient = useQueryClient()
+
   const [localLists, setLocalLists] = useState<Playlist[]>([])
-  const [permLists, setPermLists] = useState<Playlist[]>([])
-  
+
+  // Shared cache (queryKey: ['playlists']) with PlaylistsPage and RadialNav —
+  // one FavoritePill renders per track row, so without a shared cache every
+  // row on screen fired its own /api/playlists request on mount and again on
+  // every dropdown open.
+  const { data: permLists = [] } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: fetchPlaylists,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  })
+
   // Creation form state
   const [newName, setNewName] = useState('')
   const [isPerm, setIsPerm] = useState(false)
@@ -61,20 +73,9 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
   const pillRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Load playlists
-  const loadLists = async () => {
-    setLocalLists(getLocalPlaylists())
-    try {
-      const serverLists = await fetchPlaylists()
-      setPermLists(serverLists)
-    } catch (e) {
-      console.error('Failed to fetch permanent playlists', e)
-    }
-  }
-
   useEffect(() => {
-    loadLists()
-    
+    setLocalLists(getLocalPlaylists())
+
     // Close dropdown on click outside
     const handleOutsideClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -152,9 +153,8 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
           } else {
             await removeTrackFromPlaylist(listId, trackId, validPw)
           }
-          // Refresh server list
-          const serverLists = await fetchPlaylists()
-          setPermLists(serverLists)
+          // Refresh every FavoritePill/PlaylistsPage/RadialNav sharing the cache
+          queryClient.invalidateQueries({ queryKey: ['playlists'] })
         } catch (e: any) {
           console.error(e)
           // If unauthorized, clear password and ask again
@@ -212,9 +212,8 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
       try {
         await createPlaylist(trimmedName, pw)
         setNewName('')
-        // Refresh server list
-        const serverLists = await fetchPlaylists()
-        setPermLists(serverLists)
+        // Refresh every FavoritePill/PlaylistsPage/RadialNav sharing the cache
+        queryClient.invalidateQueries({ queryKey: ['playlists'] })
       } catch (e: any) {
         console.error(e)
         if (e.message?.includes('412') || e.message?.includes('401') || e.message?.includes('unauthorized')) {
@@ -253,7 +252,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
         <div className="fav-sep" />
         <button 
           className="fav-arrow" 
-          onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); if (!isOpen) loadLists(); }}
+          onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
           title={t('playlist.add_to_playlist', { defaultValue: 'Add to playlist' })}
         >
           ▾

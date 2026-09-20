@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { useDialogs } from '../DialogContext'
@@ -107,7 +107,6 @@ export default function PlaylistsPage() {
 
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null)
   const [localLists, setLocalLists] = useState<Playlist[]>([])
-  const [permLists, setPermLists] = useState<Playlist[]>([])
 
   // Password prompt state — shared between delete and rename
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -154,22 +153,20 @@ export default function PlaylistsPage() {
     }
   }
 
-  // Load playlists
-  const loadLists = async () => {
-    setLocalLists(getLocalPlaylists())
-    try {
-      const serverLists = await fetchPlaylists()
-      setPermLists(serverLists)
-    } catch (e) {
-      console.error('Failed to fetch permanent playlists', e)
-    }
-  }
+  const queryClient = useQueryClient()
+
+  // Shared cache (queryKey: ['playlists']) with FavoritePill and RadialNav —
+  // one request serves every subscriber instead of each fetching its own copy,
+  // and invalidating it after a mutation refreshes all of them at once.
+  const { data: permLists = [] } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: fetchPlaylists,
+    staleTime: 10_000,
+    refetchInterval: 15_000, // catches playlists the AI agent creates in the background
+  })
 
   useEffect(() => {
-    loadLists()
-    // Poll playlists list every 3s to keep everything updated in the background
-    const interval = setInterval(loadLists, 3000)
-    return () => clearInterval(interval)
+    setLocalLists(getLocalPlaylists())
   }, [])
 
   const allLists = [
@@ -248,7 +245,7 @@ export default function PlaylistsPage() {
       if (selectedPlaylistId === id) {
         setSelectedPlaylistId(null)
       }
-      loadLists()
+      queryClient.invalidateQueries({ queryKey: ['playlists'] })
     } catch (e: any) {
       console.error(e)
       if (e.message?.includes('412') || e.message?.includes('401') || e.message?.includes('unauthorized')) {
@@ -270,7 +267,7 @@ export default function PlaylistsPage() {
       setShowPasswordModal(false)
       setRenamePending(null)
       setPasswordAction(null)
-      loadLists()
+      queryClient.invalidateQueries({ queryKey: ['playlists'] })
     } catch (e: any) {
       console.error(e)
       if (e.message?.includes('412') || e.message?.includes('401') || e.message?.includes('unauthorized')) {

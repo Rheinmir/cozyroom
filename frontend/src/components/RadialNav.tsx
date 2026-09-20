@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
@@ -143,9 +144,17 @@ export default function RadialNav() {
 
   const [playlistPickerMode, setPlaylistPickerMode] = useState(false)
   const [localLists, setLocalLists] = useState<Playlist[]>(() => getLocalPlaylists())
-  const [permLists,  setPermLists]  = useState<Playlist[]>([])
+  const queryClient = useQueryClient()
 
-  // Reset contextual modes when menu is closed; fetch fresh data when it opens
+  // Shared cache (queryKey: ['playlists']) with FavoritePill and PlaylistsPage.
+  const { data: permLists = [] } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: fetchPlaylists,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  })
+
+  // Reset contextual modes when menu is closed; refresh local lists when it opens
   useEffect(() => {
     if (!open) {
       setCalendarMode(false)
@@ -153,7 +162,6 @@ export default function RadialNav() {
       setPlaylistPickerMode(false)
     } else {
       setLocalLists(getLocalPlaylists())
-      fetchPlaylists().then(setPermLists).catch(() => {})
     }
   }, [open])
 
@@ -385,7 +393,7 @@ export default function RadialNav() {
     } else {
       const pw = sessionStorage.getItem('cozyroom_owner_password') || ''
       const optimistic = () =>
-        setPermLists(prev => prev.map(l =>
+        queryClient.setQueryData(['playlists'], (prev: Playlist[] = []) => prev.map(l =>
           l.id !== list.id ? l : {
             ...l,
             track_ids: inList
