@@ -1,0 +1,29 @@
+# One-off Job: backfill the music library into the embeddings table.
+# Uses the backend image (has ./embed_backfill) + the same DB/secret env as the
+# backend deployment. Re-runnable: BackfillMusic upserts (idempotent).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: embed-backfill
+  namespace: cozyroom-k8s
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: embed-backfill
+          image: 100.88.197.64:5000/cozyroom-backend:k8s
+          imagePullPolicy: Always
+          command: ["./embed_backfill"]
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgres://cozyroom:$(POSTGRES_PASSWORD)@db-adapter:5432/cozyroom?sslmode=disable&default_query_exec_mode=simple_protocol"
+            - name: EMBED_URL
+              value: "http://embed/embed"
