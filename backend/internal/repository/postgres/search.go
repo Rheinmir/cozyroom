@@ -104,6 +104,26 @@ func (r *SearchRepo) fuseVector(ctx context.Context, query string, result *domai
 		return // empty embeddings table (pre-backfill) → lexical-only
 	}
 
+	// Relevance gate. e5 cosine similarities are compressed into a narrow high
+	// band — even unrelated text scores ~0.80, while an exact match is ~0.86, a
+	// gap of only ~0.04. Without a gate, a specific-title query drags in ~30
+	// weak "nearest" neighbours (all ~0.80) that bury the real answer. Keep only
+	// hits within relMargin of the best hit (adaptive: a clear winner suppresses
+	// the noise; a diffuse conceptual query keeps its tight cluster), never below
+	// absFloor. hits are already ordered by score desc.
+	const relMargin, absFloor = 0.03, 0.78
+	gate := hits[0].Score - relMargin
+	if gate < absFloor {
+		gate = absFloor
+	}
+	kept := hits[:0]
+	for _, h := range hits {
+		if h.Score >= gate {
+			kept = append(kept, h)
+		}
+	}
+	hits = kept
+
 	vRank := map[string]map[string]int{"artist": {}, "album": {}, "track": {}}
 	var newArtists, newAlbums, newTracks []string
 	for _, h := range hits {
