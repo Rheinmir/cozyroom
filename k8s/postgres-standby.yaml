@@ -71,7 +71,10 @@ spec:
               mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
-          image: postgres:16-alpine
+          # pgvector alpine image (must match primary so the replica can replay the
+          # CREATE EXTENSION WAL record). init-replica above stays plain postgres:16-alpine
+          # — pg_basebackup needs no extension. Do NOT revert this to postgres:16-alpine.
+          image: 100.88.197.64:5000/cozyroom-postgres-pgvector:16-alpine
           env:
             - name: POSTGRES_DB
               value: cozyroom

@@ -96,6 +96,28 @@ func migrate(db *sql.DB) error {
 	// SmartQueue tier lookups: same-artist (via albums.artist_id) and exact-genre.
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_albums_artist_id ON albums (artist_id)`)
 	db.Exec(`CREATE INDEX IF NOT EXISTS idx_tracks_genre ON tracks (genre) WHERE genre != ''`)
+
+	// ── Semantic search (pgvector) ───────────────────────────────────────────
+	// Requires the pgvector image (k8s/postgres-pgvector.Dockerfile); the plain
+	// postgres:16-alpine lacks vector.so. CREATE EXTENSION is idempotent.
+	// One unified table for ALL entity types (tracks/albums/artists/ebooks/
+	// comics/notes) keyed by (entity_type, entity_id); `content` keeps the text
+	// that was embedded so a row can be re-embedded on model change. Dimension
+	// 768 matches the sidecar model intfloat/multilingual-e5-base (k8s/embed.yaml).
+	if _, err := db.Exec(`CREATE EXTENSION IF NOT EXISTS vector`); err != nil {
+		log.Printf("[db] vector extension: %v", err)
+	}
+	db.Exec(`CREATE TABLE IF NOT EXISTS embeddings (
+		entity_type TEXT NOT NULL,
+		entity_id   TEXT NOT NULL,
+		content     TEXT NOT NULL,
+		embedding   vector(768) NOT NULL,
+		updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+		PRIMARY KEY (entity_type, entity_id)
+	)`)
+	// HNSW cosine index — built instantly on the empty table; cosine matches how
+	// the query path scores (embedding <=> query).
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_embeddings_hnsw ON embeddings USING hnsw (embedding vector_cosine_ops)`)
 	db.Exec(`CREATE TABLE IF NOT EXISTS lyrics_cache (
 		track_id   TEXT PRIMARY KEY,
 		results    TEXT NOT NULL,

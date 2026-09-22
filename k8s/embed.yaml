@@ -1,0 +1,81 @@
+# Embedding sidecar for semantic search (t2).
+# HuggingFace Text-Embeddings-Inference (CPU) serving intfloat/multilingual-e5-base
+# (768-dim, multilingual — handles the Vietnamese/English library text).
+# Public ghcr.io image → both cluster nodes pull directly (no registry push needed).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embed
+  namespace: cozyroom-k8s
+  labels:
+    app: embed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: embed
+  template:
+    metadata:
+      labels:
+        app: embed
+    spec:
+      containers:
+        - name: tei
+          image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.6
+          args:
+            - --model-id
+            - intfloat/multilingual-e5-base
+            - --port
+            - "80"
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: model-cache
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "500m"
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+          # startupProbe gates liveness: first boot downloads the ~1GB model, which
+          # can take many minutes — allow up to ~900s (90×10s) before declaring
+          # failure. Liveness only starts probing AFTER startup succeeds, so a slow
+          # download never triggers a crash-loop.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            periodSeconds: 30
+            failureThreshold: 6
+      volumes:
+        - name: model-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: embed
+  namespace: cozyroom-k8s
+  labels:
+    app: embed
+spec:
+  selector:
+    app: embed
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP

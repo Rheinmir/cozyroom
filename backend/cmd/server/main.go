@@ -13,6 +13,7 @@ import (
 	"cozyroom/internal/cron"
 	"cozyroom/internal/db"
 	"cozyroom/internal/discord"
+	"cozyroom/internal/embed"
 	"cozyroom/internal/enricher"
 	"cozyroom/internal/teams"
 	"cozyroom/internal/telegram"
@@ -106,7 +107,8 @@ func main() {
 	artistRepo  := repo.NewArtistRepo(rawDB)
 	albumRepo   := repo.NewAlbumRepo(rawDB)
 	trackRepo   := repo.NewTrackRepo(rawDB)
-	searchRepo  := &repo.SearchRepo{DB: rawDB}
+	embeddingsRepo := &repo.EmbeddingsRepo{DB: rawDB}
+	searchRepo  := &repo.SearchRepo{DB: rawDB, Embed: embed.New(), Emb: embeddingsRepo}
 	statsRepo   := &repo.StatsRepo{DB: rawDB}
 	cacheRepo   := &repo.LyricsCacheRepo{DB: rawDB}
 	settingsRepo := &repo.SettingsRepo{DB: rawDB}

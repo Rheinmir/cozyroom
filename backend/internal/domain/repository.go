@@ -67,6 +67,21 @@ type SearchRepository interface {
 	Search(ctx context.Context, query string) (*SearchResult, error)
 }
 
+// VectorHit is one semantic-search match: the entity and its similarity to the
+// query. Score is cosine similarity in [-1,1] (higher = more similar).
+type VectorHit struct {
+	EntityType string
+	EntityID   string
+	Score      float64
+}
+
+// EmbeddingRepository stores and queries entity embeddings for semantic search
+// (pgvector). entityType is one of: track|album|artist|ebook|comic|note.
+type EmbeddingRepository interface {
+	Upsert(ctx context.Context, entityType, entityID, content string, embedding []float32) error
+	Search(ctx context.Context, embedding []float32, entityTypes []string, limit int) ([]VectorHit, error)
+}
+
 // StatsRepository returns library-wide aggregate counts.
 type StatsRepository interface {
 	Get(ctx context.Context) (*Stats, error)

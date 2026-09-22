@@ -49,7 +49,10 @@ spec:
         kubernetes.io/hostname: rhein-13700hxes-4070-64-4t
       containers:
         - name: postgres
-          image: postgres:16-alpine
+          # pgvector on the SAME alpine/musl base (built from k8s/postgres-pgvector.Dockerfile,
+          # pushed to the cluster registry). Do NOT revert to postgres:16-alpine — the
+          # `vector` extension is CREATEd in this DB; the plain image lacks vector.so → errors.
+          image: 100.88.197.64:5000/cozyroom-postgres-pgvector:16-alpine
           args:
             - postgres
             - -c
