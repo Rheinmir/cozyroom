@@ -52,7 +52,7 @@ function fmtK(n: number) {
   return String(n)
 }
 
-const TT = { background: 'var(--elevated)', border: '1px solid var(--border)', fontSize: 12, borderRadius: 8 }
+const TT = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, borderRadius: 8 }
 const GR = { strokeDasharray: '3 3', stroke: 'var(--chart-grid)' }
 
 const isMobile = () => window.innerWidth <= 767

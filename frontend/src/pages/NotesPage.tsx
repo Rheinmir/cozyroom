@@ -71,7 +71,7 @@ function GateScreen({ onEnter }: { onEnter: (s: Session) => void }) {
       return
     }
     sessionStorage.setItem(OWNER_PW_KEY, ownerInput.trim())
-    onEnter({ creds: { password: OWNER_PASSWORD }, isOwner: true, username: 'owner', color: '#ffffff' })
+    onEnter({ creds: { password: OWNER_PASSWORD }, isOwner: true, username: 'owner', color: 'var(--fill-track)' })
   }
 
   return (
@@ -417,7 +417,7 @@ export default function NotesPage() {
   useEffect(() => {
     const ownerPw = sessionStorage.getItem(OWNER_PW_KEY)
     if (ownerPw === OWNER_PASSWORD) {
-      setSession({ creds: { password: OWNER_PASSWORD }, isOwner: true, username: 'owner', color: '#ffffff' })
+      setSession({ creds: { password: OWNER_PASSWORD }, isOwner: true, username: 'owner', color: 'var(--fill-track)' })
       return
     }
     const token = sessionStorage.getItem(TOKEN_KEY)

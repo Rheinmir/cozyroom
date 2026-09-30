@@ -346,7 +346,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
               autoFocus
             />
             {passwordError && (
-              <span style={{ color: '#ef4444', fontSize: 12 }}>{passwordError}</span>
+              <span style={{ color: 'var(--chart-fail)', fontSize: 12 }}>{passwordError}</span>
             )}
             <div className="password-modal-actions">
               <button 

@@ -1,223 +1,273 @@
 ---
 name: Cozyroom
-description: Self-hosted personal media hub — music, video, ebooks, comics, and an AI assistant, run as a monochrome operator console.
+description: Self-hosted media hub reskinned as a dark, teal-accented music surface — Tidal's colour set on Apple Music's structure and cover-gradient method, with Tidal control primitives.
+themeDefault: dark
+studiedDNA:
+  structure_and_gradient: "ui-kits/music-apple-com (Apple Music web app) — shell/nav/shelf/song-row structure + .am-tint cover-derived gradient wash"
+  palette_and_controls: "ui-kits/tidal-com (Tidal web) — dark colour set (--td-*), teal accent, and control primitives (.td-round/.td-btn/.td-play-mini/.td-tab)"
+  attribution: "Structure/colours studied from measured CSS vars of both kits; no vendor images, logos, or copy reproduced."
 colors:
-  void-black: "#050505"
-  charcoal-panel: "#0e0e0e"
-  raised-charcoal: "#111111"
-  surface-hover-wash: "rgba(255,255,255,0.07)"
-  paper-white: "#ffffff"
-  text-bright: "rgba(255,255,255,0.92)"
-  text-dim: "rgba(255,255,255,0.55)"
-  text-ghost: "rgba(255,255,255,0.32)"
+  # PALETTE = Tidal (dark). Accent = Tidal teal. Primary button = Tidal white-on-dark.
+  bg: "#000000"                 # page background (--td-bg)
+  surface: "#141414"            # cards / rows (--td-surface-10)
+  surface-2: "#1c1c1c"          # raised (--td-surface-20)
+  surface-3: "#2d2d2d"          # hover / elevated (--td-surface-30)
+  surface-5: "#080808"          # deepest (--td-surface-5)
+  card: "#0e0e10"               # media card bg (--td-card)
+  img-placeholder: "#242429"    # cover placeholder (--td-img)
+  text: "rgba(255,255,255,.95)" # primary (--td-text-10 = #fffffff2)
+  text-muted: "rgba(255,255,255,.55)"  # secondary (--td-text-20 = #ffffff8c)
+  text-faint: "rgba(255,255,255,.30)"  # tertiary (--td-text-30 = #ffffff4d)
+  accent: "#33ffee"             # teal — links, focus, eyebrows, badges (--td-accent)
+  accent-text: "#3fe"           # link text (--td-wave-color-text-link)
+  on-fill: "#101010"            # dark glyph on white primary (--td-on-fill-10)
+  fill-10: "rgba(255,255,255,.95)"  # primary-button fill (white) (--td-fill-10)
+  fill-20: "rgba(255,255,255,.35)"  # (--td-fill-20)
+  fill-30: "rgba(255,255,255,.15)"  # secondary-button fill (--td-fill-30)
+  fill-40: "rgba(255,255,255,.08)"  # round-button / chip fill (--td-fill-40)
+  divider: "rgba(255,255,255,.09)"  # hairline (--td-divider-20 = #ffffff14)
+  divider-strong: "rgba(255,255,255,.30)"  # (--td-divider-10)
+  critical: "#ff5a76"           # danger text (--td-critical-text)
+  success: "#16d956"            # (--td-success-text)
+  warning: "#ff9f40"            # (--td-warning-text)
 charts:
-  # One cohesive, muted categorical palette (--chart-1..8) applied to EVERY
-  # chart — categorical series, ordinal buckets, the language dimension, and
-  # single-series marks — so the whole dashboard reads as one system. Muted
-  # mid-tones sit calmly on Void Black and read on the light-theme white card
-  # too (theme-agnostic, no per-theme override). Scoped to data viz, never UI
-  # chrome. See "## Charts".
-  palette: ["#6f8fd6", "#5cb8a0", "#d8a862", "#d3798f", "#9a8fd0", "#7f8c9e", "#c98f6a", "#8bb37a"]
-  # Semantic status — reserved hues that mean something (not a category),
-  # never mixed into the categorical rotation.
-  fail: "#f87171"
-  warn: "#fb923c"
-  caution: "#facc15"
-  ok: "#4ade80"
+  # Categorical palette re-tuned to sit on Tidal black; single-series keys off teal accent.
+  palette: ["#33ffee", "#33a7ff", "#ffd432", "#ff4242", "#8f00ff", "#33ffa9", "#ffbf80", "#ff668f"]
+  fail: "#ff4242"
+  warn: "#ff9f40"
+  caution: "#ffd432"
+  ok: "#16d956"
 typography:
   display:
-    fontFamily: "'Space Grotesk', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-    fontSize: "clamp(24px, 5vw, 52px)"
-    fontWeight: 900
-    lineHeight: 1.1
+    fontFamily: "Inter, 'Square Sans Display', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif"
+    fontSize: "clamp(22px, 4vw, 34px)"
+    fontWeight: 700
+    lineHeight: 1.15
+    letterSpacing: "-0.01em"
   body:
-    fontFamily: "Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    fontFamily: "Inter, 'Square Sans Text', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif"
     fontSize: "14px"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: "22px"
   label:
-    fontFamily: "'Geist Mono', 'SFMono-Regular', monospace"
-    fontSize: "11px"
-    fontWeight: 600
-    letterSpacing: "0.08em"
+    fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace"
+    fontSize: "12px"
+    fontWeight: 500
 rounded:
-  sm: "4px"
-  md: "8px"
-  lg: "13px"
-  xl: "20px"
-  pill: "999px"
+  cover: "2px"      # album/track cover (--td-r-cover) — Tidal's signature near-square art
+  xs: "4px"
+  sm: "8px"
+  md: "12px"        # nav item, cards
+  panel: "16px"     # floating panels / queue
+  full: "1000px"    # pills, round buttons
+  tabbar: "20px"
 spacing:
   xs: "4px"
   sm: "8px"
   md: "16px"
   lg: "24px"
   xl: "32px"
+motion:
+  transition: "0.1s ease-in"       # Apple Music --global-transition (opacity .1s)
+  control: "0.1s"                  # Tidal button transition
+  blur-nav: "saturate(1.8) blur(20px)"
+  blur-glass: "saturate(2) blur(60px)"   # Apple Music sidebar glass
+shadows:
+  play: "0 2.2px 5.5px 0 rgba(0,0,0,.1)"    # Tidal play-button (--td-shadow-play)
+  menu: "0 4px 20px 0 rgba(0,0,0,.3)"       # dropdowns (--td-shadow-menu)
+  panel: "0 10px 12px 0 rgba(0,0,0,.15), 0 0 2px 0 rgba(255,255,255,.08)"  # floating panels
+gradient_method:
+  # Apple Music's cover-derived tint. On album/artist/playlist detail pages, derive a
+  # dominant dark colour from the cover art and pour it as the page background wash;
+  # tint secondary text + dividers to match. Sample tokens (real value = per-cover):
+  tint-bg: "derived-dark (e.g. #370c18)"     # page wash behind hero + first shelf
+  tint-sec: "derived-mid (e.g. rgb(216,173,190))"  # secondary text on the tint
+  tint-div: "derived-line (e.g. rgb(136,56,78))"   # dividers on the tint
 components:
-  button-primary:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "#000000"
-    rounded: "{rounded.md}"
-    padding: "10px 16px"
-  button-primary-hover:
-    backgroundColor: "#e0e0e0"
-  button-ghost:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-dim}"
-    rounded: "{rounded.sm}"
-    padding: "3px 8px"
+  button-primary:      # Tidal .td-btn--primary (WHITE on dark)
+    backgroundColor: "{colors.fill-10}"
+    textColor: "{colors.on-fill}"
+    rounded: "{rounded.full}"
+    padding: "9px 16px"
+    height: "40px"
+  button-secondary:    # Tidal .td-btn--secondary
+    backgroundColor: "{colors.fill-40}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.full}"
+  button-round:        # Tidal .td-round (32 icon)
+    size: "32px"
+    backgroundColor: "{colors.fill-40}"
+    rounded: "{rounded.full}"
+  play-button:         # Tidal .td-play-mini — white circle, dark glyph, play shadow
+    backgroundColor: "{colors.fill-10}"
+    textColor: "{colors.on-fill}"
+    rounded: "{rounded.full}"
+    shadow: "{shadows.play}"
   input-field:
-    backgroundColor: "{colors.charcoal-panel}"
-    textColor: "{colors.text-bright}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.search}"
 ---
 
-# Design System: Cozyroom
+<!-- design: theme=Tidal-palette × Apple-Music-structure -->
+
+# Design System: Cozyroom — Tidal × Apple Music
+
+> **Supersedes the apple.com-light system** (which superseded the Midnight Deck,
+> archived at [`DESIGN.midnight-deck.archived.md`](DESIGN.midnight-deck.archived.md)).
+> **Colour set = Tidal. Structure + cover-gradient method = Apple Music. Controls = Tidal.**
+> The behavioural fixes in [§ Inherited Invariants](#inherited-invariants) still hold.
 
 ## Overview
 
-**Creative North Star: "The Midnight Deck"**
+**Creative North Star: "Tidal booth, Apple Music floorplan."**
 
-Cozyroom reads as a DJ booth after hours: a near-black operator surface built to be lived in for hours at a time, not glanced at. It borrows the *structure* of a familiar dark music app (sidebar library, persistent player, dense list views) but rejects that app's color language entirely — there is no brand hue, no gradient wash, no colorful badge system. The only "color" is paper-white against void-black, used sparingly as the single interactive signal in a field of near-black surfaces and three tiers of white-on-black text.
+A dark, near-black music surface built from **Tidal's colour set** — void-black
+canvas, three charcoal surface tiers, a single **teal `#33ffee`** accent reserved
+for links / focus / eyebrows, and Tidal's white-on-dark primary buttons — laid
+out on **Apple Music's structure**: a translucent glass sidebar, horizontal
+content shelves, dense song-rows, and a segmented control. Detail pages
+(album / artist / playlist) use **Apple Music's cover-gradient method**: a
+dominant colour pulled from the cover art washes the page background and tints
+the secondary text, exactly as Apple Music does.
 
-This restraint is deliberate, not a placeholder: the owner runs Cozyroom as both a daily media console and a live testbed for scaling real infrastructure, so the interface should feel closer to an instrument panel than a consumer entertainment app — legible at a glance, low-decoration, confident about what's interactive.
+**Key characteristics:**
+- **Dark-first, Tidal palette.** `#000` canvas; `#141414 / #1c1c1c / #2d2d2d`
+  surface tiers; white-alpha text ladder (`.95 / .55 / .30`).
+- **Teal is the accent, white is the primary.** `#33ffee` marks links, focus
+  rings, eyebrows, and badges. The primary button and play button are **white
+  fill with dark glyph** (Tidal's actual scheme — teal is NOT a button fill).
+- **Apple Music structure.** 232px glass sidebar (`saturate(2) blur(60px)`),
+  `section.block` horizontal shelves, song-rows, `.seg` segmented control (r9).
+- **Cover-gradient method.** Detail pages derive a dark tint from the cover and
+  pour it as a background wash + tint the secondary text/dividers.
+- **Tidal controls.** `.td-round` (32 round), `.td-btn` primary/secondary/floating,
+  `.td-play-mini` (white 14px circle + play shadow), `.td-tab` (2px underline),
+  `.td-more`, `.td-fav`.
 
-**Key Characteristics:**
-- Monochrome-first: void-black background, white the only accent, three text-opacity tiers for hierarchy.
-- Operator-console density: compact rows, tables, and dashboards over marketing-style whitespace.
-- Tactile, not flat: interactive elements lift and glow on hover/press rather than sitting inert (see Elevation & Depth — this is a deliberate evolution from the incumbent purely-flat system).
-- Spotify-shaped chrome, Cozyroom-owned palette: the current in-app icon is a placeholder borrowed from Spotify's mark; it is not a binding brand asset and should be replaced with a Cozyroom-original mark during polish/new-work passes.
+## Colours (Tidal set)
 
-## Colors
-
-A single accent (paper-white) against three densities of near-black. No hue exists anywhere in the base system — any color that appears (status reds/greens/blues on charts, provider badges) is local to that one context, never promoted to a system color.
-
-### Primary
-- **Paper White** (`#ffffff`, token `paper-white`): the only accent. Used for primary buttons, active/selected states, the single interactive underline/highlight. Always paired with black or near-black foreground text on top of it — never white text over it.
-
-### Neutral
-- **Void Black** (`#050505`, token `void-black`): the app background (`--bg`).
-- **Charcoal Panel** (`#0e0e0e`, token `charcoal-panel`): resting surfaces — cards, inputs, dropdowns (`--surface`).
-- **Raised Charcoal** (`#111111`, token `raised-charcoal`): a slightly lighter tier for elements that sit above a Charcoal Panel surface (`--elevated`).
-- **Surface Hover Wash** (`rgba(255,255,255,0.07)`, token `surface-hover-wash`): the hover/pressed state for rows and panels (`--surface-hover`).
-- **Bright Text** (`rgba(255,255,255,0.92)`): primary reading text (`--text`).
-- **Dim Text** (`rgba(255,255,255,0.55)`): secondary/meta text — timestamps, labels, muted rows (`--text-muted`).
-- **Ghost Text** (`rgba(255,255,255,0.32)`): tertiary/disabled-weight text (`--text-faint`).
-
-### Named Rules
-**The One Accent Rule.** Paper White is the only accent color in the system. Anything that wants to look "selected," "primary," or "on" reaches for it — never a second brand hue.
-
-**The No-Accent-Token Rule.** There is no `--accent` CSS variable in the codebase — referencing it silently resolves to nothing (a confirmed, previously-shipped bug class). The real accent token is `var(--green)`, which is literally white, always paired with `color: #000` for legible text/icons on top of it. `--purple` is currently also white and should be treated as an unused legacy alias, not a second hue — don't build new work assuming it is distinct from `--green`.
-
-**The Data Needs Color Rule (narrowed).** Two distinct chart color systems, both scoped to data viz and never to UI chrome: (1) the **categorical palette** `--chart-1..8` for separating series/categories (see the Chart-Palette Rule); (2) **semantic status** — `--chart-fail` / `--chart-warn` / `--chart-caution` / `--chart-ok` — reserved for meaning monochrome can't express (red=failure, amber/yellow=warning severity, green=success), never mixed into the categorical rotation. The old ad-hoc per-page hue palettes (`#22d3ee`, `#f59e0b`, `#a78bfa`, GitHub language colors, tier/impact hues in TrendingChartMode, …) were all removed in favor of these two token sets.
-
-**The Genre Tile Color Rule.** The Browse-by-genre grid on the Search page (empty-query state, `.genre-tile` in SearchPage.tsx) is the second, and only other, deliberate exception to the One Accent Rule — a rotating six-color duotone palette tints each genre's cover photo (grayscale image + a per-tile hue via `mix-blend-mode: color`), the way Apple Music's genre tiles work, because a wall of identical monochrome tiles gives the eye nothing to scan by. This palette is scoped strictly to that grid: it must never be promoted into a system-wide token, reused for album/artist/playlist artwork elsewhere, or extended to any other tile/card type outside Browse-by-genre.
-
-### Light Theme
-
-Added 2026-09-02 as `:root[data-theme="light"]`, toggled from the Sidebar (persisted to `localStorage`, applied pre-paint via an inline script in `index.html` to avoid a flash of the wrong theme). Structural tokens invert; accent stays fixed.
-
-- **Smoke, not stark white.** `--bg` is `#eef0f2` — a soft cool-neutral gray, not `#ffffff`. A near-white page canvas under near-white cards reads as flat with no structure (confirmed the hard way: the first ship used `#f7f7f8` for `--bg` next to a `#ffffff` `--surface`, and every card blended into the page). `--surface` (`#ffffff`) is the brightest tier — cards pop off the canvas the same way Charcoal Panel pops off Void Black in dark mode. `--elevated` (`#f7f7f8`) sits between the two, for nested zones inside a white surface rather than "raised above" it — white is already the brightness ceiling, so elevation beyond a surface leans on shadow, not a lighter fill.
-- **Accent does not flip.** `--green`/`--purple` stay Paper White in both themes. Countless buttons pair `background: var(--green)` with a hardcoded `color: #000` — flipping the accent per-theme would silently turn that text invisible in whichever theme made the accent dark. This is a deliberate exception to naive "invert everything" theming.
-- **`--border` exists now.** Fifteen call sites across the stylesheet already referenced `var(--border)` before this token was ever defined — a latent bug (invisible borders in both themes, worse once cards stopped being near-black) that light mode's shipped screenshots surfaced. Defined as `rgba(255,255,255,.12)` dark / `rgba(0,0,0,.12)` light.
-- **Chart marks must key off `--text`, never `--green`.** A chart bar or line fill drawn directly on the page background needs contrast *with that background*, not a fixed accent color — `fill={ACCENT}` (`var(--green)`, always white) is invisible the instant the canvas turns light. `var(--text)` correctly tracks the background in both themes. Multi-series charts keep their sanctioned hue palette (Data Needs Color Rule) unmodified; only the single-series monochrome marks and shared chart chrome (grid lines, tooltip background/border) needed to move off hardcoded dark-mode hex values (`#ffffff10`, `#1e1e1e`, `#333`) onto `var(--border)` / `var(--elevated)` / `var(--surface-hover)`.
-- **Any element using a literal `#fff`/`white` fill instead of `currentColor` will vanish on this background.** Found and fixed in `CozyroomMark` (the wordmark logo) and `Spinner` (the loading equalizer) — both previously hardcoded white, both correct now via `currentColor` / `var(--text)`. Treat a hardcoded white fill anywhere in the codebase as a light-theme bug on sight.
-
-## Typography
-
-**Display Font:** Space Grotesk (token `--font-display`, falling back to Geist) — a distinctive grotesque used for report/dashboard titles (`.page-title`, `.tc-section-title`, chart-card labels) and big stat numbers, added 2026-09-07 to give the dashboards a more premium, "operator-console" character. Body/UI stays Geist.
-**Body Font:** Geist (same stack)
-**Label/Mono Font:** Geist Mono (falling back to 'SFMono-Regular', monospace)
-
-**Character:** A single humanist grotesque (Geist) carries almost everything — display, body, and UI chrome all read as one calm voice. Geist Mono is reserved for anything that wants to feel like raw data or a technical readout (chat model names, provider badges, chart ranks, log timestamps), which is what actually creates hierarchy in a system with only one color.
-
-### Hierarchy
-- **Display** (900, `clamp(24px, 5vw, 52px)`, line-height 1.1): page titles (`.page-title`, hero titles).
-- **Title** (700, 18px): section headers, card titles.
-- **Body** (400, 14px, line-height 1.5): default reading and UI text.
-- **Label** (600, 11px, letter-spacing 0.08em, uppercase where used): table headers, small buttons, badges — frequently set in Geist Mono instead of Geist to read as "system" text.
+| Role | Token | Value |
+|---|---|---|
+| Canvas | `--bg` | `#000000` |
+| Surface / row | `--surface` | `#141414` |
+| Raised | `--surface-2` | `#1c1c1c` |
+| Hover / elevated | `--surface-3` | `#2d2d2d` |
+| Media card | `--card` | `#0e0e10` |
+| Cover placeholder | `--img` | `#242429` |
+| Text primary | `--text` | `rgba(255,255,255,.95)` |
+| Text secondary | `--text-muted` | `rgba(255,255,255,.55)` |
+| Text tertiary | `--text-faint` | `rgba(255,255,255,.30)` |
+| **Accent (teal)** | `--accent` | `#33ffee` |
+| Primary-button fill (white) | `--fill-10` | `rgba(255,255,255,.95)` |
+| Glyph on white | `--on-fill` | `#101010` |
+| Round/chip fill | `--fill-40` | `rgba(255,255,255,.08)` |
+| Hairline | `--border` | `rgba(255,255,255,.09)` |
 
 ### Named Rules
-**The Mono-Means-Machine Rule.** Switch to Geist Mono only for content that is literally data or system output (model names, token counts, timestamps, ranks) — never for prose or UI copy. Mono is how this system signals "this is a readout," not a decorative typographic accent.
+- **The Teal-Accent Rule.** `#33ffee` is the ONE chromatic accent — links, focus
+  rings, eyebrows, badges, active-nav marks, single-series chart marks. It is
+  **never a large button fill** (that stays white, Tidal-style). No second hue.
+- **The White-Primary Rule.** Primary buttons and play buttons are white fill
+  (`--fill-10`) + dark glyph (`--on-fill`). Any `background: var(--accent)` on a
+  large CTA is wrong — repoint to `--fill-10`.
+- **The Cover-Gradient Rule.** Only album/artist/playlist **detail** pages get the
+  Apple-Music tint wash (derived from cover). Library grids and system pages stay
+  on the flat `#000` canvas. Never invent a tint where there's no cover.
+- **Data Needs Colour (retained).** Charts keep `--chart-1..8` + semantic status,
+  re-tuned for the black canvas; single series uses teal `--chart-1`.
+- **Genre Tile exception (retained).** SearchPage `.genre-tile` duotone stays scoped.
 
-## Layout
+## Structure (Apple Music)
 
-Two-tier structure: a persistent app sidebar (`--sidebar-w: 220px`, collapsible to `--sidebar-collapsed-w: 56px`) plus a persistent bottom player bar (`--player-h: 72px`, `56px` on mobile), with the routed page filling the remainder. Content pages default to full-width with `32px` padding (`.page`); a small number of reading-focused surfaces (the AI chat column, the Now Playing overlay, the ebook reader body) instead cap to a centered, readable column and scale that cap up in three explicit steps at 1920px/2560px/3840px so wide monitors don't strand the content in a fixed mobile-era width — established today via `.ai-page`, `.npo-body`, `.stats-page-body`, `.debug-page-body`, `.album-page` in `index.css`. New reading-width surfaces should follow the same three-breakpoint scaling pattern rather than a single static `max-width`.
+- **Shell:** ~232px glass sidebar + fluid main (`0 32px` gutters). Sidebar is
+  `saturate(2) blur(60px)` glass over the dark canvas, `.5px` divider.
+- **Sidebar nav:** 28–36px rows, 14px text, icon in the accent, active row = a
+  faint `rgba(255,255,255,.08)` fill (no glow).
+- **Shelves:** `section.block` sections with a `h2` (26–30 / 700) header + optional
+  "View all", horizontal scroll of cards.
+- **Song-rows:** dense list rows, cover 56 (r `cover` = 2px), title/artist stacked,
+  hover reveals the play control.
+- **Segmented control:** `.seg` track r9, selected segment gets a raised fill +
+  small shadow.
+- **Header/search:** sticky, `saturate(1.8) blur(20px)`, `.5px` bottom divider.
 
-Mobile breakpoint is `900px`: sidebar hides in favor of a bottom mini-player + radial/mobile nav, and any page-level secondary sidebar (e.g. the AI conversation history panel) collapses into a slide-in overlay behind a toggle rather than disappearing outright.
+## Gradient method (Apple Music `.am-tint`)
+
+On a detail page with a cover:
+1. Derive a dominant **dark** colour from the cover (client-side; a muted, low-L
+   version so text stays legible).
+2. Set it as the page background wash behind the hero + first shelf (fade to `#000`).
+3. Tint secondary text → a lighter derivative; tint dividers → a mid derivative.
+4. Primary text stays near-white; the accent stays teal.
+
+This is the one place colour is data-derived. Everywhere else uses the flat Tidal
+palette. Implement as a `.tinted` container + CSS custom props set inline from the
+extracted colour (like the app's existing playlist/artist hero gradient, extended
+to the full Apple-Music page-wash treatment).
+
+## Controls (Tidal primitives)
+
+- **Primary button** (`.td-btn--primary`): white fill, dark glyph, pill, `9px 16px`,
+  40px tall (compact 32px). Hover → `--fill-20`.
+- **Secondary** (`.td-btn--secondary`): `--fill-40` fill, white text, pill.
+- **Round icon** (`.td-round`): 32px, `--fill-40` fill, full-round.
+- **Play** (`.td-play-mini`): 14px **white** circle, dark glyph, `play` shadow;
+  `.td-play-row` 40px transparent white for row hover.
+- **Tab** (`.td-tab`): text + 2px underline on active (`--text`), teal dotted focus.
+- **Fav / More** (`.td-fav` 36 round, `.td-more` 32 ghost).
+- **Focus:** Tidal uses `1px dotted var(--accent)` (teal) on controls; keep the
+  visible-focus invariant with the teal ring.
 
 ## Elevation & Depth
 
-The incumbent implementation was almost entirely flat, using a 1px inset hairline (`inset 0 0 0 1px rgba(255,255,255,0.05–0.3)`) in place of drop shadows for structure — a reasonable choice on a void-black background, where dark shadows don't read at all. The owner asked for a more **tactile and confident** feel going forward, so this system commits to a real (if restrained) elevation model rather than staying purely flat:
-
-- **Resting:** Charcoal Panel surface, hairline inset border only (as today) — no shadow.
-- **Raised (hover-capable elements: buttons, cards, list rows):** on hover/focus, lift with a soft ambient glow — `box-shadow: 0 8px 20px -8px rgba(255,255,255,0.2)` (already used on the AI avatar and send button) — plus a `1–2px` translateY. Light, not color, reads as depth here.
-- **Floating (popovers, the reaction picker, modals):** a heavier ambient shadow against the page behind it — `box-shadow: 0 6px 20px rgba(0,0,0,0.5)` (already used by `.ai-reaction-picker`) — since floating surfaces sit above other UI, not directly on void-black.
-
-### Named Rules
-**The Light-Not-Color Rule.** Depth is expressed with white ambient glow and subtle lift, never with a second color or a dark drop-shadow (dark shadows are invisible on a `#050505` background). This is what makes elevation feel tactile without breaking the monochrome rule.
-
-## Shapes
-
-Corner radius scales with a component's intent rather than following one fixed value: small chips/badges/inline controls use `4–8px`; cards, panels, and bubbles use `11–20px`; anything meant to feel like a discrete "pill" (badges, small icon buttons, avatars, the reaction trigger) goes fully round (`999px` / `50%`). Borders are rare and always a hairline `1px solid rgba(255,255,255,0.07–0.15)` — never a heavier stroke.
-
-## Components
-
-### Buttons
-- **Shape:** `8px` radius by default (`{rounded.md}`); fully round for icon-only buttons.
-- **Primary:** Paper White background, black text, `10px 16px` padding.
-- **Hover / Focus:** background steps down to `#e0e0e0`; add the Raised elevation glow.
-- **Ghost / Secondary:** transparent background, `1px` hairline border, Dim Text color; used for the many small control-row buttons (🧠, 📋-equivalent, model input, etc.).
-
-### Cards / Containers
-- **Corner Style:** `11–16px`.
-- **Background:** Charcoal Panel at rest, Raised Charcoal or Surface Hover Wash on hover.
-- **Shadow Strategy:** none at rest; Raised elevation glow on hover for interactive cards.
-- **Border:** `1px` hairline, `rgba(255,255,255,0.07)`.
-
-### Inputs / Fields
-- **Style:** Charcoal Panel background, `8px` radius, no visible border at rest.
-- **Focus:** inset hairline brightens to `rgba(255,255,255,0.5)` (see `.ai-input-wrap:focus-within`) rather than an outline ring — consistent with the hairline-as-structure language.
-
-### Navigation
-- Sidebar items: Body-weight label text, Dim Text at rest, Bright Text + Surface Hover Wash background when active/hovered, generous `12–16px` row padding for a console-like scan rhythm. Mobile drops the sidebar for a bottom mini-player and radial nav; secondary in-page navigation (e.g. AI chat history) becomes a slide-in overlay behind a toggle.
-
-### Conversation Sidebar (signature component)
-The AI assistant's chat-history sidebar (`.ai-history-sidebar`) is the clearest expression of "console, not chat toy": a fixed 260px column, one-line-truncated session titles in Body weight over a Geist Mono timestamp, active session marked only by Surface Hover Wash — no color, no icon badge.
+Dark surfaces + real black shadows for floating layers (`shadows.menu` for
+dropdowns, `shadows.panel` for the queue/floating panels). Cards lift on hover
+with `--surface-3` fill + a subtle `scale(1.01)`. No white-glow (that was Midnight
+Deck); depth here is surface-tier + shadow, Tidal-style.
 
 ## Charts
 
-Added 2026-09-06. The stats dashboards (AIStatsPage, MusicStatsPage, RequestLogPage, TrendingChartMode — all recharts) were redesigned to make data visualization obey the same monochrome discipline as the rest of the Midnight Deck. The charting language is distilled from the `lieflat-charts` Mono system (PolyForm-Noncommercial; re-expressed as our own tokens, never copied) and mapped onto our dark-first palette — density stays console-tight, *not* lieflat's editorial whitespace.
+Retained system, re-tuned for `#000`. Grid hairline `var(--border)` dashed; axis
+`var(--text-muted)`; tooltip `var(--surface)` + `1px var(--border)` + `var(--text)`;
+single-series marks teal `var(--chart-1)`; multi-series `--chart-1..8`.
 
-### Named Rules
+## Inherited Invariants
 
-**The Chart-Palette Rule.** Every chart draws from one cohesive, muted categorical palette — `--chart-1 … --chart-8` (index.css) — so the whole dashboard reads as one system. It covers *all* data marks: categorical series, ordinal buckets/tiers, the language dimension, and single-series bars/lines (a single series uses `--chart-1`). No chart mixes this palette with a different color scheme, and no chart falls back to a per-page ad-hoc hue set. The palette is intentionally muted/desaturated so it sits calmly on Void Black without becoming the loud, multi-hue "dashboard" look the Midnight Deck rejects elsewhere — this is the one sanctioned place color is used decoratively (to separate series), and it is deliberately restrained. The mid-tones are theme-agnostic (no per-theme override); text on a colored mark uses `var(--text)`, which stays legible on the mid-tones in both themes.
-
-> History: an earlier pass tried a strict monochrome gray ladder (lightness = importance) plus a GitHub `LANG_COLORS` identity exception. Shipped, it read as jarring — a couple of colored charts (momentum scatter, language bars) stranded among grayscale ones. Replaced 2026-09-07 by this single-palette rule. The stale `LANG_COLORS` `ignoreValues` in `.impeccable/config.json` are now dead (langColor hashes into the palette instead) and can be pruned.
-
-### Chart chrome
-
-- **Grid:** hairline, `var(--chart-grid)` (= `var(--border)`), `strokeDasharray "3 3"`. Never a hardcoded dark-only hex — those vanished in light theme.
-- **Axis / ticks:** `var(--chart-axis)` (= `var(--text-muted)`); axis *labels* one tier fainter (`var(--text-faint)`).
-- **Bars:** capsule ends — `radius={[999,999,0,0]}` (vertical) / `[0,999,999,0]` (horizontal), matching lieflat's pill bar-caps.
-- **Tooltips:** `var(--elevated)` background, `1px solid var(--border)`, `var(--text)` copy — theme-aware, replacing the old `#1e1e2e`/`#333` hardcodes.
-- **Matrix heat** (lang × tier table): a single-hue sequential — `color-mix(in srgb, var(--chart-1) N%, transparent)` where N encodes count; the cell number stays `var(--text)`, legible on the palette mid-tone in both themes.
-- **Treemap:** color carries no data (area already encodes frequency), so every tile is one palette hue (`--chart-1`); label text is `var(--text)`.
+Carried verbatim (behavioural/a11y — do NOT regress):
+1. **Visible keyboard focus** on every interactive element — now the teal ring
+   (`1px dotted var(--accent)` on controls; `3px` teal on cards/nav). Keep the
+   `.ai-input`/`.artist-filter-input` opt-outs.
+2. **iOS tap:** `touch-action: manipulation` verbatim.
+3. **Wide-monitor reading widths:** 1920/2560/3840 breakpoints for reading columns.
+4. **Anti-flash theme boot** via `index.html` inline script + `localStorage`
+   (`cozyroom-theme`). Default is now **dark**; respect a stored value.
+5. **`currentColor` for brand/loading marks** (`CozyroomMark`, `Spinner`).
+6. **Scrollbars hidden globally.**
+7. **`index.css` is the single entry stylesheet, append/edit-in-place** — fonts
+   `@import` stays at the very top.
 
 ## Do's and Don'ts
 
-### Do:
-- **Do** treat Paper White as the only accent in any new surface — resist the urge to add a second color for "variety."
-- **Do** use the three explicit wide-monitor breakpoints (1920/2560/3840px) for any new reading-width column, matching `.ai-page`.
-- **Do** give interactive elements a hover glow + slight lift (Raised elevation) — flat-and-static now reads as unfinished, not minimal.
-- **Do** reserve Geist Mono for data/system readouts only.
+### Do
+- Use the flat Tidal dark palette everywhere except detail-page cover washes.
+- Reserve teal `#33ffee` for links/focus/eyebrows/badges/active marks + single-series charts.
+- Make primary + play buttons WHITE fill with dark glyph (Tidal).
+- Lay pages out on Apple Music structure (glass sidebar, shelves, song-rows, seg).
+- Use the cover-gradient method only on album/artist/playlist detail pages.
 
-### Don't:
-- **Don't** reference `var(--accent)` — it does not exist; use `var(--green)`.
-- **Don't** add drop shadows in dark colors — they're invisible on `#050505`; use the white ambient-glow pattern instead.
-- **Don't** treat the current Spotify-shaped play-button icon as a locked brand asset — it's an acknowledged placeholder, fair game to replace with a Cozyroom-original mark.
-- **Don't** touch backend/DB/k8s config as part of design work in this project — impeccable's scope here is `frontend/src` only (owner-confirmed constraint).
+### Don't
+- Don't use teal as a large button fill, and don't add a second accent hue.
+- Don't put the cover-tint wash on library grids or system pages.
+- Don't reintroduce the apple.com light canvas or the blue `#0071E3` accent.
+- Don't touch backend/DB/k8s as part of design work (`frontend/src` only).
+- Don't break any Inherited Invariant.
 
 ## Origin
 
-- Created by `/impeccable document` (scan mode), 2026-08-26, from `frontend/src/index.css` custom properties and rendered component patterns, plus a qualitative interview with the owner (Creative North Star, logo status, elevation direction, component feel).
+- Created 2026-09-29 by studying `ui-kits/music-apple-com` (structure + cover-gradient
+  method) and `ui-kits/tidal-com` (colour set + control primitives), per owner
+  direction to take Apple Music's structure/gradient and Tidal's palette/buttons.
+  Structure/colours studied only; no vendor images/logos/copy reproduced. Supersedes
+  the interim apple.com-light system; Midnight Deck preserved at
+  [`DESIGN.midnight-deck.archived.md`](DESIGN.midnight-deck.archived.md).

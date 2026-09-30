@@ -20,8 +20,8 @@ const statusColor = (s: number) =>
 function SummaryCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 16px', textAlign: 'center', minWidth: 110 }}>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>{sub}</div>}
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{sub}</div>}
       <div style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>{label}</div>
     </div>
   )
@@ -203,7 +203,7 @@ export default function RequestLogPage() {
           <button onClick={load} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, background: 'var(--surface)' }}>↻</button>
           <button
             onClick={() => setAutoRefresh(a => !a)}
-            style={{ padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, background: autoRefresh ? 'var(--green)' : 'var(--surface)', color: autoRefresh ? '#000' : 'inherit', fontWeight: autoRefresh ? 600 : 400 }}
+            style={{ padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, background: autoRefresh ? 'var(--accent)' : 'var(--surface)', color: autoRefresh ? '#fff' : 'inherit', fontWeight: autoRefresh ? 600 : 400 }}
           >
             {autoRefresh ? '● Live' : '○ Paused'}
           </button>
@@ -230,7 +230,7 @@ export default function RequestLogPage() {
               <YAxis type="category" dataKey="endpoint" tick={{ fontSize: 9 }} width={220} />
               <Tooltip
                 cursor={{ fill: 'var(--surface-hover)' }}
-                contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 11 }}
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 11 }}
                 formatter={(val, name) => [
                   name === 'avg' ? fmtMs(val as number) : name === 'p95' ? fmtMs(val as number) : fmtMs(val as number),
                   name === 'avg' ? 'Avg' : name === 'p95' ? 'P95' : 'Max',
@@ -252,8 +252,8 @@ export default function RequestLogPage() {
         {(['all', '2xx', '3xx', '4xx', '5xx'] as StatusFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '3px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-            background: filter === f ? 'var(--green)' : 'var(--surface)',
-            color: filter === f ? '#000' : 'inherit',
+            background: filter === f ? 'var(--accent)' : 'var(--surface)',
+            color: filter === f ? '#fff' : 'inherit',
             fontWeight: filter === f ? 600 : 400,
           }}>{f}</button>
         ))}
@@ -268,7 +268,7 @@ export default function RequestLogPage() {
 
       {/* Request table */}
       <div style={{ background: 'var(--surface)', borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '70px 56px 1fr 52px 90px', padding: '8px 14px', fontSize: 10, opacity: 0.45, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '70px 56px 1fr 52px 90px', padding: '8px 14px', fontSize: 10, opacity: 0.45, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border)' }}>
           <span>Time</span>
           <span>Method</span>
           <span>Path</span>
@@ -287,7 +287,7 @@ export default function RequestLogPage() {
                   gridTemplateColumns: '70px 56px 1fr 52px 90px',
                   padding: '5px 14px',
                   fontSize: 12,
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  borderBottom: '1px solid var(--border)',
                   borderLeft: `2px solid ${statusColor(e.status)}`,
                 }}
               >
@@ -309,35 +309,35 @@ export default function RequestLogPage() {
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sơ đồ topology (số liệu live)</div>
           <svg width="100%" viewBox="0 0 920 260" style={{ minWidth: 820, display: 'block' }}>
             {/* Client node */}
-            <rect x="10" y="90" width="150" height="80" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-            <text x="85" y="112" textAnchor="middle" fontSize="11" fontWeight={700} fill="rgba(255,255,255,0.92)">Client (bạn)</text>
-            <text x="85" y="130" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="rgba(255,255,255,0.55)">{instance.cf_connecting_ip}</text>
-            <text x="85" y="144" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.55)">{instance.cf_ip_country}</text>
-            <text x="85" y="160" textAnchor="middle" fontSize="8" fontFamily="monospace" fill="rgba(255,255,255,0.32)">{instance.cf_ray}</text>
+            <rect x="10" y="90" width="150" height="80" rx="8" fill="var(--glass-fill)" stroke="var(--border-strong)" strokeWidth="1.5" />
+            <text x="85" y="112" textAnchor="middle" fontSize="11" fontWeight={700} fill="var(--text)">Client (bạn)</text>
+            <text x="85" y="130" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="var(--text-muted)">{instance.cf_connecting_ip}</text>
+            <text x="85" y="144" textAnchor="middle" fontSize="9" fill="var(--text-muted)">{instance.cf_ip_country}</text>
+            <text x="85" y="160" textAnchor="middle" fontSize="8" fontFamily="monospace" fill="var(--text-faint)">{instance.cf_ray}</text>
 
-            <line x1="160" y1="130" x2="270" y2="130" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-            <polygon points="270,125 280,130 270,135" fill="rgba(255,255,255,0.3)" />
-            <text x="215" y="122" textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.55)">Cloudflare</text>
+            <line x1="160" y1="130" x2="270" y2="130" stroke="var(--border-strong)" strokeWidth="1.5" />
+            <polygon points="270,125 280,130 270,135" fill="var(--border-strong)" />
+            <text x="215" y="122" textAnchor="middle" fontSize="8" fill="var(--text-muted)">Cloudflare</text>
 
             {/* Backend pod node */}
-            <rect x="280" y="80" width="190" height="100" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-            <text x="375" y="102" textAnchor="middle" fontSize="11" fontWeight={700} fill="rgba(255,255,255,0.92)">Backend pod</text>
-            <text x="375" y="120" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="rgba(255,255,255,0.55)">{instance.pod_name}</text>
-            <text x="375" y="136" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="rgba(255,255,255,0.55)">node: {instance.node_name}</text>
-            <text x="375" y="152" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="rgba(255,255,255,0.55)">{instance.pod_ip}</text>
-            <text x="375" y="168" textAnchor="middle" fontSize="8" fontFamily="monospace" fill="rgba(255,255,255,0.32)">remote: {instance.remote_addr}</text>
+            <rect x="280" y="80" width="190" height="100" rx="8" fill="var(--glass-fill)" stroke="var(--border-strong)" strokeWidth="1.5" />
+            <text x="375" y="102" textAnchor="middle" fontSize="11" fontWeight={700} fill="var(--text)">Backend pod</text>
+            <text x="375" y="120" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="var(--text-muted)">{instance.pod_name}</text>
+            <text x="375" y="136" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="var(--text-muted)">node: {instance.node_name}</text>
+            <text x="375" y="152" textAnchor="middle" fontSize="9" fontFamily="monospace" fill="var(--text-muted)">{instance.pod_ip}</text>
+            <text x="375" y="168" textAnchor="middle" fontSize="8" fontFamily="monospace" fill="var(--text-faint)">remote: {instance.remote_addr}</text>
 
             {/* Service nodes fanning out */}
             {services.map((s, i) => {
               const y = 20 + i * 62
-              const color = s.reachable ? '#4ade80' : '#f87171'
+              const color = s.reachable ? 'var(--chart-ok)' : 'var(--chart-fail)'
               return (
                 <g key={s.name}>
                   <line x1="470" y1="130" x2="600" y2={y + 24} stroke={color} strokeWidth="1.5" opacity={0.8} />
                   <polygon points={`${596},${y + 24 - 4} ${606},${y + 24} ${596},${y + 24 + 4}`} fill={color} />
-                  <rect x="610" y={y} width="300" height="48" rx="6" fill="rgba(255,255,255,0.03)" stroke={color} strokeWidth="1.5" />
+                  <rect x="610" y={y} width="300" height="48" rx="6" fill="var(--glass-fill)" stroke={color} strokeWidth="1.5" />
                   <text x="622" y={y + 18} fontSize="10" fontWeight={700} fill={color}>{s.name}</text>
-                  <text x="622" y={y + 32} fontSize="8" fontFamily="monospace" fill="#94a3b8">{s.addr}</text>
+                  <text x="622" y={y + 32} fontSize="8" fontFamily="monospace" fill="var(--text-muted)">{s.addr}</text>
                   <text x="898" y={y + 32} textAnchor="end" fontSize="9" fontFamily="monospace" fill={color}>
                     {s.reachable ? `${s.latency_ms}ms` : 'timeout'}
                   </text>
@@ -351,7 +351,7 @@ export default function RequestLogPage() {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                 {traceroute.hops!.map((h, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', fontSize: 9, fontFamily: 'monospace', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={h}>
+                    <div style={{ padding: '4px 8px', borderRadius: 6, background: 'var(--glass-fill-2)', border: '1px solid var(--border)', fontSize: 9, fontFamily: 'monospace', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={h}>
                       {h.trim()}
                     </div>
                     {i < traceroute.hops!.length - 1 && <span style={{ opacity: 0.4, fontSize: 11 }}>→</span>}
@@ -384,10 +384,10 @@ export default function RequestLogPage() {
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Service reachability (TCP dial từ backend pod)</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }}>
           {services.map(s => (
-            <div key={s.name} style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', borderLeft: `2px solid ${s.reachable ? '#4ade80' : '#f87171'}` }}>
+            <div key={s.name} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--glass-fill)', borderLeft: `2px solid ${s.reachable ? 'var(--chart-ok)' : 'var(--chart-fail)'}` }}>
               <div style={{ fontSize: 12, fontWeight: 600 }}>{s.name}</div>
               <div style={{ fontSize: 10, opacity: 0.5, fontFamily: 'monospace' }}>{s.addr}</div>
-              <div style={{ fontSize: 11, marginTop: 4, color: s.reachable ? '#4ade80' : '#f87171' }}>
+              <div style={{ fontSize: 11, marginTop: 4, color: s.reachable ? 'var(--chart-ok)' : 'var(--chart-fail)' }}>
                 {s.reachable ? `reachable · ${s.latency_ms}ms` : `unreachable${s.error ? ` · ${s.error}` : ''}`}
               </div>
             </div>
@@ -402,7 +402,7 @@ export default function RequestLogPage() {
           <button
             onClick={handleRunTraceroute}
             disabled={tracerouteLoading}
-            style={{ padding: '3px 12px', borderRadius: 6, border: 'none', cursor: tracerouteLoading ? 'default' : 'pointer', fontSize: 12, background: 'var(--green)', color: '#000', opacity: tracerouteLoading ? 0.6 : 1 }}
+            style={{ padding: '3px 12px', borderRadius: 6, border: 'none', cursor: tracerouteLoading ? 'default' : 'pointer', fontSize: 12, background: 'var(--accent)', color: '#fff', opacity: tracerouteLoading ? 0.6 : 1 }}
           >
             {tracerouteLoading ? 'Đang chạy…' : 'Chạy traceroute'}
           </button>

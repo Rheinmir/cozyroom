@@ -49,7 +49,7 @@ const fmtNum = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : String(n)
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 16px', textAlign: 'center', minWidth: 100 }}>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
       <div style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>{label}</div>
     </div>
   )
@@ -352,8 +352,8 @@ export default function AIStatsPage() {
           {(['charts', 'logs'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-              background: tab === t ? 'var(--green)' : 'var(--surface)',
-              color: tab === t ? '#000' : 'inherit', fontWeight: tab === t ? 600 : 400,
+              background: tab === t ? 'var(--accent)' : 'var(--surface)',
+              color: tab === t ? '#fff' : 'inherit', fontWeight: tab === t ? 600 : 400,
             }}>{t === 'charts' ? 'Biểu đồ' : 'Logs'}</button>
           ))}
         </div>
@@ -364,7 +364,7 @@ export default function AIStatsPage() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
             <button onClick={() => { setLogsFailedOnly(f => !f); setLogsPage(0) }} style={{
               padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-              background: logsFailedOnly ? '#f87171' : 'var(--surface)', color: logsFailedOnly ? '#fff' : 'inherit',
+              background: logsFailedOnly ? 'var(--chart-fail)' : 'var(--surface)', color: logsFailedOnly ? '#fff' : 'inherit',
             }}>{logsFailedOnly ? '⚠️ Chỉ lỗi' : 'Tất cả'}</button>
             <button onClick={() => loadLogs(logsFailedOnly, logsPage)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, background: 'var(--surface)' }}>↻</button>
             <span style={{ fontSize: 11, opacity: 0.4, marginLeft: 'auto' }}>trang {logsPage + 1}</span>
@@ -382,21 +382,21 @@ export default function AIStatsPage() {
                 return (
                   <div key={log.id} style={{
                     background: 'var(--surface)', borderRadius: 8, padding: '10px 14px',
-                    borderLeft: `3px solid ${log.failed ? '#f87171' : '#4ade80'}`,
+                    borderLeft: `3px solid ${log.failed ? 'var(--chart-fail)' : 'var(--chart-ok)'}`,
                   }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
                       {log.failed
-                        ? <span style={{ color: '#f87171', fontSize: 11 }}>⚠️ {log.fail_reason}</span>
-                        : <span style={{ color: '#4ade80', fontSize: 11 }}>✓</span>}
+                        ? <span style={{ color: 'var(--chart-fail)', fontSize: 11 }}>⚠️ {log.fail_reason}</span>
+                        : <span style={{ color: 'var(--chart-ok)', fontSize: 11 }}>✓</span>}
                       <span style={{ fontSize: 11, opacity: 0.5, marginLeft: 'auto' }}>{(log.created_at || '').slice(0, 16).replace('T', ' ')}</span>
                       <span style={{ fontSize: 10, opacity: 0.4 }}>{modelLabel(log.model || '')}</span>
                       <span style={{ fontSize: 10, opacity: 0.35 }}>↑{log.tokens_in} ↓{log.tokens_out}</span>
-                      <button onClick={() => handleDislike(log.id)} title="Đánh dấu xấu" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: '0 2px', opacity: log.fail_reason === 'user_dislike' ? 1 : 0.25, color: log.fail_reason === 'user_dislike' ? '#f87171' : 'inherit' }}>👎</button>
+                      <button onClick={() => handleDislike(log.id)} title="Đánh dấu xấu" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: '0 2px', opacity: log.fail_reason === 'user_dislike' ? 1 : 0.25, color: log.fail_reason === 'user_dislike' ? 'var(--chart-fail)' : 'inherit' }}>👎</button>
                     </div>
                     <div style={{ fontSize: 12, marginBottom: 4 }}>👤 {(log.user_msg || '').slice(0, 120)}{(log.user_msg || '').length > 120 ? '…' : ''}</div>
                     <div style={{ fontSize: 11, opacity: 0.75 }}>🤖 {(log.ai_msg || '').slice(0, 160)}{(log.ai_msg || '').length > 160 ? '…' : ''}</div>
                     {toolErrs.length > 0 && (
-                      <div style={{ fontSize: 10, color: '#fca5a5', marginTop: 4 }}>
+                      <div style={{ fontSize: 10, color: 'var(--chart-fail)', marginTop: 4 }}>
                         {toolErrs.map((e, i) => <div key={i}>🔧 {e}</div>)}
                       </div>
                     )}
@@ -427,47 +427,47 @@ export default function AIStatsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Request đắt / rẻ nhất</span>
           {/* Date range */}
-          <input type="date" value={dateFrom} max={dateTo} onChange={e => setDateFrom(e.target.value)} style={{ fontSize: 10, background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: 6, color: '#fff', padding: '2px 6px', cursor: 'pointer' }} />
+          <input type="date" value={dateFrom} max={dateTo} onChange={e => setDateFrom(e.target.value)} style={{ fontSize: 10, background: 'var(--bg)', border: 'none', borderRadius: 6, color: 'var(--text)', padding: '2px 6px', cursor: 'pointer' }} />
           <span style={{ fontSize: 10, opacity: 0.4 }}>→</span>
-          <input type="date" value={dateTo} min={dateFrom} max={today} onChange={e => setDateTo(e.target.value)} style={{ fontSize: 10, background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: 6, color: '#fff', padding: '2px 6px', cursor: 'pointer' }} />
+          <input type="date" value={dateTo} min={dateFrom} max={today} onChange={e => setDateTo(e.target.value)} style={{ fontSize: 10, background: 'var(--bg)', border: 'none', borderRadius: 6, color: 'var(--text)', padding: '2px 6px', cursor: 'pointer' }} />
           {/* Pricing table toggle + OCR */}
-          <button onClick={() => setShowPricing(o => !o)} style={{ marginLeft: 'auto', fontSize: 10, padding: '2px 9px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showPricing ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.07)', color: '#fff' }}>
+          <button onClick={() => setShowPricing(o => !o)} style={{ marginLeft: 'auto', fontSize: 10, padding: '2px 9px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showPricing ? 'var(--surface-hover)' : 'var(--bg)', color: 'var(--text)' }}>
             💰 Giá token {showPricing ? '▲' : '▼'}
           </button>
         </div>
 
         {/* Model filter pills */}
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
-          <button onClick={() => setExtremeModel('')} style={{ fontSize: 10, padding: '2px 9px', borderRadius: 100, border: 'none', cursor: 'pointer', background: extremeModel === '' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)', color: extremeModel === '' ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: extremeModel === '' ? 600 : 400 }}>Tất cả</button>
+          <button onClick={() => setExtremeModel('')} style={{ fontSize: 10, padding: '2px 9px', borderRadius: 100, border: 'none', cursor: 'pointer', background: extremeModel === '' ? 'var(--accent)' : 'var(--bg)', color: extremeModel === '' ? '#fff' : 'var(--text-muted)', fontWeight: extremeModel === '' ? 600 : 400 }}>Tất cả</button>
           {all_models.map((m, i) => (
-            <button key={m.name} onClick={() => setExtremeModel(m.name === extremeModel ? '' : m.name)} style={{ fontSize: 10, padding: '2px 9px', borderRadius: 100, border: 'none', cursor: 'pointer', background: extremeModel === m.name ? COLORS[i % COLORS.length] : 'rgba(255,255,255,0.07)', color: extremeModel === m.name ? '#fff' : COLORS[i % COLORS.length], fontWeight: extremeModel === m.name ? 600 : 400 }}>{modelLabel(m.name)}</button>
+            <button key={m.name} onClick={() => setExtremeModel(m.name === extremeModel ? '' : m.name)} style={{ fontSize: 10, padding: '2px 9px', borderRadius: 100, border: 'none', cursor: 'pointer', background: extremeModel === m.name ? COLORS[i % COLORS.length] : 'var(--bg)', color: extremeModel === m.name ? '#fff' : COLORS[i % COLORS.length], fontWeight: extremeModel === m.name ? 600 : 400 }}>{modelLabel(m.name)}</button>
           ))}
         </div>
 
         {/* Pricing table */}
         {showPricing && (
-          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
+          <div style={{ background: 'var(--bg)', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.6 }}>Giá ($/1M tokens)</span>
               <input ref={ocrInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleOcrUpload} />
-              <button onClick={handleOcrClick} disabled={ocrLoading} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showOcrPanel ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', color: '#fff', opacity: ocrLoading ? 0.5 : 1 }}>
+              <button onClick={handleOcrClick} disabled={ocrLoading} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: showOcrPanel ? 'var(--surface-hover)' : 'var(--surface)', color: 'var(--text)', opacity: ocrLoading ? 0.5 : 1 }}>
                 📷 OCR từ ảnh
               </button>
             </div>
             {showOcrPanel && !ocrPending && (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.06)', borderRadius: 8 }}>
-                <button onClick={() => { ocrInputRef.current?.click() }} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.12)', color: '#fff' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, padding: '8px 10px', background: 'var(--surface)', borderRadius: 8 }}>
+                <button onClick={() => { ocrInputRef.current?.click() }} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--surface-hover)', color: 'var(--text)' }}>
                   📁 Chọn file
                 </button>
-                <button onClick={handleOcrPaste} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.15)', color: '#fff' }}>
+                <button onClick={handleOcrPaste} style={{ fontSize: 11, padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--surface-hover)', color: 'var(--text)' }}>
                   📋 Dán từ clipboard
                 </button>
                 <span style={{ fontSize: 10, opacity: 0.4 }}>hoặc Ctrl+V</span>
-                <button onClick={() => setShowOcrPanel(false)} style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.4)' }}>✕</button>
+                <button onClick={() => setShowOcrPanel(false)} style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 8px', borderRadius: 4, border: 'none', cursor: 'pointer', background: 'transparent', color: 'var(--text-muted)' }}>✕</button>
               </div>
             )}
             {ocrPending && (
-              <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <img src={ocrPending.dataUrl} alt="preview" style={{ width: 100, borderRadius: 6, flexShrink: 0, objectFit: 'cover' }} />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -477,20 +477,20 @@ export default function AIStatsPage() {
                       onChange={e => setOcrPending(p => p ? { ...p, prompt: e.target.value } : p)}
                       placeholder={ocrText.startsWith('⏳') ? ocrText : 'Đang nhận dạng...'}
                       rows={5}
-                      style={{ fontSize: 11, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 6, color: '#fff', padding: '6px 8px', resize: 'vertical', fontFamily: 'monospace', lineHeight: 1.5 }}
+                      style={{ fontSize: 11, background: 'var(--bg)', border: 'none', borderRadius: 6, color: 'var(--text)', padding: '6px 8px', resize: 'vertical', fontFamily: 'monospace', lineHeight: 1.5 }}
                     />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                  <button onClick={() => setOcrPending(null)} style={{ fontSize: 11, padding: '3px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>Hủy</button>
-                  <button onClick={submitOcr} disabled={ocrLoading} style={{ fontSize: 11, padding: '3px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: ocrLoading ? 'rgba(255,255,255,0.15)' : 'var(--green)', color: ocrLoading ? '#fff' : '#000', fontWeight: 600 }}>
+                  <button onClick={() => setOcrPending(null)} style={{ fontSize: 11, padding: '3px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>Hủy</button>
+                  <button onClick={submitOcr} disabled={ocrLoading} style={{ fontSize: 11, padding: '3px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', background: ocrLoading ? 'var(--surface-hover)' : 'var(--accent)', color: ocrLoading ? 'var(--text-muted)' : '#fff', fontWeight: 600 }}>
                     {ocrLoading ? '⏳ Đang gửi…' : 'Gửi'}
                   </button>
                 </div>
               </div>
             )}
             {ocrText && !ocrPending && (
-              <div style={{ marginBottom: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 6, fontSize: 10, opacity: 0.6, whiteSpace: 'pre-wrap', maxHeight: 80, overflow: 'auto' }}>
+              <div style={{ marginBottom: 8, padding: '8px 10px', background: 'var(--bg)', borderRadius: 6, fontSize: 10, opacity: 0.6, whiteSpace: 'pre-wrap', maxHeight: 80, overflow: 'auto' }}>
                 <span style={{ fontWeight: 600, opacity: 0.8 }}>OCR text: </span>{ocrText}
               </div>
             )}
@@ -498,7 +498,7 @@ export default function AIStatsPage() {
               {all_models.map((m, i) => {
                 const p = modelPrices[m.name] || { i: 0, o: 0 }
                 const color = COLORS[i % COLORS.length]
-                const inputStyle = { fontSize: 10, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 4, color: '#fff', padding: '2px 5px', textAlign: 'right' as const }
+                const inputStyle = { fontSize: 10, background: 'var(--bg)', border: 'none', borderRadius: 4, color: 'var(--text)', padding: '2px 5px', textAlign: 'right' as const }
                 return (
                   <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
@@ -521,13 +521,13 @@ export default function AIStatsPage() {
             { label: '💚 Rẻ nhất',  log: extremes?.cheapest },
           ] as const).map(({ label, log }) => {
             const modelIdx = log?.model ? all_models.findIndex(m => m.name === log.model) : -1
-            const modelColor = modelIdx >= 0 ? COLORS[modelIdx % COLORS.length] : 'rgba(255,255,255,0.3)'
+            const modelColor = modelIdx >= 0 ? COLORS[modelIdx % COLORS.length] : 'var(--text-faint)'
             const cost = calcCost(log)
             return (
-              <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px' }}>
+              <div key={label} style={{ background: 'var(--bg)', borderRadius: 8, padding: '10px 12px' }}>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.75 }}>{label}</span>
-                  {log?.model && <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 100, background: modelColor + '33', color: modelColor, fontWeight: 600 }}>{modelLabel(log.model)}</span>}
+                  {log?.model && <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 100, background: `color-mix(in srgb, ${modelColor} 20%, transparent)`, color: modelColor, fontWeight: 600 }}>{modelLabel(log.model)}</span>}
                   <span style={{ fontSize: 10, opacity: 0.35, marginLeft: 'auto' }}>{(log?.created_at || '').slice(0, 16).replace('T', ' ')}</span>
                 </div>
                 {log?.id ? <>
@@ -535,7 +535,7 @@ export default function AIStatsPage() {
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{fmtNum((log.tokens_in || 0) + (log.tokens_out || 0))} tok</span>
                     <span style={{ fontSize: 10, opacity: 0.5 }}>↑{fmtNum(log.tokens_in)} ↓{fmtNum(log.tokens_out)}</span>
                     {log.response_ms > 0 && <span style={{ fontSize: 10, opacity: 0.35 }}>{fmtMs(log.response_ms)}</span>}
-                    {cost && <span style={{ fontSize: 11, fontWeight: 700, color: '#facc15', marginLeft: 'auto' }}>{cost}</span>}
+                    {cost && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--chart-warn)', marginLeft: 'auto' }}>{cost}</span>}
                   </div>
                   <div style={{ fontSize: 10, opacity: 0.6, marginBottom: 3, lineHeight: 1.5 }}>👤 {(log.user_msg || '').slice(0, 120)}{(log.user_msg || '').length > 120 ? '…' : ''}</div>
                   <div style={{ fontSize: 10, opacity: 0.4, lineHeight: 1.5 }}>🤖 {(log.ai_msg || '').slice(0, 160)}{(log.ai_msg || '').length > 160 ? '…' : ''}</div>
@@ -555,7 +555,7 @@ export default function AIStatsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+              <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
               <Bar dataKey="success" stackId="a" fill="var(--chart-ok)" name="Thành công" />
               <Bar dataKey="failed"  stackId="a" fill="var(--chart-fail)" name="Thất bại" radius={[999,999,0,0]} />
             </BarChart>
@@ -569,7 +569,7 @@ export default function AIStatsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10 }} tickFormatter={fmtNum} />
-              <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtNum(v as number)} />
+              <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtNum(v as number)} />
               <Line type="monotone" dataKey="tokens_in"  stroke="var(--chart-1)" dot={false} name="Tokens vào" strokeWidth={2} />
               <Line type="monotone" dataKey="tokens_out" stroke="var(--chart-4)" dot={false} name="Tokens ra"  strokeWidth={2} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -586,7 +586,7 @@ export default function AIStatsPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis yAxisId="tok" tick={{ fontSize: 10 }} tickFormatter={fmtNum} />
                 <YAxis yAxisId="cost" orientation="right" tick={{ fontSize: 10, fill: 'var(--chart-axis)' }} tickFormatter={v => `$${(v as number).toFixed(3)}`} />
-                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                   formatter={(val, name) => name === 'cost' ? [`$${Number(val).toFixed(4)}`, 'Chi phí'] : [fmtNum(Number(val)), modelLabel(String(name))]} />
                 {dailyModelModels.map((m, i) => (
                   <Bar key={m} yAxisId="tok" dataKey={m} stackId="tok" fill={COLORS[i % COLORS.length]} name={m} />
@@ -606,7 +606,7 @@ export default function AIStatsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `$${v}`} />
                 <YAxis type="category" dataKey="model" tick={{ fontSize: 10 }} width={110} />
-                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                   formatter={(val, name) => [`$${Number(val).toFixed(4)}/1M`, name === 'input' ? 'Input' : 'Output']} />
                 <Legend wrapperStyle={{ fontSize: 10 }} />
                 <Bar dataKey="input"  name="Input"  fill="var(--chart-1)" radius={[0, 999, 999, 0]} barSize={10} />
@@ -624,7 +624,7 @@ export default function AIStatsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => fmtMs(v)} />
-                <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtMs(v as number)} />
+                <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} formatter={(v) => fmtMs(v as number)} />
                 <Line type="monotone" dataKey="ms" stroke="var(--chart-1)" dot={false} strokeWidth={2} name="avg ms" />
               </LineChart>
             </ResponsiveContainer>
@@ -638,7 +638,7 @@ export default function AIStatsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="hour" tick={{ fontSize: 10 }} tickFormatter={h => `${h}h`} />
               <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} labelFormatter={h => `${h}:00`} />
+              <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} labelFormatter={h => `${h}:00`} />
               <Bar dataKey="count" fill="var(--chart-1)" name="Tin nhắn" radius={[999,999,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -652,7 +652,7 @@ export default function AIStatsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={110} />
-                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
                 <Bar dataKey="count" name="Lần" radius={[0,999,999,0]}>
                   {actions.slice(0, 10).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
@@ -670,7 +670,7 @@ export default function AIStatsPage() {
                   <Pie data={models} dataKey="count" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80}>
                     {models.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                  <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ flex: 1 }}>
@@ -694,7 +694,7 @@ export default function AIStatsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={80} />
-                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                <Tooltip cursor={{ fill: 'var(--surface-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
                 <Bar dataKey="count" fill="var(--chart-fail)" name="Lần" radius={[0,999,999,0]} />
               </BarChart>
             </ResponsiveContainer>

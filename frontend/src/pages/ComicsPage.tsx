@@ -399,8 +399,8 @@ export default function ComicsPage() {
                 style={{
                   padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 600,
-                  background: source === s ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
-                  color: source === s ? '#000' : 'var(--text)',
+                  background: source === s ? 'var(--accent)' : 'var(--elevated)',
+                  color: source === s ? '#fff' : 'var(--text)',
                 }}
               >
                 {s === 'md' ? 'MangaDex' : 'E-Hentai'}
@@ -409,7 +409,7 @@ export default function ComicsPage() {
             {searchActive && (
               <button
                 onClick={handleBackToDownloads}
-                style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, marginLeft: 4 }}
+                style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, marginLeft: 4 }}
               >
                 ← Downloads
               </button>
@@ -427,8 +427,8 @@ export default function ComicsPage() {
                     style={{
                       padding: '4px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
                       fontSize: 11, fontWeight: 600,
-                      background: dlFilter === f ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
-                      color: dlFilter === f ? '#000' : 'var(--text-muted)',
+                      background: dlFilter === f ? 'var(--accent)' : 'var(--elevated)',
+                      color: dlFilter === f ? '#fff' : 'var(--text-muted)',
                     }}
                   >
                     {f === 'all' ? 'All' : f === 'idle' ? 'Discovered' : f.charAt(0).toUpperCase() + f.slice(1)} {count > 0 ? `(${count})` : ''}
@@ -455,7 +455,7 @@ export default function ComicsPage() {
               disabled={loading}
               style={{
                 padding: '8px 20px', borderRadius: 999, border: 'none',
-                background: 'rgba(255,255,255,0.6)', color: '#000', fontWeight: 600, cursor: 'pointer',
+                background: 'var(--accent)', color: '#fff', fontWeight: 600, cursor: 'pointer',
               }}
             >
               Search
@@ -469,14 +469,14 @@ export default function ComicsPage() {
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
               <div style={{
                 width: 32, height: 32, border: '3px solid var(--border)',
-                borderTopColor: 'rgba(255,255,255,0.6)', borderRadius: '50%',
+                borderTopColor: 'var(--accent)', borderRadius: '50%',
                 animation: 'spin 0.8s linear infinite', margin: '0 auto 16px',
               }} />
               Loading...
             </div>
           )}
           {!loading && loadError && (
-            <div style={{ textAlign: 'center', padding: 40, color: '#888888' }}>{loadError}</div>
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>{loadError}</div>
           )}
 
           {/* Downloads view */}
@@ -498,7 +498,7 @@ export default function ComicsPage() {
                   <div style={{ textAlign: 'center', marginTop: 20 }}>
                     <button
                       onClick={() => setVisibleCount(n => n + PAGE_SIZE)}
-                      style={{ padding: '8px 20px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.15)', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
+                      style={{ padding: '8px 20px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
                     >
                       Xem thêm ({shownDownloads.length - visibleCount} còn lại)
                     </button>
@@ -588,7 +588,7 @@ export default function ComicsPage() {
               <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
                 <button
                   onClick={() => handleChapter(chapterList[0], 0)}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.6)', color: '#000', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
+                  style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
                 >
                   ▶ Start Reading
                 </button>
@@ -632,7 +632,7 @@ export default function ComicsPage() {
                       fontSize: 11, cursor: 'pointer', overflow: 'hidden',
                       textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#2a2a2a')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--fill-track)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
                   >
                     {ch.title || `Page ${i + 1}`}
@@ -678,8 +678,8 @@ export default function ComicsPage() {
                   style={{
                     padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
                     fontSize: 11, fontWeight: 600,
-                    background: viewMode === m ? 'rgba(255,255,255,0.6)' : 'var(--elevated)',
-                    color: viewMode === m ? '#000' : 'var(--text)',
+                    background: viewMode === m ? 'var(--accent)' : 'var(--elevated)',
+                    color: viewMode === m ? '#fff' : 'var(--text)',
                   }}
                 >
                   {m === 'scroll' ? 'Scroll' : 'Page'}

@@ -40,9 +40,9 @@ const IconPause = () => (
 function RepeatIcon({ mode }: { mode: RepeatMode }) {
   const active = mode !== 'off'
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill={active ? 'var(--green)' : 'currentColor'} stroke={active ? 'var(--green)' : 'currentColor'} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill={active ? 'var(--accent)' : 'currentColor'} stroke={active ? 'var(--accent)' : 'currentColor'} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
       {mode === 'one'
-        ? <><path d="M7 7H17V10L21 6L17 2V5H5V13H7V7Z"/><path d="M17 17H7V14L3 18L7 22V19H19V11H17V17Z"/><text x="10" y="14" fontSize="7" stroke="none" fill={active ? 'var(--green)' : 'currentColor'}>1</text></>
+        ? <><path d="M7 7H17V10L21 6L17 2V5H5V13H7V7Z"/><path d="M17 17H7V14L3 18L7 22V19H19V11H17V17Z"/><text x="10" y="14" fontSize="7" stroke="none" fill={active ? 'var(--accent)' : 'currentColor'}>1</text></>
         : <><path d="M7 7H17V10L21 6L17 2V5H5V13H7V7Z"/><path d="M17 17H7V14L3 18L7 22V19H19V11H17V17Z"/></>
       }
     </svg>
@@ -52,7 +52,7 @@ function RepeatIcon({ mode }: { mode: RepeatMode }) {
 function ShuffleModeIcon({ mode }: { mode: ShuffleMode }) {
   if (mode === 'smart') {
     return (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--purple, #ffffff)" stroke="var(--purple, #ffffff)" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
         <path d="M12 2 L13.5 8.5 L20 10 L13.5 11.5 L12 18 L10.5 11.5 L4 10 L10.5 8.5 Z"/>
         <circle cx="19" cy="4"  r="1.2"/>
         <circle cx="5"  cy="18" r="1.2"/>
@@ -60,7 +60,7 @@ function ShuffleModeIcon({ mode }: { mode: ShuffleMode }) {
     )
   }
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill={mode === 'shuffle' ? 'var(--green)' : 'currentColor'} stroke={mode === 'shuffle' ? 'var(--green)' : 'currentColor'} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill={mode === 'shuffle' ? 'var(--accent)' : 'currentColor'} stroke={mode === 'shuffle' ? 'var(--accent)' : 'currentColor'} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
       <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
     </svg>
   )
@@ -184,7 +184,7 @@ export default function PlayerBar() {
   const pct = duration > 0 ? (progress / duration) * 100 : 0
   // Played portion keys off var(--text) so it stays visible in both themes —
   // a hardcoded #fff fill vanished on the light-theme canvas.
-  const progressStyle = { background: `linear-gradient(to right, var(--text) ${pct}%, #535353 ${pct}%)` }
+  const progressStyle = { background: `linear-gradient(to right, var(--text) ${pct}%, var(--fill-track) ${pct}%)` }
 
   const cycleRepeat = () => {
     const n: RepeatMode = repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off'

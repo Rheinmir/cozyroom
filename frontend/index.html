@@ -8,9 +8,26 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Cozyroom" />
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Pre-paint theme boot (Inherited Invariant #4): apply the persisted theme
+         before first paint to avoid a flash. DARK is the default now (Tidal
+         dark-first); only an explicit stored 'light' opts out. Keeps the
+         localStorage read + data-theme application intact. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('cozyroom-theme');
+          document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

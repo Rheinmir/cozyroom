@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ── Slash command autocomplete ────────────────────────── */
 /* Ghost text inline completion */
@@ -24,7 +24,7 @@
 }
 .ai-input-wrap .ai-input:focus { outline: none; }
 .ai-ghost-text {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.9rem;
   left: 0;
   line-height: 1.4;
@@ -38,33 +38,33 @@
   word-break: break-word;
   color: transparent;
 }
-.ai-ghost-completion { color: rgba(255,255,255,0.3); }
-.ai-ghost-label { background: var(--glass-fill-2); border-radius: 3px; color: rgba(255,255,255,0.35); font-size: 10px; margin-left: 4px; padding: 1px 5px; vertical-align: middle; }
+.ai-ghost-completion { color: var(--text-faint); }
+.ai-ghost-label { background: var(--glass-fill-2); border-radius: 3px; color: var(--text-faint); font-size: 10px; margin-left: 4px; padding: 1px 5px; vertical-align: middle; }
 
 .slash-suggestions { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
 .slash-suggestion-item { align-items: center; cursor: pointer; display: flex; gap: 10px; padding: 8px 12px; transition: background 0.1s; }
 .slash-suggestion-item:hover, .slash-suggestion-item--active { background: var(--glass-fill-2); }
-.slash-suggestion-name { color: var(--green); font-family: 'SFMono-Regular', monospace; font-size: 13px; flex-shrink: 0; }
+.slash-suggestion-name { color: var(--green); font-family: var(--font-mono); font-size: 13px; flex-shrink: 0; }
 .slash-suggestion-desc { color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── MCP Tool Gallery ────────────────────────────────── */
 /* Tool detail modal */
 .tool-detail-backdrop { align-items: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); bottom: 0; display: flex; justify-content: center; left: 0; position: fixed; right: 0; top: 0; z-index: 1000; padding: 20px; }
-.tool-detail-modal { background: #1a1a1a; border: 1px solid var(--border); border-radius: 16px; max-width: 420px; padding: 20px; width: 100%; }
+.tool-detail-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; max-width: 420px; padding: 20px; width: 100%; box-shadow: var(--shadow-soft-hover); }
 .tool-detail-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 12px; }
 .tool-detail-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px 8px; }
-.tool-detail-name { font-family: 'SFMono-Regular', monospace; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.tool-detail-name { font-family: var(--font-mono); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 .tool-detail-desc { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
 .tool-detail-section { margin-bottom: 12px; }
-.tool-detail-label { color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; margin-bottom: 4px; text-transform: uppercase; }
+.tool-detail-label { color: var(--text-muted); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; margin-bottom: 4px; text-transform: uppercase; }
 .tool-detail-route { font-size: 13px; }
-.tool-detail-route code { background: var(--glass-fill-2); border-radius: 4px; color: var(--green); font-family: 'SFMono-Regular', monospace; padding: 2px 6px; }
+.tool-detail-route code { background: var(--glass-fill-2); border-radius: 4px; color: var(--green); font-family: var(--font-mono); padding: 2px 6px; }
 .tool-detail-prompt { background: var(--glass-fill); border-left: 2px solid var(--green); border-radius: 0 6px 6px 0; color: var(--text-muted); font-size: 13px; font-style: italic; padding: 8px 12px; }
 .tool-detail-flow { counter-reset: flow; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .tool-detail-flow-step { background: var(--glass-fill); border-radius: 6px; color: var(--text-muted); counter-increment: flow; font-size: 12px; line-height: 1.5; padding: 6px 10px 6px 32px; position: relative; }
-.tool-detail-flow-step::before { background: var(--green); border-radius: 50%; color: #000; content: counter(flow); font-size: 10px; font-weight: 700; height: 16px; left: 8px; line-height: 16px; position: absolute; text-align: center; top: 8px; width: 16px; }
-.tool-detail-use-btn { background: var(--green); border: none; border-radius: 8px; color: #000; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 16px; padding: 10px 16px; width: 100%; }
-.tool-detail-use-btn:hover { background: var(--green-hover); }
+.tool-detail-flow-step::before { background: var(--green); border-radius: 50%; color: var(--on-fill); content: counter(flow); font-size: 10px; font-weight: 700; height: 16px; left: 8px; line-height: 16px; position: absolute; text-align: center; top: 8px; width: 16px; }
+.tool-detail-use-btn { background: var(--fill-10); border: none; border-radius: 8px; color: var(--on-fill); cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 16px; padding: 10px 16px; width: 100%; }
+.tool-detail-use-btn:hover { background: #fff; }
 
 /* Tool search */
 .tools-search { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; margin-bottom: 12px; padding: 8px 12px; width: 100%; box-sizing: border-box; }
@@ -77,7 +77,7 @@
 .tools-filter { display: flex; flex-wrap: wrap; gap: 6px; }
 .tools-filter-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 4px 12px; transition: background .15s, border-color .15s, color .15s; }
 .tools-filter-btn:hover { border-color: var(--border-strong); color: var(--text); }
-.tools-filter-btn--active { background: var(--green); border-color: var(--green); color: #000; }
+.tools-filter-btn--active { background: var(--green); border-color: var(--green); color: var(--on-fill); }
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .tool-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--surface); border: 1px solid var(--border); transition: transform 0.18s, border-color 0.18s; height: 200px; }
 .tool-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
@@ -86,7 +86,7 @@
 .tool-card-iframe-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #111 100%); }
 .tool-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.15) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 12px 12px; }
 .tool-card-category { align-self: flex-start; border: 1px solid; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 6px; padding: 2px 7px; }
-.tool-card-name { font-size: 13px; font-weight: 600; font-family: 'SFMono-Regular', monospace; margin-bottom: 4px; }
+.tool-card-name { font-size: 13px; font-weight: 600; font-family: var(--font-mono); margin-bottom: 4px; }
 .tool-card-desc { font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.4; }
 
 /* ── AI Assistant ───────────────────────────────────── */
@@ -245,10 +245,11 @@
   box-sizing: border-box;
 }
 .ai-bubble--user {
-  background: var(--glass-fill-strong);
-  color: #fff;
+  /* Teal is the accent highlight for the user's own message; dark glyph keeps
+     contrast on the light teal (white-on-teal would be unreadable). */
+  background: var(--accent);
+  color: var(--on-fill);
   border-radius: 18px 4px 18px 18px;
-  box-shadow: inset 0 0 0 1px var(--hairline-strong);
 }
 .ai-bubble--assistant {
   background: var(--glass-fill);
@@ -264,11 +265,11 @@
   animation: ai-blink 1s infinite;
 }
 @keyframes ai-blink { 0%,100% { opacity: 1 } 50% { opacity: 0.2 } }
-.ai-typing-indicator { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.4); font-family: 'Geist Mono', monospace; font-size: 12px; }
+.ai-typing-indicator { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
 .ai-typing-dots { display: inline-flex; gap: 4px; align-items: center; }
-.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); animation: ai-dot-bounce 1.4s ease-in-out infinite; }
-.ai-dot--2 { background: rgba(255,255,255,0.25); animation-delay: 0.2s; }
-.ai-dot--3 { background: rgba(255,255,255,0.15); animation-delay: 0.4s; }
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); animation: ai-dot-bounce 1.4s ease-in-out infinite; }
+.ai-dot--2 { background: var(--text-faint); animation-delay: 0.2s; }
+.ai-dot--3 { background: var(--text-faint); opacity: .6; animation-delay: 0.4s; }
 @keyframes ai-dot-bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
 .ai-actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; width: 100%; max-width: min(520px, 100%); }
 .ai-action-btn {
@@ -280,7 +281,7 @@
   font-size: 0.82rem;
   cursor: pointer;
 }
-.ai-action-btn:hover { background: var(--green); color: #000; }
+.ai-action-btn:hover { background: var(--green); color: var(--on-fill); }
 .ai-input-row {
   display: flex;
   align-items: flex-end;
@@ -305,9 +306,10 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 8px 20px -8px rgba(255,255,255,0.3);
-  color: #070708;
+  /* White-Primary Rule: white circle + dark glyph (Tidal primary submit). */
+  background: var(--fill-10);
+  box-shadow: var(--shadow-play);
+  color: var(--on-fill);
   font-size: 1rem;
   border: none;
   cursor: pointer;
@@ -333,7 +335,7 @@
   border-bottom: 1px solid var(--surface-hover);
   padding: 4px 0;
   font-size: 0.78rem;
-  font-family: 'SFMono-Regular', monospace;
+  font-family: var(--font-mono);
 }
 .ai-model-input:focus { outline: none; border-bottom-color: var(--green); color: var(--text); }
 .ai-model-input::placeholder { color: var(--text-faint); }
@@ -358,26 +360,26 @@
 /* AI leaderboard — rendered by AiTable component */
 .ai-leaderboard { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; width: 100%; }
 .ai-lb-header { margin-bottom: 6px; }
-.ai-lb-chip { display: inline-block; font-family: 'Geist Mono', 'Courier New', monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.9); padding: 5px 12px; border-radius: 999px; background: var(--glass-fill-2); box-shadow: rgba(255,255,255,0.25) 0px 0px 0px 1px inset; margin-bottom: 10px; }
-.ai-lb-title { margin: 0 0 4px; font-size: clamp(22px,6vw,32px); font-weight: 700; letter-spacing: -0.03em; color: #fff; line-height: 1; }
-.ai-lb-row { display: flex; flex-direction: column; gap: 0; background: var(--glass-fill); box-shadow: rgba(255,255,255,0.06) 0px 0px 0px 1px inset; border-radius: 16px; padding: 12px 16px; transition: background 0.5s cubic-bezier(0.32,0.72,0,1); cursor: pointer; }
-.ai-lb-row:hover { background: var(--glass-fill); }
-.ai-lb-row--open { background: var(--glass-fill); box-shadow: rgba(255,255,255,0.1) 0px 0px 0px 1px inset; }
+.ai-lb-chip { display: inline-block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text); padding: 5px 12px; border-radius: 999px; background: var(--glass-fill-2); box-shadow: inset 0 0 0 1px var(--hairline); margin-bottom: 10px; }
+.ai-lb-title { margin: 0 0 4px; font-size: clamp(22px,6vw,32px); font-weight: 700; letter-spacing: -0.03em; color: var(--text); line-height: 1; }
+.ai-lb-row { display: flex; flex-direction: column; gap: 0; background: var(--glass-fill); box-shadow: inset 0 0 0 1px var(--hairline); border-radius: 16px; padding: 12px 16px; transition: background 0.5s cubic-bezier(0.32,0.72,0,1); cursor: pointer; }
+.ai-lb-row:hover { background: var(--glass-fill-2); }
+.ai-lb-row--open { background: var(--glass-fill-2); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
 .ai-lb-row-main { display: flex; align-items: center; gap: 18px; width: 100%; }
-.ai-lb-rank { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; font-family: 'Geist Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.95); text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
-.ai-lb-icon { position: relative; width: 48px; height: 48px; min-width: 48px; border-radius: 11px; overflow: hidden; flex-shrink: 0; box-shadow: rgba(255,255,255,0.1) 0px 0px 0px 1px inset; }
+.ai-lb-rank { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+.ai-lb-icon { position: relative; width: 48px; height: 48px; min-width: 48px; border-radius: 11px; overflow: hidden; flex-shrink: 0; box-shadow: inset 0 0 0 1px var(--hairline); }
 .ai-lb-icon-bg { position: absolute; inset: 0; }
 .ai-lb-body { flex: 1; min-width: 0; }
-.ai-lb-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ai-lb-desc { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ai-lb-trend { font-family: 'Geist Mono', 'Courier New', monospace; font-size: 10px; font-weight: 600; flex-shrink: 0; padding: 4px 9px; border-radius: 999px; line-height: 1.3; white-space: nowrap; }
-.ai-lb-trend--up { color: rgb(45,212,191); background: var(--glass-fill-2); box-shadow: rgba(255,255,255,0.3) 0px 0px 0px 1px inset; }
+.ai-lb-name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-lb-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-lb-trend { font-family: var(--font-mono); font-size: 10px; font-weight: 600; flex-shrink: 0; padding: 4px 9px; border-radius: 999px; line-height: 1.3; white-space: nowrap; }
+.ai-lb-trend--up { color: rgb(45,212,191); background: var(--glass-fill-2); box-shadow: inset 0 0 0 1px var(--hairline); }
 .ai-lb-trend--down { color: #f472b6; background: rgba(128,128,128,0.12); box-shadow: rgba(128,128,128,0.3) 0px 0px 0px 1px inset; }
-.ai-lb-trend--neutral { color: rgba(255,255,255,0.45); background: var(--glass-fill); box-shadow: rgba(255,255,255,0.12) 0px 0px 0px 1px inset; }
+.ai-lb-trend--neutral { color: var(--text-muted); background: var(--glass-fill); box-shadow: inset 0 0 0 1px var(--hairline); }
 .ai-lb-detail { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 5px; }
-.ai-lb-detail-item { font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1.5; }
-.ai-lb-detail-label { font-family: 'Geist Mono', 'Courier New', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-right: 6px; }
-.ai-lb-gh-link { display: inline-block; margin-top: 4px; font-size: 11px; color: rgba(255,255,255,0.7); text-decoration: none; }
+.ai-lb-detail-item { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.ai-lb-detail-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-right: 6px; }
+.ai-lb-gh-link { display: inline-block; margin-top: 4px; font-size: 11px; color: var(--text-muted); text-decoration: none; }
 .ai-lb-gh-link:hover { color: rgb(45,212,191); }
 
 /* AI Media Card */
@@ -441,7 +443,7 @@
 .ai-model-name {
   font-size: 0.65rem;
   color: var(--text-faint);
-  font-family: 'SFMono-Regular', monospace;
+  font-family: var(--font-mono);
 }
 .ai-status-text {
   font-size: 0.78rem;
@@ -456,7 +458,7 @@
 .ai-token-usage {
   font-size: 0.62rem;
   color: var(--text-faint);
-  font-family: 'SFMono-Regular', monospace;
+  font-family: var(--font-mono);
   margin-left: auto;
   opacity: 0.6;
 }
@@ -482,7 +484,7 @@
 .ai-memory-toggle:hover { color: var(--text); }
 .ai-memory-count {
   background: var(--green);
-  color: #000;
+  color: var(--on-fill);
   border-radius: 8px;
   padding: 0 5px;
   font-size: 0.65rem;
@@ -530,7 +532,7 @@
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--green);
-  font-family: 'SFMono-Regular', monospace;
+  font-family: var(--font-mono);
   margin-bottom: 2px;
 }
 .ai-memory-value {
@@ -575,102 +577,191 @@ button, a, [role="button"], input, select, textarea {
 * { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { display: none; }
 
+/* Honor reduced-motion (DESIGN.md § Motion): kill animation/transition. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Design tokens ─────────────────────────────────── */
+/* ── DARK is canonical (Tidal colour set — see DESIGN.md) ──────────────────
+   Dark-first now: :root is the Tidal dark palette (default when no attribute
+   is present), and :root[data-theme="light"] is an optional light variant.
+   The boot script always stamps an explicit data-theme; data-theme="dark"
+   simply inherits this base. The teal accent (--accent) is the ONE chromatic
+   signal — links / focus / eyebrows / badges / active marks. Legacy
+   --green/--purple (both literally white before) are now ALIASES of the teal
+   --accent, so accent-coloured TEXT/marks pick it up. Primary + play buttons
+   are WHITE (--fill-10 fill + --on-fill glyph), Tidal-style — see the button
+   rules below; teal is NEVER a large-button fill (White-Primary Rule). */
 :root {
-  --bg:            #050505;
-  --surface:       #0e0e0e;
-  --surface-hover: rgba(255,255,255,.07);
-  --elevated:      #111111;
-  --border:        rgba(255,255,255,.12);
-  --green:         #ffffff;
-  --green-hover:   #e0e0e0;
-  --purple:        #ffffff;
-  --text:          rgba(255,255,255,.92);
-  --text-muted:    rgba(255,255,255,.55);
-  --text-faint:    rgba(255,255,255,.32);
-  --sidebar-glass: rgba(5,5,5,.85);
-  --header-glass:  rgba(5,5,5,.7);
-  --player-glass:  rgba(5,5,5,.88);
+  color-scheme: dark;
+
+  /* Neutral ladder (Tidal dark) */
+  --bg:            #000000;   /* page canvas / void-black (--td-bg) */
+  --surface:       #141414;   /* cards / rows (--td-surface-10) */
+  --surface-2:     #1c1c1c;   /* raised panels / secondary (--td-surface-20) */
+  --surface-3:     #2d2d2d;   /* hover / elevated (--td-surface-30) */
+  --elevated:      #1c1c1c;   /* nested inset zone */
+  --surface-hover: rgba(255,255,255,.06);
+  --card:          #0e0e10;   /* media-card bg (--td-card) */
+  --img:           #242429;   /* cover placeholder (--td-img) */
+  --fill-track:    #1c1c1c;   /* segmented-control track / hairline fills */
+  --border:        rgba(255,255,255,.09);
+  --border-strong: rgba(255,255,255,.30);
+
+  /* Accent — the ONE teal chromatic signal (links/focus/eyebrows/badges/
+     active marks). NOT a large-button fill (that stays white, Tidal-style). */
+  --accent:        #33ffee;
+  --accent-hover:  #5cfff2;
+  --link:          #33ffee;   /* inline text links (--td-wave-color-text-link) */
+  /* Legacy accent aliases now resolve to teal. */
+  --green:         var(--accent);
+  --green-hover:   var(--accent-hover);
+  --purple:        var(--accent);
+
+  /* Primary/secondary button fills (white-on-dark, Tidal) */
+  --fill-10:       rgba(255,255,255,.95);   /* primary + play fill (white) */
+  --fill-20:       rgba(255,255,255,.35);   /* primary hover */
+  --fill-30:       rgba(255,255,255,.15);   /* secondary fill */
+  --fill-40:       rgba(255,255,255,.08);   /* round/chip fill, active-nav */
+  --on-fill:       #101010;                 /* dark glyph on white fill */
+
+  /* Text ladder (white-alpha) */
+  --text:          rgba(255,255,255,.95);   /* primary (--td-text-10) */
+  --text-strong:   #ffffff;   /* display headlines */
+  --text-muted:    rgba(255,255,255,.55);   /* secondary (--td-text-20) */
+  --text-faint:    rgba(255,255,255,.30);   /* tertiary (--td-text-30) */
+  --text-secondary: var(--text-muted);   /* legacy alias */
+
+  /* Glass / hairline — white-alpha on the dark canvas */
+  --glass-fill:    rgba(255,255,255,.05);
+  --glass-fill-2:  rgba(255,255,255,.08);
+  --glass-fill-strong: rgba(255,255,255,.14);
+  --hairline:      rgba(255,255,255,.09);
+  --hairline-strong:   rgba(255,255,255,.20);
+
+  /* Nav surfaces: translucent dark glass for backdrop-filter (Apple Music) */
+  --sidebar-glass: rgba(20,20,20,.6);
+  --header-glass:  rgba(10,10,10,.7);
+  --player-glass:  rgba(10,10,10,.7);
+  --blur-nav:      saturate(1.8) blur(20px);
+  --blur-glass:    saturate(2) blur(60px);
+  /* Frosted floating bars/chips (back button, stats chips, mobile player &
+     search island). Dark translucent so the light-text controls stay legible. */
+  --mica:          rgba(28,28,30,.6);
+
+  /* Dimensions */
   --sidebar-w:          220px;
   --sidebar-collapsed-w: 56px;
   --player-h:      72px;
-  --radius:        13px;
-  /* Display font — a distinctive grotesque for report/dashboard titles and big
-     numbers; body/UI stays Geist. Loaded via the Google Fonts @import above. */
-  --font-display: 'Space Grotesk', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* Theme-aware glass surfaces — the mica look was built from hardcoded
-     rgba(255,255,255,.0x) fills/borders/edge-highlights that vanish on the
-     light-theme white canvas. These tokens carry the dark values verbatim (so
-     dark mode is unchanged) and flip to dark-alpha in the light override below,
-     so cards keep their fill / hairline / depth in both themes. */
-  --glass-fill:    rgba(255,255,255,.04);  /* subtle surface fill (.04–.06) */
-  --glass-fill-2:  rgba(255,255,255,.08);  /* stronger fill / active (.07–.16) */
-  --hairline:      rgba(255,255,255,.09);  /* inset 1px edge highlight */
-  --border-strong: rgba(255,255,255,.22);  /* hover / emphasized borders (.15–.3) */
-  --glass-fill-strong: rgba(255,255,255,.2);  /* prominent/active fills (.16–.4) */
-  --hairline-strong:   rgba(255,255,255,.3);  /* strong inset highlights (.16+) */
 
-  /* ── Chart categorical palette ───────────────────────
-     One cohesive, muted palette applied to EVERY chart (categorical series,
-     ordinal buckets, language dimension, single-series) so the whole
-     dashboard reads as one system — no mono islands next to colored ones.
-     Muted/desaturated to sit calmly on the dark Midnight Deck surface;
-     the same mid-tones read on the light-theme cards too. See the
-     Chart-Palette Rule in DESIGN.md. --chart-fail/warn/caution/ok stay
-     reserved for semantic status (meaning, not category). */
-  --chart-1: #6f8fd6;
-  --chart-2: #5cb8a0;
-  --chart-3: #d8a862;
-  --chart-4: #d3798f;
-  --chart-5: #9a8fd0;
-  --chart-6: #7f8c9e;
-  --chart-7: #c98f6a;
-  --chart-8: #8bb37a;
-  --chart-fail:    #f87171;
-  --chart-warn:    #fb923c;
-  --chart-caution: #facc15;
-  --chart-ok:      #4ade80;
+  /* Radii — buttons are pills; covers near-square (Tidal) */
+  --radius:        12px;
+  --radius-cover:  2px;    /* album/track cover — Tidal signature near-square */
+  --radius-sm:     8px;
+  --radius-md:     12px;
+  --radius-lg:     18px;
+  --radius-xl:     28px;
+  --radius-panel:  16px;   /* floating panels / queue */
+  --radius-full:   1000px; /* pills, round buttons */
+  --radius-pill:   980px;  /* legacy alias of --radius-full */
+
+  /* Type stacks — Inter (display/body) + JetBrains Mono (labels) */
+  --font-display: Inter, 'Square Sans Display', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  --font-body:    Inter, 'Square Sans Text', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  /* Named easings */
+  --ease-nav:       0.32s cubic-bezier(0.4, 0, 0.6, 1);
+  --ease-underline: 0.24s cubic-bezier(0.28, 0.11, 0.32, 1);
+  --ease-card:      0.7s cubic-bezier(0.42, 0.46, 0.45, 0.99);
+  --ease-control:   0.1s linear;
+
+  /* Real black shadows (Tidal depth = surface-tier + shadow, no white-glow) */
+  --shadow-play:   0 2.2px 5.5px 0 rgba(0,0,0,.1);          /* play button */
+  --shadow-menu:   0 4px 20px 0 rgba(0,0,0,.3);             /* dropdowns */
+  --shadow-panel:  0 10px 12px 0 rgba(0,0,0,.15), 0 0 2px 0 rgba(255,255,255,.08);
+  --shadow-card:       0 4px 16px 0 rgba(0,0,0,0.5);
+  --shadow-card-hover: 0 8px 28px 0 rgba(0,0,0,0.6);
+  --shadow-soft:       var(--shadow-play);   /* legacy alias */
+  --shadow-soft-hover: var(--shadow-menu);   /* legacy alias */
+  --raised-glow:       var(--shadow-panel);  /* legacy alias */
+
+  /* ── Chart categorical palette (re-tuned for the #000 canvas) ──
+     One cohesive palette on EVERY chart so dashboards read as one system.
+     Single-series mark keys off teal --chart-1; --chart-fail/warn/caution/ok
+     stay reserved for semantic status. Charts are the one place a second hue
+     is allowed (Data-Needs-Colour Rule). See DESIGN.md. */
+  --chart-1: #33ffee;
+  --chart-2: #33a7ff;
+  --chart-3: #ffd432;
+  --chart-4: #ff4242;
+  --chart-5: #8f00ff;
+  --chart-6: #33ffa9;
+  --chart-7: #ffbf80;
+  --chart-8: #ff668f;
+  --chart-fail:    #ff4242;
+  --chart-warn:    #ff9f40;
+  --chart-caution: #ffd432;
+  --chart-ok:      #16d956;
   --chart-grid: var(--border);
   --chart-axis: var(--text-muted);
 }
 
-/* ── Light theme override ──────────────────────────────
-   Only the structural tokens flip — --green/--purple (accent) stay
-   white/black in both themes. Many buttons hardcode `color: #000` next to
-   `background: var(--green)`; flipping accent per-theme would silently make
-   that text unreadable in half the cases.
-   --bg is a soft cool-neutral smoke (#eef0f2), not stark white — cards
-   (--surface, pure white) need to visibly pop off the page canvas the same
-   way Charcoal Panel pops off Void Black in dark mode; --bg === --surface
-   (near-white on near-white) reads as flat with no structure. --elevated
-   sits between the two, for nested zones inside a white surface (e.g. an
-   input resting on a card) rather than "raised above" — white is already
-   the brightness ceiling, so elevation there leans on shadow, not fill. */
+/* ── Optional light variant (Tidal-on-white) ───────────
+   Dark is canonical; this is a cheap light fallback for users who have stored
+   'light'. Accent teal is darkened for AA on white; the white-primary button
+   inverts (dark fill + light glyph) so the White-Primary Rule still holds. */
 :root[data-theme="light"] {
-  --bg:            #eef0f2;
-  --surface:       #ffffff;
+  color-scheme: light;
+
+  --bg:            #ffffff;
+  --surface:       #f5f5f7;
+  --surface-2:     #ececee;
+  --surface-3:     #e2e2e6;
+  --elevated:      #ececee;
   --surface-hover: rgba(0,0,0,.05);
-  --elevated:      #f7f7f8;
-  --border:        rgba(0,0,0,.15);
-  --text:          rgba(0,0,0,.87);
+  --card:          #ffffff;
+  --img:           #e6e6ea;
+  --fill-track:    #e8e8ed;
+  --border:        rgba(0,0,0,.10);
+  --border-strong: rgba(0,0,0,.24);
+
+  --accent:        #00a99a;   /* teal darkened for AA on white */
+  --accent-hover:  #00bfae;
+  --link:          #008577;
+
+  --fill-10:       #1a1a1a;   /* dark primary fill on light */
+  --fill-20:       #333333;
+  --fill-30:       rgba(0,0,0,.12);
+  --fill-40:       rgba(0,0,0,.06);
+  --on-fill:       #ffffff;   /* light glyph on dark fill */
+
+  --text:          rgba(0,0,0,.92);
+  --text-strong:   #000000;
   --text-muted:    rgba(0,0,0,.55);
-  --text-faint:    rgba(0,0,0,.32);
-  --sidebar-glass: rgba(255,255,255,.85);
-  --header-glass:  rgba(255,255,255,.7);
-  --player-glass:  rgba(255,255,255,.88);
+  --text-faint:    rgba(0,0,0,.35);
 
-  /* Glass surfaces flip to dark-alpha so fills/hairlines/borders read on the
-     white canvas (restores the mica depth lost in light mode). */
-  --glass-fill:    rgba(0,0,0,.06);
-  --glass-fill-2:  rgba(0,0,0,.09);
-  --hairline:      rgba(0,0,0,.14);
-  --border-strong: rgba(0,0,0,.26);
-  --glass-fill-strong: rgba(0,0,0,.19);
-  --hairline-strong:   rgba(0,0,0,.26);
+  --glass-fill:    rgba(0,0,0,.04);
+  --glass-fill-2:  rgba(0,0,0,.06);
+  --glass-fill-strong: rgba(0,0,0,.10);
+  --hairline:      rgba(0,0,0,.10);
+  --hairline-strong:   rgba(0,0,0,.16);
 
-  /* Chart palette (--chart-1..8) is theme-agnostic — the muted mid-tones read
-     on both Void Black and the white light-theme card, so no override here.
-     --chart-fail/warn/caution/ok/-grid/-axis inherit (semantic or var-based). */
+  --sidebar-glass: rgba(245,245,247,.7);
+  --header-glass:  rgba(255,255,255,.8);
+  --player-glass:  rgba(255,255,255,.8);
+  --mica:          rgba(255,255,255,.72);
+
+  --shadow-card:       2px 4px 12px 0 rgba(0,0,0,0.08);
+  --shadow-card-hover: 2px 4px 16px 0 rgba(0,0,0,0.16);
+
+  --chart-1: #00a99a;
 }
 
 /* Sitewide keyboard-focus ring. Many components below set `outline: none`
@@ -682,7 +773,7 @@ button, a, [role="button"], input, select, textarea {
    each one individually. Uses :focus-visible so mouse clicks stay unringed. */
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible,
 select:focus-visible, [tabindex]:focus-visible, [role="button"]:focus-visible {
-  outline: 2px solid rgba(255,255,255,.7) !important;
+  outline: 2px solid var(--accent) !important;
   outline-offset: 2px;
 }
 /* These two inputs already draw their own inset focus ring (box-shadow:
@@ -694,38 +785,16 @@ select:focus-visible, [tabindex]:focus-visible, [role="button"]:focus-visible {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
-body::before {
-  content: '';
-  position: fixed;
-  top: -220px; left: -160px;
-  width: 680px; height: 680px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 62%);
-  filter: blur(70px);
-  opacity: .42;
-  z-index: 0;
-  pointer-events: none;
-  animation: cz-orbA 18s ease-in-out infinite;
-}
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -260px; right: -180px;
-  width: 700px; height: 700px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,.13), rgba(255,255,255,0) 62%);
-  filter: blur(80px);
-  opacity: .30;
-  z-index: 0;
-  pointer-events: none;
-  animation: cz-orbB 22s ease-in-out infinite;
-}
-@keyframes cz-orbA { 0%,100%{transform:translate3d(0,0,0) scale(1)} 50%{transform:translate3d(40px,-30px,0) scale(1.12)} }
-@keyframes cz-orbB { 0%,100%{transform:translate3d(0,0,0) scale(1.05)} 50%{transform:translate3d(-50px,30px,0) scale(.92)} }
+/* The two glowing radial orbs belonged to the void-black look and are retired
+   with the Real-Shadow model. */
 
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; background: none; color: inherit; font: inherit; }
@@ -771,9 +840,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 /* ── Sidebar ────────────────────────────────────────── */
 .sidebar {
   grid-area: sidebar;
+  /* Apple Music glass: translucent dark surface + saturate(2) blur(60px). */
   background: var(--sidebar-glass);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255,255,255,.05);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border-right: 0.5px solid var(--border);
   padding: 24px 12px;
   display: flex;
   flex-direction: column;
@@ -858,8 +929,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .nav-link:hover { color: var(--text); background: var(--glass-fill); }
 .nav-link.active { color: var(--text); }
 .nav-link.active {
-  background: var(--glass-fill-2);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 28px -12px rgba(255,255,255,.6);
+  /* Apple Music active nav = faint white fill (no glow). */
+  background: var(--fill-40);
+  font-weight: 600;
 }
 
 .sidebar-lastfm {
@@ -917,8 +989,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 /* ── Top header / search ────────────────────────────── */
 .top-header {
   background: var(--header-glass);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  backdrop-filter: var(--blur-nav);
+  -webkit-backdrop-filter: var(--blur-nav);
+  border-bottom: 1px solid var(--border);
   padding: 12px 24px;
   flex-shrink: 0;
   z-index: 10;
@@ -942,8 +1015,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .search-input {
   width: 100%;
-  background: var(--glass-fill);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1px solid transparent;
   border-radius: 999px;
   padding: 8px 12px 8px 36px;
   color: var(--text);
@@ -951,7 +1024,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   outline: none;
   transition: background .2s, border-color .2s;
 }
-.search-input:focus { background: var(--glass-fill-2); border-color: var(--border-strong); }
+.search-input:focus { background: var(--surface); border-color: var(--border); }
 
 .search-input::placeholder { color: var(--text-faint); }
 
@@ -997,7 +1070,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   border-radius: 999px;
   color: var(--text-muted);
   text-decoration: none;
-  background: rgba(28,28,30,.5);
+  background: var(--mica);
   backdrop-filter: blur(20px) saturate(1.8);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -1016,7 +1089,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   background: var(--glass-fill-2);
   border-color: var(--border-strong);
   color: rgba(255,255,255,0.9);
-  font-family: 'Geist Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.22em;
   width: fit-content;
@@ -1045,7 +1118,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   border: none;
   cursor: pointer;
   color: var(--text);
-  background: rgba(28,28,30,.5);
+  background: var(--mica);
   backdrop-filter: blur(30px) saturate(1.8);
   -webkit-backdrop-filter: blur(30px) saturate(1.8);
   box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px var(--hairline);
@@ -1153,7 +1226,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   border: none;
   color: var(--text-muted);
   font-size: 10px;
-  font-family: 'Geist Mono', 'SFMono-Regular', monospace;
+  font-family: var(--font-mono);
   padding: 1px 4px;
   cursor: pointer;
   border-radius: 3px;
@@ -1180,22 +1253,22 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: var(--glass-fill);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
   border-radius: 22px;
   transition: all .6s cubic-bezier(.32,.72,0,1);
   text-align: center;
 }
 .artist-card:hover {
-  transform: translateY(-5px);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(255,255,255,.45);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .artist-avatar {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a1a1a, #050505);
+  background: linear-gradient(135deg, #A1A1A6, #6E6E73);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1235,7 +1308,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a1a1a, #050505);
+  background: linear-gradient(135deg, #A1A1A6, #6E6E73);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1323,24 +1396,24 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .album-card {
-  background: var(--glass-fill);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
   border-radius: 22px;
   padding: 12px;
   transition: all .6s cubic-bezier(.32,.72,0,1);
   cursor: pointer;
 }
 .album-card:hover {
-  transform: translateY(-5px);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 0 50px -14px rgba(255,255,255,.45);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .album-cover {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  background: var(--elevated);
-  border-radius: 4px;
+  background: var(--img);
+  border-radius: var(--radius-cover);   /* Tidal near-square art */
   overflow: hidden;
   margin-bottom: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,.5);
@@ -1368,11 +1441,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--green);
+  /* White-Primary Rule: white play circle + dark glyph (Tidal). */
+  background: var(--fill-10);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: var(--on-fill);
   opacity: 0;
   transform: translateY(8px);
   transition: opacity .2s, transform .2s;
@@ -1596,7 +1670,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(255,255,255,0.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .bgsounds-title { font-size: 12.5px; font-weight: 600; flex: 1; }
 .bgsounds-active-name { font-size: 10.5px; color: rgba(255,255,255,0.45); }
@@ -1744,8 +1818,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .smart-badge:hover { background: var(--glass-fill-strong); transform: scale(1.05); }
 .smart-badge--active {
   background: var(--purple);
-  color: #000;
-  box-shadow: 0 0 12px rgba(255,255,255,.4);
+  color: #fff;
 }
 
 /* ── Quality badge ──────────────────────────────────── */
@@ -1761,9 +1834,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   text-transform: uppercase;
 }
 .quality-btn--lossless {
-  color: #000;
+  color: var(--on-fill);
   background: var(--green);
-  box-shadow: 0 0 12px rgba(255,255,255,.3);
 }
 .quality-btn--lossless:hover { background: var(--green-hover); transform: scale(1.05); }
 .quality-btn--320 {
@@ -1791,7 +1863,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a1a1a, #050505);
+  background: linear-gradient(135deg, #A1A1A6, #6E6E73);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1814,8 +1886,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: inline-block;
   padding: 8px 18px;
   border-radius: 999px;
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -1841,7 +1913,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  background: rgba(28,28,30,.5);
+  background: var(--mica);
   backdrop-filter: blur(20px) saturate(1.8);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -1888,7 +1960,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .channel-header { display: flex; align-items: center; gap: 20px; margin: 24px 0 32px; }
 .channel-avatar {
   width: 80px; height: 80px; border-radius: 50%;
-  background: var(--green); color: #000;
+  background: var(--surface-3); color: var(--text);
   display: flex; align-items: center; justify-content: center;
   font-size: 36px; font-weight: 700; flex-shrink: 0;
 }
@@ -1918,7 +1990,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .channel-search-clear:hover { color: var(--text); }
 .channel-search-btn {
-  background: var(--green); color: #000;
+  background: var(--fill-10); color: var(--on-fill);
   border: none; border-radius: 8px; padding: 10px 20px;
   font-size: 13px; font-weight: 700; cursor: pointer;
   transition: opacity .15s; white-space: nowrap; flex-shrink: 0;
@@ -1941,7 +2013,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-size: 13px; font-weight: 600; cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
-.load-more-btn:hover { background: var(--green); color: #000; border-color: var(--green); }
+.load-more-btn:hover { background: var(--surface-3); color: var(--text); border-color: var(--border-strong); }
 .youtube-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .youtube-btn {
   padding: 6px 14px;
@@ -1952,17 +2024,17 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   transition: all .15s;
 }
 .youtube-btn--stream {
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
 }
-.youtube-btn--stream:hover { background: var(--green-hover); transform: scale(1.05); }
+.youtube-btn--stream:hover { background: #fff; transform: scale(1.05); }
 .youtube-btn--download {
   background: var(--glass-fill-2);
   color: var(--text);
 }
 .youtube-btn--download:hover { background: var(--glass-fill-strong); }
 .youtube-btn--downloading { opacity: 0.5; pointer-events: none; }
-.youtube-btn--done { background: var(--green); color: #000; pointer-events: none; }
+.youtube-btn--done { background: var(--green); color: var(--on-fill); pointer-events: none; }
 .youtube-dur {
   font-size: 12px;
   color: var(--text-muted);
@@ -1988,7 +2060,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   position: absolute;
   inset: 0;
   background: var(--player-glass);
-  backdrop-filter: blur(24px);
+  backdrop-filter: var(--blur-nav);
+  -webkit-backdrop-filter: var(--blur-nav);
   z-index: -1;
 }
 .player-mini-progress {
@@ -2024,22 +2097,25 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #fff;
-  color: #070708;
+  /* White-Primary Rule: play buttons are a white circle + dark glyph (Tidal). */
+  background: var(--fill-10);
+  color: var(--on-fill);
+  box-shadow: var(--shadow-play);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: transform .1s, background .15s;
 }
-.play-btn:hover { background: #f0f0f0; transform: scale(1.06); }
+.play-btn:hover { background: #fff; transform: scale(1.06); }
 
 .hero-play-btn {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #fff;
-  color: #070708;
+  /* White-Primary Rule: white circle + dark glyph + play shadow (Tidal). */
+  background: var(--fill-10);
+  color: var(--on-fill);
   border: none;
   display: flex;
   align-items: center;
@@ -2047,9 +2123,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex-shrink: 0;
   cursor: pointer;
   transition: transform .1s, background .15s;
-  box-shadow: 0 14px 30px -12px rgba(255,255,255,.5);
+  box-shadow: var(--shadow-play);
 }
-.hero-play-btn:hover { background: #f0f0f0; transform: scale(1.06); }
+.hero-play-btn:hover { background: #fff; transform: scale(1.06); }
 .hero-play-btn svg { margin-left: 3px; }
 
 .player-time {
@@ -2584,7 +2660,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
        while still letting the card colors bleed through (content now
        genuinely scrolls behind it, so this no longer looks like a black
        block the way it did before the float fix). */
-    background: rgba(28,28,30,.5);
+    background: var(--mica);
     backdrop-filter: blur(30px) saturate(1.8);
     -webkit-backdrop-filter: blur(30px) saturate(1.8);
     box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px var(--hairline);
@@ -2635,10 +2711,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   .player-mini-play-btn {
     width: 40px;
     height: 40px;
-    background: #fff;
-    color: #070708;
+    /* White-Primary Rule: white circle + dark glyph (Tidal). */
+    background: var(--fill-10);
+    color: var(--on-fill);
+    box-shadow: var(--shadow-play);
   }
-  .player-mini-play-btn:hover { background: #f0f0f0; }
+  .player-mini-play-btn:hover { background: #fff; }
 
   /* "Water flowing" progress: the whole pill IS the vessel — the fill
      covers the entire height/rounded shape of .player-mini itself (not a
@@ -2794,7 +2872,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
        while still letting the card colors bleed through (content now
        genuinely scrolls behind it, so this no longer looks like a black
        block the way it did before the float fix). */
-    background: rgba(28,28,30,.5);
+    background: var(--mica);
     backdrop-filter: blur(30px) saturate(1.8);
     -webkit-backdrop-filter: blur(30px) saturate(1.8);
     box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px var(--hairline);
@@ -2835,12 +2913,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
        while still letting the card colors bleed through (content now
        genuinely scrolls behind it, so this no longer looks like a black
        block the way it did before the float fix). */
-    background: rgba(28,28,30,.5);
+    background: var(--mica);
     backdrop-filter: blur(30px) saturate(1.8);
     -webkit-backdrop-filter: blur(30px) saturate(1.8);
     box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px var(--hairline);
   }
-  .search-island-queue-btn--active { color: #fff; }
+  .search-island-queue-btn--active { color: var(--accent); }
 
   /* tighter page padding */
   .page { padding: 16px 16px 40px; }
@@ -2991,15 +3069,15 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .install-banner span { flex: 1; color: var(--text-muted); }
 .install-banner button {
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
   font-weight: 700;
   font-size: 12px;
   padding: 6px 14px;
   border-radius: 20px;
   white-space: nowrap;
 }
-.install-banner button:hover { background: var(--green-hover); }
+.install-banner button:hover { background: #fff; }
 .install-banner-close {
   background: none !important;
   color: var(--text-muted) !important;
@@ -3401,8 +3479,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: var(--glass-fill);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -3410,9 +3488,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .video-poster-card:hover {
-  box-shadow: inset 0 0 0 1px var(--hairline-strong),
-              0 0 50px -14px rgba(255,255,255,.45);
-  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-3px) scale(1.01);
 }
 
 .video-poster-img {
@@ -3581,7 +3658,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-weight: 700;
   border-radius: 4px;
   background: var(--purple);
-  color: #000;
+  color: #fff;
   backdrop-filter: blur(4px);
   z-index: 2;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -3665,8 +3742,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .download-btn {
   margin-top: 12px;
   padding: 12px 24px;
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
   font-weight: 700;
   border-radius: 24px;
   transition: transform .2s, background .2s;
@@ -4369,7 +4446,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .reader-mode-btn.mode-safe {
   background: var(--glass-fill-2);
   border-color: var(--border-strong);
-  color: #ffffff;
+  color: inherit;
 }
 
 .pdf-ctrl-btn:hover:not(:disabled) {
@@ -4435,8 +4512,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .download-btn {
   padding: 10px 24px;
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
   border-radius: 30px;
   text-decoration: none;
   font-weight: 700;
@@ -4456,8 +4533,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   padding: 4px 6px !important;
 }
 .offline-download-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-fill);
+  border: 1px solid var(--border);
   border-radius: 20px;
   color: var(--text-muted);
   width: 26px;
@@ -4466,15 +4543,15 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
-.offline-download-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+.offline-download-btn:hover { background: var(--surface-hover); color: var(--text); }
 .offline-download-btn--done { color: var(--green); border-color: var(--green); }
 .offline-download-btn:disabled { cursor: default; opacity: 0.6; }
 
 .fav-pill {
   display: inline-flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-fill);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 2px 6px;
   gap: 4px;
@@ -4482,8 +4559,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   transition: background 0.2s, border-color 0.2s;
 }
 .fav-pill:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
 }
 
 .fav-star {
@@ -4502,13 +4579,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   transform: scale(1.2);
 }
 .fav-star--active {
-  color: #ffffff !important; /* Gold star */
+  color: var(--accent) !important;
 }
 
 .fav-sep {
   width: 1px;
   height: 10px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--border);
 }
 
 .fav-arrow {
@@ -4534,12 +4611,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   right: 0;
   margin-top: 6px;
   width: 240px;
-  background: rgba(24, 24, 24, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface);
+  backdrop-filter: var(--blur-nav);
+  -webkit-backdrop-filter: var(--blur-nav);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-soft-hover);
   z-index: 999;
   padding: 8px 0;
   text-align: left;
@@ -4563,7 +4640,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .dropdown-list {
   max-height: 160px;
   overflow-y: auto;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 6px;
 }
 
@@ -4578,7 +4655,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   transition: background 0.15s;
 }
 .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-hover);
 }
 .dropdown-item input[type="checkbox"] {
   accent-color: var(--green);
@@ -4590,7 +4667,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .dropdown-item-type {
   font-size: 10px;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--glass-fill);
   padding: 1px 4px;
   border-radius: 3px;
   margin-left: auto;
@@ -4606,8 +4683,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .dropdown-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 5px 8px;
   font-size: 16px;
@@ -4620,7 +4697,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .dropdown-type-toggle {
   display: flex;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass-fill);
   border-radius: 4px;
   padding: 2px;
 }
@@ -4638,13 +4715,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-weight: 600;
 }
 .dropdown-type-btn--active {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-hover);
   color: var(--text);
 }
 
 .dropdown-create-btn {
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
   border: none;
   border-radius: 4px;
   padding: 6px 0;
@@ -4677,13 +4754,14 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .password-modal {
-  background: rgba(14, 14, 19, 0.85);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  backdrop-filter: var(--blur-nav);
+  -webkit-backdrop-filter: var(--blur-nav);
+  border: 1px solid var(--border);
   border-radius: 16px;
   width: 320px;
   padding: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  box-shadow: var(--shadow-soft-hover);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -4716,12 +4794,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   cursor: pointer;
 }
 .modal-btn--cancel {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-hover);
   color: var(--text);
 }
 .modal-btn--confirm {
-  background: var(--green);
-  color: #000;
+  background: var(--fill-10);
+  color: var(--on-fill);
 }
 
 /* Playlists Page grid */
@@ -4733,20 +4811,22 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .playlist-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 16px;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 12px;
   position: relative;
 }
 .playlist-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-4px);
+  background: var(--surface);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-4px) scale(1.01);
 }
 
 .playlist-cover-placeholder {
@@ -4797,9 +4877,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   border: 1px solid rgba(124, 58, 237, 0.3);
 }
 .playlist-badge--perm {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--green);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 113, 227, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(0, 113, 227, 0.3);
 }
 
 .playlist-delete-btn {
@@ -4854,7 +4934,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   box-shadow: 0 6px 28px rgba(0,0,0,.7), 0 0 0 2px rgba(255,255,255,.18);
 }
 .radial-bubble--open {
-  box-shadow: 0 6px 28px rgba(255,255,255,.4), 0 0 0 2px rgba(255,255,255,.5);
+  box-shadow: 0 6px 28px rgba(0,0,0,.4), 0 0 0 2px var(--accent);
 }
 .radial-bubble--spinning {
   animation-play-state: running;
@@ -5120,7 +5200,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-size: 16px;
   font-weight: 700;
   outline: none;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.28);
   -moz-appearance: textfield;
 }
 .radial-year-input::-webkit-outer-spin-button,
@@ -5299,7 +5379,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex: 1; padding: 8px; border: none; border-radius: 8px; background: var(--elevated);
   color: var(--text-muted); font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
-.notes-gate-tab--active { background: var(--green); color: #000; }
+.notes-gate-tab--active { background: var(--green); color: var(--on-fill); }
 .notes-gate-info { color: var(--green); font-size: 12px; margin-bottom: 10px; line-height: 1.5; }
 
 .notes-logout-btn {
@@ -5323,7 +5403,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   background: var(--surface); color: var(--text-muted); font-size: 12.5px; cursor: pointer; border: none;
 }
 .notes-board-tab span { cursor: pointer; }
-.notes-board-tab--active { background: var(--green); color: #000; font-weight: 600; }
+.notes-board-tab--active { background: var(--green); color: var(--on-fill); font-weight: 600; }
 .notes-board-tab-del {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 16px; height: 16px; padding: 0; background: transparent; border: none;
@@ -5423,7 +5503,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex: 1; padding: 9px; border-radius: 8px; border: none;
   background: var(--surface-hover); color: var(--text); font-size: 13.5px; font-weight: 600; cursor: pointer;
 }
-.confirm-btn--primary { background: var(--green); color: #000; }
+.confirm-btn--primary { background: var(--fill-10); color: var(--on-fill); }
 .confirm-btn--danger { background: #ef4444; color: #fff; }
 
 .toast-stack {
@@ -5436,6 +5516,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .toast--error { background: #ef4444; }
 .toast--info { background: var(--surface-hover); color: var(--text); }
-.toast--success { background: var(--green); color: #000; }
+.toast--success { background: var(--chart-ok); color: var(--on-fill); }
 
 

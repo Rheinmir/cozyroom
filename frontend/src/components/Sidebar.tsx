@@ -28,8 +28,7 @@ export default function Sidebar() {
     const next = theme === 'dark' ? 'light' : 'dark'
     setTheme(next)
     localStorage.setItem('cozyroom-theme', next)
-    if (next === 'light') document.documentElement.setAttribute('data-theme', 'light')
-    else document.documentElement.removeAttribute('data-theme')
+    document.documentElement.setAttribute('data-theme', next)
   }
 
   const toggleCollapse = () => {

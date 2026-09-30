@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { fetchTracks, fetchAlbum, imgSrc } from '../api'
 import { usePlayer } from '../PlayerContext'
+import { useDominantColor, darkenTint } from '../useDominantColor'
 import FavoritePill from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
@@ -37,24 +38,33 @@ export default function AlbumPage() {
     staleTime: 5 * 60_000,
   })
 
+  // Apple Music .am-tint: derive a dominant colour from the cover, darken it to
+  // a legible dark wash poured behind the hero and fading to #000.
+  const tint = darkenTint(useDominantColor(album?.cover_url ? imgSrc(album.cover_url, 400) : undefined))
+
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
-    <div className="page album-page">
-      <BackButton onClick={() => navigate(-1)} label={t('library.back')} />
+    <div className="page album-page" style={{ paddingTop: 0 }}>
+      <div
+        className="playlist-hero-wrapper"
+        style={{ background: `linear-gradient(180deg, rgb(${tint}) 0%, rgba(${tint}, 0.5) 220px, #000 420px)` }}
+      >
+        <BackButton onClick={() => navigate(-1)} label={t('library.back')} />
 
-      <div className="album-hero">
-        <div className="album-hero-cover">
-          <HeroCoverImg url={album?.cover_url ?? ''} title={album?.title ?? ''} />
-        </div>
-        <div className="album-hero-info">
-          <p className="hero-type">{t('library.album')}</p>
-          <h1 className="hero-title">{album?.title ?? ''}</h1>
-          <p className="hero-meta">
-            {album?.artist_name}
-            {album?.year ? ` · ${album.year}` : ''}
-            {` · ${t('library.tracks_count', { n: tracks.length })}`}
-          </p>
+        <div className="album-hero">
+          <div className="album-hero-cover">
+            <HeroCoverImg url={album?.cover_url ?? ''} title={album?.title ?? ''} />
+          </div>
+          <div className="album-hero-info">
+            <p className="hero-type" style={{ color: 'var(--accent)' }}>{t('library.album')}</p>
+            <h1 className="hero-title">{album?.title ?? ''}</h1>
+            <p className="hero-meta">
+              {album?.artist_name}
+              {album?.year ? ` · ${album.year}` : ''}
+              {` · ${t('library.tracks_count', { n: tracks.length })}`}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -81,7 +91,7 @@ export default function AlbumPage() {
               >
                 <td className="col-num">
                   {isCurrent && isPlaying
-                    ? <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--green)"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    ? <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--accent)"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                     : <span className="track-num-text">{t.track_num || i + 1}</span>
                   }
                 </td>

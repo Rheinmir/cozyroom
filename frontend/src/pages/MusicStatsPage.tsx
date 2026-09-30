@@ -5,7 +5,7 @@ import { imgSrc, fetchPlayStats, fetchLastfmStatus, backfillLastfmPlayCounts, fe
 import type { LastfmBackfillStatus } from '../api'
 import Spinner from '../components/Spinner'
 
-const ACCENT = 'var(--green)'
+const ACCENT = 'var(--accent)'
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -66,7 +66,7 @@ export default function MusicStatsPage() {
           title={lastfmConnected ? '' : 'Chưa kết nối Last.fm'}
           style={{
             marginLeft: 'auto', padding: '4px 14px', borderRadius: 6, border: 'none', cursor: lastfmConnected ? 'pointer' : 'not-allowed',
-            fontSize: 12, background: ACCENT, color: '#000', fontWeight: 600,
+            fontSize: 12, background: ACCENT, color: '#fff', fontWeight: 600,
             opacity: !lastfmConnected || backfill?.running ? 0.5 : 1,
           }}
         >
@@ -134,10 +134,10 @@ export default function MusicStatsPage() {
                 <BarChart data={top} layout="vertical" margin={{ top: 0, right: 28, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="title" tick={{ fontSize: 10 }} width={110} />
+                  <YAxis type="category" dataKey="title" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} width={110} />
                   <Tooltip
                     cursor={{ fill: 'var(--surface-hover)' }}
-                    contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
+                    contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }}
                     formatter={(val, _name, item) => [`${val} lượt`, item.payload.artist_name]}
                   />
                   <Bar dataKey="plays" fill="var(--chart-1)" radius={[0, 999, 999, 0]} barSize={14} maxBarSize={24}>
@@ -151,9 +151,9 @@ export default function MusicStatsPage() {
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={daily} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12 }} />
                   <Line type="monotone" dataKey="plays" stroke="var(--chart-1)" dot={false} strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>

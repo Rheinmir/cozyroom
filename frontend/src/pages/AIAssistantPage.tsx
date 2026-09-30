@@ -827,7 +827,7 @@ export default function AIAssistantPage() {
               <button
                 onClick={retry}
                 disabled={loading}
-                style={{ marginTop: 4, background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 12, padding: '3px 10px' }}
+                style={{ marginTop: 4, background: 'none', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, padding: '3px 10px' }}
               >🔄 Thử lại</button>
             )}
             {msg.role === 'assistant' && msg.logId && (
@@ -983,7 +983,7 @@ export default function AIAssistantPage() {
           disabled={loading || !input.trim()}
           title={t('ai.send')}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#070708" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>

@@ -15,36 +15,8 @@ import FavoritePill, { getLocalPlaylists, saveLocalPlaylists } from '../componen
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
 import { saveOfflineTrack, deleteOfflineTrack, listOfflineTrackIds } from '../offlineStore'
+import { useDominantColor } from '../useDominantColor'
 import type { Track } from '../types'
-
-function useDominantColor(src: string | undefined): string {
-  const [rgb, setRgb] = useState('40, 40, 55')
-  useEffect(() => {
-    if (!src) return
-    const img = new Image()
-    img.onload = () => {
-      const c = document.createElement('canvas')
-      c.width = c.height = 50
-      const ctx = c.getContext('2d')
-      if (!ctx) return
-      try {
-        ctx.drawImage(img, 0, 0, 50, 50)
-        const d = ctx.getImageData(0, 0, 50, 50).data
-        let r = 0, g = 0, b = 0, n = 0
-        for (let i = 0; i < d.length; i += 4) {
-          const br = (d[i] + d[i + 1] + d[i + 2]) / 3
-          if (br < 15 || br > 235) continue
-          r += d[i]; g += d[i + 1]; b += d[i + 2]; n++
-        }
-        if (n > 0) setRgb(`${Math.round(r / n)}, ${Math.round(g / n)}, ${Math.round(b / n)}`)
-      } catch {}
-    }
-    img.crossOrigin = 'anonymous'
-    img.onerror = () => {}
-    img.src = src
-  }, [src])
-  return rgb
-}
 
 const PLAYLIST_GRADIENTS = [
   'radial-gradient(140% 140% at 30% 22%, oklch(0.55 0.20 285) 0%, oklch(0.35 0.14 315) 50%, oklch(0.15 0.06 345) 100%)',
@@ -386,7 +358,7 @@ export default function PlaylistsPage() {
           <BackButton onClick={() => setSelectedPlaylistId(null)} label={t('library.back', { defaultValue: 'Quay lại' })} />
 
           <div className="album-hero">
-            <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden', boxShadow: '0 20px 48px rgba(0,0,0,0.7)', flexShrink: 0 }}>
+            <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--shadow-soft-hover)', flexShrink: 0 }}>
               <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} name={currentPlaylist.name} />
             </div>
             <div className="album-hero-info">
@@ -468,7 +440,7 @@ export default function PlaylistsPage() {
                   >
                     <td className="col-num">
                       {isCurrent && isPlaying ? (
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--green)">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--accent)">
                           <rect x="6" y="4" width="4" height="16" />
                           <rect x="14" y="4" width="4" height="16" />
                         </svg>
