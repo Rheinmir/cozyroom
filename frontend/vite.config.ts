@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      filename: 'sw3.js',
+      filename: 'sw4.js',
       devOptions: { enabled: true },
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
@@ -58,8 +58,8 @@ export default defineConfig({
       manifest: {
         name: 'Cozyroom',
         short_name: 'Cozyroom',
-        theme_color: '#050505',
-        background_color: '#050505',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

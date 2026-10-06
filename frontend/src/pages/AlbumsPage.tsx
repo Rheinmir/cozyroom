@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { MUSIC_FALLBACK_COVER } from '../coverPlaceholder'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -50,7 +51,7 @@ export default function AlbumsPage() {
                 <div className="album-cover">
                   {al.cover_url
                     ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                    : <span className="no-cover">♪</span>
+                    : <img className="no-cover" src={MUSIC_FALLBACK_COVER} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   }
                 </div>
                 <div className="album-info">

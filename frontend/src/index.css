@@ -1,4 +1,23 @@
 ﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0');
+
+/* Material Symbols Rounded (FILL 1) — Apple-Music-style rounded+filled
+   transport/play glyphs. Size per use via font-size on the button. */
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 1;
+  user-select: none;
+}
+.ctrl-btn--active .ms { color: var(--accent); }
 
 /* ── Slash command autocomplete ────────────────────────── */
 /* Ghost text inline completion */
@@ -668,6 +687,7 @@ button, a, [role="button"], input, select, textarea {
   --radius-lg:     18px;
   --radius-xl:     28px;
   --radius-panel:  16px;   /* floating panels / queue */
+  --radius-search: 36px;   /* search input pill (--td-r-search) */
   --radius-full:   1000px; /* pills, round buttons */
   --radius-pill:   980px;  /* legacy alias of --radius-full */
 
@@ -779,7 +799,11 @@ select:focus-visible, [tabindex]:focus-visible, [role="button"]:focus-visible {
 /* These two inputs already draw their own inset focus ring (box-shadow:
    inset ... on :focus/:focus-within). The generic outside outline above
    would stack a second ring on top of that inset one — opt them out. */
-.ai-input:focus-visible, .artist-filter-input:focus-visible { outline: none !important; }
+.ai-input:focus-visible, .artist-filter-input:focus-visible,
+/* Search fields show focus via their own accent border (prettier than an outer
+   ring on a pill), so opt them out of the global 2px ring — a11y is preserved
+   by the border-colour change on :focus below. */
+.search-input:focus-visible { outline: none !important; }
 
 /* ── Base ───────────────────────────────────────────── */
 body {
@@ -818,12 +842,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .shell, .mobile-shell { position: relative; z-index: 1; }
 .shell {
   display: grid;
+  /* Sidebar + main both span full height. The player is a FLOATING pill
+     (position:fixed, below) — it no longer reserves a grid row, which used to
+     leave a 72px black strip under the sidebar (sidebar looked "off") and an
+     empty black band around the pill. */
   grid-template-columns: var(--sidebar-w) 1fr;
-  grid-template-rows: 1fr var(--player-h) 0px;
-  grid-template-areas:
-    "sidebar    main-wrapper"
-    "player     player"
-    "mobilenav  mobilenav";
+  grid-template-rows: 1fr;
+  grid-template-areas: "sidebar main-wrapper";
   height: 100dvh;
   transition: grid-template-columns 250ms cubic-bezier(0.4,0,0.2,1);
 }
@@ -916,7 +941,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   align-items: center;
   gap: 10px;
   padding: 8px 8px;
-  border-radius: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 22px;
   font-weight: 600;
   color: var(--text-muted);
   transition: color .15s, background .15s;
@@ -926,11 +953,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .nav-link-icon { font-size: 16px; flex-shrink: 0; line-height: 1; }
 .nav-link-text { overflow: hidden; text-overflow: ellipsis; }
 .sidebar--collapsed .nav-link { justify-content: center; padding: 8px 0; }
-.nav-link:hover { color: var(--text); background: var(--glass-fill); }
+.nav-link:hover { color: var(--text); background: var(--surface); }
 .nav-link.active { color: var(--text); }
 .nav-link.active {
-  /* Apple Music active nav = faint white fill (no glow). */
-  background: var(--fill-40);
+  /* TIDAL active nav = --fill-30 white fill + --text (no glow). */
+  background: var(--fill-30);
   font-weight: 600;
 }
 
@@ -1015,16 +1042,16 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .search-input {
   width: 100%;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-search);
   padding: 8px 12px 8px 36px;
   color: var(--text);
   font-size: 16px;
   outline: none;
   transition: background .2s, border-color .2s;
 }
-.search-input:focus { background: var(--surface); border-color: var(--border); }
+.search-input:focus { background: var(--surface-2); border-color: var(--accent); }
 
 .search-input::placeholder { color: var(--text-faint); }
 
@@ -1033,6 +1060,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex: 1;
   overflow-y: auto;
   background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 340px);
+  /* Clear the floating player pill (now position:fixed, ~56px tall at bottom:16px)
+     so the last content row isn't hidden behind it on every page. */
+  padding-bottom: 88px;
 }
 
 .page { padding: 32px 32px 80px; }
@@ -1289,7 +1319,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 .artist-name {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1458,7 +1488,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 .album-info { display: flex; flex-direction: column; gap: 2px; }
-.album-title { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.album-title { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .album-year  { font-size: 12px; color: var(--text-muted); }
 
 /* ── Playlist hero gradient wrapper ─────────────────── */
@@ -1753,12 +1783,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 /* ───────────────────────────────────────────────────────── */
 
-.player-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* ── Equalizer mirrored premium ────────────────────── */
 .eq-container {
   display: flex;
@@ -2043,55 +2067,34 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 
 /* ── Player bar ─────────────────────────────────────── */
+/* The player row is now a transparent gutter; the floating pill (.player-full)
+   supplies its own glass. Centred under the CONTENT area via padding-left:
+   --sidebar-w (set on :root; shrinks when the sidebar collapses). */
 .player-bar {
-  grid-area: player;
-  border-top: 1px solid var(--border);
+  /* Floating pill over content — no reserved grid row (see .shell). Centered
+     under the main area via padding-left:sidebar-w. The transparent gutter must
+     not swallow clicks on the content behind it, so pointer-events pass through
+     everywhere except the pill itself. */
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 16px;
+  z-index: 40;
   display: flex;
   align-items: center;
-  padding: 0 24px;
-  gap: 16px;
-  position: relative;
+  justify-content: center;
+  padding-left: var(--sidebar-w);
   min-width: 0;
+  pointer-events: none;
 }
-/* backdrop-filter on ::before — keeps blur without creating a containing block
-   for position:fixed children (e.g. .npo overlay) */
-.player-bar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--player-glass);
-  backdrop-filter: var(--blur-nav);
-  -webkit-backdrop-filter: var(--blur-nav);
-  z-index: -1;
-}
+.player-bar > * { pointer-events: auto; }
 .player-mini-progress {
   display: none;
 }
 .player-bar--empty {
   justify-content: center;
+  padding-left: var(--sidebar-w);
 }
 .player-hint { color: var(--text-faint); font-size: 13px; }
-
-.player-left  { flex: 1; min-width: 0; }
-/* The whole player-bar background opens the now-playing detail on click
-   (interactive children opt out via the JS guard), so show the pointer. */
-.player-full { cursor: pointer; }
-.player-right { flex: 1; }
-.player-title {
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.player-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 2;
-  gap: 0;
-}
 
 .play-btn {
   width: 36px;
@@ -2137,12 +2140,15 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   flex-shrink: 0;
 }
 
+/* Right-actions cluster inside the pill: favourite · queue · Smart · quality ·
+   background-sounds (Smart/quality kept here as compact badges so the pill
+   stays uncluttered without losing the controls). */
 .player-right {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* ── Progress bar ───────────────────────────────────── */
@@ -2170,14 +2176,96 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .progress-bar:hover::-webkit-slider-thumb { opacity: 1; }
 
-/* ── Desktop: player-full wraps existing 3-col layout ── */
+/* ── Desktop: floating Apple-Music "chrome" pill ──────────
+   668px glass pill, full-round, 3 columns: transport | LCD | actions.
+   backdrop-filter lives on the pill (not .player-bar) so the fixed .npo
+   overlay — a sibling, not a descendant — keeps its viewport anchor. */
 .player-full {
-  display: flex;
+  width: min(668px, calc(100% - 48px));
+  height: 56px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  flex: 1;
+  gap: 12px;
+  padding: 0 12px;
+  border-radius: var(--r-full, 1000px);
+  background: var(--player-glass);
+  backdrop-filter: var(--blur-nav);
+  -webkit-backdrop-filter: var(--blur-nav);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0,0,0,.45), inset 0 0 0 1px var(--hairline);
+  cursor: pointer;
   min-width: 0;
 }
+
+/* Left transport cluster — override the shared .player-controls base
+   (it carries a now-irrelevant margin-bottom from the old stacked layout). */
+.player-full .player-controls {
+  margin-bottom: 0;
+  gap: 2px;
+}
+.player-full .ctrl-btn { width: 30px; height: 30px; }
+
+/* Center LCD: cover thumb + title/artist + a hairline progress scrubber
+   pinned to the panel's bottom edge. */
+.player-lcd {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px 2px;
+  border-radius: 10px;
+  background: var(--glass-fill);
+  overflow: hidden;
+  min-width: 0;
+}
+.player-lcd-cover {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-cover, 2px);
+  overflow: hidden;
+  background: var(--img);
+  flex-shrink: 0;
+}
+.player-lcd-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.player-lcd-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.player-lcd-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-lcd-artist {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Thin progress line across the bottom of the LCD; the scrub thumb only
+   appears on hover so the resting state reads as a clean indicator. */
+.player-lcd-range {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 1px;
+  width: auto;
+  flex: none;
+  height: 3px;
+}
+.player-lcd-range:hover { height: 3px; }
+.player-lcd-range::-webkit-slider-thumb { width: 9px; height: 9px; opacity: 0; }
+.player-lcd:hover .player-lcd-range::-webkit-slider-thumb { opacity: 1; }
 
 /* ── Mobile mini bar (hidden on desktop) ── */
 .player-mini { display: none; }
@@ -2646,7 +2734,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     height: 56px;
     position: relative;
     overflow: hidden;
-    border-radius: 22px;
+    /* Full-round capsule to match the Apple-Music mini-player pill (r1000). */
+    border-radius: 1000px;
     /* .4 opacity + 24px blur still read as "an opaque dark block" against
        real page content — a strong blur smears any content behind into an
        unrecognizable color wash regardless of how transparent the tint is,
@@ -2858,7 +2947,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     flex: 1;
     min-width: 0;
     height: 56px;
-    border-radius: 22px;
+    border-radius: 28px;
     /* .4 opacity + 24px blur still read as "an opaque dark block" against
        real page content — a strong blur smears any content behind into an
        unrecognizable color wash regardless of how transparent the tint is,
@@ -2883,9 +2972,16 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     background: transparent;
     border: none;
     padding-left: 44px;
-    font-size: 15px;
+    /* 16px (not 15) is the floor that stops iOS Safari auto-zooming the page
+       on focus — any input < 16px triggers the zoom-to-fit. Keep ≥16px. */
+    font-size: 16px;
   }
   .mobile-search-island .search-input:focus { background: transparent; border-color: transparent; }
+  /* Focus shows as a thin teal edge on the whole island (not an outer ring on
+     the input) — consistent with the desktop search's accent-border focus. */
+  .mobile-search-island .search-bar:focus-within {
+    box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px var(--accent);
+  }
 
   /* Queue toggle — same glass pill treatment, round, sized to match the
      search bar's own height so the row reads as one consistent unit. Only
@@ -3442,7 +3538,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .lyrics-retry-btn:hover { background: var(--hover); }
 
-/* ── Videos Poster Grid ───────────────────────────────── */
+/* ── Films / Videos — poster-forward streaming library ──── */
 .videos-loading {
   display: flex;
   align-items: center;
@@ -3452,52 +3548,105 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   font-size: 15px;
 }
 
+/* Page head: title + result count */
+.videos-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.videos-head .page-title { margin-bottom: 0; }
+.videos-count {
+  font-size: 13px;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+/* Empty / no-match state */
+.videos-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 72px 20px;
+  text-align: center;
+}
+.videos-empty-glyph {
+  font-size: 56px;
+  color: var(--text-faint);
+  font-variation-settings: 'FILL' 0;
+}
 .videos-empty-note {
   color: var(--text-muted);
-  font-size: 13px;
-  margin-top: -8px;
+  font-size: 14px;
+  margin: 0;
 }
 
-.video-group { margin-bottom: 40px; }
-
-.video-group-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: capitalize;
+/* Category shelves (horizontal) */
+.video-shelf { margin-bottom: 40px; }
+.video-shelf-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   margin: 0 0 16px;
-  letter-spacing: .04em;
+}
+.video-shelf-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 26px;
+  color: var(--text);
+  margin: 0;
+}
+.video-shelf-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+.video-shelf-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.video-shelf-track > .video-poster-card {
+  flex: 0 0 auto;
+  width: 164px;
+  scroll-snap-align: start;
 }
 
+/* Responsive grid (single category / search) */
 .video-poster-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 24px 18px;
 }
 
 .video-poster-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: var(--surface);
-  box-shadow: var(--shadow-soft);
-  border-radius: 12px;
-  overflow: hidden;
   cursor: pointer;
-  transition: box-shadow .28s, transform .28s;
-}
-
-.video-poster-card:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-3px) scale(1.01);
+  text-decoration: none;
+  min-width: 0;
 }
 
 .video-poster-img {
   position: relative;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  border-radius: 10px 10px 0 0;
-  background: var(--glass-fill);
+  border-radius: var(--radius-md);
+  background: var(--img);
+  transition: transform .26s ease, box-shadow .26s ease;
+  will-change: transform;
+}
+.video-poster-card:hover .video-poster-img,
+.video-poster-card:focus-visible .video-poster-img {
+  transform: scale(1.03);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .video-poster-img img {
@@ -3507,31 +3656,100 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   display: block;
 }
 
+/* Hover scrim + centred play glyph */
+.video-poster-scrim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,.12) 55%, transparent);
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.video-poster-card:hover .video-poster-scrim,
+.video-poster-card:focus-visible .video-poster-scrim {
+  opacity: 1;
+}
+.video-poster-play {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full, 1000px);
+  background: var(--accent);
+  color: var(--on-fill);
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  box-shadow: var(--shadow-play, 0 2.2px 5.5px 0 rgba(0,0,0,.25));
+  transform: scale(.82);
+  transition: transform .22s ease;
+}
+.video-poster-card:hover .video-poster-play,
+.video-poster-card:focus-visible .video-poster-play {
+  transform: scale(1);
+}
+
+/* Teal "NEW" badge (uses real created_at) */
+.video-poster-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--accent);
+  color: var(--on-fill);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* Runtime chip */
 .video-poster-duration {
   position: absolute;
   bottom: 8px;
   right: 8px;
   background: rgba(0,0,0,.72);
   color: #fff;
-  font-size: 0.62rem;
+  font-size: 11px;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
+  backdrop-filter: blur(2px);
 }
 
 .video-poster-info {
-  padding: 0 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .video-poster-title {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.4;
+  line-height: 1.35;
+}
+
+.video-poster-meta {
+  font-size: 13px;
+  color: var(--text-faint);
+  transition: color .2s ease;
+}
+.video-poster-card:hover .video-poster-meta {
+  color: var(--text-muted);
+}
+
+@media (max-width: 520px) {
+  .video-poster-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 18px 12px;
+  }
+  .video-shelf-track > .video-poster-card { width: 132px; }
 }
 /* ── Ebooks ─────────────────────────────────────────── */
 .ebooks-page { padding: 32px 32px 80px; }

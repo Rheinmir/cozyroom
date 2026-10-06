@@ -1,273 +1,254 @@
 ---
 name: Cozyroom
-description: Self-hosted media hub reskinned as a dark, teal-accented music surface — Tidal's colour set on Apple Music's structure and cover-gradient method, with Tidal control primitives.
+description: Self-hosted media hub reskinned as a full TIDAL-style dark music surface — Tidal's colour set, typography, controls, cards, track grid and shelves.
 themeDefault: dark
 studiedDNA:
-  structure_and_gradient: "ui-kits/music-apple-com (Apple Music web app) — shell/nav/shelf/song-row structure + .am-tint cover-derived gradient wash"
-  palette_and_controls: "ui-kits/tidal-com (Tidal web) — dark colour set (--td-*), teal accent, and control primitives (.td-round/.td-btn/.td-play-mini/.td-tab)"
-  attribution: "Structure/colours studied from measured CSS vars of both kits; no vendor images, logos, or copy reproduced."
+  source: "ui-kits/tidal-com (TIDAL web player) — measured --td-* CSS vars + component classes (.td-*)"
+  attribution: "Colours, type and component metrics studied from the kit; no TIDAL images, logos, or copy reproduced. Square Sans is TIDAL's proprietary font — we use its declared fallback (Inter)."
 colors:
-  # PALETTE = Tidal (dark). Accent = Tidal teal. Primary button = Tidal white-on-dark.
-  bg: "#000000"                 # page background (--td-bg)
-  surface: "#141414"            # cards / rows (--td-surface-10)
+  bg: "#000000"                 # page background (--td-bg / --td-surface-fill)
+  surface-5: "#080808"          # deepest surface (--td-surface-5)
+  surface: "#141414"            # rows / hover surface (--td-surface-10)
   surface-2: "#1c1c1c"          # raised (--td-surface-20)
-  surface-3: "#2d2d2d"          # hover / elevated (--td-surface-30)
-  surface-5: "#080808"          # deepest (--td-surface-5)
+  surface-3: "#2d2d2d"          # elevated / brightest base (--td-surface-30)
   card: "#0e0e10"               # media card bg (--td-card)
-  img-placeholder: "#242429"    # cover placeholder (--td-img)
-  text: "rgba(255,255,255,.95)" # primary (--td-text-10 = #fffffff2)
-  text-muted: "rgba(255,255,255,.55)"  # secondary (--td-text-20 = #ffffff8c)
-  text-faint: "rgba(255,255,255,.30)"  # tertiary (--td-text-30 = #ffffff4d)
-  accent: "#33ffee"             # teal — links, focus, eyebrows, badges (--td-accent)
-  accent-text: "#3fe"           # link text (--td-wave-color-text-link)
-  on-fill: "#101010"            # dark glyph on white primary (--td-on-fill-10)
+  img: "#242429"                # cover placeholder (--td-img)
+  text: "rgba(255,255,255,.95)" # primary (--td-text-10 #fffffff2)
+  text-muted: "rgba(255,255,255,.55)"  # secondary (--td-text-20 #ffffff8c)
+  text-faint: "rgba(255,255,255,.30)"  # tertiary (--td-text-30 #ffffff4d)
+  accent: "#33ffee"             # TIDAL Wave cyan — accent/link/focus/eyebrow (--td-accent)
+  accent-link: "#33ffee"        # text link (--td-wave-color-text-link #3fe)
   fill-10: "rgba(255,255,255,.95)"  # primary-button fill (white) (--td-fill-10)
   fill-20: "rgba(255,255,255,.35)"  # (--td-fill-20)
-  fill-30: "rgba(255,255,255,.15)"  # secondary-button fill (--td-fill-30)
+  fill-30: "rgba(255,255,255,.15)"  # secondary fill / active nav (--td-fill-30)
   fill-40: "rgba(255,255,255,.08)"  # round-button / chip fill (--td-fill-40)
-  divider: "rgba(255,255,255,.09)"  # hairline (--td-divider-20 = #ffffff14)
-  divider-strong: "rgba(255,255,255,.30)"  # (--td-divider-10)
-  critical: "#ff5a76"           # danger text (--td-critical-text)
+  on-fill: "#101010"            # dark glyph on white primary (--td-on-fill-10)
+  divider: "rgba(255,255,255,.08)"  # hairline (--td-divider-20 #ffffff14)
+  divider-strong: "rgba(255,255,255,.30)"  # (--td-divider-10 #ffffff4d)
+  floating: "rgba(40,40,40,.75)"  # floating button (--td-floating #282828bf)
+  critical: "#ff5a76"           # (--td-critical-text)
   success: "#16d956"            # (--td-success-text)
   warning: "#ff9f40"            # (--td-warning-text)
 charts:
-  # Categorical palette re-tuned to sit on Tidal black; single-series keys off teal accent.
   palette: ["#33ffee", "#33a7ff", "#ffd432", "#ff4242", "#8f00ff", "#33ffa9", "#ffbf80", "#ff668f"]
   fail: "#ff4242"
   warn: "#ff9f40"
   caution: "#ffd432"
   ok: "#16d956"
 typography:
+  # TIDAL: "Square Sans" (proprietary) with Inter as the declared web fallback.
   display:
-    fontFamily: "Inter, 'Square Sans Display', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif"
-    fontSize: "clamp(22px, 4vw, 34px)"
+    fontFamily: "Inter, 'Square Sans Display', Helvetica, Arial, sans-serif"
+    fontSize: "19px"            # shelf heading _heading20 (Display 19/26 700)
     fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: "-0.01em"
+    lineHeight: "26px"
   body:
-    fontFamily: "Inter, 'Square Sans Text', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif"
-    fontSize: "14px"
+    fontFamily: "Inter, 'Square Sans Text', Helvetica, Arial, sans-serif"
+    fontSize: "14px"           # TIDAL base 14/20–22
     fontWeight: 400
     lineHeight: "22px"
   label:
-    fontFamily: "'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace"
+    fontFamily: "'JetBrains Mono', ui-monospace, Menlo, monospace"
     fontSize: "12px"
-    fontWeight: 500
+    fontWeight: 600
 rounded:
-  cover: "2px"      # album/track cover (--td-r-cover) — Tidal's signature near-square art
+  cover: "2px"      # album/track cover (--td-r-cover) — TIDAL's signature near-square art
   xs: "4px"
   sm: "8px"
-  md: "12px"        # nav item, cards
-  panel: "16px"     # floating panels / queue
-  full: "1000px"    # pills, round buttons
+  menuitem: "9px"
+  md: "12px"        # nav item, buttons pill fallback
+  panel: "16px"     # floating panels / play queue (--td-r-panel)
   tabbar: "20px"
-spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "16px"
-  lg: "24px"
-  xl: "32px"
+  search: "36px"    # search input (--td-r-search)
+  full: "1000px"    # pills, round buttons (--td-r-full)
 motion:
-  transition: "0.1s ease-in"       # Apple Music --global-transition (opacity .1s)
-  control: "0.1s"                  # Tidal button transition
-  blur-nav: "saturate(1.8) blur(20px)"
-  blur-glass: "saturate(2) blur(60px)"   # Apple Music sidebar glass
+  transition: "0.1s"          # button/control transition
+  fav: "transform .1s"        # fav scale
 shadows:
-  play: "0 2.2px 5.5px 0 rgba(0,0,0,.1)"    # Tidal play-button (--td-shadow-play)
+  play: "0 2.2px 5.5px 0 rgba(0,0,0,.1)"    # play-button (--td-shadow-play)
   menu: "0 4px 20px 0 rgba(0,0,0,.3)"       # dropdowns (--td-shadow-menu)
   panel: "0 10px 12px 0 rgba(0,0,0,.15), 0 0 2px 0 rgba(255,255,255,.08)"  # floating panels
-gradient_method:
-  # Apple Music's cover-derived tint. On album/artist/playlist detail pages, derive a
-  # dominant dark colour from the cover art and pour it as the page background wash;
-  # tint secondary text + dividers to match. Sample tokens (real value = per-cover):
-  tint-bg: "derived-dark (e.g. #370c18)"     # page wash behind hero + first shelf
-  tint-sec: "derived-mid (e.g. rgb(216,173,190))"  # secondary text on the tint
-  tint-div: "derived-line (e.g. rgb(136,56,78))"   # dividers on the tint
 components:
-  button-primary:      # Tidal .td-btn--primary (WHITE on dark)
+  nav-item:            # .td-nav-item 208×40 r12
+    height: "40px"
+    rounded: "{rounded.md}"
+    padding: "8px"
+    text: "{colors.text-muted}"       # rest; hover → text + surface, active → text + fill-30
+  button-primary:      # .td-btn--primary (WHITE on dark)
     backgroundColor: "{colors.fill-10}"
     textColor: "{colors.on-fill}"
     rounded: "{rounded.full}"
     padding: "9px 16px"
     height: "40px"
-  button-secondary:    # Tidal .td-btn--secondary
+  button-secondary:    # .td-btn--secondary
     backgroundColor: "{colors.fill-40}"
     textColor: "{colors.text}"
     rounded: "{rounded.full}"
-  button-round:        # Tidal .td-round (32 icon)
+  round-button:        # .td-round 32
     size: "32px"
     backgroundColor: "{colors.fill-40}"
     rounded: "{rounded.full}"
-  play-button:         # Tidal .td-play-mini — white circle, dark glyph, play shadow
+  play-button:         # .td-play-mini — white circle, dark glyph, play shadow
     backgroundColor: "{colors.fill-10}"
     textColor: "{colors.on-fill}"
     rounded: "{rounded.full}"
     shadow: "{shadows.play}"
-  input-field:
+  card:                # .td-card
+    coverRounded: "{rounded.cover}"
+    titleWeight: 500   # medium, NOT bold
+    subColor: "{colors.text-muted}"
+  input:               # search
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.text}"
     rounded: "{rounded.search}"
 ---
 
-<!-- design: theme=Tidal-palette × Apple-Music-structure -->
+<!-- design: theme=TIDAL (full) -->
 
-# Design System: Cozyroom — Tidal × Apple Music
+# Design System: Cozyroom — TIDAL
 
-> **Supersedes the apple.com-light system** (which superseded the Midnight Deck,
-> archived at [`DESIGN.midnight-deck.archived.md`](DESIGN.midnight-deck.archived.md)).
-> **Colour set = Tidal. Structure + cover-gradient method = Apple Music. Controls = Tidal.**
-> The behavioural fixes in [§ Inherited Invariants](#inherited-invariants) still hold.
+> **Full TIDAL reskin.** Supersedes the Tidal×Apple-Music hybrid and the
+> interim apple.com-light pass; Midnight Deck archived at
+> [`DESIGN.midnight-deck.archived.md`](DESIGN.midnight-deck.archived.md).
+> Everything — colour, type, controls, cards, track grid, shelves — follows
+> TIDAL's web player. The behavioural fixes in [§ Inherited Invariants](#inherited-invariants) still hold.
 
 ## Overview
 
-**Creative North Star: "Tidal booth, Apple Music floorplan."**
+**Creative North Star: "TIDAL web player."**
 
-A dark, near-black music surface built from **Tidal's colour set** — void-black
-canvas, three charcoal surface tiers, a single **teal `#33ffee`** accent reserved
-for links / focus / eyebrows, and Tidal's white-on-dark primary buttons — laid
-out on **Apple Music's structure**: a translucent glass sidebar, horizontal
-content shelves, dense song-rows, and a segmented control. Detail pages
-(album / artist / playlist) use **Apple Music's cover-gradient method**: a
-dominant colour pulled from the cover art washes the page background and tints
-the secondary text, exactly as Apple Music does.
+A pure-black, Wave-cyan music surface built entirely from TIDAL's system:
+`#000` canvas with four charcoal surface tiers, a white-on-dark primary button,
+TIDAL's teal **Wave** accent (`#33ffee`) reserved for links / focus / eyebrows /
+badges, near-square album art (2px radius), a 208px nav with `r12` items, dense
+3-column track grids, and horizontal shelves with "View all" links. Type is Inter
+(TIDAL's declared fallback for its proprietary Square Sans), 14/22 base.
 
 **Key characteristics:**
-- **Dark-first, Tidal palette.** `#000` canvas; `#141414 / #1c1c1c / #2d2d2d`
-  surface tiers; white-alpha text ladder (`.95 / .55 / .30`).
-- **Teal is the accent, white is the primary.** `#33ffee` marks links, focus
-  rings, eyebrows, and badges. The primary button and play button are **white
-  fill with dark glyph** (Tidal's actual scheme — teal is NOT a button fill).
-- **Apple Music structure.** 232px glass sidebar (`saturate(2) blur(60px)`),
-  `section.block` horizontal shelves, song-rows, `.seg` segmented control (r9).
-- **Cover-gradient method.** Detail pages derive a dark tint from the cover and
-  pour it as a background wash + tint the secondary text/dividers.
-- **Tidal controls.** `.td-round` (32 round), `.td-btn` primary/secondary/floating,
-  `.td-play-mini` (white 14px circle + play shadow), `.td-tab` (2px underline),
-  `.td-more`, `.td-fav`.
+- **Pure black canvas**, four surface tiers `#080808/#141414/#1c1c1c/#2d2d2d`.
+- **White primary, teal accent.** Primary/play buttons are white fill + dark glyph;
+  teal `#33ffee` is links/focus/eyebrows/badges only — never a large button fill.
+- **Near-square art** (`2px` radius) — TIDAL's signature cover shape.
+- **Inter** 14/22, tight dense layout; shelf headings 19/26 700.
+- **3-column track grids**, horizontal card shelves, 208px nav.
 
-## Colours (Tidal set)
+## Colours (TIDAL set)
 
 | Role | Token | Value |
 |---|---|---|
 | Canvas | `--bg` | `#000000` |
 | Surface / row | `--surface` | `#141414` |
 | Raised | `--surface-2` | `#1c1c1c` |
-| Hover / elevated | `--surface-3` | `#2d2d2d` |
+| Elevated / hover | `--surface-3` | `#2d2d2d` |
 | Media card | `--card` | `#0e0e10` |
 | Cover placeholder | `--img` | `#242429` |
 | Text primary | `--text` | `rgba(255,255,255,.95)` |
 | Text secondary | `--text-muted` | `rgba(255,255,255,.55)` |
 | Text tertiary | `--text-faint` | `rgba(255,255,255,.30)` |
-| **Accent (teal)** | `--accent` | `#33ffee` |
-| Primary-button fill (white) | `--fill-10` | `rgba(255,255,255,.95)` |
+| **Accent (Wave teal)** | `--accent` | `#33ffee` |
+| Primary-button fill | `--fill-10` | `rgba(255,255,255,.95)` |
 | Glyph on white | `--on-fill` | `#101010` |
 | Round/chip fill | `--fill-40` | `rgba(255,255,255,.08)` |
-| Hairline | `--border` | `rgba(255,255,255,.09)` |
+| Active-nav fill | `--fill-30` | `rgba(255,255,255,.15)` |
+| Hairline | `--border` | `rgba(255,255,255,.08)` |
 
 ### Named Rules
-- **The Teal-Accent Rule.** `#33ffee` is the ONE chromatic accent — links, focus
-  rings, eyebrows, badges, active-nav marks, single-series chart marks. It is
-  **never a large button fill** (that stays white, Tidal-style). No second hue.
-- **The White-Primary Rule.** Primary buttons and play buttons are white fill
-  (`--fill-10`) + dark glyph (`--on-fill`). Any `background: var(--accent)` on a
-  large CTA is wrong — repoint to `--fill-10`.
-- **The Cover-Gradient Rule.** Only album/artist/playlist **detail** pages get the
-  Apple-Music tint wash (derived from cover). Library grids and system pages stay
-  on the flat `#000` canvas. Never invent a tint where there's no cover.
-- **Data Needs Colour (retained).** Charts keep `--chart-1..8` + semantic status,
-  re-tuned for the black canvas; single series uses teal `--chart-1`.
+- **The Wave-Accent Rule.** `#33ffee` (TIDAL Wave cyan) is the ONE accent — links,
+  focus rings, eyebrows, badges, active marks, single-series charts. **Never a
+  large button fill.** No second hue.
+- **The White-Primary Rule.** Primary + play buttons are white fill (`--fill-10`)
+  + dark glyph (`--on-fill`). Any `background: var(--accent)` on a big CTA is wrong.
+- **The Near-Square-Art Rule.** Album/track/artist covers use `2px` radius (round
+  only for artist-avatar variants). No large rounded covers.
+- **Data Needs Colour (retained).** Charts keep `--chart-1..8` + semantic status on
+  black; single series = teal `--chart-1`.
 - **Genre Tile exception (retained).** SearchPage `.genre-tile` duotone stays scoped.
 
-## Structure (Apple Music)
+## Typography (TIDAL / Inter)
 
-- **Shell:** ~232px glass sidebar + fluid main (`0 32px` gutters). Sidebar is
-  `saturate(2) blur(60px)` glass over the dark canvas, `.5px` divider.
-- **Sidebar nav:** 28–36px rows, 14px text, icon in the accent, active row = a
-  faint `rgba(255,255,255,.08)` fill (no glow).
-- **Shelves:** `section.block` sections with a `h2` (26–30 / 700) header + optional
-  "View all", horizontal scroll of cards.
-- **Song-rows:** dense list rows, cover 56 (r `cover` = 2px), title/artist stacked,
-  hover reveals the play control.
-- **Segmented control:** `.seg` track r9, selected segment gets a raised fill +
-  small shadow.
-- **Header/search:** sticky, `saturate(1.8) blur(20px)`, `.5px` bottom divider.
+Inter for display + body (TIDAL's declared fallback for Square Sans); JetBrains
+Mono for data readouts. Base **14/22 400**. Shelf/section headings **19/26 700**
+(display). Card title **14/22 500** (medium, NOT bold). Card subtitle **14/22 400**
+`--text-muted`. Small labels 12. `letter-spacing` near-0 (TIDAL is tight but not negative).
 
-## Gradient method (Apple Music `.am-tint`)
+### Named Rule
+- **Card titles are medium (500), not bold (700).** A frequent tell — TIDAL card
+  titles are `500`; only shelf/section headings are `700`.
 
-On a detail page with a cover:
-1. Derive a dominant **dark** colour from the cover (client-side; a muted, low-L
-   version so text stays legible).
-2. Set it as the page background wash behind the hero + first shelf (fade to `#000`).
-3. Tint secondary text → a lighter derivative; tint dividers → a mid derivative.
-4. Primary text stays near-white; the accent stays teal.
+## Layout & structure (TIDAL)
 
-This is the one place colour is data-derived. Everywhere else uses the flat Tidal
-palette. Implement as a `.tinted` container + CSS custom props set inline from the
-extracted colour (like the app's existing playlist/artist hero gradient, extended
-to the full Apple-Music page-wash treatment).
+- **Shell:** ~208px left nav + fluid main. Nav items `.td-nav-item`: 40px tall,
+  `r12`, `8px` padding, 14/22 600, icon 20; rest `--text-muted`, hover `--surface`
+  + `--text`, active `--fill-30` + `--text`.
+- **Shelves:** a `h2` heading (19/26 700) + optional "View all" (`--text-muted` →
+  `--text` on hover), then a horizontal scroll of cards.
+- **Cards** (`.td-card`): near-square cover (`2px`), `.td-play-mini` bottom-left +
+  `.td-fav` bottom-right on hover, title 14/22 500, sub 14/22 400 muted; round
+  variant centres its title.
+- **Track rows** (`.td-tracks`): a **3-column grid** (`repeat(3, minmax(0,1fr))`,
+  gap `16px 32px`), each row 56px with a 56px cover; hover reveals `.td-play-row`.
+- **Search input:** `--surface` fill, `r36` (pill).
+- **Floating panels** (play queue): `r16`, `1px` hairline, `--shadow-panel`.
 
-## Controls (Tidal primitives)
+## Controls (TIDAL primitives)
 
-- **Primary button** (`.td-btn--primary`): white fill, dark glyph, pill, `9px 16px`,
-  40px tall (compact 32px). Hover → `--fill-20`.
-- **Secondary** (`.td-btn--secondary`): `--fill-40` fill, white text, pill.
-- **Round icon** (`.td-round`): 32px, `--fill-40` fill, full-round.
-- **Play** (`.td-play-mini`): 14px **white** circle, dark glyph, `play` shadow;
+- **Primary** (`.td-btn--primary`): white fill, dark glyph, pill, `9px 16px`, 40px
+  (compact 32px). Hover → `--fill-20`.
+- **Secondary** (`.td-btn--secondary`): `--fill-40`, white text, pill.
+- **Round icon** (`.td-round`): 32px, `--fill-40`, full-round.
+- **Play** (`.td-play-mini`): 14px **white** circle + dark glyph + `--shadow-play`;
   `.td-play-row` 40px transparent white for row hover.
-- **Tab** (`.td-tab`): text + 2px underline on active (`--text`), teal dotted focus.
-- **Fav / More** (`.td-fav` 36 round, `.td-more` 32 ghost).
-- **Focus:** Tidal uses `1px dotted var(--accent)` (teal) on controls; keep the
-  visible-focus invariant with the teal ring.
+- **Tab** (`.td-tab`): text + 2px underline on active (`--text`); teal dotted focus.
+- **Fav** (`.td-fav` 36 round, hover scale 1.1) / **More** (`.td-more` 32 ghost).
+- **Focus:** `1px dotted var(--accent)` (teal) on controls; teal ring elsewhere.
 
-## Elevation & Depth
+## Elevation
 
-Dark surfaces + real black shadows for floating layers (`shadows.menu` for
-dropdowns, `shadows.panel` for the queue/floating panels). Cards lift on hover
-with `--surface-3` fill + a subtle `scale(1.01)`. No white-glow (that was Midnight
-Deck); depth here is surface-tier + shadow, Tidal-style.
+Surface tiers + black shadows. Cards lift to `--surface-3` on hover; dropdowns use
+`--shadow-menu`; floating panels `--shadow-panel`. No white-glow, no coloured
+drop-shadow.
 
 ## Charts
 
-Retained system, re-tuned for `#000`. Grid hairline `var(--border)` dashed; axis
+Retained, tuned for `#000`. Grid hairline `var(--border)` dashed; axis
 `var(--text-muted)`; tooltip `var(--surface)` + `1px var(--border)` + `var(--text)`;
-single-series marks teal `var(--chart-1)`; multi-series `--chart-1..8`.
+single-series teal `var(--chart-1)`; multi `--chart-1..8`.
 
 ## Inherited Invariants
 
-Carried verbatim (behavioural/a11y — do NOT regress):
-1. **Visible keyboard focus** on every interactive element — now the teal ring
-   (`1px dotted var(--accent)` on controls; `3px` teal on cards/nav). Keep the
-   `.ai-input`/`.artist-filter-input` opt-outs.
+Behavioural/a11y — do NOT regress:
+1. **Visible keyboard focus** on every interactive element — teal (`1px dotted
+   var(--accent)` on controls; teal ring on cards/nav). Keep `.ai-input` /
+   `.artist-filter-input` opt-outs.
 2. **iOS tap:** `touch-action: manipulation` verbatim.
 3. **Wide-monitor reading widths:** 1920/2560/3840 breakpoints for reading columns.
 4. **Anti-flash theme boot** via `index.html` inline script + `localStorage`
-   (`cozyroom-theme`). Default is now **dark**; respect a stored value.
+   (`cozyroom-theme`), default **dark**.
 5. **`currentColor` for brand/loading marks** (`CozyroomMark`, `Spinner`).
 6. **Scrollbars hidden globally.**
-7. **`index.css` is the single entry stylesheet, append/edit-in-place** — fonts
-   `@import` stays at the very top.
+7. **`index.css` is the single entry stylesheet, append/edit-in-place**; fonts
+   `@import` at the very top.
+8. **Service worker versioned filename** (`sw4.js`) — bump on each design ship so
+   CF/browser fetch a fresh SW and users get the new bundle (SW-cache postmortem).
 
 ## Do's and Don'ts
 
 ### Do
-- Use the flat Tidal dark palette everywhere except detail-page cover washes.
-- Reserve teal `#33ffee` for links/focus/eyebrows/badges/active marks + single-series charts.
-- Make primary + play buttons WHITE fill with dark glyph (Tidal).
-- Lay pages out on Apple Music structure (glass sidebar, shelves, song-rows, seg).
-- Use the cover-gradient method only on album/artist/playlist detail pages.
+- Use the flat TIDAL black palette everywhere; teal only for links/focus/eyebrows/badges.
+- White primary + play buttons; near-square 2px covers; card titles medium (500).
+- Lay content out as TIDAL: 208px nav, shelves + "View all", 3-column track grids.
 
 ### Don't
-- Don't use teal as a large button fill, and don't add a second accent hue.
-- Don't put the cover-tint wash on library grids or system pages.
-- Don't reintroduce the apple.com light canvas or the blue `#0071E3` accent.
-- Don't touch backend/DB/k8s as part of design work (`frontend/src` only).
+- Don't use teal as a large button fill or add a second hue.
+- Don't use large rounded covers or bold (700) card titles.
+- Don't reintroduce the apple.com light canvas / blue accent, or the Apple-Music
+  cover-gradient page-wash (removed — TIDAL detail pages stay on the flat canvas).
+- Don't touch backend/DB/k8s as part of design (`frontend/src` only).
 - Don't break any Inherited Invariant.
 
 ## Origin
 
-- Created 2026-09-29 by studying `ui-kits/music-apple-com` (structure + cover-gradient
-  method) and `ui-kits/tidal-com` (colour set + control primitives), per owner
-  direction to take Apple Music's structure/gradient and Tidal's palette/buttons.
-  Structure/colours studied only; no vendor images/logos/copy reproduced. Supersedes
-  the interim apple.com-light system; Midnight Deck preserved at
+- Created 2026-09-30 by studying `ui-kits/tidal-com` (TIDAL web player) measured
+  `--td-*` vars + `.td-*` component classes, per owner direction to make the whole
+  spec match TIDAL. Colours/type/metrics studied only; no TIDAL images/logos/copy
+  reproduced. Supersedes the Tidal×Apple-Music hybrid; Midnight Deck archived at
   [`DESIGN.midnight-deck.archived.md`](DESIGN.midnight-deck.archived.md).

@@ -16,54 +16,24 @@ import QueueList from './QueueList'
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-const IconPrev = () => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
-    <polygon points="19,20 9,12 19,4"/><rect x="5" y="4" width="2" height="16"/>
-  </svg>
+// Material Symbols Rounded (FILL 1) transport glyphs — rounded + filled, to
+// match Apple Music exactly. The .ms class (index.css) loads the font; size is
+// set per button via font-size. Active teal for toggles is applied by the
+// `.ctrl-btn--active .ms` rule when the parent button carries ctrl-btn--active.
+const Ms = ({ name, size }: { name: string; size: number }) => (
+  <span className="ms" style={{ fontSize: size }} aria-hidden>{name}</span>
 )
-const IconNext = () => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
-    <polygon points="5,4 15,12 5,20"/><rect x="17" y="4" width="2" height="16"/>
-  </svg>
-)
-const IconPlay = () => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
-    <polygon points="5,3 19,12 5,21"/>
-  </svg>
-)
-const IconPause = () => (
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
-    <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-  </svg>
-)
+const IconPrev  = () => <Ms name="skip_previous" size={22} />
+const IconNext  = () => <Ms name="skip_next"     size={22} />
+const IconPlay  = () => <Ms name="play_arrow"     size={22} />
+const IconPause = () => <Ms name="pause"          size={22} />
 
 function RepeatIcon({ mode }: { mode: RepeatMode }) {
-  const active = mode !== 'off'
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill={active ? 'var(--accent)' : 'currentColor'} stroke={active ? 'var(--accent)' : 'currentColor'} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
-      {mode === 'one'
-        ? <><path d="M7 7H17V10L21 6L17 2V5H5V13H7V7Z"/><path d="M17 17H7V14L3 18L7 22V19H19V11H17V17Z"/><text x="10" y="14" fontSize="7" stroke="none" fill={active ? 'var(--accent)' : 'currentColor'}>1</text></>
-        : <><path d="M7 7H17V10L21 6L17 2V5H5V13H7V7Z"/><path d="M17 17H7V14L3 18L7 22V19H19V11H17V17Z"/></>
-      }
-    </svg>
-  )
+  return <Ms name={mode === 'one' ? 'repeat_one' : 'repeat'} size={20} />
 }
 
-function ShuffleModeIcon({ mode }: { mode: ShuffleMode }) {
-  if (mode === 'smart') {
-    return (
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
-        <path d="M12 2 L13.5 8.5 L20 10 L13.5 11.5 L12 18 L10.5 11.5 L4 10 L10.5 8.5 Z"/>
-        <circle cx="19" cy="4"  r="1.2"/>
-        <circle cx="5"  cy="18" r="1.2"/>
-      </svg>
-    )
-  }
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill={mode === 'shuffle' ? 'var(--accent)' : 'currentColor'} stroke={mode === 'shuffle' ? 'var(--accent)' : 'currentColor'} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
-      <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
-    </svg>
-  )
+function ShuffleModeIcon({ mode: _mode }: { mode: ShuffleMode }) {
+  return <Ms name="shuffle" size={20} />
 }
 
 export default function PlayerBar() {
@@ -185,6 +155,9 @@ export default function PlayerBar() {
   // Played portion keys off var(--text) so it stays visible in both themes —
   // a hardcoded #fff fill vanished on the light-theme canvas.
   const progressStyle = { background: `linear-gradient(to right, var(--text) ${pct}%, var(--fill-track) ${pct}%)` }
+  // The floating-pill LCD uses the teal accent for its played portion (Tidal
+  // Wave / Apple-Music chrome spec); NPO keeps the white fill above.
+  const lcdProgressStyle = { background: `linear-gradient(to right, var(--green) ${pct}%, var(--fill-track) ${pct}%)` }
 
   const cycleRepeat = () => {
     const n: RepeatMode = repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off'
@@ -211,29 +184,37 @@ export default function PlayerBar() {
             onClick={e => { if (!(e.target as HTMLElement).closest('button, input, a, .fav-pill-wrapper')) setOpen(true) }}
             title={t('player.now_playing')}
           >
-            <div className="player-left">
-              <span className="player-title">{track.title}</span>
+            {/* Left: transport controls (Apple-Music chrome cluster) */}
+            <div className="player-controls">
+              <button className={'ctrl-btn' + (shuffleMode !== 'off' ? ' ctrl-btn--active' : '')} onClick={cycleShuffle} title={shuffleTitle}>
+                <ShuffleModeIcon mode={shuffleMode} />
+              </button>
+              <button className="ctrl-btn" onClick={prev} title="Previous"><IconPrev /></button>
+              <button className="play-btn" onClick={toggle} aria-label={isPlaying ? 'Pause' : 'Play'}>
+                {isPlaying ? <IconPause /> : <IconPlay />}
+              </button>
+              <button className="ctrl-btn" onClick={next} title="Next"><IconNext /></button>
+              <button className={'ctrl-btn' + (repeat !== 'off' ? ' ctrl-btn--active' : '')} onClick={cycleRepeat} title={`Repeat: ${repeat}`}>
+                <RepeatIcon mode={repeat} />
+              </button>
             </div>
 
-            <div className="player-center">
-              <div className="player-controls">
-                <button className={'ctrl-btn' + (shuffleMode !== 'off' ? ' ctrl-btn--active' : '')} onClick={cycleShuffle} title={shuffleTitle}>
-                  <ShuffleModeIcon mode={shuffleMode} />
-                </button>
-                <button className="ctrl-btn" onClick={prev} title="Previous"><IconPrev /></button>
-                <button className="play-btn" onClick={toggle} aria-label={isPlaying ? 'Pause' : 'Play'}>
-                  {isPlaying ? <IconPause /> : <IconPlay />}
-                </button>
-                <button className="ctrl-btn" onClick={next} title="Next"><IconNext /></button>
-                <button className={'ctrl-btn' + (repeat !== 'off' ? ' ctrl-btn--active' : '')} onClick={cycleRepeat} title={`Repeat: ${repeat}`}>
-                  <RepeatIcon mode={repeat} />
-                </button>
+            {/* Center: LCD now-playing (cover + title/artist + thin progress) */}
+            <div className="player-lcd">
+              <div className="player-lcd-cover">
+                <img
+                  src={track.album_id?.startsWith('yt:')
+                    ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg`
+                    : `/api/covers/${track.album_id}?w=80`}
+                  alt=""
+                  onError={e => { (e.target as HTMLImageElement).style.visibility = 'hidden' }}
+                />
               </div>
-              <div className="player-progress">
-                <span className="player-time">{fmt(progress)}</span>
-                <input type="range" className="progress-bar" style={progressStyle} min={0} max={duration || 1} step={0.5} value={progress} onChange={e => seek(Number(e.target.value))} />
-                <span className="player-time">{fmt(duration)}</span>
+              <div className="player-lcd-text">
+                <span className="player-lcd-title">{track.title}</span>
+                <span className="player-lcd-artist">{track.artist_name ?? ''}</span>
               </div>
+              <input type="range" className="progress-bar player-lcd-range" style={lcdProgressStyle} min={0} max={duration || 1} step={0.5} value={progress} onChange={e => seek(Number(e.target.value))} />
             </div>
 
             <div className="player-right">
@@ -245,11 +226,7 @@ export default function PlayerBar() {
               )}
               {/* list icon — opens ONLY the play-queue panel (not the detail view) */}
               <button className={'ctrl-btn' + (queueOpen && !open ? ' ctrl-btn--active' : '')} onClick={() => setQueueOpen(v => !v)} title={t('player.queue')}>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                  <rect x="3" y="6"  width="18" height="2" rx="1"/>
-                  <rect x="3" y="11" width="14" height="2" rx="1"/>
-                  <rect x="3" y="16" width="10" height="2" rx="1"/>
-                </svg>
+                <Ms name="queue_music" size={20} />
               </button>
               <button className={'smart-badge' + (shuffleMode === 'smart' ? ' smart-badge--active' : '')} onClick={() => setShuffleMode(shuffleMode === 'smart' ? 'off' : 'smart')} title={shuffleMode === 'smart' ? t('player.smart_on') : t('player.smart_off')}>
                 ✦ SMART
@@ -262,9 +239,7 @@ export default function PlayerBar() {
                 onClick={() => setBgPanelOpen(!bgPanelOpen)}
                 title="Background Sounds"
               >
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">
-                  <path d="M11 5.5a.5.5 0 0 0-.8-.4L6.5 8H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.5l3.7 2.9a.5.5 0 0 0 .8-.4V5.5zm3.2 2a.75.75 0 0 1 1.06.06A6 6 0 0 1 17 12a6 6 0 0 1-1.74 4.44.75.75 0 1 1-1.12-1A4.5 4.5 0 0 0 15.5 12a4.5 4.5 0 0 0-1.36-3.44.75.75 0 0 1 .06-1.06zm2.5-2.5a.75.75 0 0 1 1.06.05A9.5 9.5 0 0 1 20.5 12a9.5 9.5 0 0 1-2.74 6.95.75.75 0 1 1-1.06-1.06A8 8 0 0 0 19 12a8 8 0 0 0-2.3-5.89.75.75 0 0 1 .02-1.11z"/>
-                </svg>
+                <Ms name="volume_up" size={20} />
               </button>
             </div>
           </div>
@@ -430,9 +405,7 @@ export default function PlayerBar() {
                   onClick={() => setQueueOpen(v => !v)}
                   title={t('player.queue')}
                 >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                    <path d="M4 6h13v2H4V6zm0 5h13v2H4v-2zm0 5h9v2H4v-2zm16-8v10l-5-5 5-5z"/>
-                  </svg>
+                  <Ms name="queue_music" size={20} />
                 </button>
                 <button
                   className={'npo-translate-btn ctrl-btn' + (trActive ? ' ctrl-btn--active' : '')}

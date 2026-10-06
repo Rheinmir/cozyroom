@@ -400,9 +400,7 @@ export default function PlaylistsPage() {
               </p>
               {tracks.length > 0 && (
                 <button className="hero-play-btn" onClick={handlePlayPlaylist} style={{ marginTop: 12 }} aria-label={t('playlist.play', { defaultValue: 'Phát' })}>
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                    <polygon points="5,3 19,12 5,21" />
-                  </svg>
+                  <span className="ms" style={{ fontSize: 22 }} aria-hidden>play_arrow</span>
                 </button>
               )}
             </div>

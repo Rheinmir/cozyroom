@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { MUSIC_FALLBACK_COVER } from '../coverPlaceholder'
 import { usePlayer } from '../PlayerContext'
 import { imgSrc } from '../api'
 
@@ -31,7 +32,7 @@ export default function QueueList() {
             <div className="queue-item-cover">
               {!isYt
                 ? <img src={imgSrc(`/api/covers/${qt.album_id}`, 80)} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                : <span className="no-cover" style={{ fontSize: 18 }}>♪</span>
+                : <img className="no-cover" src={MUSIC_FALLBACK_COVER} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               }
             </div>
             <div className="queue-item-info">

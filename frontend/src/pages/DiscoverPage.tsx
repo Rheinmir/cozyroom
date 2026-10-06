@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { MUSIC_FALLBACK_COVER } from '../coverPlaceholder'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +10,14 @@ import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
 
 const cover = (albumId: string, w: number) => imgSrc(`/api/covers/${albumId}`, w)
+
+// Cover with fallback: a track may have no album_id, OR an album_id whose cover
+// file 404s — both must show the ♪ placeholder instead of a broken/blank image.
+function TrackCover({ albumId }: { albumId?: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!albumId || failed) return <img className="no-cover" src={MUSIC_FALLBACK_COVER} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+  return <img src={cover(albumId, 80)} alt="" loading="lazy" onError={() => setFailed(true)} />
+}
 
 // Fisher-Yates, seeded off the array length + a rotating salt so the mix is
 // fresh-ish per mount but stable across a render pass (not re-shuffled on every
@@ -31,7 +40,7 @@ function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; 
           <button key={t.id + i} className="discover-track" onClick={() => onPlay(t)}>
             <span className="discover-track-num">{i + 1}</span>
             <span className="discover-track-cover">
-              {t.album_id ? <img src={cover(t.album_id, 80)} alt="" loading="lazy" /> : <span className="no-cover">♪</span>}
+              <TrackCover albumId={t.album_id} />
             </span>
             <span className="discover-track-meta">
               <span className="discover-track-title">{t.title}</span>
@@ -120,7 +129,7 @@ export default function DiscoverPage() {
             {shelfAlbums.map(al => (
               <Link key={al.id} to={`/album/${al.id}`} className="discover-shelf-album">
                 <div className="discover-shelf-cover">
-                  {al.cover_url ? <img src={imgSrc(al.cover_url, 240)} alt={al.title} loading="lazy" /> : <span className="no-cover">♪</span>}
+                  {al.cover_url ? <img src={imgSrc(al.cover_url, 240)} alt={al.title} loading="lazy" /> : <img className="no-cover" src={MUSIC_FALLBACK_COVER} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </div>
                 <div className="discover-shelf-title">{al.title}</div>
                 <div className="discover-shelf-sub">{al.artist_name}</div>

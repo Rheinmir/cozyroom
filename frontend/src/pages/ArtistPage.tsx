@@ -1,15 +1,15 @@
 import { useState } from 'react'
+import { MUSIC_FALLBACK_COVER } from '../coverPlaceholder'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { fetchAlbums, imgSrc } from '../api'
-import { useDominantColor, darkenTint } from '../useDominantColor'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
 
 function AlbumCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
-  if (!url || err) return <span className="no-cover">♪</span>
+  if (!url || err) return <img className="no-cover" src={MUSIC_FALLBACK_COVER} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
   return <img src={imgSrc(url, 300)} alt={title} loading="lazy" onError={() => setErr(true)} />
 }
 
@@ -31,27 +31,19 @@ export default function ArtistPage() {
   const artistName     = albums[0]?.artist_name ?? ''
   const artistImageUrl = albums[0]?.artist_image_url ?? ''
 
-  // Apple Music .am-tint: dark wash derived from the artist image, fading to #000.
-  const tint = darkenTint(useDominantColor(artistImageUrl ? imgSrc(artistImageUrl, 400) : undefined))
-
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
     <div className="page" style={{ paddingTop: 0 }}>
-      <div
-        className="playlist-hero-wrapper"
-        style={{ background: `linear-gradient(180deg, rgb(${tint}) 0%, rgba(${tint}, 0.5) 220px, #000 420px)` }}
-      >
-        <BackButton to="/" label="Artists" />
-        <div className="artist-hero">
-          <div className="artist-hero-avatar">
-            <ArtistHeroImg url={artistImageUrl} name={artistName} />
-          </div>
-          <div>
-            <p className="hero-type" style={{ color: 'var(--accent)' }}>Artist</p>
-            <h1 className="hero-title">{artistName}</h1>
-            <p className="hero-meta">{albums.length} album{albums.length === 1 ? '' : 's'}</p>
-          </div>
+      <BackButton to="/" label="Artists" />
+      <div className="artist-hero">
+        <div className="artist-hero-avatar">
+          <ArtistHeroImg url={artistImageUrl} name={artistName} />
+        </div>
+        <div>
+          <p className="hero-type" style={{ color: 'var(--accent)' }}>Artist</p>
+          <h1 className="hero-title">{artistName}</h1>
+          <p className="hero-meta">{albums.length} album{albums.length === 1 ? '' : 's'}</p>
         </div>
       </div>
 
@@ -62,7 +54,7 @@ export default function ArtistPage() {
             <div className="album-cover">
               <AlbumCoverImg url={al.cover_url} title={al.title} />
               <div className="album-play-overlay">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                <span className="ms" style={{ fontSize: 18 }} aria-hidden>play_arrow</span>
               </div>
             </div>
             <div className="album-info">

@@ -1,17 +1,17 @@
 import { useState } from 'react'
+import { MUSIC_FALLBACK_COVER } from '../coverPlaceholder'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { fetchTracks, fetchAlbum, imgSrc } from '../api'
 import { usePlayer } from '../PlayerContext'
-import { useDominantColor, darkenTint } from '../useDominantColor'
 import FavoritePill from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
 
 function HeroCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
-  if (!url || err) return <span className="no-cover-lg">♪</span>
+  if (!url || err) return <img className="no-cover-lg" src={MUSIC_FALLBACK_COVER} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
   return <img src={imgSrc(url, 400)} alt={title} onError={() => setErr(true)} />
 }
 
@@ -38,33 +38,24 @@ export default function AlbumPage() {
     staleTime: 5 * 60_000,
   })
 
-  // Apple Music .am-tint: derive a dominant colour from the cover, darken it to
-  // a legible dark wash poured behind the hero and fading to #000.
-  const tint = darkenTint(useDominantColor(album?.cover_url ? imgSrc(album.cover_url, 400) : undefined))
-
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
     <div className="page album-page" style={{ paddingTop: 0 }}>
-      <div
-        className="playlist-hero-wrapper"
-        style={{ background: `linear-gradient(180deg, rgb(${tint}) 0%, rgba(${tint}, 0.5) 220px, #000 420px)` }}
-      >
-        <BackButton onClick={() => navigate(-1)} label={t('library.back')} />
+      <BackButton onClick={() => navigate(-1)} label={t('library.back')} />
 
-        <div className="album-hero">
-          <div className="album-hero-cover">
-            <HeroCoverImg url={album?.cover_url ?? ''} title={album?.title ?? ''} />
-          </div>
-          <div className="album-hero-info">
-            <p className="hero-type" style={{ color: 'var(--accent)' }}>{t('library.album')}</p>
-            <h1 className="hero-title">{album?.title ?? ''}</h1>
-            <p className="hero-meta">
-              {album?.artist_name}
-              {album?.year ? ` · ${album.year}` : ''}
-              {` · ${t('library.tracks_count', { n: tracks.length })}`}
-            </p>
-          </div>
+      <div className="album-hero">
+        <div className="album-hero-cover">
+          <HeroCoverImg url={album?.cover_url ?? ''} title={album?.title ?? ''} />
+        </div>
+        <div className="album-hero-info">
+          <p className="hero-type" style={{ color: 'var(--accent)' }}>{t('library.album')}</p>
+          <h1 className="hero-title">{album?.title ?? ''}</h1>
+          <p className="hero-meta">
+            {album?.artist_name}
+            {album?.year ? ` · ${album.year}` : ''}
+            {` · ${t('library.tracks_count', { n: tracks.length })}`}
+          </p>
         </div>
       </div>
 
