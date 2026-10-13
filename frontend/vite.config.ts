@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      filename: 'sw4.js',
+      filename: 'sw5.js',
       devOptions: { enabled: true },
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,

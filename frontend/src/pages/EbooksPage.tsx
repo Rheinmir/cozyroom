@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { imgSrc, fetchEbooks, Ebook, LIBRARY_STALE_TIME } from '../api'
@@ -88,6 +89,7 @@ function EbookCard({
 }
 
 export default function EbooksPage() {
+  const { t } = useTranslation()
   const { toast } = useDialogs()
   const queryClient = useQueryClient()
   const { data: ebooks = [], isLoading: loading } = useQuery({ queryKey: ['ebooks'], queryFn: fetchEbooks, staleTime: LIBRARY_STALE_TIME })
@@ -185,8 +187,8 @@ export default function EbooksPage() {
       <header className="ebooks-header">
         <div className="header-top">
           <div className="header-titles">
-            <h1>Your Bookshelf</h1>
-            <span className="ebook-count-badge">{filteredEbooks.length} items</span>
+            <h1>{t('nav.ebooks')}</h1>
+            <span className="ebook-count-badge">{filteredEbooks.length} {t('ebooks.items', 'cuốn')}</span>
           </div>
           <div className="ebooks-filter-bar">
             <div className="filter-pill">

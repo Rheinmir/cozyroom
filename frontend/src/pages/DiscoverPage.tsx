@@ -31,14 +31,21 @@ function shuffle<T>(arr: T[], salt: number): T[] {
 }
 
 function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; onPlay: (t: Track) => void }) {
+  const { track: current, isPlaying } = usePlayer()
   if (!tracks.length) return null
   return (
     <section className="discover-section">
       <h2 className="discover-section-title">{title}</h2>
       <div className="discover-tracks">
-        {tracks.map((t, i) => (
-          <button key={t.id + i} className="discover-track" onClick={() => onPlay(t)}>
-            <span className="discover-track-num">{i + 1}</span>
+        {tracks.map((t, i) => {
+          const isCurrent = current?.id === t.id
+          return (
+          <button key={t.id + i} className={isCurrent ? 'discover-track discover-track--playing' : 'discover-track'} onClick={() => onPlay(t)}>
+            <span className="discover-track-num">
+              {isCurrent
+                ? <span className={isPlaying ? 'track-eq' : 'track-eq track-eq--paused'} aria-label="Đang phát"><i/><i/><i/></span>
+                : i + 1}
+            </span>
             <span className="discover-track-cover">
               <TrackCover albumId={t.album_id} />
             </span>
@@ -47,7 +54,8 @@ function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; 
               <span className="discover-track-artist">{t.artist_name}</span>
             </span>
           </button>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
