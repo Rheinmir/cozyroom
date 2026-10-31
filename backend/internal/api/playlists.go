@@ -217,6 +217,45 @@ func (h *PlaylistHandlers) deletePlaylist(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// PATCH /api/playlists/{id}
+func (h *PlaylistHandlers) renamePlaylist(w http.ResponseWriter, r *http.Request) {
+	if !verifyOwnerPassword(r) {
+		http.Error(w, "unauthorized: correct password required", http.StatusUnauthorized)
+		return
+	}
+
+	var body struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	name := strings.TrimSpace(body.Name)
+	if name == "" {
+		http.Error(w, "playlist name cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	id := r.PathValue("id")
+
+	res, err := h.db.Exec("UPDATE playlists SET name = $1 WHERE id = $2", name, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		http.Error(w, "playlist not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"id": id, "name": name})
+}
+
 // POST /api/playlists/{id}/tracks
 func (h *PlaylistHandlers) addTrackToPlaylist(w http.ResponseWriter, r *http.Request) {
 	if !verifyOwnerPassword(r) {
