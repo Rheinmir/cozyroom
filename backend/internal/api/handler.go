@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cozyroom/internal/audiohls"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -44,6 +45,7 @@ type handlers struct {
 	ebooksPath   string
 	ebookCoversDir string
 	cloakProxyURL  string // routes external image fetches through proxy
+	audioHLSMgr    *audiohls.Manager
 }
 
 var hexID = regexp.MustCompile(`^[0-9a-f]{16}$`)
