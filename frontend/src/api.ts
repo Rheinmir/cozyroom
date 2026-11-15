@@ -354,6 +354,21 @@ export const removeTrackFromPlaylist = (playlistId: string, trackId: string, pas
     }
   })
 
+export const reorderPlaylist = (playlistId: string, trackIds: string[], password?: string): Promise<void> =>
+  fetch(`/api/playlists/${encodeURIComponent(playlistId)}/order`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(password ? { 'X-Owner-Password': password } : {}),
+    },
+    body: JSON.stringify({ track_ids: trackIds }),
+  }).then(async r => {
+    if (!r.ok) {
+      const err = await r.text().catch(() => '')
+      throw new Error(err || `Failed to reorder playlist: ${r.status}`)
+    }
+  })
+
 // ---- Kanban ----
 // Every kanban call carries EITHER the owner password (admin mode, unchanged
 // since the original Kanban Quick Note feature) OR a logged-in user's

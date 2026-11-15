@@ -258,6 +258,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("PATCH /api/playlists/{id}", ph.renamePlaylist)
 	mux.HandleFunc("POST /api/playlists/{id}/tracks", ph.addTrackToPlaylist)
 	mux.HandleFunc("DELETE /api/playlists/{id}/tracks/{track_id}", ph.removeTrackFromPlaylist)
+	mux.HandleFunc("PUT /api/playlists/{id}/order", ph.reorderPlaylist)
 
 	nh := &NotesHandlers{db: d.ScanDB}
 	mux.HandleFunc("GET /api/notes", nh.listNotes)

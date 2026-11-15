@@ -330,3 +330,73 @@ func (h *PlaylistHandlers) removeTrackFromPlaylist(w http.ResponseWriter, r *htt
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// PUT /api/playlists/{id}/order — body {"track_ids": [...]} is the playlist's
+// full new order. It must hold exactly the tracks already in the playlist, so a
+// stale client (a track added or removed meanwhile) gets 409 instead of
+// silently dropping or duplicating rows.
+func (h *PlaylistHandlers) reorderPlaylist(w http.ResponseWriter, r *http.Request) {
+	if !verifyOwnerPassword(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	id := r.PathValue("id")
+
+	var body struct {
+		TrackIDs []string `json:"track_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	tx, err := h.db.Begin()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("SELECT track_id FROM playlist_tracks WHERE playlist_id = $1", id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	have := map[string]bool{}
+	for rows.Next() {
+		var tid string
+		if err := rows.Scan(&tid); err != nil {
+			rows.Close()
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		have[tid] = true
+	}
+	rows.Close()
+
+	seen := map[string]bool{}
+	for _, tid := range body.TrackIDs {
+		if !have[tid] || seen[tid] {
+			http.Error(w, "track list does not match the playlist", http.StatusConflict)
+			return
+		}
+		seen[tid] = true
+	}
+	if len(seen) != len(have) {
+		http.Error(w, "track list does not match the playlist", http.StatusConflict)
+		return
+	}
+
+	for i, tid := range body.TrackIDs {
+		if _, err := tx.Exec("UPDATE playlist_tracks SET position = $1 WHERE playlist_id = $2 AND track_id = $3", i+1, id, tid); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
