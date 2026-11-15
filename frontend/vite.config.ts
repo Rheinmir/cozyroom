@@ -19,7 +19,7 @@ export default defineConfig({
             urlPattern: /\/api\/covers\//,
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'covers',
+              cacheName: 'covers-v2',
               expiration: { maxEntries: 1000, maxAgeSeconds: 30 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [200] },
             },

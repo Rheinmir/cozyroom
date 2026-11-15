@@ -285,6 +285,7 @@ export default function PlayerBar() {
               </div>
               <div className="player-mini-cover">
                 <img
+                  key={track.album_id}
                   src={track.album_id?.startsWith('yt:')
                     ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg`
                     : `/api/covers/${track.album_id}?w=80`}
