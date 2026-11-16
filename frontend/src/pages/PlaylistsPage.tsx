@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { usePlayer } from '../PlayerContext'
 import { useDialogs } from '../DialogContext'
 import {
@@ -79,7 +80,10 @@ export default function PlaylistsPage() {
   const { play, track: current, isPlaying, setShuffleMode } = usePlayer()
   const { confirm, toast } = useDialogs()
 
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null)
+  // ?id= opens one playlist directly (link from the top search).
+  const [searchParams] = useSearchParams()
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(searchParams.get('id'))
+  useEffect(() => { const id = searchParams.get('id'); if (id) setSelectedPlaylistId(id) }, [searchParams])
   const [localLists, setLocalLists] = useState<Playlist[]>([])
   const [permLists, setPermLists] = useState<Playlist[]>([])
 

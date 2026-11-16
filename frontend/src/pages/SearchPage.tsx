@@ -4,10 +4,11 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
-import { imgSrc, searchYoutube, fetchYouTubeChannel, downloadYoutube, fetchGenres, fetchGenreDetail } from '../api'
+import { imgSrc, fetchPlaylists, searchYoutube, fetchYouTubeChannel, downloadYoutube, fetchGenres, fetchGenreDetail } from '../api'
 import type { Artist, Album, Track } from '../types'
 import type { YouTubeResult, Genre } from '../api'
-import FavoritePill from '../components/FavoritePill'
+import FavoritePill, { getLocalPlaylists } from '../components/FavoritePill'
+import { matchPlaylists } from '../playlistMatch'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
 
@@ -379,6 +380,14 @@ export default function SearchPage() {
     enabled:  q.length >= 2,
   })
 
+  // Playlists (server + this device's local ones) whose name matches: first row.
+  const { data: serverPlaylists } = useQuery({
+    queryKey: ['playlists'],
+    queryFn:  fetchPlaylists,
+    enabled:  q.length >= 1,
+  })
+  const playlists = q ? matchPlaylists([...getLocalPlaylists(), ...(serverPlaylists ?? [])], q) : []
+
   const { data: ytResults } = useQuery({
     queryKey: ['youtube-search', q],
     queryFn:  () => searchYoutube(q),
@@ -555,7 +564,7 @@ export default function SearchPage() {
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('search.searching')} /></div>
 
   const { artists = [], albums = [], tracks = [] } = data ?? {}
-  const empty = artists.length + albums.length + tracks.length === 0
+  const empty = playlists.length + artists.length + albums.length + tracks.length === 0
 
   return (
     <div className="page">
@@ -569,6 +578,20 @@ export default function SearchPage() {
             {t('search.ask_ai_button')}
           </Link>
         </div>
+      )}
+
+      {playlists.length > 0 && (
+        <section className="search-section search-section--playlists">
+          <h2 className="section-title">{t('search.playlists')}</h2>
+          <div className="search-playlist-row">
+            {playlists.map(p => (
+              <Link key={p.id} to={`/playlists?id=${encodeURIComponent(p.id)}`} className="search-playlist-chip">
+                <span className="search-playlist-name">{p.name}</span>
+                <span className="search-playlist-count">{t('search.playlist_count', { count: p.track_ids?.length ?? 0 })}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {artists.length > 0 && (

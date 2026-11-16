@@ -29,6 +29,8 @@
     "network_error": "Lỗi mạng"
   },
   "search": {
+    "playlists": "Danh sách phát",
+    "playlist_count": "{{count}} bài",
     "placeholder": "Nghệ sĩ, album, bài hát…",
     "title": "Tìm kiếm",
     "hint": "Nhập từ khoá để tìm trong thư viện.",

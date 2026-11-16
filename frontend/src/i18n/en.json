@@ -29,6 +29,8 @@
     "network_error": "Network error"
   },
   "search": {
+    "playlists": "Playlists",
+    "playlist_count": "{{count}} tracks",
     "placeholder": "Artists, albums, tracks…",
     "title": "Search",
     "hint": "Type something to search your library.",
