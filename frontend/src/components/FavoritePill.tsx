@@ -248,7 +248,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
           onClick={handleStarClick}
           title={isStarred ? t('playlist.remove_star', { defaultValue: 'Starred' }) : t('playlist.add_star', { defaultValue: 'Star' })}
         >
-          {isStarred ? '★' : '☆'}
+          <span className={'ms' + (isStarred ? '' : ' ms--outline')} style={{ fontSize: 19 }} aria-hidden>star</span>
         </button>
         <div className="fav-sep" />
         <button 
@@ -256,7 +256,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
           onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); if (!isOpen) loadLists(); }}
           title={t('playlist.add_to_playlist', { defaultValue: 'Add to playlist' })}
         >
-          ▾
+          <span className="ms" style={{ fontSize: 20 }} aria-hidden>playlist_add</span>
         </button>
         
         {isOpen && (

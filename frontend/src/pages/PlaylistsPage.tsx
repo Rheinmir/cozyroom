@@ -17,6 +17,7 @@ import BackButton from '../components/BackButton'
 import { saveOfflineTrack, deleteOfflineTrack, listOfflineTrackIds } from '../offlineStore'
 import { useDominantColor } from '../useDominantColor'
 import type { Track } from '../types'
+import type { CSSProperties } from 'react'
 
 const PLAYLIST_GRADIENTS = [
   'radial-gradient(140% 140% at 30% 22%, oklch(0.55 0.20 285) 0%, oklch(0.35 0.14 315) 50%, oklch(0.15 0.06 345) 100%)',
@@ -34,18 +35,18 @@ function playlistGradientFor(name: string) {
 
 function PlaylistCoverMosaic({ coverIds, name = '' }: { coverIds?: string[]; name?: string }) {
   if (!coverIds || coverIds.length === 0) {
-    return <div className="playlist-cover-placeholder" style={{ background: playlistGradientFor(name) }}>♪</div>
+    return <div className="playlist-cover-placeholder" style={{ background: playlistGradientFor(name) }}><span className="ms" style={{ fontSize: 56 }} aria-hidden>queue_music</span></div>
   }
   const uniqueCovers = Array.from(new Set(coverIds.filter(id => id && id.trim() !== '')))
   if (uniqueCovers.length === 0) {
-    return <div className="playlist-cover-placeholder" style={{ background: playlistGradientFor(name) }}>♪</div>
+    return <div className="playlist-cover-placeholder" style={{ background: playlistGradientFor(name) }}><span className="ms" style={{ fontSize: 56 }} aria-hidden>queue_music</span></div>
   }
 
   // Less than 4 unique covers: show the first cover full size (items-1)
   if (uniqueCovers.length < 4) {
     return (
       <div className="playlist-cover-mosaic items-1">
-        <img src={`/api/covers/${uniqueCovers[0]}`} alt=""
+        <img src={`/api/covers/${uniqueCovers[0]}?w=400`} alt=""
           onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
       </div>
     )
@@ -55,7 +56,7 @@ function PlaylistCoverMosaic({ coverIds, name = '' }: { coverIds?: string[]; nam
   return (
     <div className="playlist-cover-mosaic items-4">
       {uniqueCovers.slice(0, 4).map(aid => (
-        <img key={aid} src={`/api/covers/${aid}`} alt=""
+        <img key={aid} src={`/api/covers/${aid}?w=200`} alt=""
           onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
       ))}
     </div>
@@ -74,7 +75,7 @@ const fmt = (s: number) => {
 
 export default function PlaylistsPage() {
   const { t } = useTranslation()
-  const { play, track: current, isPlaying } = usePlayer()
+  const { play, track: current, isPlaying, setShuffleMode } = usePlayer()
   const { confirm, toast } = useDialogs()
 
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null)
@@ -307,6 +308,13 @@ export default function PlaylistsPage() {
       play(tracks[0], tracks)
     }
   }
+  const handleShufflePlaylist = () => {
+    if (!tracks.length) return
+    setShuffleMode('shuffle')
+    play(tracks[Math.floor(Math.random() * tracks.length)], tracks)
+  }
+  const totalS = tracks.reduce((n, tr) => n + (tr.duration_s || 0), 0)
+  const totalMin = Math.round(totalS / 60)
 
   // Password modal — shared between the list view (delete) and the detail view (rename)
   const passwordModal = showPasswordModal && (
@@ -351,58 +359,58 @@ export default function PlaylistsPage() {
   if (selectedPlaylistId && currentPlaylist) {
     return (
       <div className="page" style={{ paddingTop: 0 }}>
-        <div
-          className="playlist-hero-wrapper"
-          style={{ background: `linear-gradient(180deg, rgba(${dominantRgb}, 0.65) 0%, rgba(${dominantRgb}, 0.2) 70%, transparent 100%)` }}
-        >
-          <BackButton onClick={() => setSelectedPlaylistId(null)} label={t('library.back', { defaultValue: 'Quay lại' })} />
+        <BackButton onClick={() => setSelectedPlaylistId(null)} label={t('library.back', { defaultValue: 'Quay lại' })} />
 
-          <div className="album-hero">
-            <div style={{ width: 230, height: 230, borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--shadow-soft-hover)', flexShrink: 0 }}>
-              <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} name={currentPlaylist.name} />
-            </div>
-            <div className="album-hero-info">
-              <p className="hero-type">
-                {currentPlaylist.is_local
-                  ? t('playlist.local', { defaultValue: 'Local Playlist' })
-                  : t('playlist.permanent', { defaultValue: 'Permanent Playlist' })}
-              </p>
-              {editingName ? (
-                <input
-                  type="text"
-                  className="hero-title-input"
-                  value={nameDraft}
-                  autoFocus
-                  onChange={e => setNameDraft(e.target.value)}
-                  onBlur={saveEditName}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') e.currentTarget.blur()
-                    else if (e.key === 'Escape') cancelEditName()
-                  }}
-                />
-              ) : (
-                <div className="hero-title-wrap">
-                  <h1 className="hero-title">{currentPlaylist.name}</h1>
-                  <button
-                    className="hero-title-edit-btn"
-                    onClick={startEditName}
-                    aria-label={t('playlist.rename', { defaultValue: 'Đổi tên playlist' })}
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-              <p className="hero-meta">
-                {t('library.tracks_count', { n: tracks.length })}
-              </p>
-              {tracks.length > 0 && (
-                <button className="hero-play-btn" onClick={handlePlayPlaylist} style={{ marginTop: 12 }} aria-label={t('playlist.play', { defaultValue: 'Phát' })}>
-                  <span className="ms" style={{ fontSize: 22 }} aria-hidden>play_arrow</span>
+        <div className="album-hero detail-hero playlist-hero" style={{ '--tint': dominantRgb } as CSSProperties}>
+          <div className="album-hero-cover playlist-hero-cover">
+            <PlaylistCoverMosaic coverIds={currentPlaylist.cover_ids} name={currentPlaylist.name} />
+          </div>
+          <div className="album-hero-info">
+            <p className="hero-type">
+              {currentPlaylist.is_local
+                ? t('playlist.local', { defaultValue: 'Local Playlist' })
+                : t('playlist.permanent', { defaultValue: 'Permanent Playlist' })}
+            </p>
+            {editingName ? (
+              <input
+                type="text"
+                className="hero-title-input"
+                value={nameDraft}
+                autoFocus
+                onChange={e => setNameDraft(e.target.value)}
+                onBlur={saveEditName}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') e.currentTarget.blur()
+                  else if (e.key === 'Escape') cancelEditName()
+                }}
+              />
+            ) : (
+              <div className="hero-title-wrap">
+                <h1 className="hero-title">{currentPlaylist.name}</h1>
+                <button
+                  className="hero-title-edit-btn"
+                  onClick={startEditName}
+                  aria-label={t('playlist.rename', { defaultValue: 'Đổi tên playlist' })}
+                  title={t('playlist.rename', { defaultValue: 'Đổi tên playlist' })}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
                 </button>
-              )}
+              </div>
+            )}
+            <p className="hero-meta">
+              <span>{t('library.tracks_count', { n: tracks.length })}</span>
+              {totalMin > 0 && <span>{totalMin >= 60 ? `${Math.floor(totalMin / 60)} giờ ${totalMin % 60} phút` : `${totalMin} phút`}</span>}
+            </p>
+            <div className="hero-actions">
+              <button className="btn-primary" onClick={handlePlayPlaylist} disabled={!tracks.length}>
+                <span className="ms" style={{ fontSize: 22 }} aria-hidden>play_arrow</span>{t('playlist.play', { defaultValue: 'Phát' })}
+              </button>
+              <button className="btn-secondary" onClick={handleShufflePlaylist} disabled={!tracks.length}>
+                <span className="ms" style={{ fontSize: 19 }} aria-hidden>shuffle</span>{t('library.shuffle')}
+              </button>
             </div>
           </div>
         </div>
@@ -410,18 +418,20 @@ export default function PlaylistsPage() {
         {isLoadingTracks ? (
           <div className="loading"><Spinner size={28} label={t('library.loading', { defaultValue: 'Đang tải...' })} /></div>
         ) : tracks.length === 0 ? (
-          <p className="text-muted" style={{ marginTop: 24 }}>
+          <p className="playlist-empty">
             {t('playlist.no_tracks', { defaultValue: 'Chưa có bài hát nào trong playlist này.' })}
           </p>
         ) : (
-          <table className="track-table" style={{ marginTop: 24 }}>
+          <table className="track-table playlist-tracks">
             <thead>
               <tr>
                 <th className="col-num">#</th>
                 <th>{t('search.title_col')}</th>
                 <th className="col-fav"></th>
                 <th className="col-offline"></th>
-                <th className="col-dur">{t('search.duration_col')}</th>
+                <th className="col-dur" aria-label={t('search.duration_col')} title={t('search.duration_col')}>
+                  <span className="ms ms--outline" style={{ fontSize: 17, verticalAlign: 'middle' }} aria-hidden>schedule</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -438,17 +448,14 @@ export default function PlaylistsPage() {
                   >
                     <td className="col-num">
                       {isCurrent && isPlaying ? (
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="var(--accent)">
-                          <rect x="6" y="4" width="4" height="16" />
-                          <rect x="14" y="4" width="4" height="16" />
-                        </svg>
+                        <span className="track-eq" aria-label="Đang phát"><i/><i/><i/></span>
                       ) : (
                         <span className="track-num-text">{i + 1}</span>
                       )}
                     </td>
                     <td className={'track-title' + (isCurrent ? ' track-title--active' : '')}>
                       <div className="track-info">
-                        <span>{tTrack.title}</span>
+                        <span className="tt-clamp">{tTrack.title}</span>
                         {tTrack.artist_name && <span className="track-artist">{tTrack.artist_name}</span>}
                       </div>
                     </td>
@@ -468,7 +475,9 @@ export default function PlaylistsPage() {
                             ? t('playlist.offline_remove', { defaultValue: 'Xoá khỏi offline' })
                             : t('playlist.offline_download', { defaultValue: 'Tải xuống nghe offline' })}
                         >
-                          {downloadingIds.has(tTrack.id) ? '…' : offlineIds.has(tTrack.id) ? '✓' : '⬇'}
+                          {downloadingIds.has(tTrack.id)
+                            ? <span className="ms offline-spin" style={{ fontSize: 17 }} aria-hidden>progress_activity</span>
+                            : <span className={'ms' + (offlineIds.has(tTrack.id) ? '' : ' ms--outline')} style={{ fontSize: 18 }} aria-hidden>{offlineIds.has(tTrack.id) ? 'download_done' : 'download'}</span>}
                         </button>
                       )}
                     </td>
@@ -500,16 +509,18 @@ export default function PlaylistsPage() {
               className="playlist-card"
               onClick={() => setSelectedPlaylistId(list.id)}
             >
+              <div className="playlist-card-cover">
+              <PlaylistCoverMosaic coverIds={list.cover_ids} name={list.name} />
               <button
                 className="playlist-delete-btn"
                 onClick={(e) => handleDeleteClick(e, list.id, list.is_local)}
                 title={t('playlist.delete', { defaultValue: 'Xóa Playlist' })}
+                aria-label={t('playlist.delete', { defaultValue: 'Xóa Playlist' })}
               >
-                ✕
+                <span className="ms" style={{ fontSize: 16 }} aria-hidden>delete</span>
               </button>
-              
-              <PlaylistCoverMosaic coverIds={list.cover_ids} name={list.name} />
-              
+              </div>
+
               <div className="playlist-info">
                 <div className="playlist-title">{list.name}</div>
                 <div className="playlist-meta">

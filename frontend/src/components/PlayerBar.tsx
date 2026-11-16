@@ -12,6 +12,9 @@ import LyricsView from './LyricsView'
 import type { LyricsViewHandle } from './LyricsView'
 import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
+import { useQuery } from '@tanstack/react-query'
+import { fetchPlayStats } from '../api'
+import { idleInvite } from '../roomVoice'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -41,12 +44,16 @@ export default function PlayerBar() {
   const {
     track, isPlaying, progress, duration,
     repeat, shuffleMode, quality, analyser,
-    toggle, seek, prev, next,
+    toggle, seek, prev, next, play,
     setRepeat, setShuffleMode, setQuality, coverColors, setCoverColors,
     playbackError, setPlaybackError,
     queueOpen, setQueueOpen,
     npoOpen: open, setNpoOpen: setOpen,
   } = usePlayer()
+  // Idle pill speaks to the listener: offers their most-played track, phrased
+  // for the time of day (shares the ['stats','plays',90] cache with Discover).
+  const { data: playStats } = useQuery({ queryKey: ['stats', 'plays', 90], queryFn: () => fetchPlayStats(90), staleTime: 5 * 60_000, enabled: !track })
+  const invite = idleInvite(playStats?.top ?? [])
   const { isPlaying: bgPlaying, panelOpen: bgPanelOpen, setPanelOpen: setBgPanelOpen } = useBgSounds()
 
   const [mobileTab,    setMobileTab]    = useState<'player' | 'lyrics'>('player')
@@ -63,6 +70,21 @@ export default function PlayerBar() {
   }, [track?.artist_id])
 
   useEffect(() => { setTrActive(false) }, [track?.id])
+  // Close the NPO's queue panel on any press outside it (or its toggle).
+  // The .queue-panel-backdrop catcher only has size inside the ≤900px media
+  // query, so on desktop clicking elsewhere in the overlay left it open.
+  const npoQueueRef    = useRef<HTMLDivElement>(null)
+  const npoQueueBtnRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!(queueOpen && open)) return
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Node
+      if (npoQueueRef.current?.contains(target) || npoQueueBtnRef.current?.contains(target)) return
+      setQueueOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [queueOpen, open])
   useEffect(() => () => { if (ctrlsTimerRef.current) clearTimeout(ctrlsTimerRef.current) }, [])
   useEffect(() => { localStorage.setItem('lyrics-auto-translate', autoTranslate ? '1' : '0') }, [autoTranslate])
   // Esc closes the fullscreen Now Playing overlay (desktop expectation).
@@ -154,7 +176,7 @@ export default function PlayerBar() {
   const pct = duration > 0 ? (progress / duration) * 100 : 0
   // Played portion keys off var(--text) so it stays visible in both themes —
   // a hardcoded #fff fill vanished on the light-theme canvas.
-  const progressStyle = { background: `linear-gradient(to right, var(--text) ${pct}%, var(--fill-track) ${pct}%)` }
+  const progressStyle = { background: `linear-gradient(to right, #fff ${pct}%, rgba(255,255,255,.2) ${pct}%)` }
   // The floating-pill LCD uses the teal accent for its played portion (Tidal
   // Wave / Apple-Music chrome spec); NPO keeps the white fill above.
   const lcdProgressStyle = { background: `linear-gradient(to right, var(--green) ${pct}%, var(--fill-track) ${pct}%)` }
@@ -175,7 +197,17 @@ export default function PlayerBar() {
   return (
     <div className={'player-bar' + (!track ? ' player-bar--empty' : '')} onDoubleClick={() => open && setOpen(false)}>
       {!track ? (
-        <span className="player-hint">{t('player.hint')}</span>
+        invite.track ? (
+          <button className="player-idle player-idle--invite" onClick={() => play(invite.track!, [invite.track!])} title={t('player.hint')}>
+            <span className="player-idle-disc player-idle-disc--play"><Ms name="play_arrow" size={18} /></span>
+            <span className="player-hint">{invite.text}</span>
+          </button>
+        ) : (
+          <div className="player-idle">
+            <span className="player-idle-disc"><Ms name="music_note" size={16} /></span>
+            <span className="player-hint">{invite.text}</span>
+          </div>
+        )
       ) : (
         <>
           {/* ── Desktop player bar ── */}
@@ -229,7 +261,7 @@ export default function PlayerBar() {
                 <Ms name="queue_music" size={20} />
               </button>
               <button className={'smart-badge' + (shuffleMode === 'smart' ? ' smart-badge--active' : '')} onClick={() => setShuffleMode(shuffleMode === 'smart' ? 'off' : 'smart')} title={shuffleMode === 'smart' ? t('player.smart_on') : t('player.smart_off')}>
-                ✦ SMART
+                SMART
               </button>
               <button className={'quality-btn' + (quality === 'lossless' ? ' quality-btn--lossless' : ' quality-btn--320')} onClick={() => setQuality(quality === 'lossless' ? '320' : 'lossless')}>
                 {quality === 'lossless' ? 'LOSSLESS' : '320K'}
@@ -358,7 +390,7 @@ export default function PlayerBar() {
                   {artistInfo && <div className="npo-info-artist">{artistInfo.name}</div>}
                   <div className="npo-info-badges">
                     <button className={'smart-badge' + (shuffleMode === 'smart' ? ' smart-badge--active' : '')} onClick={() => setShuffleMode(shuffleMode === 'smart' ? 'off' : 'smart')} title={shuffleMode === 'smart' ? t('player.smart_on') : t('player.smart_off')}>
-                      ✦ SMART
+                      SMART
                     </button>
                     <button className={'quality-btn' + (quality === 'lossless' ? ' quality-btn--lossless' : ' quality-btn--320')} onClick={() => setQuality(quality === 'lossless' ? '320' : 'lossless')}>
                       {quality === 'lossless' ? 'LOSSLESS' : '320K'}
@@ -394,13 +426,14 @@ export default function PlayerBar() {
               {queueOpen && open && (
                 <>
                   <div className="queue-panel-backdrop" onClick={() => setQueueOpen(false)} />
-                  <div className="queue-panel">
+                  <div className="queue-panel" ref={npoQueueRef}>
                     <QueueList />
                   </div>
                 </>
               )}
               <div className="npo-icon-row">
                 <button
+                  ref={npoQueueBtnRef}
                   className={'npo-queue-btn ctrl-btn' + (queueOpen ? ' ctrl-btn--active' : '')}
                   onClick={() => setQueueOpen(v => !v)}
                   title={t('player.queue')}
@@ -411,12 +444,12 @@ export default function PlayerBar() {
                   className={'npo-translate-btn ctrl-btn' + (trActive ? ' ctrl-btn--active' : '')}
                   onClick={() => lyricsRef.current?.toggleTranslation()}
                   title={trActive ? t('player.hide_translation') : t('player.show_translation')}
-                >🌐</button>
+                ><Ms name="translate" size={20} /></button>
                 <button
                   className={'npo-auto-translate-btn ctrl-btn' + (autoTranslate ? ' ctrl-btn--active' : '')}
                   onClick={() => setAutoTranslate(v => !v)}
                   title={autoTranslate ? t('player.auto_translate_on') : t('player.auto_translate_off')}
-                >⚡</button>
+                ><Ms name="bolt" size={20} /></button>
               </div>
               <div className="npo-progress">
                 <input type="range" className="progress-bar" style={progressStyle} min={0} max={duration || 1} step={0.5} value={progress} onChange={e => seek(Number(e.target.value))} />

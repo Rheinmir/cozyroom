@@ -4,6 +4,8 @@ import { MCP_TOOLS } from '../data/mcpTools'
 import type { McpTool } from '../data/mcpTools'
 
 const CATEGORIES = [...new Set(MCP_TOOLS.map(t => t.category))]
+// Category keys carry a leading emoji ("🎵 Music"); show just the word.
+const catLabel = (c: string) => c.replace(/^[^A-Za-z0-9À-ỹ]+/u, '')
 
 function ToolCard({ tool, onClick }: { tool: McpTool; onClick: () => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -41,9 +43,7 @@ function ToolCard({ tool, onClick }: { tool: McpTool; onClick: () => void }) {
         {(!visible || !iframeReady) && <div className="tool-card-iframe-placeholder" />}
       </div>
       <div className="tool-card-overlay">
-        <span className="tool-card-category" style={{ background: tool.categoryColor + '33', color: tool.categoryColor, borderColor: tool.categoryColor + '55' }}>
-          {tool.category}
-        </span>
+        <span className="tool-card-category">{catLabel(tool.category)}</span>
         <div className="tool-card-name">{tool.name}</div>
         <div className="tool-card-desc">{tool.description}</div>
       </div>
@@ -56,10 +56,8 @@ function ToolDetail({ tool, onClose, onUse }: { tool: McpTool; onClose: () => vo
     <div className="tool-detail-backdrop" onClick={onClose}>
       <div className="tool-detail-modal" onClick={e => e.stopPropagation()}>
         <div className="tool-detail-header">
-          <span className="tool-card-category" style={{ background: tool.categoryColor + '33', color: tool.categoryColor, borderColor: tool.categoryColor + '55' }}>
-            {tool.category}
-          </span>
-          <button className="tool-detail-close" onClick={onClose}>✕</button>
+          <span className="tool-card-category">{catLabel(tool.category)}</span>
+          <button className="tool-detail-close" onClick={onClose} aria-label="Đóng"><span className="ms" style={{ fontSize: 20 }} aria-hidden>close</span></button>
         </div>
         <div className="tool-detail-name">{tool.name}</div>
         <div className="tool-detail-desc">{tool.description}</div>
@@ -84,7 +82,7 @@ function ToolDetail({ tool, onClose, onUse }: { tool: McpTool; onClose: () => vo
           <div className="tool-detail-prompt">"{tool.prompt}..."</div>
         </div>
         <button className="tool-detail-use-btn" onClick={onUse}>
-          Dùng tool này với AI →
+          Dùng tool này với AI<span className="ms" style={{ fontSize: 18 }} aria-hidden>arrow_forward</span>
         </button>
       </div>
     </div>
@@ -113,6 +111,8 @@ export default function ToolsPage() {
       <div className="tools-header">
         <h1 className="tools-title">MCP Tool Gallery</h1>
         <p className="tools-subtitle">{MCP_TOOLS.length} tools · tap để xem chi tiết</p>
+        <div className="tools-search-wrap">
+        <span className="ms tools-search-icon" aria-hidden>search</span>
         <input
           className="tools-search"
           type="search"
@@ -120,6 +120,7 @@ export default function ToolsPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
+        </div>
         <div className="tools-filter">
           <button className={`tools-filter-btn${!activeCategory ? ' tools-filter-btn--active' : ''}`} onClick={() => setActiveCategory(null)}>
             Tất cả
@@ -129,7 +130,7 @@ export default function ToolsPage() {
               key={c}
               className={`tools-filter-btn${activeCategory === c ? ' tools-filter-btn--active' : ''}`}
               onClick={() => setActiveCategory(c === activeCategory ? null : c)}
-            >{c}</button>
+            >{catLabel(c)}</button>
           ))}
         </div>
       </div>

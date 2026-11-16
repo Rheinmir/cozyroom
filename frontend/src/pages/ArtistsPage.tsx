@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchArtists, imgSrc } from '../api'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
+import { isPlaceholderAvatar } from '../avatarPlaceholder'
 
 const AVATAR_GRADIENTS = [
   'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 262) 0%, oklch(0.4 0.13 300) 46%, oklch(0.17 0.06 340) 100%)',
@@ -26,7 +27,8 @@ function gradientFor(name: string) {
 function ArtistAvatar({ imageUrl, name }: { imageUrl: string; name: string }) {
   const [failed, setFailed] = useState(false)
   if (!imageUrl || failed) return <>{name.charAt(0).toUpperCase()}</>
-  return <img src={imgSrc(imageUrl, 200)} alt={name} loading="lazy" onError={() => setFailed(true)} />
+  return <img src={imgSrc(imageUrl, 200)} alt={name} loading="lazy" onError={() => setFailed(true)}
+    onLoad={e => { if (isPlaceholderAvatar(e.currentTarget)) setFailed(true) }} />
 }
 
 const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')]
@@ -60,9 +62,11 @@ export default function ArtistsPage() {
 
   return (
     <div className="page">
-      <LibraryStatsBar current="artists" />
       <div className="artist-head-row">
-        <h1 className="page-title">{t('nav.artists')}</h1>
+        <div className="head-title-group">
+          <h1 className="page-title">{t('nav.artists')}</h1>
+          <LibraryStatsBar current="artists" />
+        </div>
         <div className="artist-filter-wrap">
           <svg className="artist-filter-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />

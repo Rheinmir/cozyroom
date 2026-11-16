@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useSearchContext } from '../searchContext'
 import { usePlayer } from '../PlayerContext'
 import QueueList from './QueueList'
 
@@ -22,13 +23,15 @@ export default function MobileSearchBar() {
   const { track, queueOpen, setQueueOpen, npoOpen } = usePlayer()
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const ctx = useSearchContext()
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      if (q.trim()) navigate(`/search?q=${encodeURIComponent(q)}`, { replace: true })
-      else navigate(-1)
+      if (q.trim()) navigate(`${ctx.path}?q=${encodeURIComponent(q)}`, { replace: true })
+      else if (ctx.path === '/search') navigate(-1)
+      else navigate(ctx.path, { replace: true })
     }, 300)
   }
 
@@ -67,7 +70,7 @@ export default function MobileSearchBar() {
           ref={inputRef}
           className="search-input"
           type="search"
-          placeholder={t('search.placeholder')}
+          placeholder={ctx.placeholder}
           defaultValue={params.get('q') ?? ''}
           onChange={handleInput}
           onBlur={() => clearTimeout(timerRef.current)}

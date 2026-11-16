@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf'
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
+import { markEbookOpened } from '../mediaProgress'
 
 interface Ebook {
   id: string
@@ -34,6 +35,7 @@ function HtmlPage({ id, index, fontSize, desktopMode }: { id: string; index: num
   return (
     <div
       className={`epub-html-page${desktopMode ? ' desktop-wide' : ''}`}
+      data-page={index}
       style={{ fontSize: `${fontSize}%` }}
       dangerouslySetInnerHTML={{ __html: html }}
     />
@@ -84,6 +86,7 @@ export default function EbookReaderPage() {
     setPdfPage(1)
     setReadMode((localStorage.getItem(`epub-mode-${id}`) as 'paged' | 'scroll') || 'paged')
     document.querySelector('.shell')?.classList.add('reader-active')
+    if (id) markEbookOpened(id)
 
     fetch('/api/ebooks')
       .then(r => r.json())
@@ -128,7 +131,41 @@ export default function EbookReaderPage() {
     const clamped = Math.max(0, Math.min(pages.length - 1, n))
     setCurrentPage(clamped)
     saveProgress(String(clamped))
-    scrollRef.current?.scrollTo(0, 0)
+    // Scroll mode renders every page at once, so "go to page" means scrolling
+    // that page into view (it used to jump back to the top of the book).
+    if (readMode === 'scroll') {
+      scrollRef.current?.querySelector(`[data-page="${clamped}"]`)?.scrollIntoView({ block: 'start' })
+    } else {
+      scrollRef.current?.scrollTo(0, 0)
+    }
+  }
+
+  // EPUB HTML is injected verbatim, so its own links (e.g. the book's in-text
+  // "Mục lục" pointing at "../Text/C12.xhtml") would make the browser navigate
+  // to a non-existent app URL and fall through to the SPA fallback. Intercept
+  // every link: external ones open in a new tab, internal ones are resolved to
+  // a spine page — by matching the link text against the TOC labels, else by
+  // the link's position among the links on its page.
+  const handleContentLink = (ev: React.MouseEvent) => {
+    const a = (ev.target as HTMLElement).closest('a')
+    if (!a || !scrollRef.current?.contains(a) || a.closest('.reader-toc')) return
+    const href = a.getAttribute('href') || ''
+    ev.preventDefault()
+    ev.stopPropagation()
+    if (/^(https?:|mailto:)/i.test(href)) { window.open(href, '_blank', 'noopener'); return }
+    if (!href || href.startsWith('#')) return
+    const norm = (t: string) => t.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim()
+    const label = norm(a.textContent || '')
+    let target = label ? toc.find(e => norm(e.label) === label) : undefined
+    if (!target && label.length > 3) target = toc.find(e => { const l = norm(e.label); return l.startsWith(label) || label.startsWith(l) })
+    if (!target) {
+      const pageEl = a.closest('[data-page]')
+      const pageIdx = pageEl ? parseInt(pageEl.getAttribute('data-page') || '0', 10) : currentPage
+      const links = pageEl ? Array.from(pageEl.querySelectorAll('a[href]')).filter(x => !/^(https?:|mailto:|#)/i.test(x.getAttribute('href') || '')) : []
+      const after = toc.filter(e => e.spineIndex > pageIdx)
+      target = after[links.indexOf(a)]
+    }
+    if (target) goToPage(target.spineIndex)
   }
 
   const changePdfPage = (offset: number) => {
@@ -172,49 +209,33 @@ export default function EbookReaderPage() {
     <div className={`reader-page theme-${theme}`}>
       <header className="reader-header">
         <Link to="/ebooks" className="reader-back">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-          </svg>
-          Back
+          <span className="ms" style={{ fontSize: 20 }} aria-hidden>arrow_back</span>
+          Thư viện
         </Link>
         <div className="reader-title">{ebook.title}</div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {toc.length > 0 && (
             <button className={`reader-mode-btn${showToc ? ' mode-safe' : ''}`} onClick={() => { setShowToc(s => !s); setShowSettings(false) }}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/>
-              </svg>
-              <span>ToC</span>
+              <span className="ms" style={{ fontSize: 18 }} aria-hidden>toc</span>
+              <span>Mục lục</span>
             </button>
           )}
 
           <button className="reader-mode-btn" onClick={toggleMode}>
-            {readMode === 'paged' ? (
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/>
-              </svg>
-            )}
-            <span>{readMode === 'paged' ? 'Paged' : 'Scroll'}</span>
+            <span className="ms" style={{ fontSize: 18 }} aria-hidden>{readMode === 'paged' ? 'auto_stories' : 'view_day'}</span>
+            <span>{readMode === 'paged' ? 'Lật trang' : 'Cuộn'}</span>
           </button>
 
           {ebook.format === 'epub' && (
             <button className={`reader-mode-btn${desktopMode ? ' mode-safe' : ''}`} onClick={toggleDesktop}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M15 3l2.3 2.3-2.89 2.87 1.42 1.42L18.7 6.7 21 9V3h-6zM3 9l2.3-2.3 2.87 2.89 1.42-1.42L6.7 5.3 9 3H3v6zm6 12l-2.3-2.3 2.89-2.87-1.42-1.42L5.3 17.3 3 15v6h6zm12-6l-2.3 2.3-2.87-2.89-1.42 1.42 2.89 2.87L15 21h6v-6z"/>
-              </svg>
-              <span>{desktopMode ? 'Wide' : 'Wide'}</span>
+              <span className="ms" style={{ fontSize: 18 }} aria-hidden>width_wide</span>
+              <span>Rộng</span>
             </button>
           )}
 
-          <button className="reader-settings-btn" onClick={() => { setShowSettings(s => !s); setShowToc(false) }}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5zm10.5-3.5c0-.64-.04-1.28-.13-1.91l2.42-1.89-2.35-4.07-2.85 1.15c-.62-.48-1.3-.88-2.02-1.18l-.43-3.05h-4.7l-.43 3.05c-.72.3-1.4.7-2.02 1.18l-2.85-1.15-2.35 4.07 2.42 1.89c-.09.63-.13 1.27-.13 1.91s.04 1.28.13 1.91l-2.42 1.89 2.35 4.07 2.85-1.15c.62.48 1.3.88 2.02 1.18l.43 3.05h4.7l.43 3.05c.72-.3 1.4-.7 2.02-1.18l2.85 1.15 2.35-4.07-2.42-1.89c.09-.63.13-1.27.13-1.91z"/>
-            </svg>
+          <button className="reader-settings-btn" onClick={() => { setShowSettings(s => !s); setShowToc(false) }} aria-label="Cài đặt đọc" title="Cài đặt đọc">
+            <span className="ms" style={{ fontSize: 20 }} aria-hidden>text_format</span>
           </button>
         </div>
 
@@ -240,7 +261,7 @@ export default function EbookReaderPage() {
         )}
       </header>
 
-      <div className="reader-container" ref={scrollRef} onClick={() => { setShowSettings(false); setShowToc(false) }}>
+      <div className="reader-container" ref={scrollRef} onClickCapture={handleContentLink} onClick={() => { setShowSettings(false); setShowToc(false) }}>
         {showToc && (
           <div className="reader-toc" onClick={e => e.stopPropagation()}>
             <div className="toc-header">Contents</div>
@@ -300,7 +321,7 @@ export default function EbookReaderPage() {
           <div className="epub-scroll-view">
             {pages.map(page => (
               page.type === 'image' ? (
-                <div key={page.index} className="epub-img-page">
+                <div key={page.index} className="epub-img-page" data-page={page.index}>
                   <img src={`/api/ebooks/${id}/page/${page.index}`} alt={`Page ${page.index + 1}`} loading="lazy" />
                 </div>
               ) : (

@@ -164,6 +164,8 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/genres", h.listGenres)
 	mux.HandleFunc("GET /api/genres/{genre}", h.genreDetail)
 	mux.HandleFunc("GET /api/lyrics/detect-language", h.detectLyricsLanguage)
+	mux.HandleFunc("GET /api/lyrics/search", h.lyricsSearchHandler)
+	mux.HandleFunc("GET /api/lyrics/candidate", h.lyricsCandidateHandler)
 	mux.HandleFunc("GET /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("POST /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("DELETE /api/lyrics/{id}", h.lyricsHandler)

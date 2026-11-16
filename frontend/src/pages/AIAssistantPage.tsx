@@ -108,24 +108,31 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
 
   return (
     <div className="ai-media-card">
-      {coverUrl && (
-        <img
-          className="ai-media-card-cover"
-          src={coverUrl}
-          alt=""
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        />
-      )}
-      <div className="ai-media-card-info">
-        <div className="ai-media-card-title">{action.title}</div>
-        {action.artist && <div className="ai-media-card-row">👤 {action.artist}</div>}
-        {action.album_title && <div className="ai-media-card-row">💿 {action.album_title}</div>}
-        {action.year ? <div className="ai-media-card-row">📅 {action.year}</div> : null}
+      <div className="ai-media-card-head">
+        <div className="ai-media-card-art">
+          {coverUrl && (
+            <img
+              className="ai-media-card-cover"
+              src={coverUrl}
+              alt=""
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          )}
+        </div>
+        <div className="ai-media-card-info">
+          <div className="ai-media-card-title">{action.title}</div>
+          {action.artist && <div className="ai-media-card-row">{action.artist}</div>}
+          {(action.album_title || action.year) ? (
+            <div className="ai-media-card-row ai-media-card-row--faint">
+              {[action.album_title, action.year || null].filter(Boolean).join(' · ')}
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="ai-media-card-controls">
-        <button className="ai-media-card-btn" onClick={onPrev} title="Bài trước">⏮</button>
-        <button className="ai-media-card-btn ai-media-card-btn--play" onClick={onPlay}>▶ Phát</button>
-        <button className="ai-media-card-btn" onClick={onNext} title="Bài sau">⏭</button>
+        <button className="ai-media-card-btn" onClick={onPrev} title="Bài trước" aria-label="Bài trước"><span className="ms" style={{ fontSize: 20 }} aria-hidden>skip_previous</span></button>
+        <button className="ai-media-card-btn ai-media-card-btn--play" onClick={onPlay}><span className="ms" style={{ fontSize: 20 }} aria-hidden>play_arrow</span>Phát</button>
+        <button className="ai-media-card-btn" onClick={onNext} title="Bài sau" aria-label="Bài sau"><span className="ms" style={{ fontSize: 20 }} aria-hidden>skip_next</span></button>
         {action.id && (
           <span className="ai-media-card-fav" onClick={e => e.stopPropagation()}>
             <FavoritePill trackId={action.id} />
@@ -136,11 +143,13 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
         <button
           className={'ai-media-card-mode-btn' + (activeMode === 'smart' ? ' ai-media-card-mode-btn--active' : '')}
           onClick={handleSmartMix} title="Smart Mix — phát tiếp theo tự động"
-        >🔀 Smart Mix</button>
+        >
+          <span className="ms" style={{ fontSize: 16 }} aria-hidden>auto_awesome</span>Smart Mix</button>
         <button
           className={'ai-media-card-mode-btn' + (activeMode === 'shuffle' ? ' ai-media-card-mode-btn--active' : '')}
           onClick={handleShuffle} title="Shuffle ngẫu nhiên"
-        >🎲 Shuffle</button>
+        >
+          <span className="ms" style={{ fontSize: 16 }} aria-hidden>shuffle</span>Shuffle</button>
       </div>
       {(ytId || action.album_id) && (
         <div className="ai-media-card-modes">
@@ -151,16 +160,16 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
               disabled={dlState === 'loading'}
               title="Tải về thư viện"
             >
-              {dlState === 'loading' ? '⏳ Đang tải...' : dlState === 'done' ? '✅ Đã lưu' : '📥 Tải về'}
+              <span className="ms" style={{ fontSize: 16 }} aria-hidden>{dlState === 'loading' ? 'hourglass_top' : dlState === 'done' ? 'check_circle' : 'download'}</span>
+              {dlState === 'loading' ? 'Đang tải…' : dlState === 'done' ? 'Đã lưu' : 'Tải về'}
             </button>
           )}
           {localAlbumId && (
             <Link
               to={`/album/${localAlbumId}`}
               className="ai-media-card-mode-btn"
-              style={{ textAlign: 'center', textDecoration: 'none' }}
               title="Xem album trong thư viện"
-            >💿 Album</Link>
+            ><span className="ms" style={{ fontSize: 16 }} aria-hidden>album</span>Album</Link>
           )}
         </div>
       )}
@@ -758,7 +767,10 @@ export default function AIAssistantPage() {
     <div className="ai-shell">
       {sidebarOpen && <div className="ai-history-backdrop" onClick={() => setSidebarOpen(false)} />}
       <aside className={'ai-history-sidebar' + (sidebarOpen ? ' ai-history-sidebar--open' : '')}>
-        <button className="ai-new-chat-btn" onClick={startNewChat}>+ Đoạn chat mới</button>
+        <button className="ai-new-chat-btn" onClick={startNewChat}>
+          <span className="ms" style={{ fontSize: 18 }} aria-hidden>edit_square</span>Đoạn chat mới
+        </button>
+        <div className="ai-history-label">Gần đây</div>
         <div className="ai-history-list">
           {sessionsLoading ? (
             <div className="ai-history-empty"><Spinner size={20} label="Đang tải…" /></div>
@@ -780,8 +792,10 @@ export default function AIAssistantPage() {
       </aside>
       <div className="ai-page">
       <div className="ai-page-header">
-        <button className="ai-history-toggle-btn" onClick={() => setSidebarOpen(o => !o)} title="Lịch sử chat">☰</button>
-        <h1 className="page-title" style={{ marginBottom: 8 }}>Trợ lý AI</h1>
+        <button className="ai-history-toggle-btn" onClick={() => setSidebarOpen(o => !o)} title="Lịch sử chat" aria-label="Lịch sử chat">
+          <span className="ms" style={{ fontSize: 20 }} aria-hidden>menu</span>
+        </button>
+        <h1 className="page-title">Trợ lý AI</h1>
       </div>
       <div className="ai-messages">
         {messages.map(msg => (
@@ -827,8 +841,8 @@ export default function AIAssistantPage() {
               <button
                 onClick={retry}
                 disabled={loading}
-                style={{ marginTop: 4, background: 'none', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, padding: '3px 10px' }}
-              >🔄 Thử lại</button>
+                className="ai-retry-btn"
+              ><span className="ms" style={{ fontSize: 16 }} aria-hidden>refresh</span>Thử lại</button>
             )}
             {msg.role === 'assistant' && msg.logId && (
               <ReactionBar logId={msg.logId} />
@@ -860,25 +874,31 @@ export default function AIAssistantPage() {
 
       {/* Compact controls row */}
       <div className="ai-controls-row">
-        <button className="ai-ctrl-btn" onClick={() => setMemoryOpen(o => !o)}>
-          🧠{facts.length > 0 ? ` ${facts.length}` : ''} {memoryOpen ? '▲' : '▼'}
+        <button className={'ai-ctrl-btn' + (memoryOpen ? ' ai-ctrl-btn--active' : '')} onClick={() => setMemoryOpen(o => !o)} aria-expanded={memoryOpen} title="Bộ nhớ AI">
+          <span className="ms" style={{ fontSize: 16 }} aria-hidden>psychology</span>
+          Bộ nhớ{facts.length > 0 && <span className="ai-ctrl-count">{facts.length}</span>}
+          <span className="ms" style={{ fontSize: 16 }} aria-hidden>{memoryOpen ? 'expand_less' : 'expand_more'}</span>
         </button>
-        <input
-          className="ai-model-input"
-          placeholder={t('ai.model_placeholder')}
-          value={model}
-          onChange={e => setModel(e.target.value)}
-          disabled={loading}
-        />
-        <Link to="/tools" style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>🛠</Link>
-        <Link to="/ai/stats" style={{ fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>📊</Link>
+        <label className="ai-model-chip" title={t('ai.model_placeholder')}>
+          <span className="ms" style={{ fontSize: 16 }} aria-hidden>neurology</span>
+          <input
+            className="ai-model-input"
+            placeholder={t('ai.model_short', { defaultValue: 'Model: tự động' })}
+            value={model}
+            onChange={e => setModel(e.target.value)}
+            disabled={loading}
+            spellCheck={false}
+          />
+        </label>
+        <Link to="/tools" className="ai-ctrl-icon" title="Công cụ MCP" aria-label="Công cụ MCP"><span className="ms" style={{ fontSize: 18 }} aria-hidden>construction</span></Link>
+        <Link to="/ai/stats" className="ai-ctrl-icon" title="Thống kê AI" aria-label="Thống kê AI"><span className="ms" style={{ fontSize: 18 }} aria-hidden>bar_chart</span></Link>
       </div>
 
       {memoryOpen && (
         <div className="ai-memory-panel">
           <div className="ai-memory-toolbar">
-            <button className="ai-memory-btn" onClick={exportMemory} title="Tải xuống JSON">↓ Export</button>
-            <button className="ai-memory-btn" onClick={() => importRef.current?.click()} title="Tải lên JSON">↑ Import</button>
+            <button className="ai-memory-btn" onClick={exportMemory} title="Tải xuống JSON"><span className="ms" style={{ fontSize: 15 }} aria-hidden>download</span>Export</button>
+            <button className="ai-memory-btn" onClick={() => importRef.current?.click()} title="Tải lên JSON"><span className="ms" style={{ fontSize: 15 }} aria-hidden>upload</span>Import</button>
             <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importMemory} />
             <button className="ai-memory-btn ai-memory-btn--danger" onClick={async () => {
               const ok = await dialogs.confirm({
@@ -890,7 +910,7 @@ export default function AIAssistantPage() {
               if (!ok) return
               await fetch('/api/ai/memory', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: '{"facts":[]}' })
               setFacts([])
-            }}>🗑 Xóa tất cả</button>
+            }}><span className="ms" style={{ fontSize: 15 }} aria-hidden>delete</span>Xóa tất cả</button>
           </div>
           {memoryLoading ? (
             <div className="ai-memory-empty"><Spinner size={20} label="Đang tải…" /></div>
@@ -904,7 +924,7 @@ export default function AIAssistantPage() {
                     <span className="ai-memory-key">{f.key}</span>
                     <span className="ai-memory-value">{f.value}</span>
                   </div>
-                  <button className="ai-memory-delete" onClick={() => deleteFact(f.key)} title="Xóa">×</button>
+                  <button className="ai-memory-delete" onClick={() => deleteFact(f.key)} title="Xóa" aria-label="Xóa"><span className="ms" style={{ fontSize: 16 }} aria-hidden>close</span></button>
                 </div>
               ))}
             </div>
@@ -983,9 +1003,7 @@ export default function AIAssistantPage() {
           disabled={loading || !input.trim()}
           title={t('ai.send')}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-          </svg>
+          <span className="ms" style={{ fontSize: 20 }} aria-hidden>arrow_upward</span>
         </button>
         </div>
       </div>

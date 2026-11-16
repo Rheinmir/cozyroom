@@ -486,7 +486,7 @@ export default function SearchPage() {
                         <th className="col-num">#</th>
                         <th>{t('search.title_col')}</th>
                         <th className="col-fav"></th>
-                        <th>{t('search.album_col')}</th>
+                        <th className="col-album">{t('search.album_col')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -500,7 +500,15 @@ export default function SearchPage() {
                           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2) } }}
                         >
                           <td className="col-num"><span className="track-num-text">{i + 1}</span></td>
-                          <td className="track-title">{t2.title}</td>
+                          <td className="track-title">
+                            <div className="track-title-cell">
+                              <img className="track-thumb" src={t2.album_id ? imgSrc(`/api/covers/${t2.album_id}`, 80) : MUSIC_FALLBACK_COVER} alt="" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).src = MUSIC_FALLBACK_COVER }} />
+                              <span className="track-title-text">
+                                <span className="tt-clamp">{t2.title}</span>
+                                {t2.artist_name && <span className="track-artist">{t2.artist_name}</span>}
+                              </span>
+                            </div>
+                          </td>
                           <td className="col-fav" onClick={e => e.stopPropagation()}>
                             <FavoritePill trackId={t2.id} />
                           </td>
@@ -566,14 +574,14 @@ export default function SearchPage() {
       {artists.length > 0 && (
         <section className="search-section">
           <h2 className="section-title">{t('search.artists')}</h2>
-          <div className="search-artist-list">
+          <div className="discover-shelf">
             {artists.map(a => (
-              <Link key={a.id} to={`/artist/${a.id}`} className="search-artist-row">
-                <div className="search-avatar" style={{ background: gradientFor(a.name) }}>{a.name.charAt(0).toUpperCase()}</div>
-                <div>
-                  <p className="search-row-title">{a.name}</p>
-                  <p className="search-row-sub">{t('search.artist')}</p>
+              <Link key={a.id} to={`/artist/${a.id}`} className="discover-shelf-artist">
+                <div className="discover-shelf-avatar" style={a.image_url ? undefined : { background: gradientFor(a.name) }}>
+                  {a.image_url ? <img src={imgSrc(a.image_url, 200)} alt={a.name} loading="lazy" /> : a.name.charAt(0).toUpperCase()}
                 </div>
+                <div className="discover-shelf-title discover-shelf-title--center">{a.name}</div>
+                <div className="discover-shelf-sub discover-shelf-title--center">{t('search.artist')}</div>
               </Link>
             ))}
           </div>
@@ -611,7 +619,7 @@ export default function SearchPage() {
                 <th className="col-num">#</th>
                 <th>{t('search.title_col')}</th>
                 <th className="col-fav"></th>
-                <th>{t('search.album_col')}</th>
+                <th className="col-album">{t('search.album_col')}</th>
               </tr>
             </thead>
             <tbody>
@@ -625,7 +633,15 @@ export default function SearchPage() {
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(t2) } }}
                 >
                   <td className="col-num"><span className="track-num-text">{i + 1}</span></td>
-                  <td className="track-title">{t2.title}</td>
+                  <td className="track-title">
+                            <div className="track-title-cell">
+                              <img className="track-thumb" src={t2.album_id ? imgSrc(`/api/covers/${t2.album_id}`, 80) : MUSIC_FALLBACK_COVER} alt="" loading="lazy" onError={e => { (e.currentTarget as HTMLImageElement).src = MUSIC_FALLBACK_COVER }} />
+                              <span className="track-title-text">
+                                <span className="tt-clamp">{t2.title}</span>
+                                {t2.artist_name && <span className="track-artist">{t2.artist_name}</span>}
+                              </span>
+                            </div>
+                          </td>
                   <td className="col-fav" onClick={e => e.stopPropagation()}>
                     <FavoritePill trackId={t2.id} />
                   </td>

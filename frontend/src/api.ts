@@ -46,6 +46,8 @@ export type Ebook = {
   cover_url?: string
   is_nsfw?: boolean
   collection?: string
+  progress?: string   // server-side reading position: EPUB page index / PDF page number
+  created_at?: number
 }
 export const fetchEbooks = () => get<Ebook[]>('/api/ebooks')
 
@@ -90,6 +92,24 @@ export const bustLyricsCache = (trackId: string): Promise<void> =>
 
 export const fetchLyricsTranslation = (trackId: string, lang = 'vi') =>
   get<{ lines: string[] }>(`/api/lyrics/${trackId}/translate?lang=${lang}`)
+
+export type LyricsCandidate = { source: string; id: string; title: string; artist: string; album: string; duration: number }
+
+export const searchLyrics = (q: string) =>
+  get<{ candidates: LyricsCandidate[]; sources: SourceInfo[] }>(`/api/lyrics/search?q=${encodeURIComponent(q)}`)
+
+export const fetchLyricsCandidate = (c: LyricsCandidate, duration: number) =>
+  get<LyricsData>(`/api/lyrics/candidate?source=${c.source}&id=${encodeURIComponent(c.id)}&duration=${Math.round(duration)}`)
+
+// Owner-only: rename a track (stored as an override the scanner re-applies).
+export const setTrackMeta = (trackId: string, meta: { title: string; artist: string }, password: string): Promise<void> =>
+  fetch(`/api/tracks/${trackId}/meta`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Owner-Password': password },
+    body: JSON.stringify(meta),
+  }).then(r => {
+    if (!r.ok) throw new Error(String(r.status))
+  })
 
 export const detectLyricsLanguage = (text: string) =>
   get<{ lang: string; confidence: number }>(`/api/lyrics/detect-language?text=${encodeURIComponent(text)}`)

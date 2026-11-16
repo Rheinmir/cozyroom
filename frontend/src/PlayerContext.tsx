@@ -33,6 +33,9 @@ type PlayerCtx = {
   setCoverColors:(c: string[])    => void
   playbackError:  { code: number; message: string; trackId: string } | null
   setPlaybackError: (err: { code: number; message: string; trackId: string } | null) => void
+  // Patch a track's display metadata in the now-playing slot and the queue
+  // (after the server renamed it) without interrupting playback.
+  renameTrack:   (id: string, patch: Partial<Pick<Track, 'title' | 'artist_name'>>) => void
   // Shared so the queue toggle button can live in more than one place
   // (NPO controls, the mobile search island) and both open the same panel.
   queueOpen:    boolean
@@ -909,13 +912,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const renameTrack = (id: string, patch: Partial<Pick<Track, 'title' | 'artist_name'>>) => {
+    if (trackRef.current?.id === id) trackRef.current = { ...trackRef.current, ...patch }
+    setTrack(t => (t?.id === id ? { ...t, ...patch } : t))
+    setQueue(q => q.map(t => (t.id === id ? { ...t, ...patch } : t)))
+  }
+
   return (
     <Ctx.Provider value={{
       track, queue, queueIdx, isPlaying, progress, duration,
       repeat, shuffleMode, quality, analyser, coverColors,
       play, playFromQueue, toggle, seek, prev, next,
       setRepeat, setShuffleMode: handleSetShuffleMode, setQuality, setCoverColors,
-      playbackError, setPlaybackError,
+      playbackError, setPlaybackError, renameTrack,
       queueOpen, setQueueOpen,
       npoOpen, setNpoOpen,
     }}>

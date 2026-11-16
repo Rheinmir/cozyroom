@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { MUSIC_FALLBACK_COVER } from '../coverPlaceholder'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -6,6 +7,8 @@ import { useTranslation } from 'react-i18next'
 import { fetchAlbums, imgSrc } from '../api'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
+import { isPlaceholderAvatar } from '../avatarPlaceholder'
+import { useDominantColor } from '../useDominantColor'
 
 function AlbumCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
@@ -16,7 +19,8 @@ function AlbumCoverImg({ url, title }: { url: string; title: string }) {
 function ArtistHeroImg({ url, name }: { url: string; name: string }) {
   const [err, setErr] = useState(false)
   if (!url || err) return <>{name.charAt(0).toUpperCase()}</>
-  return <img src={imgSrc(url, 400)} alt={name} onError={() => setErr(true)} />
+  return <img src={imgSrc(url, 400)} alt={name} onError={() => setErr(true)}
+    onLoad={e => { if (isPlaceholderAvatar(e.currentTarget)) setErr(true) }} />
 }
 
 export default function ArtistPage() {
@@ -30,24 +34,26 @@ export default function ArtistPage() {
 
   const artistName     = albums[0]?.artist_name ?? ''
   const artistImageUrl = albums[0]?.artist_image_url ?? ''
+  const tintSrc = artistImageUrl || albums[0]?.cover_url
+  const tint = useDominantColor(tintSrc ? imgSrc(tintSrc, 400) : undefined)
 
   if (isLoading) return <div className="loading"><Spinner size={28} label={t('library.loading')} /></div>
 
   return (
     <div className="page" style={{ paddingTop: 0 }}>
       <BackButton to="/" label="Artists" />
-      <div className="artist-hero">
+      <div className="artist-hero detail-hero" style={{ '--tint': tint } as CSSProperties}>
         <div className="artist-hero-avatar">
           <ArtistHeroImg url={artistImageUrl} name={artistName} />
         </div>
-        <div>
-          <p className="hero-type" style={{ color: 'var(--accent)' }}>Artist</p>
+        <div className="album-hero-info">
+          <p className="hero-type">{t('library.artist')}</p>
           <h1 className="hero-title">{artistName}</h1>
-          <p className="hero-meta">{albums.length} album{albums.length === 1 ? '' : 's'}</p>
+          <p className="hero-meta"><span>{t('library.albums_count', { n: albums.length })}</span></p>
         </div>
       </div>
 
-      <h2 className="section-title">Albums</h2>
+      <h2 className="section-title">Album</h2>
       <div className="album-grid">
         {albums.map(al => (
           <Link key={al.id} to={`/album/${al.id}`} className="album-card">

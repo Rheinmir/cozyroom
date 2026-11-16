@@ -16,7 +16,8 @@
     "greeting": "Hi! I can search music, play tracks, download from YouTube, manage playlists, and check trending repos. What can I do for you?",
     "placeholder": "Ask anything…",
     "send": "Send",
-    "model_placeholder": "model (e.g. claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — empty = auto"
+    "model_placeholder": "model (e.g. claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — empty = auto",
+    "model_short": "Model: auto"
   },
   "auth": {
     "username": "Username",
@@ -126,6 +127,8 @@
     "album": "Album",
     "tracks_count": "{{n}} tracks",
     "back": "← Back",
+    "shuffle": "Shuffle",
+    "albums_count": "{{n}} albums",
     "loading": "Loading…"
   },
   "playlist": {

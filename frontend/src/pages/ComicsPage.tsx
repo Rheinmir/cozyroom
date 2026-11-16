@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   searchMangaDex, searchEHentai,
@@ -17,9 +18,9 @@ type DlFilter = 'all' | 'done' | 'downloading' | 'failed' | 'idle'
 
 function FallbackCover() {
   return (
-    <svg viewBox="0 0 200 300" style={{ width: '100%', height: '100%', background: '#333' }}>
-      <rect width="200" height="300" fill="#333" />
-      <path d="M60 100h80v20H60zm0 40h80v10H60zm0 30h80v10H60zm0 30h50v10H60z" fill="#555" />
+    <svg viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <rect width="200" height="300" style={{ fill: 'var(--img)' }} />
+      <path d="M60 100h80v20H60zm0 40h80v10H60zm0 30h80v10H60zm0 30h50v10H60z" style={{ fill: 'var(--surface-3)' }} />
     </svg>
   )
 }
@@ -31,9 +32,10 @@ function dlCoverSrc(dl: ComicsDownload): string {
   return `/api/scraper/md/img?url=${encodeURIComponent(dl.cover)}`
 }
 
-function DownloadCard({ dl, onRead, onDelete, onRetry, onDownload }: {
+function DownloadCard({ dl, onRead, onOpen, onDelete, onRetry, onDownload }: {
   dl: ComicsDownload
   onRead: (dl: ComicsDownload) => void
+  onOpen: (dl: ComicsDownload) => void
   onDelete: (e: React.MouseEvent, id: string) => void
   onRetry: (e: React.MouseEvent, id: string) => void
   onDownload: (e: React.MouseEvent, dl: ComicsDownload) => void
@@ -41,86 +43,59 @@ function DownloadCard({ dl, onRead, onDelete, onRetry, onDownload }: {
   const pct = dl.page_count > 0 ? Math.round(dl.downloaded / dl.page_count * 100) : 0
   const isDone = dl.status === 'done'
   const isIdle = dl.status === 'idle'
-  const isClickable = isDone || isIdle
   return (
     <div
-      onClick={() => isClickable && onRead(dl)}
-      style={{ cursor: isClickable ? 'pointer' : 'default', position: 'relative' }}
+      className="comic-card comic-card--clickable"
+      onClick={() => (isDone ? onRead(dl) : onOpen(dl))}
     >
-      <div style={{
-        width: '100%', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden',
-        background: 'var(--surface)', marginBottom: 8, position: 'relative',
-      }}>
+      <div className="comic-cover">
         <FallbackCover />
         {dl.cover && (
           <img
             src={dlCoverSrc(dl)} alt={dl.title} loading="lazy"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
             onError={e => { e.currentTarget.style.display = 'none' }}
           />
         )}
-        {dl.source === 'eh' && (
-          <div style={{ position: 'absolute', top: 6, left: 6, background: '#888888', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3 }}>NSFW</div>
-        )}
+        {dl.source === 'eh' && <span className="media-chip comic-chip-tl">NSFW</span>}
         {!isIdle && dl.status !== 'done' && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', padding: 8 }}>
-            <div style={{
-              width: '100%', fontSize: 10, fontWeight: 700,
-              padding: '3px 6px', borderRadius: 4, textAlign: 'center',
-              background: dl.status === 'failed' ? '#888888' : dl.status === 'downloading' ? 'rgba(255,255,255,0.6)' : '#666',
-              color: dl.status === 'downloading' ? '#000' : '#fff',
-            }}>
-              {dl.status === 'downloading' && dl.page_count > 0 ? `${pct}%` : dl.status.toUpperCase()}
-            </div>
+          <div className={'comic-status comic-status--' + dl.status}>
+            {dl.status === 'downloading' && dl.page_count > 0 ? (
+              <>
+                <div className="comic-progress"><i style={{ width: `${pct}%` }} /></div>
+                <span>{pct}%</span>
+              </>
+            ) : (
+              <span>{dl.status === 'failed' ? 'Lỗi tải' : dl.status === 'downloading' ? 'Đang tải…' : dl.status}</span>
+            )}
           </div>
         )}
         {isIdle && (
-          <button
-            onClick={e => onDownload(e, dl)}
-            title="Download"
-            style={{
-              position: 'absolute', bottom: 6, right: 6,
-              padding: '4px 8px', borderRadius: 6, border: 'none',
-              background: 'rgba(0,0,0,0.75)', color: '#fff',
-              fontSize: 11, fontWeight: 700, cursor: 'pointer',
-            }}
-          >⬇ Download</button>
+          <button className="comic-dl-btn media-hover-reveal" onClick={e => onDownload(e, dl)} title="Tải về" aria-label="Tải về">
+            <span className="ms" aria-hidden>download</span>
+          </button>
         )}
         {(isDone || dl.status === 'failed') && (
-          <button
-            onClick={e => onDelete(e, dl.id)}
-            title="Delete"
-            style={{
-              position: 'absolute', top: 6, right: 6, width: 22, height: 22,
-              borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.7)',
-              color: '#fff', fontSize: 14, cursor: 'pointer', lineHeight: '22px', padding: 0,
-            }}
-          >×</button>
+          <button className="media-icon-btn media-hover-reveal comic-btn-tr" onClick={e => onDelete(e, dl.id)} title="Xoá" aria-label="Xoá">
+            <span className="ms" aria-hidden>close</span>
+          </button>
         )}
         {dl.status === 'failed' && (
-          <button
-            onClick={e => onRetry(e, dl.id)}
-            title="Retry"
-            style={{
-              position: 'absolute', top: 6, left: 6, width: 22, height: 22,
-              borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.7)',
-              color: '#fff', fontSize: 13, cursor: 'pointer', lineHeight: '22px', padding: 0,
-            }}
-          >↺</button>
+          <button className="media-icon-btn comic-btn-tl" onClick={e => onRetry(e, dl.id)} title="Thử lại" aria-label="Thử lại">
+            <span className="ms" aria-hidden>refresh</span>
+          </button>
         )}
       </div>
-      <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-        {dl.title}
-      </div>
-      {isDone && (
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{dl.page_count} pages · local</div>
-      )}
+      <div className="comic-title">{dl.title}</div>
+      {isDone && <div className="comic-sub">{dl.page_count} trang · đã tải</div>}
     </div>
   )
 }
 
 export default function ComicsPage() {
   const { toast } = useDialogs()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlQ = searchParams.get('q')?.trim() ?? ''
   const [source, setSource] = useState<Source>('md')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ComicResult[]>([])
@@ -184,8 +159,16 @@ export default function ComicsPage() {
     setDlFilter('all')
   }
 
-  const handleSearch = async () => {
-    if (!query.trim()) {
+  // Search is driven by the app's top search island (Header routes
+  // "Tìm trong Truyện tranh…" to /comics?q=) — one search box, not two.
+  useEffect(() => {
+    if (urlQ) { setQuery(urlQ); handleSearch(urlQ) }
+    else if (searchActive) { setSearchActive(false); setResults([]); setSelected(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlQ, source])
+
+  const handleSearch = async (q: string = query) => {
+    if (!q.trim()) {
       setSearchActive(false)
       setResults([])
       return
@@ -197,7 +180,7 @@ export default function ComicsPage() {
     setChapterList([])
     setSearchActive(true)
     try {
-      const data = source === 'md' ? await searchMangaDex(query) : await searchEHentai(query)
+      const data = source === 'md' ? await searchMangaDex(q) : await searchEHentai(q)
       setResults(data.results || [])
     } catch (e: any) {
       setLoadError(e.message || 'Search failed')
@@ -211,6 +194,20 @@ export default function ComicsPage() {
     setQuery('')
     setResults([])
     setSelected(null)
+    if (urlQ) navigate('/comics', { replace: true })
+  }
+
+  // A library card that isn't downloaded yet (discovered / queued / failed)
+  // opens the detail panel — chapters, "Đọc ngay" online, "Tải về" — instead
+  // of silently doing nothing (only finished downloads open the local reader).
+  const handleOpenDl = (dl: ComicsDownload) => {
+    if (dl.source !== source) setSource(dl.source as Source)
+    if (dl.source === 'eh') {
+      const gid = dl.id.replace('eh_', '')
+      handleSelect({ id: gid, title: dl.title, token: dl.token, cover: dlCoverSrc(dl), link: `https://e-hentai.org/g/${gid}/${dl.token || ''}/` })
+    } else {
+      handleSelect({ id: dl.id.replace('md_', ''), title: dl.title, cover: dlCoverSrc(dl), link: '' })
+    }
   }
 
   const handleSelect = async (item: ComicResult) => {
@@ -374,6 +371,8 @@ export default function ComicsPage() {
 
   const sourceDownloads = downloads.filter(d => d.source === source)
   const shownDownloads = dlFilter === 'all' ? sourceDownloads : sourceDownloads.filter(d => d.status === dlFilter)
+  const myShelf = sourceDownloads.filter(d => d.status !== 'idle').sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0))
+  const gridList = dlFilter === 'all' ? sourceDownloads.filter(d => d.status === 'idle') : shownDownloads
   const title = selected?.title || selected?.name || ''
   const cover = selected?.cover || ''
   const uploader = selected?.uploader || ''
@@ -386,167 +385,146 @@ export default function ComicsPage() {
   const canDownload = !selectedDl || selectedDl.status === 'idle' || selectedDl.status === 'failed'
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+    <div className="comics-shell">
       {/* Left panel */}
-      <div style={{ width: searchActive ? '60%' : '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: searchActive ? '1px solid var(--border)' : 'none' }}>
+      <div className={'comics-main' + (searchActive || selected ? ' comics-main--split' : '')}>
         {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {(['md', 'eh'] as Source[]).map(s => (
-              <button
-                key={s}
-                onClick={() => handleSourceChange(s)}
-                style={{
-                  padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  fontSize: 12, fontWeight: 600,
-                  background: source === s ? 'var(--accent)' : 'var(--elevated)',
-                  color: source === s ? '#fff' : 'var(--text)',
-                }}
-              >
-                {s === 'md' ? 'MangaDex' : 'E-Hentai'}
-              </button>
-            ))}
-            {searchActive && (
-              <button
-                onClick={handleBackToDownloads}
-                style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, marginLeft: 4 }}
-              >
-                ← Downloads
-              </button>
-            )}
+        <div className="comics-head">
+          <div className="media-head comics-head-top">
+            <div className="media-head-title">
+              {searchActive && (
+                <button className="comics-back" onClick={handleBackToDownloads} title="Về thư viện" aria-label="Về thư viện">
+                  <span className="ms" aria-hidden>arrow_back</span>
+                </button>
+              )}
+              <h1 className="page-title">Truyện tranh</h1>
+              {!searchActive && <span className="media-count">{sourceDownloads.length} bộ</span>}
+            </div>
+            <div className="media-seg" role="tablist" aria-label="Nguồn">
+              {(['md', 'eh'] as Source[]).map(s => (
+                <button
+                  key={s}
+                  role="tab"
+                  aria-selected={source === s}
+                  className={'media-seg-btn' + (source === s ? ' media-seg-btn--active' : '')}
+                  onClick={() => handleSourceChange(s)}
+                >
+                  {s === 'md' ? 'MangaDex' : 'E-Hentai'}
+                </button>
+              ))}
+            </div>
           </div>
+          {searchActive && (
+            <p className="comics-results-for">Kết quả cho “{urlQ || query}” · {source === 'md' ? 'MangaDex' : 'E-Hentai'}</p>
+          )}
           {!searchActive && (
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div className="comics-filters">
               {(['all', 'done', 'downloading', 'failed', 'idle'] as DlFilter[]).map(f => {
                 const count = f === 'all' ? sourceDownloads.length : sourceDownloads.filter(d => d.status === f).length
                 if (f !== 'all' && count === 0) return null
+                const label = f === 'all' ? 'Tất cả' : f === 'idle' ? 'Đề xuất' : f === 'done' ? 'Đã tải' : f === 'failed' ? 'Lỗi' : 'Đang tải'
                 return (
                   <button
                     key={f}
+                    className={'comics-filter' + (dlFilter === f ? ' comics-filter--active' : '')}
                     onClick={() => setDlFilter(f)}
-                    style={{
-                      padding: '4px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                      fontSize: 11, fontWeight: 600,
-                      background: dlFilter === f ? 'var(--accent)' : 'var(--elevated)',
-                      color: dlFilter === f ? '#fff' : 'var(--text-muted)',
-                    }}
                   >
-                    {f === 'all' ? 'All' : f === 'idle' ? 'Discovered' : f.charAt(0).toUpperCase() + f.slice(1)} {count > 0 ? `(${count})` : ''}
+                    {label}<span className="comics-filter-count">{count}</span>
                   </button>
                 )
               })}
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder={source === 'md' ? 'Search manga, manhwa, novel...' : 'Search galleries...'}
-              style={{
-                flex: 1, padding: '8px 16px',
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 999, color: 'var(--text)', fontSize: 14, outline: 'none',
-              }}
-            />
-            <button
-              onClick={handleSearch}
-              disabled={loading}
-              style={{
-                padding: '8px 20px', borderRadius: 999, border: 'none',
-                background: 'var(--accent)', color: '#fff', fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Search
-            </button>
-          </div>
         </div>
 
         {/* Grid */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        <div className="comics-scroll">
           {loading && (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-              <div style={{
-                width: 32, height: 32, border: '3px solid var(--border)',
-                borderTopColor: 'var(--accent)', borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite', margin: '0 auto 16px',
-              }} />
-              Loading...
+            <div className="media-empty">
+              <div className="comics-spinner" />
+              Đang tải…
             </div>
           )}
           {!loading && loadError && (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>{loadError}</div>
+            <div className="media-empty">
+              <span className="ms" aria-hidden>cloud_off</span>
+              <div>Nguồn truyện đang không phản hồi</div>
+              <div className="media-empty-sub">{loadError}</div>
+            </div>
           )}
 
           {/* Downloads view */}
           {!searchActive && !loading && !loadError && (
             shownDownloads.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>📥</div>
-                <div style={{ fontSize: 14, marginBottom: 6 }}>No downloads yet</div>
-                <div style={{ fontSize: 12 }}>Background discovery runs every 6 hours</div>
+              <div className="media-empty">
+                <span className="ms" aria-hidden>download</span>
+                <div>Chưa có truyện nào</div>
+                <div className="media-empty-sub">Tự động khám phá chạy mỗi 6 giờ</div>
               </div>
             ) : (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 20 }}>
-                  {shownDownloads.slice(0, visibleCount).map(dl => (
-                    <DownloadCard key={dl.id} dl={dl} onRead={handleReadLocal} onDelete={handleDeleteDl} onRetry={handleRetryDl} onDownload={handleDownloadDl} />
-                  ))}
-                </div>
-                {visibleCount < shownDownloads.length && (
-                  <div style={{ textAlign: 'center', marginTop: 20 }}>
-                    <button
-                      onClick={() => setVisibleCount(n => n + PAGE_SIZE)}
-                      style={{ padding: '8px 20px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
-                    >
-                      Xem thêm ({shownDownloads.length - visibleCount} còn lại)
-                    </button>
-                  </div>
+                {/* "All" = the reader's own shelf first (downloaded / in progress /
+                    failed), then the auto-discovered catalogue to browse. */}
+                {dlFilter === 'all' && myShelf.length > 0 && (
+                  <section className="comics-section">
+                    <div className="discover-section-head">
+                      <h2 className="discover-section-title">Tủ truyện của bạn</h2>
+                      <span className="media-count">{myShelf.length}</span>
+                    </div>
+                    <div className="comics-shelf">
+                      {myShelf.map(dl => <DownloadCard key={dl.id} dl={dl} onRead={handleReadLocal} onOpen={handleOpenDl} onDelete={handleDeleteDl} onRetry={handleRetryDl} onDownload={handleDownloadDl} />)}
+                    </div>
+                  </section>
                 )}
+                <section className="comics-section">
+                  {dlFilter === 'all' && (
+                    <div className="discover-section-head">
+                      <h2 className="discover-section-title">Khám phá</h2>
+                      <span className="media-count">{gridList.length} bộ · tự cập nhật mỗi 6 giờ</span>
+                    </div>
+                  )}
+                  <div className="comics-grid">
+                    {gridList.slice(0, visibleCount).map(dl => <DownloadCard key={dl.id} dl={dl} onRead={handleReadLocal} onOpen={handleOpenDl} onDelete={handleDeleteDl} onRetry={handleRetryDl} onDownload={handleDownloadDl} />)}
+                  </div>
+                  {visibleCount < gridList.length && (
+                    <div className="comics-more">
+                      <button className="btn-secondary" onClick={() => setVisibleCount(n => n + PAGE_SIZE)}>
+                        Xem thêm ({gridList.length - visibleCount} còn lại)
+                      </button>
+                    </div>
+                  )}
+                </section>
               </>
             )
           )}
 
           {/* Search results view */}
           {searchActive && !loading && !loadError && results.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-              No results
+            <div className="media-empty">
+              <span className="ms" aria-hidden>search_off</span>
+              Không có kết quả
             </div>
           )}
           {searchActive && results.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 20 }}>
+            <div className="comics-grid">
               {results.map((item, i) => (
                 <div
                   key={i}
+                  className={'comic-card comic-card--clickable' + (selected && selected.id === item.id ? ' comic-card--selected' : '')}
                   onClick={() => handleSelect(item)}
-                  style={{ cursor: 'pointer', position: 'relative' }}
                 >
-                  <div style={{
-                    width: '100%', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden',
-                    background: 'var(--surface)', marginBottom: 8, position: 'relative',
-                  }}>
+                  <div className="comic-cover">
                     <FallbackCover />
                     {item.cover && (
                       <img
                         src={item.cover} alt={item.title || item.name} loading="lazy"
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={e => { e.currentTarget.style.display = 'none' }}
                       />
                     )}
-                    {source === 'eh' && (
-                      <div style={{ position: 'absolute', top: 8, right: 8, background: '#888888', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
-                        NSFW
-                      </div>
-                    )}
+                    {source === 'eh' && <span className="media-chip comic-chip-tr">NSFW</span>}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {item.title || item.name}
-                  </div>
-                  {item.uploader && (
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{item.uploader}</div>
-                  )}
+                  <div className="comic-title">{item.title || item.name}</div>
+                  {item.uploader && <div className="comic-sub">{item.uploader}</div>}
                 </div>
               ))}
             </div>
@@ -555,28 +533,35 @@ export default function ComicsPage() {
       </div>
 
       {/* Right panel — only visible during search */}
-      {searchActive && <div style={{ width: '40%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {(searchActive || selected) && <aside className="comics-detail">
         {!selected ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-            Select a title to see details
+          <div className="media-empty comics-detail-empty">
+            <span className="ms" aria-hidden>auto_stories</span>
+            Chọn một truyện để xem chi tiết
           </div>
         ) : (
           <>
             {/* Detail header */}
-            <div style={{ padding: 16, borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, flexShrink: 0 }}>
+            <div className="comics-detail-head">
+              {cover && <img className="comics-detail-bg" src={cover} alt="" aria-hidden />}
+              <button className="comics-detail-close" onClick={() => setSelected(null)} aria-label="Đóng">
+                <span className="ms" aria-hidden>close</span>
+              </button>
               {cover && (
-                <img src={cover} alt={title} style={{ width: 80, height: 120, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                <img className="comics-detail-cover" src={cover} alt={title}
                   onError={e => { e.currentTarget.style.display = 'none' }} />
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{title}</div>
-                {uploader && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>{uploader}</div>}
-                {pages_ !== undefined && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{pages_} pages</div>}
-                {rating && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Rating: {rating}</div>}
+              <div className="comics-detail-info">
+                <div className="comics-detail-title">{title}</div>
+                {uploader && <div className="comics-detail-sub">{uploader}</div>}
+                <div className="comics-detail-meta">
+                  {pages_ !== undefined && <span>{pages_} trang</span>}
+                  {rating && <span>★ {rating}</span>}
+                </div>
                 {source === 'eh' && selected.tags && (
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                  <div className="comics-tags">
                     {(Array.isArray(selected.tags) ? selected.tags as string[] : [selected.tags as string]).slice(0, 5).map((t: string) => (
-                      <span key={t} style={{ background: 'var(--elevated)', padding: '1px 5px', borderRadius: 3 }}>{t}</span>
+                      <span key={t} className="comics-tag">{t}</span>
                     ))}
                   </div>
                 )}
@@ -585,71 +570,50 @@ export default function ComicsPage() {
 
             {/* Action buttons */}
             {chapterList.length > 0 && (
-              <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
-                <button
-                  onClick={() => handleChapter(chapterList[0], 0)}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
-                >
-                  ▶ Start Reading
+              <div className="comics-detail-actions">
+                <button className="btn-primary" onClick={() => handleChapter(chapterList[0], 0)}>
+                  <span className="ms" style={{ fontSize: 20 }} aria-hidden>menu_book</span>Đọc ngay
                 </button>
                 {canDownload && (
-                  <button
-                    onClick={handleDownloadSelected}
-                    disabled={enqueueing === 'selected'}
-                    style={{
-                      padding: '6px 14px', borderRadius: 8, border: 'none',
-                      background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12,
-                      opacity: enqueueing === 'selected' ? 0.5 : 1,
-                    }}
-                  >
-                    {enqueueing === 'selected' ? '...' : source === 'md' ? '⬇ Download All' : '⬇ Download'}
+                  <button className="btn-secondary" onClick={handleDownloadSelected} disabled={enqueueing === 'selected'}>
+                    <span className="ms" style={{ fontSize: 19 }} aria-hidden>download</span>
+                    {enqueueing === 'selected' ? '…' : source === 'md' ? 'Tải tất cả' : 'Tải về'}
                   </button>
                 )}
                 {selectedDl && selectedDl.status === 'done' && (
-                  <button
-                    onClick={() => handleReadLocal(selectedDl)}
-                    style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--elevated)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
-                  >
-                    📂 Read Local
+                  <button className="btn-secondary" onClick={() => handleReadLocal(selectedDl)}>
+                    <span className="ms" style={{ fontSize: 19 }} aria-hidden>folder_open</span>Đọc bản tải
                   </button>
                 )}
               </div>
             )}
 
             {/* Chapter/page list */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--text-muted)' }}>
-                {chapterList.length} {source === 'md' ? 'Chapters' : 'Pages'}
+            <div className="comics-chapters">
+              <div className="comics-chapters-label">
+                {chapterList.length} {source === 'md' ? 'chương' : 'trang'}
               </div>
-              {loading && <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>Loading...</div>}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 6 }}>
+              {loading && <div className="media-empty"><div className="comics-spinner" /></div>}
+              <div className="comics-chapter-grid">
                 {chapterList.map((ch, i) => (
-                  <div
-                    key={i}
-                    onClick={() => handleChapter(ch)}
-                    style={{
-                      padding: '8px 12px', background: 'var(--surface)', borderRadius: 8,
-                      fontSize: 11, cursor: 'pointer', overflow: 'hidden',
-                      textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--fill-track)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
-                  >
-                    {ch.title || `Page ${i + 1}`}
-                  </div>
+                  <button key={i} className="comics-chapter" onClick={() => handleChapter(ch)} title={ch.title || ''}>
+                    {source === 'md'
+                      ? <><span className="comics-chapter-no">{ch.chapter ? `Ch. ${ch.chapter}` : `#${i + 1}`}</span><span className="comics-chapter-title">{ch.title || 'Không tên'}</span></>
+                      : <span className="comics-chapter-title">Trang {i + 1}</span>}
+                  </button>
                 ))}
               </div>
             </div>
           </>
         )}
-      </div>}
+      </aside>}
 
       {/* Reader overlay */}
       {reading && (
-        <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 200, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px 16px 10px 68px', background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div className="comics-reader">
+          <div className="comics-reader-bar">
             <BackButton onClick={() => setReading(null)} label="Close" autoHide={false} overlay />
-            <span style={{ fontSize: 13, opacity: 0.7, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className="comics-reader-title">
               {reading.title || reading.chapter || ''}
             </span>
 
@@ -662,7 +626,7 @@ export default function ComicsPage() {
                   setLocalChapterIdx(idx)
                   openLocalChapter(reading.dlId, localChapters[idx])
                 }}
-                style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, background: 'var(--elevated)', color: 'var(--text)', border: 'none' }}
+                className="comics-reader-select"
               >
                 {localChapters.map((ch, i) => (
                   <option key={ch.id} value={i}>Ch {i + 1} ({ch.page_count}p)</option>
@@ -670,24 +634,19 @@ export default function ComicsPage() {
               </select>
             )}
 
-            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            <div className="media-seg comics-reader-seg">
               {(['scroll', 'page'] as ViewMode[]).map(m => (
                 <button
                   key={m}
                   onClick={() => setViewMode(m)}
-                  style={{
-                    padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                    fontSize: 11, fontWeight: 600,
-                    background: viewMode === m ? 'var(--accent)' : 'var(--elevated)',
-                    color: viewMode === m ? '#fff' : 'var(--text)',
-                  }}
+                  className={'media-seg-btn' + (viewMode === m ? ' media-seg-btn--active' : '')}
                 >
-                  {m === 'scroll' ? 'Scroll' : 'Page'}
+                  {m === 'scroll' ? 'Cuộn' : 'Lật trang'}
                 </button>
               ))}
             </div>
             {viewMode === 'page' && pages.length > 0 && (
-              <span style={{ fontSize: 12, opacity: 0.6, flexShrink: 0 }}>{currentPageIdx + 1} / {pages.length}</span>
+              <span className="comics-reader-count">{currentPageIdx + 1} / {pages.length}</span>
             )}
           </div>
 
@@ -714,12 +673,9 @@ export default function ComicsPage() {
               <button
                 onClick={() => setCurrentPageIdx(i => Math.max(0, i - 1))}
                 disabled={currentPageIdx === 0}
-                style={{
-                  position: 'absolute', left: 12, zIndex: 10, width: 44, height: 44, borderRadius: '50%',
-                  border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 20, cursor: 'pointer',
-                  opacity: currentPageIdx === 0 ? 0.2 : 1,
-                }}
-              >‹</button>
+                className="comics-page-nav comics-page-nav--prev"
+                aria-label="Trang trước"
+              ><span className="ms" aria-hidden>chevron_left</span></button>
               {pages[currentPageIdx] ? (
                 <img key={currentPageIdx} src={pages[currentPageIdx]} alt={`Page ${currentPageIdx + 1}`}
                   style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
@@ -734,12 +690,9 @@ export default function ComicsPage() {
               <button
                 onClick={() => setCurrentPageIdx(i => Math.min(pages.length - 1, i + 1))}
                 disabled={currentPageIdx === pages.length - 1}
-                style={{
-                  position: 'absolute', right: 12, zIndex: 10, width: 44, height: 44, borderRadius: '50%',
-                  border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 20, cursor: 'pointer',
-                  opacity: currentPageIdx === pages.length - 1 ? 0.2 : 1,
-                }}
-              >›</button>
+                className="comics-page-nav comics-page-nav--next"
+                aria-label="Trang sau"
+              ><span className="ms" aria-hidden>chevron_right</span></button>
             </div>
           )}
         </div>

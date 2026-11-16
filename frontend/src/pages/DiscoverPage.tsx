@@ -8,6 +8,7 @@ import type { Track } from '../types'
 import { usePlayer } from '../PlayerContext'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
+import { listeningLine } from '../roomVoice'
 
 const cover = (albumId: string, w: number) => imgSrc(`/api/covers/${albumId}`, w)
 
@@ -30,6 +31,22 @@ function shuffle<T>(arr: T[], salt: number): T[] {
   return a
 }
 
+// Time-of-day greeting for the page eyebrow — a small human touch on the
+// landing page without adding any new data dependency.
+function greeting() {
+  const h = new Date().getHours()
+  return h < 5 ? 'Khuya rồi' : h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Chào buổi trưa' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối'
+}
+
+function ShelfHead({ title, to }: { title: string; to: string }) {
+  return (
+    <div className="discover-section-head">
+      <h2 className="discover-section-title">{title}</h2>
+      <Link to={to} className="discover-see-all">Xem tất cả</Link>
+    </div>
+  )
+}
+
 function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; onPlay: (t: Track) => void }) {
   const { track: current, isPlaying } = usePlayer()
   if (!tracks.length) return null
@@ -48,6 +65,7 @@ function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; 
             </span>
             <span className="discover-track-cover">
               <TrackCover albumId={t.album_id} />
+              <span className="discover-track-play ms" aria-hidden>play_arrow</span>
             </span>
             <span className="discover-track-meta">
               <span className="discover-track-title">{t.title}</span>
@@ -106,6 +124,11 @@ export default function DiscoverPage() {
 
   return (
     <div className="page discover-page">
+      <div className="discover-head">
+        <p className="discover-eyebrow">{greeting()}</p>
+        <h1 className="page-title">{t('nav.discover')}</h1>
+        {playStats && (() => { const line = listeningLine(playStats.daily, playStats.top); return line ? <p className="room-voice">{line}</p> : null })()}
+      </div>
       <LibraryStatsBar />
 
       {hero.length > 0 && (
@@ -132,7 +155,7 @@ export default function DiscoverPage() {
 
       {shelfAlbums.length > 0 && (
         <section className="discover-section">
-          <h2 className="discover-section-title">{t('search.albums')}</h2>
+          <ShelfHead title={t('search.albums')} to="/albums" />
           <div className="discover-shelf">
             {shelfAlbums.map(al => (
               <Link key={al.id} to={`/album/${al.id}`} className="discover-shelf-album">
@@ -149,7 +172,7 @@ export default function DiscoverPage() {
 
       {shelfArtists.length > 0 && (
         <section className="discover-section">
-          <h2 className="discover-section-title">{t('nav.artists')}</h2>
+          <ShelfHead title={t('nav.artists')} to="/" />
           <div className="discover-shelf">
             {shelfArtists.map(a => (
               <Link key={a.id} to={`/artist/${a.id}`} className="discover-shelf-artist">

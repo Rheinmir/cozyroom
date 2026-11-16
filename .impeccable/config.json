@@ -1,7 +1,9 @@
 {
   "detector": {
     "ignoreRules": [],
-    "ignoreFiles": [],
+    "ignoreFiles": [
+      ".impeccable/review/audit-compare.html"
+    ],
     "ignoreValues": [
       {
         "rule": "design-system-color",
@@ -359,6 +361,27 @@
         ],
         "createdAt": "2026-09-06T16:55:21.028Z",
         "reason": "TrendingChartMode LANG_COLORS — GitHub canonical language identity colors, scoped to the language dimension; sanctioned per Language-Identity Color Rule in DESIGN.md, same class as PLAYLIST/AVATAR gradient identity palettes"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#666",
+        "createdAt": "2026-09-29T14:35:26.185Z",
+        "reason": "reader-engineer: status chip overlays a rgba(0,0,0,0.55) scrim on comic cover art (media overlay, not app-canvas chrome) — stays self-contained dark-neutral"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.64 0.17 285)",
+        "createdAt": "2026-09-29T14:37:04.742Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.62 0.18 160)",
+        "createdAt": "2026-09-29T14:37:04.883Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.72 0.18 45)",
+        "createdAt": "2026-09-29T14:37:05.022Z"
       }
     ]
   }

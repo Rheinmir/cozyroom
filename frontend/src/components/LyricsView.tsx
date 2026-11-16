@@ -1,12 +1,15 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
-import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation } from '../api'
+import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation, searchLyrics, fetchLyricsCandidate, setTrackMeta } from '../api'
 import { useFlipUp } from '../useFlipPosition'
-import type { LyricsData, SourceInfo } from '../api'
+import type { LyricsData, SourceInfo, LyricsCandidate } from '../api'
 
 const AUTH_KEY = 'hs-lyrics-auth'
 const isAuthed  = () => localStorage.getItem(AUTH_KEY) === '1'
+// Same session key PlaylistsPage uses for the server-checked owner password.
+const OWNER_PW_KEY = 'cozyroom_owner_password'
 const grantAuth = () => localStorage.setItem(AUTH_KEY, '1')
 
 const SS = 'lyr:'
@@ -51,7 +54,8 @@ const LyricsView = forwardRef<LyricsViewHandle, {
 }>(
 function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, onToggleAutoTranslate }, ref) {
   const { t } = useTranslation()
-  const { progress, duration } = usePlayer()
+  const { progress, duration, track, renameTrack } = usePlayer()
+  const queryClient = useQueryClient()
   const stored = cache.has(trackId) ? cache.get(trackId) : null
   const [results, setResults]     = useState<LyricsData[]>(stored?.results ?? [])
   const [sources, setSources]     = useState<SourceInfo[]>(stored?.sources ?? [])
@@ -76,6 +80,15 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
   useEffect(() => { localStorage.setItem('lyrics-manual-translate', manualOn ? '1' : '0') }, [manualOn])
   const manualOnRef = useRef(manualOn)
   manualOnRef.current = manualOn
+  const [lyrSearchOpen, setLyrSearchOpen] = useState(false)
+  const [lyrQ, setLyrQ]                   = useState('')
+  const [lyrSearching, setLyrSearching]   = useState(false)
+  const [lyrCands, setLyrCands]           = useState<LyricsCandidate[] | null>(null)
+  const [lyrPicking, setLyrPicking]       = useState<string | null>(null)
+  // Title/artist offered for syncing after a lyrics match is picked.
+  const [meta, setMeta]                   = useState<{ title: string; artist: string } | null>(null)
+  const [metaPw, setMetaPw]               = useState<string | null>(null)  // null = no password prompt
+  const [metaSaving, setMetaSaving]       = useState(false)
   const [translations, setTranslations] = useState<string[]>([])
   const [translating, setTranslating]   = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
@@ -126,6 +139,8 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
 
   useEffect(() => {
     prevIdxRef.current = -1
+    setMeta(null)
+    setMetaPw(null)
     setShowTr(false)
     setTranslations([])
     if (cache.has(trackId)) {
@@ -254,6 +269,79 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
     bustLyricsCache(trackId).finally(() => doFetch(trackId))
   }
 
+  // Manual lyrics search: every vendor's top matches for a free-text query,
+  // so a wrong auto-pick (vendors only ever return their first hit) can be
+  // replaced. Picking previews the candidate; Lưu/Ghi đè then locks it into
+  // the file, which outranks every online source from then on.
+  const openLyrSearch = () => {
+    setLyrSearchOpen(o => !o)
+    // " - Topic" is a YouTube auto-channel suffix, not part of the artist.
+    if (!lyrQ && track) setLyrQ(`${track.title} ${(track.artist_name ?? '').replace(/\s*-\s*Topic$/i, '')}`.trim())
+  }
+
+  const runLyrSearch = () => {
+    const q = lyrQ.trim()
+    if (!q) return
+    setLyrSearching(true)
+    setLyrCands(null)
+    searchLyrics(q)
+      .then(d => {
+        // Candidates whose length matches the playing track float to the top.
+        const near = (c: LyricsCandidate) => duration > 0 && c.duration > 0 && Math.abs(c.duration - duration) <= 3
+        setLyrCands([...d.candidates].sort((a, b) => Number(near(b)) - Number(near(a))))
+      })
+      .catch(() => setLyrCands([]))
+      .finally(() => setLyrSearching(false))
+  }
+
+  const pickCandidate = (c: LyricsCandidate) => {
+    const key = c.source + ':' + c.id
+    setLyrPicking(key)
+    setSaveMsg('')
+    fetchLyricsCandidate(c, duration)
+      .then(r => {
+        const next = [...results.filter(x => x.source !== r.source), r]
+        cache.set(trackId, next, sources, beCached)
+        setResults(next)
+        setSelected(next.length - 1)
+        setLyrSearchOpen(false)
+        if (c.title !== track?.title || c.artist !== track?.artist_name) setMeta({ title: c.title, artist: c.artist })
+        setSaveMsg(t('lyrics.picked_hint', { defaultValue: 'Đang xem bản đã chọn — bấm Lưu để khoá cho lần sau' }))
+      })
+      // get() throws "<status> <url>": 404 = this match has no lyrics,
+      // anything else = the vendor is down/overloaded right now.
+      .catch(e => setSaveMsg(String(e?.message).startsWith('404')
+        ? t('lyrics.pick_none', { defaultValue: 'Bản này không có lời' })
+        : t('lyrics.pick_failed', { defaultValue: 'Nguồn đang lỗi, thử lại sau' })))
+      .finally(() => setLyrPicking(null))
+  }
+
+  const handleSyncMeta = () => {
+    if (!meta) return
+    const pw = metaPw || sessionStorage.getItem(OWNER_PW_KEY) || ''
+    if (!pw) { setMetaPw(''); return }
+    setMetaSaving(true)
+    setTrackMeta(trackId, meta, pw)
+      .then(() => {
+        sessionStorage.setItem(OWNER_PW_KEY, pw)
+        renameTrack(trackId, { title: meta.title, artist_name: meta.artist })
+        queryClient.invalidateQueries()
+        setMeta(null)
+        setMetaPw(null)
+        setSaveMsg(t('lyrics.meta_synced', { defaultValue: 'Đã đồng bộ tên bài & nghệ sĩ' }))
+      })
+      .catch(e => {
+        if (e?.message === '401') {
+          sessionStorage.removeItem(OWNER_PW_KEY)
+          setMetaPw('')
+          setSaveMsg(t('lyrics.wrong_password'))
+        } else {
+          setSaveMsg(t('lyrics.meta_failed', { defaultValue: 'Đồng bộ tên thất bại' }))
+        }
+      })
+      .finally(() => setMetaSaving(false))
+  }
+
   const handleSave = async () => {
     if (!isAuthed() && pw !== 'admin123' && pw !== 'owner712002') { setSaveMsg(t('lyrics.wrong_password')); return }
     if (pw === 'owner712002') grantAuth()
@@ -291,11 +379,53 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
     }
   }
 
+  const lyrSearchPanel = (
+    <div className="lyrics-search">
+      <form className="lyrics-search-bar" onSubmit={e => { e.preventDefault(); runLyrSearch() }}>
+        <input
+          className="lyrics-search-input"
+          type="search"
+          value={lyrQ}
+          onChange={e => setLyrQ(e.target.value)}
+          placeholder={t('lyrics.search_placeholder', { defaultValue: 'Tên bài – nghệ sĩ' })}
+          autoFocus
+        />
+        <button type="submit" className="lyrics-save-btn" disabled={lyrSearching}>
+          {lyrSearching ? '…' : t('lyrics.search_go', { defaultValue: 'Tìm' })}
+        </button>
+      </form>
+      {lyrCands && (
+        lyrCands.length === 0
+          ? <div className="lyrics-search-empty">{t('lyrics.not_found')}</div>
+          : <div className="lyrics-search-list">
+              {lyrCands.map(c => {
+                const key = c.source + ':' + c.id
+                const near = duration > 0 && c.duration > 0 && Math.abs(c.duration - duration) <= 3
+                return (
+                  <button key={key} className="lyrics-cand" onClick={() => pickCandidate(c)} disabled={lyrPicking !== null}>
+                    <span className="lyrics-cand-src">{SOURCE_LABEL[c.source] ?? c.source}</span>
+                    <span className="lyrics-cand-main">
+                      <span className="lyrics-cand-title">{c.title}</span>
+                      <span className="lyrics-cand-sub">{[c.artist, c.album].filter(Boolean).join(' · ')}</span>
+                    </span>
+                    <span className={'lyrics-cand-dur' + (near ? ' lyrics-cand-dur--near' : '')}>
+                      {lyrPicking === key ? '…' : c.duration > 0 ? `${Math.floor(c.duration / 60)}:${String(c.duration % 60).padStart(2, '0')}` : ''}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+      )}
+    </div>
+  )
+
   if (loading) return <div className="lyrics-state">{t('lyrics.finding')}</div>
   if (results.length === 0) return (
     <div className="lyrics-state">
       {t('lyrics.not_found')}
       <button className="lyrics-retry-btn" onClick={handleRefresh}>{t('lyrics.retry')}</button>
+      <button className="lyrics-retry-btn" onClick={openLyrSearch}>{t('lyrics.search_go', { defaultValue: 'Tìm' })}</button>
+      {lyrSearchOpen && lyrSearchPanel}
     </div>
   )
 
@@ -403,6 +533,13 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
                 title={autoTranslate ? t('player.auto_translate_on') : t('player.auto_translate_off')}
               >⚡</button>
             )}
+            <button
+              className={'lyrics-tr-btn' + (lyrSearchOpen ? ' lyrics-tr-btn--active' : '')}
+              onClick={openLyrSearch}
+              title={t('lyrics.search_title', { defaultValue: 'Tìm lời từ các nguồn' })}
+            >
+              <span className="ms" style={{ fontSize: 16, verticalAlign: 'middle' }} aria-hidden>search</span>
+            </button>
             <button className="lyrics-refresh-btn" onClick={handleRefresh} title={t('lyrics.refetch')}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
             </button>
@@ -417,6 +554,28 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
               </button>
             )}
           </div>
+
+          {lyrSearchOpen && lyrSearchPanel}
+
+          {meta && (
+            <div className="lyrics-meta-sync">
+              <span className="lyrics-meta-sync-label">{t('lyrics.meta_sync_label', { defaultValue: 'Đồng bộ tên theo bản lời' })}</span>
+              <input className="lyrics-search-input" value={meta.title} onChange={e => setMeta({ ...meta, title: e.target.value })}
+                placeholder={t('lyrics.meta_title', { defaultValue: 'Tên bài' })} />
+              <input className="lyrics-search-input" value={meta.artist} onChange={e => setMeta({ ...meta, artist: e.target.value })}
+                placeholder={t('lyrics.meta_artist', { defaultValue: 'Nghệ sĩ' })} />
+              <div className="lyrics-meta-sync-actions">
+                {metaPw !== null && (
+                  <input type="password" className="lyrics-pw-input" placeholder={t('auth.password')} value={metaPw} autoFocus
+                    onChange={e => setMetaPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSyncMeta()} />
+                )}
+                <button className="lyrics-save-btn" onClick={handleSyncMeta} disabled={metaSaving || !(meta.title.trim() || meta.artist.trim())}>
+                  {metaSaving ? '…' : t('lyrics.meta_sync', { defaultValue: 'Đồng bộ' })}
+                </button>
+                <button className="lyrics-cancel-btn" onClick={() => { setMeta(null); setMetaPw(null) }}>✕</button>
+              </div>
+            </div>
+          )}
 
           {srcOpen && sources.length > 0 && (
             <div className="lyrics-monitor">

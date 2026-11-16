@@ -3,15 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- iOS Safari still zoom-to-fits on input focus in some layouts even at
+         16px. maximum-scale=1 stops only that auto-zoom on iOS (pinch-zoom
+         stays available since iOS 10); Android honours it as a hard pinch
+         lock, so it's applied to iOS only. -->
+    <script>
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+        document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1');
+      }
+    </script>
     <title>Cozyroom</title>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Cozyroom" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#0b0a09" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-hearth.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon-hearth.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-hearth.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Pre-paint theme boot (Inherited Invariant #4): apply the persisted theme

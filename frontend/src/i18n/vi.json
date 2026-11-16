@@ -16,7 +16,8 @@
     "greeting": "Xin chào! Tôi có thể tìm nhạc, phát bài, tải từ YouTube, quản lý playlist, và xem repo trending. Bạn cần gì?",
     "placeholder": "Hỏi gì đi…",
     "send": "Gửi",
-    "model_placeholder": "model (vd: claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — để trống = tự động"
+    "model_placeholder": "model (vd: claude-sonnet-4-6, gemini-2.0-flash, openai/gpt-4o) — để trống = tự động",
+    "model_short": "Model: tự động"
   },
   "auth": {
     "username": "Tên đăng nhập",
@@ -126,6 +127,8 @@
     "album": "Album",
     "tracks_count": "{{n}} bài",
     "back": "← Quay lại",
+    "shuffle": "Trộn bài",
+    "albums_count": "{{n}} album",
     "loading": "Đang tải…"
   },
   "playlist": {
@@ -141,8 +144,8 @@
     "cancel": "Hủy",
     "confirm": "Xác nhận",
     "delete_confirm": "Bạn có chắc chắn muốn xóa playlist này không?",
-    "local": "Local Playlist",
-    "permanent": "Permanent Playlist",
+    "local": "Playlist cục bộ",
+    "permanent": "Playlist vĩnh viễn",
     "play": "Phát",
     "no_tracks": "Chưa có bài hát nào trong playlist này.",
     "no_playlists_yet": "Chưa có playlist nào. Hãy thêm một bài hát vào playlist để tạo mới!",

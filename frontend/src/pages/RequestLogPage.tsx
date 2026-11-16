@@ -6,6 +6,7 @@ import {
   type DebugInstance, type DebugServiceCheck, type DebugTraceroute,
 } from '../api'
 import Spinner from '../components/Spinner'
+import { TIP, GRID, AXIS, BAR_H } from '../chartTheme'
 
 const OWNER_PW_KEY = 'cozyroom_owner_password'
 
@@ -17,12 +18,13 @@ const fmtTime = (ms: number) => new Date(ms).toLocaleTimeString('vi-VN', { hour1
 const statusColor = (s: number) =>
   s >= 500 ? 'var(--chart-fail)' : s >= 400 ? 'var(--chart-warn)' : s >= 300 ? 'var(--chart-caution)' : 'var(--chart-ok)'
 
-function SummaryCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function SummaryCard({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'fail' }) {
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 16px', textAlign: 'center', minWidth: 110 }}>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{sub}</div>}
-      <div style={{ fontSize: 11, opacity: 0.55, marginTop: 2 }}>{label}</div>
+    <div className="stat-tile">
+      <div className="stat-tile-label">{label}</div>
+      <div className={'stat-tile-value' + (tone ? ` stat-tile-value--${tone}` : '')}>
+        {value}{sub && <span className="stat-hero-unit" style={{ fontSize: 12, marginLeft: 6 }}>{sub}</span>}
+      </div>
     </div>
   )
 }
@@ -196,24 +198,23 @@ export default function RequestLogPage() {
   return (
     <div className="debug-page-body">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Request Log</h2>
-        <span style={{ fontSize: 11, opacity: 0.4 }}>500 requests gần nhất · in-memory</span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button onClick={load} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, background: 'var(--surface)' }}>↻</button>
-          <button
-            onClick={() => setAutoRefresh(a => !a)}
-            style={{ padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, background: autoRefresh ? 'var(--accent)' : 'var(--surface)', color: autoRefresh ? '#fff' : 'inherit', fontWeight: autoRefresh ? 600 : 400 }}
-          >
-            {autoRefresh ? '● Live' : '○ Paused'}
+      <div className="stat-head">
+        <div>
+          <h1 className="stat-title">Request Log</h1>
+          <p className="stat-sub">500 request gần nhất · in-memory</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={load} className="stat-icon-btn" title="Tải lại" aria-label="Tải lại"><span className="ms" style={{ fontSize: 17 }} aria-hidden>refresh</span></button>
+          <button onClick={() => setAutoRefresh(a => !a)} className={'stat-chip stat-live' + (autoRefresh ? ' stat-live--on' : '')} style={{ height: 28 }}>
+            {autoRefresh ? 'Live' : 'Tạm dừng'}
           </button>
         </div>
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-        <SummaryCard label="Tổng requests" value={String(stats.total)} sub="(buffer 500)" />
-        <SummaryCard label="Lỗi (4xx/5xx)" value={`${stats.errors}`} sub={`${errorRate}%`} />
+      <div className="stat-tiles" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+        <SummaryCard label="Tổng requests" value={String(stats.total)} sub="/ 500" />
+        <SummaryCard label="Lỗi (4xx/5xx)" value={`${stats.errors}`} sub={`${errorRate}%`} tone={stats.errors > 0 ? 'fail' : undefined} />
         <SummaryCard label="Avg latency" value={fmtMs(stats.avgMs)} />
         <SummaryCard label="P95 latency" value={fmtMs(stats.p95Ms)} />
         <SummaryCard label="Max latency" value={fmtMs(stats.maxMs)} />
@@ -221,27 +222,26 @@ export default function RequestLogPage() {
 
       {/* Slowest endpoints chart */}
       {topSlow.length > 0 && (
-        <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Endpoint chậm nhất (avg ms)</div>
+        <div className="stat-panel" style={{ marginBottom: 12 }}>
+          <div className="stat-panel-title">Endpoint chậm nhất (avg ms)</div>
           <ResponsiveContainer width="100%" height={Math.max(180, topSlow.length * 30)}>
             <BarChart data={topSlow} layout="vertical" margin={{ top: 0, right: 80, left: 8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => fmtMs(v as number)} />
-              <YAxis type="category" dataKey="endpoint" tick={{ fontSize: 9 }} width={220} />
+              <CartesianGrid {...GRID} horizontal={false} vertical />
+              <XAxis type="number" {...AXIS} tickFormatter={v => fmtMs(v as number)} />
+              <YAxis type="category" dataKey="endpoint" {...AXIS} tick={{ fontSize: 11, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} width={240} />
               <Tooltip
-                cursor={{ fill: 'var(--surface-hover)' }}
-                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 11 }}
+                {...TIP}
                 formatter={(val, name) => [
                   name === 'avg' ? fmtMs(val as number) : name === 'p95' ? fmtMs(val as number) : fmtMs(val as number),
                   name === 'avg' ? 'Avg' : name === 'p95' ? 'P95' : 'Max',
                 ]}
               />
-              <Bar dataKey="avg" name="avg" radius={[0, 999, 999, 0]} barSize={10}>
+              <Bar dataKey="avg" name="avg" radius={BAR_H} barSize={10}>
                 {topSlow.map((entry, i) => (
                   <Cell key={i} fill={entry.avg > 1000 ? 'var(--chart-fail)' : entry.avg > 300 ? 'var(--chart-warn)' : entry.avg > 100 ? 'var(--chart-caution)' : 'var(--chart-ok)'} />
                 ))}
               </Bar>
-              <Bar dataKey="p95" name="p95" fill="var(--text-faint)" radius={[0, 999, 999, 0]} barSize={6} />
+              <Bar dataKey="p95" name="p95" fill="var(--text-faint)" radius={BAR_H} barSize={6} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -250,25 +250,23 @@ export default function RequestLogPage() {
       {/* Filters + search */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
         {(['all', '2xx', '3xx', '4xx', '5xx'] as StatusFilter[]).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '3px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-            background: filter === f ? 'var(--accent)' : 'var(--surface)',
-            color: filter === f ? '#fff' : 'inherit',
-            fontWeight: filter === f ? 600 : 400,
-          }}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} className={'stat-chip' + (filter === f ? ' stat-chip--on' : '')}>
+            {f !== 'all' && <i className="stat-dot" style={{ background: statusColor(Number(f[0]) * 100) }} />}{f === 'all' ? 'Tất cả' : f}
+          </button>
         ))}
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Lọc theo path / method…"
-          style={{ marginLeft: 'auto', padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--surface)', color: 'inherit', fontSize: 12, width: 220 }}
+          className="stat-input"
+          style={{ marginLeft: 'auto', width: 240 }}
         />
-        <span style={{ fontSize: 11, opacity: 0.4 }}>{filtered.length} entries</span>
+        <span style={{ fontSize: 12, color: 'var(--text-faint)', fontVariantNumeric: 'tabular-nums' }}>{filtered.length} entries</span>
       </div>
 
       {/* Request table */}
-      <div style={{ background: 'var(--surface)', borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '70px 56px 1fr 52px 90px', padding: '8px 14px', fontSize: 10, opacity: 0.45, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border)' }}>
+      <div className="stat-panel" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="reqlog-row reqlog-head">
           <span>Time</span>
           <span>Method</span>
           <span>Path</span>
@@ -277,25 +275,15 @@ export default function RequestLogPage() {
         </div>
         <div style={{ maxHeight: 540, overflowY: 'auto' }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: '20px 14px', opacity: 0.4, fontSize: 13 }}>Không có request nào.</div>
+            <div style={{ padding: '24px 16px', color: 'var(--text-faint)', fontSize: 13 }}>Không có request nào.</div>
           ) : (
             [...filtered].reverse().map((e, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '70px 56px 1fr 52px 90px',
-                  padding: '5px 14px',
-                  fontSize: 12,
-                  borderBottom: '1px solid var(--border)',
-                  borderLeft: `2px solid ${statusColor(e.status)}`,
-                }}
-              >
-                <span style={{ opacity: 0.45, fontSize: 10, fontVariantNumeric: 'tabular-nums' }}>{fmtTime(e.time)}</span>
-                <span style={{ fontWeight: 600, fontSize: 10, opacity: 0.7 }}>{e.method}</span>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85, fontFamily: 'monospace', fontSize: 11 }}>{e.path}</span>
-                <span style={{ textAlign: 'right', color: statusColor(e.status), fontWeight: 600, fontSize: 11 }}>{e.status}</span>
-                <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', opacity: 0.7, fontSize: 11, color: e.duration_ms > 1000 ? 'var(--chart-fail)' : e.duration_ms > 300 ? 'var(--chart-warn)' : 'inherit' }}>{fmtMs(e.duration_ms)}</span>
+              <div key={i} className="reqlog-row">
+                <span className="reqlog-time">{fmtTime(e.time)}</span>
+                <span className="reqlog-method">{e.method}</span>
+                <span className="reqlog-path">{e.path}</span>
+                <span className="reqlog-status" style={{ color: statusColor(e.status) }}><i className="stat-dot" style={{ background: statusColor(e.status) }} />{e.status}</span>
+                <span className="reqlog-dur" style={{ color: e.duration_ms > 1000 ? 'var(--chart-fail)' : e.duration_ms > 300 ? 'var(--chart-warn)' : undefined }}>{fmtMs(e.duration_ms)}</span>
               </div>
             ))
           )}
@@ -305,8 +293,8 @@ export default function RequestLogPage() {
       {/* Topology diagram — every label pulled from the live instance/services/traceroute
           state above; nothing here is a hardcoded placeholder value. */}
       {instance && (
-        <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16, overflowX: 'auto' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sơ đồ topology (số liệu live)</div>
+        <div className="stat-panel" style={{ marginTop: 12, overflowX: 'auto' }}>
+          <div className="stat-panel-title">Sơ đồ topology (số liệu live)</div>
           <svg width="100%" viewBox="0 0 920 260" style={{ minWidth: 820, display: 'block' }}>
             {/* Client node */}
             <rect x="10" y="90" width="150" height="80" rx="8" fill="var(--glass-fill)" stroke="var(--border-strong)" strokeWidth="1.5" />
@@ -364,8 +352,8 @@ export default function RequestLogPage() {
       )}
 
       {/* Instance — which pod/node is serving THIS request */}
-      <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Instance đang serve request này</div>
+      <div className="stat-panel" style={{ marginTop: 12 }}>
+        <div className="stat-panel-title">Instance đang serve request này</div>
         {instance ? (
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 12 }}>
             <div><span style={{ opacity: 0.5 }}>Pod: </span><span style={{ fontFamily: 'monospace' }}>{instance.pod_name}</span></div>
@@ -380,12 +368,12 @@ export default function RequestLogPage() {
       </div>
 
       {/* Services — reachability from this backend pod (Phương án A: TCP dial, không dùng k8s API) */}
-      <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Service reachability (TCP dial từ backend pod)</div>
+      <div className="stat-panel" style={{ marginTop: 12 }}>
+        <div className="stat-panel-title">Service reachability (TCP dial từ backend pod)</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }}>
           {services.map(s => (
-            <div key={s.name} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--glass-fill)', borderLeft: `2px solid ${s.reachable ? 'var(--chart-ok)' : 'var(--chart-fail)'}` }}>
-              <div style={{ fontSize: 12, fontWeight: 600 }}>{s.name}</div>
+            <div key={s.name} className="stat-inset">
+              <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><i className="stat-dot" style={{ background: s.reachable ? 'var(--chart-ok)' : 'var(--chart-fail)' }} />{s.name}</div>
               <div style={{ fontSize: 10, opacity: 0.5, fontFamily: 'monospace' }}>{s.addr}</div>
               <div style={{ fontSize: 11, marginTop: 4, color: s.reachable ? 'var(--chart-ok)' : 'var(--chart-fail)' }}>
                 {s.reachable ? `reachable · ${s.latency_ms}ms` : `unreachable${s.error ? ` · ${s.error}` : ''}`}
@@ -396,13 +384,14 @@ export default function RequestLogPage() {
       </div>
 
       {/* Traceroute — server's-eye view outward, NOT the client's path */}
-      <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '14px 16px', marginTop: 16, marginBottom: 16 }}>
+      <div className="stat-panel" style={{ marginTop: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Traceroute</div>
+          <div className="stat-panel-title" style={{ margin: 0 }}>Traceroute</div>
           <button
             onClick={handleRunTraceroute}
             disabled={tracerouteLoading}
-            style={{ padding: '3px 12px', borderRadius: 6, border: 'none', cursor: tracerouteLoading ? 'default' : 'pointer', fontSize: 12, background: 'var(--accent)', color: '#fff', opacity: tracerouteLoading ? 0.6 : 1 }}
+            className="btn-secondary"
+            style={{ height: 30, padding: '0 14px', fontSize: 12 }}
           >
             {tracerouteLoading ? 'Đang chạy…' : 'Chạy traceroute'}
           </button>

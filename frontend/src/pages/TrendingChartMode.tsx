@@ -52,8 +52,12 @@ function fmtK(n: number) {
   return String(n)
 }
 
-const TT = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, borderRadius: 8 }
-const GR = { strokeDasharray: '3 3', stroke: 'var(--chart-grid)' }
+const TT = { background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12, borderRadius: 10, boxShadow: '0 12px 32px -8px rgba(0,0,0,.6)', padding: '8px 12px' }
+const TT_LABEL = { color: 'var(--text-muted)', fontSize: 11, marginBottom: 2 }
+const TT_ITEM = { color: 'var(--text)', padding: 0 }
+const GR = { strokeDasharray: '2 4', stroke: 'var(--chart-grid)' }
+// shared axis styling — no axis line / tick marks, quiet 11px labels
+const AX = { axisLine: false, tickLine: false } as const
 
 const isMobile = () => window.innerWidth <= 767
 function ch(desktop: number, mobile: number) { return isMobile() ? mobile : desktop }
@@ -140,12 +144,12 @@ function ChartMomentum({ repos, onFilter, compact }: { repos: TrendingRepo[]; on
     <ResponsiveContainer width="100%" height={compact ? ch(260, 200) : ch(340, 240)}>
       <ScatterChart margin={compact ? { top: 12, right: 12, bottom: 30, left: 40 } : { top: 16, right: 20, bottom: ch(40, 28), left: ch(56, 36) }}>
         <CartesianGrid {...GR} />
-        <XAxis
+        <XAxis {...AX}
           dataKey="x" type="number" name="+Stars this week"
           tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
           label={{ value: '＋Stars this week', position: 'insideBottom', offset: -16, fill: 'var(--text-faint)', fontSize: 11 }}
         />
-        <YAxis
+        <YAxis {...AX}
           dataKey="y" type="number" name="Total Stars" scale="log" domain={['auto', 'auto']}
           tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
           label={compact ? undefined : { value: 'Total Stars (log)', angle: -90, position: 'insideLeft', offset: 14, fill: 'var(--text-faint)', fontSize: 11 }}
@@ -197,10 +201,10 @@ function ChartBar({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFilt
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }}>
         <CartesianGrid {...GR} horizontal={false} />
-        <XAxis type="number" tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-        <YAxis type="category" dataKey="name" tick={{ fill: 'var(--text)', fontSize: 11 }} width={168} />
-        <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Star Delta']} contentStyle={TT} cursor={false} />
-        <Bar dataKey="delta" radius={[0, 999, 999, 0]} style={{ cursor: 'pointer' }}
+        <XAxis {...AX} type="number" tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <YAxis {...AX} type="category" dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} width={ch(168, 100)} />
+        <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Star Delta']} contentStyle={TT} labelStyle={TT_LABEL} itemStyle={TT_ITEM} cursor={{ fill: 'var(--surface-hover)' }} />
+        <Bar dataKey="delta" radius={[0, 3, 3, 0]} barSize={12} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
             const found = repos.filter(r => r.name === d.fullName)
             if (found.length) onFilter(d.fullName, found)
@@ -336,8 +340,8 @@ function ChartDonut({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFi
             </Pie>
             <Tooltip
               formatter={(v: any) => [`${v} repos`, 'Volume']}
-              contentStyle={TT}
-              cursor={false}
+              contentStyle={TT} labelStyle={TT_LABEL} itemStyle={TT_ITEM}
+              cursor={{ fill: 'var(--surface-hover)' }}
             />
             <Legend
               iconSize={8}
@@ -432,10 +436,10 @@ function ChartHistogram({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: 
     <ResponsiveContainer width="100%" height={ch(260, 200)}>
       <BarChart data={data} margin={{ top: 12, right: 8, bottom: 8, left: 8 }}>
         <CartesianGrid {...GR} />
-        <XAxis dataKey="name" tick={{ fill: 'var(--text)', fontSize: 12 }} />
-        <YAxis tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-        <Tooltip formatter={(v: any) => [v, 'Repos']} contentStyle={TT} cursor={false} />
-        <Bar dataKey="count" radius={[999, 999, 0, 0]} style={{ cursor: 'pointer' }}
+        <XAxis {...AX} dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+        <YAxis {...AX} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <Tooltip formatter={(v: any) => [v, 'Repos']} contentStyle={TT} labelStyle={TT_LABEL} itemStyle={TT_ITEM} cursor={{ fill: 'var(--surface-hover)' }} />
+        <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={44} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
             const found = repos.filter(d.filter)
             onFilter(`${t('charts.impact_dist')} ${d.name}`, found)
@@ -464,11 +468,11 @@ function ChartLang({ repos, onFilter }: { repos: TrendingRepo[]; onFilter: OnFil
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: ch(76, 60) }}>
         <CartesianGrid {...GR} horizontal={false} />
-        <XAxis type="number" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-        <YAxis type="category" dataKey="lang" tick={{ fill: 'var(--text)', fontSize: 11 }} width={72} />
-        <Tooltip contentStyle={TT} cursor={false}
+        <XAxis {...AX} type="number" tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <YAxis {...AX} type="category" dataKey="lang" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} width={72} />
+        <Tooltip contentStyle={TT} labelStyle={TT_LABEL} itemStyle={TT_ITEM} cursor={{ fill: 'var(--surface-hover)' }}
           formatter={(v: any, name: any) => [name === 'count' ? `${v} repos` : `${v}/10`, name === 'count' ? 'Repos' : 'Avg Impact']} />
-        <Bar dataKey="count" radius={[0, 999, 999, 0]} style={{ cursor: 'pointer' }}
+        <Bar dataKey="count" radius={[0, 3, 3, 0]} barSize={12} style={{ cursor: 'pointer' }}
           onClick={(d: any) => onFilter(d.lang, repos.filter(r => r.language === d.lang))}>
           {data.map((d, i) => <Cell key={i} fill={langColor(d.lang)} />)}
         </Bar>
@@ -514,9 +518,9 @@ function ChartLines({ repos, history, loading, onFilter }: { repos: TrendingRepo
     <ResponsiveContainer width="100%" height={ch(300, 200)}>
       <LineChart data={data} margin={{ top: 10, right: 8, bottom: 16, left: ch(40, 28) }}>
         <CartesianGrid {...GR} />
-        <XAxis dataKey="date" tick={{ fill: 'var(--chart-axis)', fontSize: 10 }} />
-        <YAxis tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-        <Tooltip contentStyle={TT} formatter={(v: any) => [`+${fmtK(Number(v))} stars`, '']} />
+        <XAxis {...AX} dataKey="date" tick={{ fill: 'var(--chart-axis)', fontSize: 10 }} />
+        <YAxis {...AX} tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <Tooltip contentStyle={TT} labelStyle={TT_LABEL} itemStyle={TT_ITEM} formatter={(v: any) => [`+${fmtK(Number(v))} stars`, '']} />
         <Legend wrapperStyle={{ fontSize: 11, color: 'var(--text-muted)' }} />
         {top.map((r, i) => (
           <Line key={r.id} type="monotone" dataKey={r.name}
@@ -551,10 +555,10 @@ function ChartSlope({ repos, history, loading, onFilter }: { repos: TrendingRepo
     <ResponsiveContainer width="100%" height={ch(300, 220)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: ch(48, 16), bottom: 4, left: 4 }}>
         <CartesianGrid {...GR} horizontal={false} />
-        <XAxis type="number" tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
-        <YAxis type="category" dataKey="name" tick={{ fill: 'var(--text)', fontSize: 11 }} width={168} />
-        <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Net Growth']} contentStyle={TT} cursor={false} />
-        <Bar dataKey="delta" radius={[0, 999, 999, 0]} style={{ cursor: 'pointer' }}
+        <XAxis {...AX} type="number" tickFormatter={fmtK} tick={{ fill: 'var(--chart-axis)', fontSize: 11 }} />
+        <YAxis {...AX} type="category" dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} width={ch(168, 100)} />
+        <Tooltip formatter={(v: any) => [`+${fmtK(Number(v))}`, 'Net Growth']} contentStyle={TT} labelStyle={TT_LABEL} itemStyle={TT_ITEM} cursor={{ fill: 'var(--surface-hover)' }} />
+        <Bar dataKey="delta" radius={[0, 3, 3, 0]} barSize={12} style={{ cursor: 'pointer' }}
           onClick={(d: any) => {
             const found = repos.filter(r => r.name === d.fullName)
             if (found.length) onFilter(d.fullName, found)
@@ -595,7 +599,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
       <Treemap data={data} dataKey="size" aspectRatio={isMobile() ? 4 / 3 : 16 / 5}
         content={(props: any) => {
           const { x, y, width, height, name, size, index, depth } = props
-          if (depth !== 1 || !name || !width || !height || width < 4 || height < 4) return null
+          if (depth !== 1 || !name || !width || !height || width < 4 || height < 4) return <g />
           
           const pctVal = total > 0 ? (size / total) * 100 : 0
           const pct = `${pctVal.toFixed(0)}%`
@@ -610,7 +614,13 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
             deltaPct = pctVal - prevPctVal
           }
 
-          const color = CAT[index % CAT.length]
+          // One ink (teal); share of topics drives intensity, so the biggest
+          // topics glow and the long tail recedes instead of a rainbow wall.
+          const maxSize = data.reduce((m: number, d: any) => Math.max(m, d.size), 1)
+          const strength = Math.sqrt(size / maxSize)
+          const fillOp = 0.16 + strength * 0.74
+          const ink = fillOp > 0.5 ? 'rgba(0,0,0,.85)' : 'rgba(255,255,255,.92)'
+          const inkSoft = fillOp > 0.5 ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.6)'
 
           const isHovered = hovered === index
           // Size the label to the TILE (not the name length) so it stays a
@@ -629,9 +639,9 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
               style={{ cursor: 'pointer' }}
             >
               <rect x={x} y={y} width={width} height={height}
-                fill={color}
-                fillOpacity={isHovered ? 1 : 0.9}
-                stroke="rgba(0,0,0,.28)" strokeWidth={1}
+                fill="var(--chart-1)"
+                fillOpacity={isHovered ? Math.min(1, fillOp + 0.15) : fillOp}
+                stroke="var(--surface)" strokeWidth={2} rx={4}
                 style={{ transition: 'fill-opacity 0.2s' }}
               />
               {canShow && (
@@ -639,7 +649,7 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                   <text
                     x={x + width / 2} y={y + height / 2 - (height > 36 ? 7 : 0)}
                     textAnchor="middle" dominantBaseline="middle"
-                    fontSize={nameFontSize} fontWeight={700} fill="rgba(0,0,0,.85)"
+                    fontSize={nameFontSize} fontWeight={600} fill={ink}
                     style={{ pointerEvents: 'none' }}
                   >{label}</text>
 
@@ -648,12 +658,12 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="rgba(0,0,0,.65)"
+                        fontSize={10} fill={inkSoft}
                         style={{ opacity: isHovered ? 0 : 1, transform: isHovered ? 'scaleX(0)' : 'scaleX(1)' }}
                       >
-                        <tspan fill="rgba(0,0,0,.8)">{pct}</tspan>
+                        <tspan fill={ink}>{pct}</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaPct < 0 ? 'rgba(0,0,0,.45)' : 'rgba(0,0,0,.8)'} dx={4} fontWeight="bold">
+                          <tspan fill={inkSoft} dx={4} fontWeight="bold">
                             ({deltaPct > 0 ? '+' : (deltaPct < 0 ? '' : '+')}{deltaPct.toFixed(0)}%)
                           </tspan>
                         )}
@@ -662,12 +672,12 @@ function ChartTopics({ repos, prevRepos = [], onFilter }: { repos: TrendingRepo[
                       <text className="tc-flip-text"
                         x={x + width / 2} y={y + height / 2 + 10}
                         textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="rgba(0,0,0,.65)"
+                        fontSize={10} fill={inkSoft}
                         style={{ opacity: isHovered ? 1 : 0, transform: isHovered ? 'scaleX(1)' : 'scaleX(0)' }}
                       >
-                        <tspan fill="rgba(0,0,0,.8)">{size} repos</tspan>
+                        <tspan fill={ink}>{size} repos</tspan>
                         {hasDelta && (
-                          <tspan fill={deltaSize < 0 ? 'rgba(0,0,0,.45)' : 'rgba(0,0,0,.8)'} dx={4} fontWeight="bold">
+                          <tspan fill={inkSoft} dx={4} fontWeight="bold">
                             ({deltaSize > 0 ? '+' : (deltaSize < 0 ? '' : '+')}{deltaSize})
                           </tspan>
                         )}
@@ -844,7 +854,7 @@ export default function TrendingChartMode({ repos, prevRepos = [] }: { repos: Tr
           title={
             <button className="tc-section-toggle" onClick={() => setBubbleExpanded(v => !v)}>
               Momentum Bubble · ＋Stars vs Total Stars
-              <span className="tc-section-toggle-icon">{bubbleExpanded ? '▲ Thu gọn' : '▼ Mở rộng'}</span>
+              <span className="tc-section-toggle-icon">{bubbleExpanded ? 'Thu gọn' : 'Mở rộng'}</span>
             </button>
           }
           span={bubbleExpanded ? 12 : 4}
@@ -876,11 +886,11 @@ export default function TrendingChartMode({ repos, prevRepos = [] }: { repos: Tr
           <ChartSlope repos={repos} history={history} loading={historyLoading} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.topics')} span={4}>
+        <Section title={t('charts.topics')} span={8}>
           <ChartTopics repos={repos} prevRepos={prevRepos} onFilter={openDrawer} />
         </Section>
 
-        <Section title={t('charts.impact_lang')} span={6}>
+        <Section title={t('charts.impact_lang')} span={4}>
           <ChartHeatmap repos={repos} onFilter={openDrawer} />
         </Section>
       </div>

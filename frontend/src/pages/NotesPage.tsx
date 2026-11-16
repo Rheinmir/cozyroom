@@ -143,7 +143,8 @@ function AdminPendingPanel({ password, boardId }: { password: string; boardId: s
   return (
     <div className="notes-admin-panel">
       <button className="notes-admin-toggle" onClick={() => setOpen(o => !o)}>
-        👤 Quản lý user {pending.length > 0 && open === false ? `(${pending.length} chờ duyệt)` : ''}
+        <span className="ms" style={{ fontSize: 17 }} aria-hidden>group</span>
+        Quản lý user {pending.length > 0 && open === false ? `(${pending.length} chờ duyệt)` : ''}
       </button>
       {open && (
         <div className="notes-admin-list">

@@ -52,8 +52,10 @@ export default function TracksPage() {
 
   return (
     <div className="page">
-      <LibraryStatsBar current="tracks" />
-      <h1 className="page-title">{t('search.tracks')}</h1>
+      <div className="library-head">
+        <h1 className="page-title">{t('search.tracks')}</h1>
+        <LibraryStatsBar current="tracks" />
+      </div>
       <div className="artist-grid-wrap">
         <table className="track-table">
           <thead>
@@ -61,7 +63,7 @@ export default function TracksPage() {
               <th className="col-num">#</th>
               <th>{t('search.title_col')}</th>
               <th className="col-fav"></th>
-              <th>{t('search.album_col')}</th>
+              <th className="col-album">{t('search.album_col')}</th>
             </tr>
           </thead>
           <tbody>

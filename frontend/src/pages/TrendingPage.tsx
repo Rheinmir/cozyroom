@@ -122,7 +122,15 @@ export default function TrendingPage() {
   return (
     <div className="page">
       <div className="trending-header">
-        <h1 className="trending-title">{t('trending.title')}</h1>
+        <div>
+          <h1 className="trending-title">{t('trending.title')}</h1>
+          {repos.length > 0 && (
+            <p className="trending-meta">
+              {selectedDate && <span className={selectedDate === dates[0] ? 'trending-meta-live' : undefined}>{selectedDate}</span>}
+              <span>{repos.length} repo</span>
+            </p>
+          )}
+        </div>
       </div>
 
       {loading ? (

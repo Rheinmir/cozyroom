@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchLastfmStatus } from '../api'
 import type { LastfmStatus } from '../api'
@@ -10,6 +10,11 @@ const EXPANDED_W  = '220px'
 
 export default function Sidebar() {
   const { t, i18n } = useTranslation()
+  const { pathname } = useLocation()
+  // Detail routes (/video/:id, /ebook/:id) keep their parent section lit so the
+  // sidebar never loses its "you are here" mark mid-flow.
+  const navCls = (parent?: string) => ({ isActive }: { isActive: boolean }) =>
+    'nav-link' + (isActive || (parent && pathname.startsWith(parent)) ? ' active' : '')
   const [lfm, setLfm]           = useState<LastfmStatus | null>(null)
   const [showForm, setShowForm]  = useState(false)
   const [user, setUser]          = useState('')
@@ -78,18 +83,18 @@ export default function Sidebar() {
 
   return (
     <nav className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}>
-      <div className="sidebar-brand">
+      {/* The brand itself is the collapse/expand toggle (no separate chevron). */}
+      <button
+        type="button"
+        className="sidebar-brand"
+        onClick={toggleCollapse}
+        title={collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}
+        aria-label={collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}
+        aria-expanded={!collapsed}
+      >
         <CozyroomMark />
         {!collapsed && <span>Cozyroom</span>}
-        <button
-          className="sidebar-collapse-btn"
-          onClick={toggleCollapse}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? '›' : '‹'}
-        </button>
-      </div>
+      </button>
 
       <div className="sidebar-section">
         {!collapsed && <p className="sidebar-label">{t('nav.library')}</p>}
@@ -102,7 +107,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.discover')}</span>}
         </NavLink>
-        <NavLink to="/videos" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.films')}>
+        <NavLink to="/videos" className={navCls('/video/')} title={t('nav.films')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <rect x="2" y="6" width="16" height="11" rx="1.5" fill="currentColor" />
@@ -111,7 +116,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.films')}</span>}
         </NavLink>
-        <NavLink to="/ebooks" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ebooks')}>
+        <NavLink to="/ebooks" className={navCls('/ebook/')} title={t('nav.ebooks')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <path d="M2 4c2-1 5-1 8 1v11c-3-2-6-2-8-1z" fill="currentColor" />

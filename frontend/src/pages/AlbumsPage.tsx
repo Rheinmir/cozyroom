@@ -38,8 +38,10 @@ export default function AlbumsPage() {
 
   return (
     <div className="page">
-      <LibraryStatsBar current="albums" />
-      <h1 className="page-title">{t('search.albums')}</h1>
+      <div className="library-head">
+        <h1 className="page-title">{t('search.albums')}</h1>
+        <LibraryStatsBar current="albums" />
+      </div>
       <div className="artist-grid-wrap">
         <div className="album-grid">
           {shown.map(al => {

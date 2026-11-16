@@ -265,69 +265,11 @@ func fetchLRCLIB(title, artist, album string, duration int) (*LyricsResp, error)
 }
 
 func fetchNetEase(title, artist string) (*LyricsResp, error) {
-	form := url.Values{}
-	form.Set("s", title+" "+artist)
-	form.Set("type", "1")
-	form.Set("limit", "5")
-	form.Set("offset", "0")
-
-	client := &http.Client{Timeout: 8 * time.Second}
-	req, err := http.NewRequest("POST", "https://music.163.com/api/search/get",
-		strings.NewReader(form.Encode()))
-	if err != nil {
+	list, err := searchNetEase(title+" "+artist, 5)
+	if err != nil || len(list) == 0 {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-	req.Header.Set("Referer", "https://music.163.com")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var searchResp struct {
-		Result struct {
-			Songs []struct {
-				ID int64 `json:"id"`
-			} `json:"songs"`
-		} `json:"result"`
-	}
-	body, _ := io.ReadAll(resp.Body)
-	if err := json.Unmarshal(body, &searchResp); err != nil {
-		return nil, err
-	}
-	if len(searchResp.Result.Songs) == 0 {
-		return nil, nil
-	}
-
-	songID := searchResp.Result.Songs[0].ID
-	lyrURL := fmt.Sprintf("https://music.163.com/api/song/lyric?id=%d&lv=1&kv=1&tv=-1", songID)
-	req2, _ := http.NewRequest("GET", lyrURL, nil)
-	req2.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-	req2.Header.Set("Referer", "https://music.163.com")
-
-	resp2, err := client.Do(req2)
-	if err != nil {
-		return nil, err
-	}
-	defer resp2.Body.Close()
-
-	var lyrResp struct {
-		Lrc struct {
-			Lyric string `json:"lyric"`
-		} `json:"lrc"`
-	}
-	body2, _ := io.ReadAll(resp2.Body)
-	if err := json.Unmarshal(body2, &lyrResp); err != nil {
-		return nil, err
-	}
-	if lyrResp.Lrc.Lyric == "" {
-		return nil, nil
-	}
-	synced := parseLRC(lyrResp.Lrc.Lyric)
-	return &LyricsResp{Source: "netease", Plain: lyrResp.Lrc.Lyric, Synced: synced}, nil
+	return neteaseLyric(list[0].ID)
 }
 
 // stripJSONP removes a JSONP wrapper like `callback({...})` or `MusicJsonCallback({...})`.
@@ -343,74 +285,11 @@ func stripJSONP(b []byte) []byte {
 }
 
 func fetchQQMusic(title, artist string) (*LyricsResp, error) {
-	q := url.Values{}
-	q.Set("w", title+" "+artist)
-	q.Set("n", "5")
-	q.Set("format", "json")
-	q.Set("p", "1")
-	q.Set("t", "0")
-	q.Set("cr", "1")
-	q.Set("new_json", "1")
-
-	client := &http.Client{Timeout: 8 * time.Second}
-	req, err := http.NewRequest("GET",
-		"https://c.y.qq.com/soso/fcgi-bin/client_search_cp?"+q.Encode(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Referer", "https://y.qq.com")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var searchResp struct {
-		Data struct {
-			Song struct {
-				List []struct {
-					SongMid string `json:"songmid"`
-				} `json:"list"`
-			} `json:"song"`
-		} `json:"data"`
-	}
-	body, _ := io.ReadAll(resp.Body)
-	body = stripJSONP(body)
-	if err := json.Unmarshal(body, &searchResp); err != nil {
+	list, err := searchQQMusic(title+" "+artist, 5)
+	if err != nil || len(list) == 0 {
 		return nil, nil
 	}
-	if len(searchResp.Data.Song.List) == 0 {
-		return nil, nil
-	}
-
-	mid := searchResp.Data.Song.List[0].SongMid
-	lyrURL := fmt.Sprintf(
-		"https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid=%s&format=json&nobase64=1", mid)
-	req2, _ := http.NewRequest("GET", lyrURL, nil)
-	req2.Header.Set("Referer", "https://y.qq.com")
-	req2.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-
-	resp2, err := client.Do(req2)
-	if err != nil {
-		return nil, err
-	}
-	defer resp2.Body.Close()
-
-	var lyrResp struct {
-		Lyric string `json:"lyric"`
-	}
-	body2, _ := io.ReadAll(resp2.Body)
-	body2 = stripJSONP(body2)
-	if err := json.Unmarshal(body2, &lyrResp); err != nil {
-		return nil, nil
-	}
-	if lyrResp.Lyric == "" {
-		return nil, nil
-	}
-	synced := parseLRC(lyrResp.Lyric)
-	return &LyricsResp{Source: "qqmusic", Plain: lyrResp.Lyric, Synced: synced}, nil
+	return qqMusicLyric(list[0].ID)
 }
 
 var mxmCache struct {
@@ -448,6 +327,12 @@ func mxmToken() (string, error) {
 	if tResp.Message.Body.UserToken == "" {
 		return "", fmt.Errorf("musixmatch: token not found in response")
 	}
+	// A blocked client gets an all-zero token, and every search made with it
+	// returns the same decoy tracks/lyrics ("Casual" + gibberish) whatever
+	// the query — treat it as no token rather than serve those as lyrics.
+	if strings.Trim(tResp.Message.Body.UserToken, "0") == "" {
+		return "", fmt.Errorf("musixmatch: anonymous token blocked")
+	}
 
 	mxmCache.token = tResp.Message.Body.UserToken
 	mxmCache.fetchAt = time.Now()
@@ -463,138 +348,11 @@ func mxmSign(rawURL string) (string, error) {
 }
 
 func fetchMusixmatch(title, artist string, duration int) (*LyricsResp, error) {
-	ua := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
-	client := &http.Client{Timeout: 8 * time.Second}
-
-	// 1. Search for track
-	sq := url.Values{}
-	sq.Set("app_id", "web-desktop-app-v1.0")
-	sq.Set("format", "json")
-	sq.Set("q", title+" "+artist)
-	sq.Set("f_has_lyrics", "true")
-	sq.Set("page_size", "5")
-	sq.Set("page", "1")
-	searchURL, err := mxmSign("https://apic-desktop.musixmatch.com/ws/1.1/track.search?" + sq.Encode())
-	if err != nil {
-		return nil, err
-	}
-	req, _ := http.NewRequest("GET", searchURL, nil)
-	req.Header.Set("User-Agent", ua)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-
-	var searchResp struct {
-		Message struct {
-			Header struct{ StatusCode int `json:"status_code"` } `json:"header"`
-			Body   struct {
-				TrackList []struct {
-					Track struct{ TrackID int `json:"track_id"` } `json:"track"`
-				} `json:"track_list"`
-			} `json:"body"`
-		} `json:"message"`
-	}
-	if err := json.Unmarshal(body, &searchResp); err != nil || searchResp.Message.Header.StatusCode != 200 {
+	list, err := searchMusixmatch(title+" "+artist, 5)
+	if err != nil || len(list) == 0 {
 		return nil, nil
 	}
-	if len(searchResp.Message.Body.TrackList) == 0 {
-		return nil, nil
-	}
-	trackID := searchResp.Message.Body.TrackList[0].Track.TrackID
-
-	// 2. Try richsync (word-level synced lyrics)
-	rq := url.Values{}
-	rq.Set("app_id", "web-desktop-app-v1.0")
-	rq.Set("format", "json")
-	rq.Set("track_id", strconv.Itoa(trackID))
-	if duration > 0 {
-		rq.Set("f_richsync_length", strconv.Itoa(duration))
-		rq.Set("f_richsync_length_max_deviation", "10")
-	}
-	richURL, err := mxmSign("https://apic-desktop.musixmatch.com/ws/1.1/track.richsync.get?" + rq.Encode())
-	if err != nil {
-		return nil, err
-	}
-	req2, _ := http.NewRequest("GET", richURL, nil)
-	req2.Header.Set("User-Agent", ua)
-	resp2, err := client.Do(req2)
-	if err != nil {
-		return nil, err
-	}
-	defer resp2.Body.Close()
-	body2, _ := io.ReadAll(resp2.Body)
-
-	var richResp struct {
-		Message struct {
-			Header struct{ StatusCode int `json:"status_code"` } `json:"header"`
-			Body   struct {
-				Richsync struct{ RichsyncBody string `json:"richsync_body"` } `json:"richsync"`
-			} `json:"body"`
-		} `json:"message"`
-	}
-	if err := json.Unmarshal(body2, &richResp); err == nil &&
-		richResp.Message.Header.StatusCode == 200 &&
-		richResp.Message.Body.Richsync.RichsyncBody != "" {
-		var lines []struct {
-			Ts float64 `json:"ts"`
-			X  string  `json:"x"`
-		}
-		if err := json.Unmarshal([]byte(richResp.Message.Body.Richsync.RichsyncBody), &lines); err == nil {
-			synced := make([]LyricLine, 0, len(lines))
-			var pb strings.Builder
-			for _, l := range lines {
-				if l.X == "" {
-					continue
-				}
-				synced = append(synced, LyricLine{Time: l.Ts, Text: l.X})
-				pb.WriteString(l.X + "\n")
-			}
-			if len(synced) > 0 {
-				return &LyricsResp{Source: "musixmatch", Plain: strings.TrimSpace(pb.String()), Synced: synced}, nil
-			}
-		}
-	}
-
-	// 3. Fall back to plain lyrics
-	lq := url.Values{}
-	lq.Set("app_id", "web-desktop-app-v1.0")
-	lq.Set("format", "json")
-	lq.Set("track_id", strconv.Itoa(trackID))
-	lyrURL, err := mxmSign("https://apic-desktop.musixmatch.com/ws/1.1/track.lyrics.get?" + lq.Encode())
-	if err != nil {
-		return nil, err
-	}
-	req3, _ := http.NewRequest("GET", lyrURL, nil)
-	req3.Header.Set("User-Agent", ua)
-	resp3, err := client.Do(req3)
-	if err != nil {
-		return nil, err
-	}
-	defer resp3.Body.Close()
-	body3, _ := io.ReadAll(resp3.Body)
-
-	var lyrResp struct {
-		Message struct {
-			Header struct{ StatusCode int `json:"status_code"` } `json:"header"`
-			Body   struct {
-				Lyrics struct{ LyricsBody string `json:"lyrics_body"` } `json:"lyrics"`
-			} `json:"body"`
-		} `json:"message"`
-	}
-	if err := json.Unmarshal(body3, &lyrResp); err != nil || lyrResp.Message.Header.StatusCode != 200 {
-		return nil, nil
-	}
-	plain := strings.TrimSpace(lyrResp.Message.Body.Lyrics.LyricsBody)
-	if plain == "" {
-		return nil, nil
-	}
-	if idx := strings.Index(plain, "\n****"); idx > 0 {
-		plain = strings.TrimSpace(plain[:idx])
-	}
-	return &LyricsResp{Source: "musixmatch", Plain: plain}, nil
+	return musixmatchLyric(list[0].ID, duration)
 }
 
 func (h *handlers) lyricsHandler(w http.ResponseWriter, r *http.Request) {

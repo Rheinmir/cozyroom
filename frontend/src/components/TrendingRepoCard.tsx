@@ -77,12 +77,12 @@ export function RepoCard({ repo, hero }: { repo: TrendingRepo; hero?: boolean })
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {tierMeta && (
             <span className={`tier-badge tier--${tier}`}>
-              {tierMeta.badge} {tierMeta.label}
-              {repo.impact_score > 0 && <span style={{ opacity: .6, marginLeft: 3 }}>{repo.impact_score}/10</span>}
+              <i className="tier-dot" aria-hidden />{tierMeta.label}
+              {repo.impact_score > 0 && <span className="tier-score">{repo.impact_score}/10</span>}
             </span>
           )}
           <div className="trending-card-stars">
-            ★ {repo.stars.toLocaleString()}
+            <span className="ms" style={{ fontSize: 14 }} aria-hidden>star</span>{repo.stars.toLocaleString()}
             {repo.star_delta > 0 && (
               <span className="trending-card-delta">+{repo.star_delta.toLocaleString()}</span>
             )}
@@ -127,7 +127,7 @@ export function RepoCard({ repo, hero }: { repo: TrendingRepo; hero?: boolean })
       <div className="trending-card-footer">
         <Sparkline repoId={repo.id} large={hero} />
         <a href={repo.url} target="_blank" rel="noopener noreferrer" className="trending-card-link">
-          github.com ↗
+          GitHub<span className="ms" style={{ fontSize: 14 }} aria-hidden>arrow_outward</span>
         </a>
       </div>
     </div>
