@@ -76,6 +76,13 @@ function streamUrl(trackId: string, q: Quality | 'lossless-clean', clientId?: st
   if (trackId.startsWith('yt:')) {
     return `/api/youtube/stream/${trackId.slice(3)}`
   }
+  // iOS plays music the way Apple Music does: native HLS with AAC 64k / 256k
+  // and ALAC variants (backend/internal/audiohls), so Safari picks the variant
+  // the network can carry. Only the default tier goes here; a remembered
+  // lossless-clean / 320 override, and the error cascade, use /stream as before.
+  if (q === 'lossless' && isIOS()) {
+    return `/hls-audio/${trackId}/master.m3u8`
+  }
   const params = new URLSearchParams()
   if (q === 'lossless-clean' || q === '320') params.set('q', q)
   if (clientId) params.set('client_id', clientId)

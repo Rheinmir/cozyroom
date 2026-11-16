@@ -16,6 +16,7 @@ import (
 	"cozyroom/internal/enricher"
 	"cozyroom/internal/teams"
 	"cozyroom/internal/telegram"
+	"cozyroom/internal/audiohls"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
 	repo "cozyroom/internal/repository/postgres"
@@ -99,6 +100,7 @@ func main() {
 	}
 	hlsMgr := hls.New(hlsDir)
 	hlsMgr.Watch(ctx) // detect + kill stuck ffmpeg transcode jobs
+	audioHLSMgr := audiohls.New(hlsDir + "/audio")
 
 	// ---- Repository layer ----
 	artistRepo  := repo.NewArtistRepo(rawDB)
@@ -148,6 +150,7 @@ func main() {
 		EbookCoversDir: ebookCoversDir,
 		CloakProxyURL:  cloakProxyURL,
 		HLSMgr:       hlsMgr,
+		AudioHLSMgr:  audioHLSMgr,
 		TrickplayDir: trickplayDir,
 		PosterDir:    videoPosterDir,
 		GeminiKey:     geminiKey,

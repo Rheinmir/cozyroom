@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cozyroom/internal/domain"
+	"cozyroom/internal/audiohls"
 	"cozyroom/internal/hls"
 	"cozyroom/internal/library"
 	"cozyroom/internal/mcp"
@@ -105,6 +106,7 @@ type RouterDeps struct {
 	EbookCoversDir string
 	CloakProxyURL  string
 	HLSMgr        *hls.Manager
+	AudioHLSMgr   *audiohls.Manager
 	TrickplayDir  string
 	PosterDir     string
 	GeminiKey     string
@@ -138,6 +140,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 		ebooksPath:   d.EbooksPath,
 		ebookCoversDir: d.EbookCoversDir,
 		cloakProxyURL:  d.CloakProxyURL,
+		audioHLSMgr:    d.AudioHLSMgr,
 	}
 	mux := http.NewServeMux()
 
@@ -171,6 +174,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("DELETE /api/lyrics/{id}", h.lyricsHandler)
 	mux.HandleFunc("GET /api/lyrics/{id}/translate", h.translateLyricsHandler)
 	mux.HandleFunc("GET /stream/{id}", h.stream)
+	mux.HandleFunc("GET /hls-audio/{id}/{file...}", h.audioHLS)
 	mux.HandleFunc("GET /api/ambient-sounds", h.listAmbientSounds)
 	mux.HandleFunc("GET /api/ambient-sounds/{name}", h.serveAmbientSound)
 
