@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { useDialogs } from '../DialogContext'
@@ -9,7 +9,8 @@ import {
   fetchPlaylistTracks,
   fetchTracks,
   deletePlaylist,
-  renamePlaylist
+  renamePlaylist,
+  reorderPlaylist
 } from '../api'
 import FavoritePill, { getLocalPlaylists, saveLocalPlaylists } from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
@@ -87,8 +88,14 @@ export default function PlaylistsPage() {
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [passwordAction, setPasswordAction] = useState<'delete' | 'rename' | null>(null)
+  const [passwordAction, setPasswordAction] = useState<'delete' | 'rename' | 'reorder' | null>(null)
   const [renamePending, setRenamePending] = useState<{ id: string; name: string } | null>(null)
+  const [reorderPending, setReorderPending] = useState<{ id: string; trackIds: string[] } | null>(null)
+
+  // Drag-to-reorder: index of the row being dragged and the row it hovers
+  const [dragFrom, setDragFrom] = useState<number | null>(null)
+  const [dragOver, setDragOver] = useState<number | null>(null)
+  const queryClient = useQueryClient()
 
   // Inline playlist name editing
   const [editingName, setEditingName] = useState(false)
@@ -258,11 +265,68 @@ export default function PlaylistsPage() {
     }
   }
 
+  const proceedReorder = async (id: string, trackIds: string[], pw: string) => {
+    try {
+      await reorderPlaylist(id, trackIds, pw)
+      setSessionPassword(pw)
+      setShowPasswordModal(false)
+      setReorderPending(null)
+      setPasswordAction(null)
+    } catch (e: any) {
+      console.error(e)
+      if (e.message?.includes('401') || e.message?.includes('unauthorized')) {
+        sessionStorage.removeItem('cozyroom_owner_password')
+        setReorderPending({ id, trackIds })
+        setPasswordAction('reorder')
+        setPasswordError(showPasswordModal ? 'Mật khẩu sai!' : '')
+        setShowPasswordModal(true)
+        return
+      }
+      toast(e.message || 'Đổi vị trí bài hát thất bại', 'error')
+      setShowPasswordModal(false)
+      setReorderPending(null)
+      setPasswordAction(null)
+    }
+    queryClient.invalidateQueries({ queryKey: ['playlist-tracks', id] })
+  }
+
+  // Move one track from index `from` to index `to` and save the new order
+  const moveTrack = (from: number, to: number) => {
+    if (!currentPlaylist || from === to || to < 0 || to >= tracks.length) return
+    const ids = tracks.map(x => x.id)
+    const [moved] = ids.splice(from, 1)
+    ids.splice(to, 0, moved)
+
+    if (currentPlaylist.is_local) {
+      const updated = localLists.map(l => l.id === currentPlaylist.id ? { ...l, track_ids: ids } : l)
+      setLocalLists(updated)
+      saveLocalPlaylists(updated)
+      return
+    }
+
+    // Show the new order at once; the 3 s refetch then confirms it from the server
+    const reordered = ids.map(id => tracks.find(x => x.id === id)!)
+    queryClient.setQueryData(['playlist-tracks', currentPlaylist.id], reordered)
+
+    const pw = getSessionPassword()
+    if (pw) {
+      proceedReorder(currentPlaylist.id, ids, pw)
+    } else {
+      setReorderPending({ id: currentPlaylist.id, trackIds: ids })
+      setPasswordAction('reorder')
+      setPasswordInput('')
+      setPasswordError('')
+      setShowPasswordModal(true)
+    }
+  }
+
   const handlePasswordSubmit = () => {
     const trimmed = passwordInput.trim()
     if (!trimmed) return
     if (passwordAction === 'rename' && renamePending) {
       proceedRename(renamePending.id, renamePending.name, trimmed)
+    } else if (passwordAction === 'reorder' && reorderPending) {
+      proceedReorder(reorderPending.id, reorderPending.trackIds, trimmed)
     } else if (deletingId) {
       proceedDelete(deletingId, trimmed)
     }
@@ -340,7 +404,10 @@ export default function PlaylistsPage() {
           <button
             type="button"
             className="modal-btn modal-btn--cancel"
-            onClick={() => { setShowPasswordModal(false); setDeletingId(null); setRenamePending(null); setPasswordAction(null); }}
+            onClick={() => {
+              if (reorderPending) queryClient.invalidateQueries({ queryKey: ['playlist-tracks', reorderPending.id] })
+              setShowPasswordModal(false); setDeletingId(null); setRenamePending(null); setReorderPending(null); setPasswordAction(null);
+            }}
           >
             {t('playlist.cancel', { defaultValue: 'Hủy' })}
           </button>
@@ -425,6 +492,7 @@ export default function PlaylistsPage() {
           <table className="track-table playlist-tracks">
             <thead>
               <tr>
+                <th className="col-reorder"></th>
                 <th className="col-num">#</th>
                 <th>{t('search.title_col')}</th>
                 <th className="col-fav"></th>
@@ -440,12 +508,48 @@ export default function PlaylistsPage() {
                 return (
                   <tr
                     key={tTrack.id}
-                    className={'track-row' + (isCurrent ? ' track-row--active' : '')}
+                    className={'track-row' + (isCurrent ? ' track-row--active' : '')
+                      + (dragFrom === i ? ' track-row--dragging' : '')
+                      + (dragOver === i && dragFrom !== null && dragFrom !== i ? ' track-row--drop-target' : '')}
                     onClick={() => play(tTrack, tracks)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(tTrack, tracks) } }}
+                    onDragOver={e => { if (dragFrom !== null) { e.preventDefault(); setDragOver(i) } }}
+                    onDrop={e => {
+                      e.preventDefault()
+                      if (dragFrom !== null) moveTrack(dragFrom, i)
+                      setDragFrom(null); setDragOver(null)
+                    }}
                   >
+                    <td className="col-reorder" onClick={e => e.stopPropagation()}>
+                      <span
+                        className="reorder-grip"
+                        draggable
+                        onDragStart={e => { setDragFrom(i); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', tTrack.id) }}
+                        onDragEnd={() => { setDragFrom(null); setDragOver(null) }}
+                        title={t('playlist.drag_to_reorder', { defaultValue: 'Kéo để đổi vị trí' })}
+                        aria-hidden="true"
+                      >⋮⋮</span>
+                      <span className="reorder-arrows">
+                        <button
+                          type="button"
+                          className="reorder-btn"
+                          disabled={i === 0}
+                          onClick={() => moveTrack(i, i - 1)}
+                          aria-label={t('playlist.move_up', { defaultValue: 'Chuyển bài lên trên' })}
+                          title={t('playlist.move_up', { defaultValue: 'Chuyển bài lên trên' })}
+                        >▲</button>
+                        <button
+                          type="button"
+                          className="reorder-btn"
+                          disabled={i === tracks.length - 1}
+                          onClick={() => moveTrack(i, i + 1)}
+                          aria-label={t('playlist.move_down', { defaultValue: 'Chuyển bài xuống dưới' })}
+                          title={t('playlist.move_down', { defaultValue: 'Chuyển bài xuống dưới' })}
+                        >▼</button>
+                      </span>
+                    </td>
                     <td className="col-num">
                       {isCurrent && isPlaying ? (
                         <span className="track-eq" aria-label="Đang phát"><i/><i/><i/></span>

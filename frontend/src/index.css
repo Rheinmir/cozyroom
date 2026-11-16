@@ -7061,3 +7061,44 @@ a.text-muted:hover { color: var(--text); text-decoration: underline; text-underl
     height: clamp(150px, min(34vh, calc(100dvh - 470px)), 360px);
   }
 }
+
+/* Playlist reorder: drag grip (mouse) + up/down arrows (touch, keyboard).
+   Both show on row hover; on touch screens (no hover) the arrows always show. */
+.col-reorder {
+  width: 44px;
+  padding: 4px 2px !important;
+  white-space: nowrap;
+}
+.reorder-grip {
+  display: inline-block;
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: -3px;
+  padding: 0 4px;
+  opacity: 0;
+  user-select: none;
+}
+.reorder-arrows { display: inline-flex; flex-direction: column; vertical-align: middle; opacity: 0; }
+.reorder-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1;
+  padding: 1px 3px;
+  cursor: pointer;
+}
+.reorder-btn:hover:not(:disabled) { color: var(--text); }
+.reorder-btn:disabled { opacity: 0.25; cursor: default; }
+.track-row:hover .reorder-grip,
+.track-row:hover .reorder-arrows,
+.track-row:focus-within .reorder-arrows { opacity: 1; }
+@media (hover: none) {
+  .reorder-grip { display: none; }
+  .reorder-arrows { opacity: 1; }
+  .reorder-btn { font-size: 12px; padding: 5px 8px; }
+}
+.track-row--dragging td { opacity: 0.4; }
+.track-row--drop-target td { box-shadow: inset 0 2px 0 var(--accent, #f5a623); }
+
