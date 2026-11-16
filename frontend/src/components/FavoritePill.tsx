@@ -96,6 +96,10 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
   
   const flipUp = useFlipUp(pillRef, menuRef, isOpen)
 
+  // The new-name box also searches existing playlists (accent- and case-insensitive).
+  const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase()
+  const query = fold(newName.trim())
+  const shownLists = query ? allLists.filter(l => fold(l.name).includes(query)) : allLists
   const activeLists = allLists.filter(l => l.track_ids.includes(trackId))
   const isStarred = activeLists.some(l => l.name === 'Favorites')
 
@@ -264,12 +268,14 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
             <div className="dropdown-header">{t('playlist.my_playlists', { defaultValue: 'Playlists' })}</div>
             
             <div className="dropdown-list">
-              {allLists.length === 0 ? (
+              {shownLists.length === 0 ? (
                 <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>
-                  {t('playlist.no_playlists', { defaultValue: 'Chưa có playlist nào' })}
+                  {query
+                    ? t('playlist.no_match', { defaultValue: 'Không có playlist nào khớp' })
+                    : t('playlist.no_playlists', { defaultValue: 'Chưa có playlist nào' })}
                 </div>
               ) : (
-                allLists.map(list => {
+                shownLists.map(list => {
                   const inList = list.track_ids.includes(trackId)
                   return (
                     <label key={list.id} className="dropdown-item" onClick={e => e.stopPropagation()}>
