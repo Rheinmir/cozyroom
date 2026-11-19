@@ -371,6 +371,12 @@ func (h *handlers) listTracks(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "public, max-age=300")
 	w.Header().Set("Content-Type", "application/json")
+	if tracks == nil {
+		// nil slice encodes as `null`; the album page does tracks.length on it
+		// and the whole app goes black for an album with no tracks left.
+		w.Write([]byte("[]\n"))
+		return
+	}
 	json.NewEncoder(w).Encode(tracks)
 }
 
