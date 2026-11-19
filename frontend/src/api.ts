@@ -26,7 +26,7 @@ export const fetchAlbums  = (artistId?: string) =>
   get<Album[]>(`/api/albums${artistId ? `?artist_id=${artistId}` : ''}`)
 export const fetchAlbum   = (albumId: string)   => get<Album>(`/api/albums/${albumId}`)
 export const fetchTracks  = (albumId: string)   =>
-  get<Track[]>(`/api/tracks?album_id=${albumId}`)
+  get<Track[] | null>(`/api/tracks?album_id=${albumId}`).then(t => t ?? [])  // null = empty album; never crash the page
 export const streamUrl        = (trackId: string)   => `/stream/${trackId}`
 export const fetchSmartQueue  = (trackId: string)   => get<Track[]>(`/api/smart-queue?track_id=${trackId}&limit=30`)
 
