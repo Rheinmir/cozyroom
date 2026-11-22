@@ -19,12 +19,13 @@ const ownerPasswordEnv = "COZYROOM_OWNER_PASSWORD"
 
 // Brute force: a password that was SENT and is wrong waits ownerFailDelay, and counts against the client.
 // ownerFailMax wrong tries per client per ownerFailWindow, then 429 (even the right password waits out the window).
-// ownerFailGlobalMax bounds the sum over all clients, so a spoofed client header cannot buy unlimited tries.
+// ownerFailGlobalMax: once this many wrong tries happened in the window, clients that already failed are refused too.
 // A request without any password (a kanban user with a session) is never delayed or counted.
 var (
 	ownerFailDelay     = 500 * time.Millisecond
 	ownerFailMax       = 10
 	ownerFailGlobalMax = 60
+	ownerFailMaxKeys   = 1000
 	ownerFailWindow    = time.Minute
 	ownerUnsetWarn     sync.Once
 	ownerFails         = struct {
@@ -78,7 +79,22 @@ func ownerBlocked(key string, now time.Time) bool {
 	} else {
 		ownerFails.by[key] = ts
 	}
-	return len(ts) >= ownerFailMax || len(ownerFails.all) >= ownerFailGlobalMax
+	if len(ownerFails.by) > ownerFailMaxKeys { // keys of clients that never came back would stay forever
+		for k, v := range ownerFails.by {
+			if v = recent(v, now); len(v) == 0 {
+				delete(ownerFails.by, k)
+			} else {
+				ownerFails.by[k] = v
+			}
+		}
+	}
+	if len(ts) >= ownerFailMax {
+		return true
+	}
+	// The global cap only stops clients that already failed in the window, so the real owner (0 failures)
+	// is never locked out by strangers. ponytail: a spoofed client header gets one free try per fake key;
+	// fine behind Cloudflare (it sets CF-Connecting-IP). Add a total cap on all tries if the app is ever exposed directly.
+	return len(ts) > 0 && len(ownerFails.all) >= ownerFailGlobalMax
 }
 
 func ownerNoteFail(key string, now time.Time) {

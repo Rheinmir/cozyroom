@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -105,8 +106,11 @@ func TestOwnerRateLimit(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		callCheck("bad", "", "9.9.9."+string(rune('0'+i)))
 	}
-	if c := callCheck(testOwnerPw, "", "8.8.8.8").Code; c != http.StatusTooManyRequests {
-		t.Fatalf("global cap: want 429, got %d", c)
+	if c := callCheck(testOwnerPw, "", "9.9.9.0").Code; c != http.StatusTooManyRequests { // already failed once: refused
+		t.Fatalf("global cap, client with a failure: want 429, got %d", c)
+	}
+	if c := callCheck(testOwnerPw, "", "8.8.8.8").Code; c != http.StatusNoContent { // 0 failures: the owner is not locked out
+		t.Fatalf("global cap, clean client: want 204, got %d", c)
 	}
 }
 
@@ -214,5 +218,23 @@ func TestNoOwnerPasswordInSource(t *testing.T) {
 	i := strings.Index(y, ownerPasswordEnv)
 	if i < 0 || !strings.Contains(y[i:min(len(y), i+300)], "secretKeyRef") || !strings.Contains(y[i:min(len(y), i+300)], "optional: true") {
 		t.Error("k8s/backend.yaml must read " + ownerPasswordEnv + " from a secretKeyRef with optional: true")
+	}
+}
+
+func TestOwnerFailMapIsPruned(t *testing.T) {
+	ownerEnv(t, testOwnerPw)
+	stale := time.Now().Add(-2 * ownerFailWindow)
+	ownerFails.Lock()
+	for i := 0; i < ownerFailMaxKeys+200; i++ {
+		ownerFails.by["old-"+strconv.Itoa(i)] = []time.Time{stale}
+	}
+	ownerFails.Unlock()
+	callCheck("bad", "", "7.7.7.7")
+	callCheck("bad", "", "7.7.7.7")
+	ownerFails.Lock()
+	n := len(ownerFails.by)
+	ownerFails.Unlock()
+	if n > 2 {
+		t.Fatalf("stale keys must be pruned, map still holds %d", n)
 	}
 }
