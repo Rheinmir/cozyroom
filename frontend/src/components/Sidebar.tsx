@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchLastfmStatus } from '../api'
 import type { LastfmStatus } from '../api'
@@ -82,8 +82,10 @@ export default function Sidebar() {
   return (
     <nav className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}>
       <div className="sidebar-brand">
-        <CozyroomMark />
-        {!collapsed && <span>Cozyroom</span>}
+        <Link to={ROUTES.home} className="sidebar-brand-home" aria-label="Cozyroom">
+          <CozyroomMark />
+          {!collapsed && <span>Cozyroom</span>}
+        </Link>
         <button
           className="sidebar-collapse-btn"
           onClick={toggleCollapse}

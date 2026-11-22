@@ -49,7 +49,7 @@ export default function MobileNav() {
   const { t } = useTranslation()
   return (
     <nav className="mobile-nav">
-      <NavLink to={ROUTES.music} end className={btn} title={t('nav.home')} aria-label={t('nav.home')}><IconHome /></NavLink>
+      <NavLink to={ROUTES.home} end className={btn} title={t('nav.home')} aria-label={t('nav.home')}><IconHome /></NavLink>
       <NavLink to={ROUTES.search} className={btn} title={t('nav.search')} aria-label={t('nav.search')}><IconSearch /></NavLink>
       <NavLink to={ROUTES.videos} className={btn} title={t('nav.films')} aria-label={t('nav.films')}><IconVideo /></NavLink>
       <NavLink to={ROUTES.ebooks} className={btn} title={t('nav.books')} aria-label={t('nav.books')}><IconBook /></NavLink>
