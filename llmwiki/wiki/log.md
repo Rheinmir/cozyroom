@@ -1591,3 +1591,10 @@
 - Xac nhan "bam backward khong tu detect" nguoi dung bao truoc do LA HANH VI CHUAN: prev() neu currentTime > 3s chi seek ve 0, khong doi bai (track.id khong doi -> khong co gi de re-detect) — khong phai bug.
 - Xac nhan nguyen nhan cuoi cung cho cac bao cao "bai X khong tu dich" (Heavy Is the Crown, Gods...): sessionStorage cache lyr-tr:{trackId} bi ket state cu tu nhung lan test TRUOC KHI fix hom nay deploy — user tu xoa sessionStorage va xac nhan dich hien lai ngay.
 - Cap nhat concepts/LyricsAutoTranslate.md: them section "Prev vs restart" va "sessionStorage cache co the bi ket state cu", ghi nhan bug lastfmNowPlaying() 401 chua sua (ngoai scope, theo yeu cau user).
+
+## 2026-11-22 — vinyl-screen — Now Playing tab rebuilt from reference (commit a665665)
+
+- Moi: frontend/src/components/VinylScreen.tsx, gan vao tab Now Playing cua NPO (PlayerBar.tsx). Tab Lyrics, queue panel, Esc giu nguyen.
+- Bo cuc trong hop 413x896, scale bang 1 don vi CSS (--p) nen giu ti le tu 390 den 1440px.
+- Do: SSIM so voi anh tham chieu 0.869 (390) / 0.862 (1440); sai so hop phan tu <= 0.72%; muc tieu 97% KHONG dat bang pixel-SSIM (anh tham chieu la anh chup man hinh, font khac).
+- Chua tao wiki entry rieng: cho owner duyet Step 1.
