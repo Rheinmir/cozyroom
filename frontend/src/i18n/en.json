@@ -81,6 +81,16 @@
     "no_topics": "Not enough topic data",
     "loading_history": "Loading history…"
   },
+  "vinyl": {
+    "skip": "Skip",
+    "collection": "My Collection",
+    "playlist": "My Playlist",
+    "title1": "Your music.",
+    "title2": "Your little world.",
+    "sub1": "Save your favourites, create",
+    "sub2": "playlists and keep every sound close.",
+    "cta": "Start Listening"
+  },
   "player": {
     "hint": "Select a track to start playing",
     "now_playing": "Now Playing",

@@ -12,6 +12,7 @@ import LyricsView from './LyricsView'
 import type { LyricsViewHandle } from './LyricsView'
 import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
+import VinylScreen from './VinylScreen'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -316,7 +317,7 @@ export default function PlayerBar() {
           )}
 
           {/* ── Unified Now Playing overlay (desktop + mobile) ── */}
-          <div className={'npo' + (open ? ' npo--open' : '') + (ctrlsVisible ? ' npo--ctrls-active' : '')} onTouchStart={showCtrls}>
+          <div className={'npo' + (open ? ' npo--open' : '') + (ctrlsVisible ? ' npo--ctrls-active' : '') + (mobileTab === 'player' ? ' npo--vinyl' : ' npo--lyrics')} onTouchStart={showCtrls}>
             <div className="npo-bg">
               <img src={track.album_id?.startsWith('yt:') ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg` : `/api/covers/${track.album_id}?w=512`} alt="" key={track.id} onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
               <div 
@@ -466,6 +467,9 @@ export default function PlayerBar() {
                 </button>
               </div>
             </div>
+            {mobileTab === 'player' && (
+              <VinylScreen onSkip={() => setOpen(false)} onLyrics={() => setMobileTab('lyrics')} onQueue={() => setQueueOpen(true)} />
+            )}
           </div>
         </>
       )}

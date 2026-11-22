@@ -5439,3 +5439,125 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .toast--success { background: var(--green); color: #000; }
 
 
+
+/* ── Vinyl screen (Now Playing tab) ──────────────────────────────────────
+   Built from the "Your music. Your little world." reference. Everything is
+   laid out in a 413x896 art box and scaled with --p (1 reference px), so the
+   card keeps its proportions from 390px phones up to 1440px desktops. */
+.vinyl-screen {
+  position: absolute; inset: 0; z-index: 5;
+  container-type: size;
+  background: #fdf3f2;
+  color: #1b1b19;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+.vinyl-card {
+  --p: min(calc(100cqw / 413), calc(100cqh / 896));
+  position: absolute; left: 50%; top: 50%;
+  width: calc(413 * var(--p)); height: calc(896 * var(--p));
+  transform: translate(-50%, -50%);
+}
+@media (min-width: 641px) {
+  .vinyl-screen { background: #dcdcdc; }
+  .vinyl-card {
+    --p: min(calc(100cqw / 413), calc((100cqh - 48px) / 896));
+    background: #fdf3f2; border-radius: calc(46 * var(--p));
+    box-shadow: 0 calc(24 * var(--p)) calc(60 * var(--p)) rgba(60,40,40,.18);
+    overflow: hidden;
+  }
+}
+:where(.vinyl-card) button { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; box-sizing: border-box; cursor: pointer; text-align: inherit; }
+:where(.vinyl-card) button:focus-visible { outline: 2px solid #f98f60; outline-offset: 2px; }
+.vinyl-card > * { position: absolute; }
+
+.vinyl-skip { right: calc(24 * var(--p)); top: calc(59.5 * var(--p)); font-size: calc(13.5 * var(--p)); font-weight: 500; color: #1b1b19; padding: calc(6 * var(--p)); }
+
+.vinyl-stage { left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.vinyl-stage > * { position: absolute; pointer-events: auto; }
+.vinyl-disc {
+  left: calc(76 * var(--p)); top: calc(113 * var(--p)); width: calc(262 * var(--p)); height: calc(262 * var(--p));
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,.28) 0 2px, rgba(255,255,255,.05) 2.6px 3px),
+    radial-gradient(circle at 30% 20%, #4a403c 0%, #2b2523 38%, #171413 75%);
+  box-shadow: inset 0 0 0 calc(2 * var(--p)) #0f0e0e;
+}
+.vinyl-disc::before { /* light sweep */
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 20deg, transparent 0 14%, rgba(255,235,225,.30) 22%, transparent 34% 62%, rgba(255,235,225,.18) 72%, transparent 84%);
+}
+.vinyl-disc--spin { animation: vinyl-screen-spin 8s linear infinite; }
+@keyframes vinyl-screen-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .vinyl-disc--spin { animation: none; } }
+.vinyl-label {
+  position: absolute; left: 50%; top: 50%; width: calc(106 * var(--p)); height: calc(106 * var(--p));
+  transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #f59463, #e87a4a);
+  display: flex; align-items: center; justify-content: center; padding-bottom: calc(18 * var(--p));
+}
+.vinyl-label svg { width: calc(22 * var(--p)); height: calc(22 * var(--p)); opacity: .9; }
+.vinyl-label i { position: absolute; left: 50%; top: 62%; width: calc(9 * var(--p)); height: calc(9 * var(--p)); transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 40% 35%, #f2e0d8, #a8a09c); }
+
+.vinyl-tag {
+  left: calc(261 * var(--p)); top: calc(124 * var(--p)); width: calc(45 * var(--p)); height: calc(64 * var(--p));
+  background: #ffcfbf; border-radius: calc(8 * var(--p));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  transform: rotate(13deg); display: flex; justify-content: center; padding-top: calc(12 * var(--p));
+  box-shadow: 0 calc(6 * var(--p)) calc(14 * var(--p)) rgba(0,0,0,.12);
+}
+.vinyl-sleeve {
+  left: calc(63 * var(--p)); top: calc(226 * var(--p)); width: calc(288 * var(--p)); height: calc(155 * var(--p));
+  border-radius: calc(4 * var(--p)) calc(4 * var(--p)) calc(30 * var(--p)) calc(30 * var(--p));
+  overflow: hidden; background: #c9928a;
+  /* wavy top edge: dips down around the label like the reference */
+  -webkit-mask: var(--vinyl-wave) 0 0 / 100% 100% no-repeat; mask: var(--vinyl-wave) 0 0 / 100% 100% no-repeat;
+  box-shadow: 0 calc(14 * var(--p)) calc(30 * var(--p)) rgba(160,90,80,.28);
+}
+/* sleeve outline (viewBox 288x155): flat shoulders, S-curve dip around the label */
+.vinyl-sleeve { --vinyl-wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 155' preserveAspectRatio='none'%3E%3Cpath d='M0 0H52C92 0 98 50 144 50S196 0 236 0H288V155H0Z'/%3E%3C/svg%3E"); }
+.vinyl-sleeve-edge { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,.92); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.vinyl-sleeve-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .3s; }
+.vinyl-sleeve-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(240,205,195,.30) 0%, rgba(235,170,150,.08) 55%, rgba(120,70,60,.10) 100%); }
+.vinyl-sleeve-text { position: absolute; left: calc(29 * var(--p)); top: calc(54 * var(--p)); color: #fff; display: flex; flex-direction: column; max-width: calc(190 * var(--p)); }
+.vinyl-sleeve-text small { font-size: calc(11.5 * var(--p)); opacity: .7; line-height: 1.2; }
+.vinyl-sleeve-text strong { margin-top: calc(4 * var(--p)); font-size: calc(22.8 * var(--p)); font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vinyl-sleeve-play { position: absolute; right: calc(28 * var(--p)); top: calc(51 * var(--p)); width: calc(32 * var(--p)); height: calc(32 * var(--p)); border-radius: 50%; background: #fff; display: flex !important; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+
+.vinyl-playlist {
+  left: calc(48 * var(--p)); top: calc(381 * var(--p)); width: calc(316 * var(--p)); height: calc(128 * var(--p));
+  background: #fffaf8; border-radius: calc(30 * var(--p)); box-shadow: 0 calc(8 * var(--p)) calc(24 * var(--p)) rgba(190,130,120,.18), inset 0 0 0 1px rgba(255,255,255,.8);
+}
+.vinyl-playlist-head { position: absolute; left: calc(20 * var(--p)); right: calc(14 * var(--p)); top: calc(17 * var(--p)); height: calc(28 * var(--p)); display: flex; align-items: center; gap: calc(14 * var(--p)); font-size: calc(13.5 * var(--p)); font-weight: 700; }
+.vinyl-playlist-head span { flex: 1; }
+.vinyl-chev { width: calc(28 * var(--p)); height: calc(28 * var(--p)); display: flex !important; align-items: center; justify-content: center; }
+.vinyl-thumbs { position: absolute; left: calc(19 * var(--p)); top: calc(55 * var(--p)); display: flex; gap: calc(11 * var(--p)); }
+.vinyl-thumb { width: calc(64 * var(--p)); height: calc(56 * var(--p)); border-radius: calc(9 * var(--p)); overflow: hidden; background: #ecd9d4; display: block; flex: none; }
+.vinyl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vinyl-thumb--add { width: calc(58 * var(--p)); background: #f3e7e5; display: flex !important; align-items: center; justify-content: center; }
+
+.vinyl-bar {
+  left: calc(47 * var(--p)); top: calc(515 * var(--p)); width: calc(318 * var(--p)); height: calc(54 * var(--p));
+  background: #fffaf8; border-radius: calc(27 * var(--p)); box-shadow: 0 calc(8 * var(--p)) calc(24 * var(--p)) rgba(190,130,120,.18), inset 0 0 0 1px rgba(255,255,255,.8);
+}
+.vinyl-bar-btn { position: absolute !important; left: calc(18 * var(--p)); top: calc(9 * var(--p)); width: calc(36 * var(--p)); height: calc(36 * var(--p)); border-radius: 50%; background: #1f1b1a; display: flex !important; align-items: center; justify-content: center; }
+.vinyl-wave { position: absolute; left: calc(69 * var(--p)); top: 0; width: calc(185 * var(--p)); height: 100%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.vinyl-wave i { display: block; width: calc(2.6 * var(--p)); border-radius: 2px; background: #f4a07e; }
+.vinyl-wave i.on { background: #ee7f4f; }
+.vinyl-time { position: absolute; right: calc(19 * var(--p)); top: 50%; transform: translateY(-50%); font-size: calc(11.5 * var(--p)); color: #6b6b70; font-variant-numeric: tabular-nums; }
+
+.vinyl-title { left: 0; right: 0; top: calc(603 * var(--p)); margin: 0; text-align: center; font-family: 'Geist', -apple-system, sans-serif; font-size: calc(34.5 * var(--p)); line-height: calc(34 * var(--p)); font-weight: 700; letter-spacing: -.04em; color: #1b1b19; }
+.vinyl-sub { left: 0; right: 0; top: calc(683.5 * var(--p)); margin: 0; text-align: center; font-size: calc(16.3 * var(--p)); line-height: calc(20 * var(--p)); color: #85868f; }
+.vinyl-dots { left: 0; right: 0; top: calc(748.5 * var(--p)); display: flex; justify-content: center; gap: calc(11 * var(--p)); }
+.vinyl-dots button { width: calc(9 * var(--p)); height: calc(9 * var(--p)); border-radius: 50%; background: #dad0cf; position: relative; }
+.vinyl-dots button::after { content: ''; position: absolute; inset: calc(-8 * var(--p)); } /* bigger tap target */
+.vinyl-dots button.on { background: #f98f60; }
+.vinyl-cta { left: calc(40 * var(--p)); top: calc(785 * var(--p)); width: calc(333 * var(--p)); height: calc(53 * var(--p)); border-radius: calc(27 * var(--p)); background: #1b1b19; color: #fff; display: flex !important; align-items: center; justify-content: center; gap: calc(12 * var(--p)); font-size: calc(15.5 * var(--p)); font-weight: 400; }
+
+/* While the vinyl tab is showing, hide the header/body/controls underneath. */
+.npo--vinyl > .npo-header, .npo--vinyl > .npo-body, .npo--vinyl > .npo-controls { visibility: hidden; }
+.npo--vinyl .queue-panel, .npo--vinyl .queue-panel-backdrop { visibility: visible; z-index: 10; }
+/* Lyrics tab on desktop: the tab switcher is hidden by default there — show it so there is a way back to the vinyl tab. */
+@media (min-width: 641px) { .npo--lyrics .npo-tabs-mobile { display: flex; background: rgba(255,255,255,.08); padding: 3px; border-radius: 20px; gap: 4px; } .npo--lyrics .npo-tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 16px; cursor: pointer; } .npo--lyrics .npo-tab-btn--active { background: rgba(255,255,255,.15); color: #fff; } }
+
+body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
