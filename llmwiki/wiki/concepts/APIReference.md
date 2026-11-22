@@ -7,6 +7,9 @@ description: Toàn bộ HTTP API endpoints của Cozyroom backend — nhóm theo
 
 Tất cả routes đăng ký trong `backend/internal/api/routes.go`. Backend lắng nghe `:8080`, expose qua nginx `:18080`.
 
+## Path aliases (URL standard step 4)
+Mọi `/api/...` dưới đây cũng gọi được là `/api/v1/...` (canonical cho client mới). Media gom dưới `/media/`: `/media/audio/{id}` = `/stream/{id}`, `/media/video/{id}` = `/stream-video/{id}`, `/media/hls/...` = `/hls/...`, `/media/covers|artist-images|video-posters|ebook-covers/{id}` = `/api/<cùng tên>/{id}`, `/media/youtube/{id}` = `/api/youtube/stream/{id}`. Đường cũ vẫn chạy. Cài bằng rewrite (không nhân đôi route): `backend/internal/api/aliases.go` + `rewrite` trong `nginx.conf`. Handler, metrics, debug log và auth thấy path CŨ. MCP tools (`backend/internal/mcp`) không nhúng path nào nên không cần đổi. Xem [[UrlPathStandard]].
+
 ## Health & Stats
 
 | Method | Path | Mô tả |

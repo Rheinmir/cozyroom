@@ -1622,3 +1622,8 @@
 - Moi: backend/internal/api/aliases.go (+ test) bao ngoai cung trong NewRouter; 9 dong rewrite trong nginx.conf; frontend/src/endpoints.ts (API, MEDIA); 18 file frontend doi sang /api/v1 va /media; service worker regex nhan ca hai dang; vite proxy /media; README ghi chu alias.
 - Kiem: Go test (bang rewrite, Range/query giu nguyen, auth qua /api/v1); nginx local + backend gia: 9 rewrite dung, Range 206, Cache-Control di qua, location dung (SSE/chat/audio/video/hls/yt); Playwright voi service worker that: cover cache duoi /media/covers, load offline tu cache, /api/v1 cache offline, player goi /media/audio kem Range, duong cu van chay.
 - Khong lam: deploy, doi k8s, cham DB/container; backend that khong chay duoc o day (can Postgres) nen e2e dung backend gia co cung bang alias.
+
+## 2026-11-23 — url-standard step 5 (docs) — APIReference ghi chu alias; test auth doc lap voi cach luu password (branch kozu/media-api-v1)
+
+- Sua: aliases_test.go khong tham chieu OwnerPassword nua (Kento dua password vao env, co limiter): chi test nhanh 401, moi request mot dia chi client. Da kiem: go test ./internal/api xanh tren nhanh Kento + alias cua minh.
+- Them ghi chu alias vao concepts/APIReference.md. MCP tools khong nhung path nen khong doi.
