@@ -789,7 +789,7 @@ export default function RadialNav() {
         {/* Bubble */}
         <button
           ref={bubbleRef}
-          className={`radial-bubble${isPlaying && track && !calendarMode ? ' radial-bubble--spinning' : ''}${open ? ' radial-bubble--open' : ''}${calendarMode ? ' radial-bubble--calendar' : ''}${track && !calendarMode ? ' radial-bubble--vinyl' : ''}${snappedSelector ? ' radial-bubble--snapped' : ''}`}
+          className={`radial-bubble${isPlaying && track && !calendarMode ? ' radial-bubble--spinning' : ''}${open ? ' radial-bubble--open' : ''}${calendarMode ? ' radial-bubble--calendar' : ''}${track && !calendarMode ? ' radial-bubble--vinyl' : ''}${!track && !calendarMode ? ' radial-bubble--mark' : ''}${snappedSelector ? ' radial-bubble--snapped' : ''}`}
           aria-label={open ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'}
           style={{
             position: 'absolute',

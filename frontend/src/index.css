@@ -5562,3 +5562,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 @media (min-width: 641px) { .npo--lyrics .npo-tabs-mobile { display: flex; background: rgba(255,255,255,.08); padding: 3px; border-radius: 20px; gap: 4px; } .npo--lyrics .npo-tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 16px; cursor: pointer; } .npo--lyrics .npo-tab-btn--active { background: rgba(255,255,255,.15); color: #fff; } }
 
 body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
+
+/* Idle FAB (no track): just the Cozyroom mark — no dark disc, ring or shadow behind it
+   (it showed as a black blob in light theme and a grey ring in dark). */
+.radial-bubble--mark { background: transparent; box-shadow: none; color: var(--text); }
+.radial-bubble--mark:hover { box-shadow: none; }
