@@ -1627,3 +1627,8 @@
 
 - Sua: aliases_test.go khong tham chieu OwnerPassword nua (Kento dua password vao env, co limiter): chi test nhanh 401, moi request mot dia chi client. Da kiem: go test ./internal/api xanh tren nhanh Kento + alias cua minh.
 - Them ghi chu alias vao concepts/APIReference.md. MCP tools khong nhung path nen khong doi.
+
+## 2026-11-23 — home hub at "/" (branch kozu/home-hub)
+
+- Moi: pages/HomePage.tsx (greeting + chips thong ke, the Continue tu PlayerContext, 7 tile module), .hub-* trong index.css, hub.* i18n en/vi; AppRoutes: "/" render HomePage (truoc: redirect /music); logo Sidebar va nut Home mobile ve "/".
+- Kiem: Playwright 390/768/1440 (khong tran, khong chong, mot man hinh tu 900px, href 7 tile, Tab, focus ring, rong/co track, vi); tuong phan chu >= 4.5:1 dark va light (do that); chay lai bo kiem tra redirect/link/overlay: xanh.

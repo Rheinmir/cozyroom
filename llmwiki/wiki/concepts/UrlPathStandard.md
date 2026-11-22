@@ -19,7 +19,7 @@ Every UI URL is defined once in `frontend/src/routes.ts`. Scheme: `/<module>/<co
 | explore | `/explore/trending` |
 | ai / notes | `/ai`, `/ai/stats`, `/notes` |
 | system | `/system/tools`, `/system/debug` |
-| root | `/` redirects to `/music` (a module hub page comes later) |
+| root | `/` = home hub (`pages/HomePage.tsx`): greeting + library counts, Continue card (player state only), 7 module tiles |
 
 ## Rules
 - No raw path strings in components. Use `ROUTES.x` for fixed routes and `paths.album(id)` etc. for id/query URLs.
@@ -31,7 +31,8 @@ Every UI URL is defined once in `frontend/src/routes.ts`. Scheme: `/<module>/<co
 - Handlers, metrics labels, the debug request log and auth all see the OLD path. Auth is inside the handlers (`verifyOwnerPassword`, kanban tokens), not path middleware, so /api/v1 is protected exactly like /api (test `TestAliasKeepsAuth`).
 - Frontend: `src/endpoints.ts` (`API`, `MEDIA`). Backend JSON still emits old-style `cover_url` (`/api/covers/...`); `imgSrc` and the service worker accept both forms.
 - Service worker: runtime caching regexes accept both `/api` and `/media` forms; file name stays `sw3.js` (content change makes autoUpdate refresh it).
-- Next steps (not done yet): home hub page; backend emitting new-style URLs; remove legacy aliases after two releases (owner decides).
+- Home hub: tiles link to /music, /video, /read/books, /ai, /notes, /explore/trending, /system/tools. Sidebar logo and the mobile Home button go to `/`. Data: `fetchStats` + `PlayerContext` only. Styles: `.hub-*` in index.css, existing tokens only (no DESIGN.md exception); light theme text is darkened to keep >= 4.5:1.
+- Next steps (not done yet): backend emitting new-style URLs; remove legacy aliases after two releases (owner decides).
 
 ## Gotchas
 - nginx `rewrite` runs before `location` matching; the URI passed to the backend is the rewritten, decoded one.
