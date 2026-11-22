@@ -4,10 +4,9 @@ import { usePlayer } from '../PlayerContext'
 import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation } from '../api'
 import { useFlipUp } from '../useFlipPosition'
 import type { LyricsData, SourceInfo } from '../api'
-import { checkOwner } from '../ownerAuth'
+import { checkOwner, getOwnerPw, setOwnerPw } from '../ownerAuth'
 
 const AUTH_KEY = 'hs-lyrics-auth'
-const isAuthed  = () => localStorage.getItem(AUTH_KEY) === '1'
 const grantAuth = () => localStorage.setItem(AUTH_KEY, '1')
 
 const SS = 'lyr:'
@@ -252,12 +251,16 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
 
   const handleRefresh = () => {
     cache.delete(trackId)
-    bustLyricsCache(trackId).finally(() => doFetch(trackId))
+    bustLyricsCache(trackId, getOwnerPw()).finally(() => doFetch(trackId))
   }
 
   const handleSave = async () => {
-    if (!isAuthed()) {
+    // The server checks the password on every save, so keep it for this tab (sessionStorage).
+    let ownerPw = getOwnerPw()
+    if (!ownerPw) {
       if (!(await checkOwner(pw))) { setSaveMsg(t('lyrics.wrong_password')); return }
+      setOwnerPw(pw)
+      ownerPw = pw
       grantAuth()
     }
     if (!data) { setSaveMsg(t('lyrics.none_selected')); return }
@@ -281,7 +284,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
     setSaving(true)
     setSaveMsg('')
     try {
-      await saveLyrics(trackId, lrc)
+      await saveLyrics(trackId, lrc, ownerPw)
       setSaveMsg(t('lyrics.saved'))
       setPwVisible(false)
       setPw('')
@@ -369,7 +372,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
             {!pwVisible ? (
               <button
                 className="lyrics-save-btn"
-                onClick={() => { if (isAuthed()) { handleSave() } else { setPwVisible(true); setSaveMsg('') } }}
+                onClick={() => { if (getOwnerPw()) { handleSave() } else { setPwVisible(true); setSaveMsg('') } }}
                 title={hasSaved ? t('lyrics.overwrite_title') : t('lyrics.save_title')}
               >
                 {hasSaved ? t('lyrics.overwrite') : t('lyrics.save')}

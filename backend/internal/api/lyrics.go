@@ -604,6 +604,18 @@ func (h *handlers) lyricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
+		if ok, tooMany := ownerAuth(r); !ok {
+			if tooMany {
+				w.Header().Set("Retry-After", "60")
+				http.Error(w, "too many attempts", http.StatusTooManyRequests)
+			} else {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+			}
+			return
+		}
+	}
+
 	meta, err := h.lib.TrackMeta(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -75,10 +75,10 @@ export const fetchLyrics = (trackId: string, signal?: AbortSignal) =>
       })
     : get<LyricsMulti>(`${API}/lyrics/${trackId}`)
 
-export const saveLyrics = (trackId: string, lrc: string): Promise<void> =>
+export const saveLyrics = (trackId: string, lrc: string, password: string): Promise<void> =>
   fetch(`${API}/lyrics/${trackId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Owner-Password': password },
     body: JSON.stringify({ lrc }),
   }).then(async r => {
     if (!r.ok) {
@@ -87,8 +87,9 @@ export const saveLyrics = (trackId: string, lrc: string): Promise<void> =>
     }
   })
 
-export const bustLyricsCache = (trackId: string): Promise<void> =>
-  fetch(`${API}/lyrics/${trackId}`, { method: 'DELETE' }).then(() => {})
+// Owner only on the server: without the password the DELETE gets 401 and the cache stays.
+export const bustLyricsCache = (trackId: string, password: string): Promise<void> =>
+  fetch(`${API}/lyrics/${trackId}`, { method: 'DELETE', headers: password ? { 'X-Owner-Password': password } : {} }).then(() => {})
 
 export const fetchLyricsTranslation = (trackId: string, lang = 'vi') =>
   get<{ lines: string[] }>(`${API}/lyrics/${trackId}/translate?lang=${lang}`)
