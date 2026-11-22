@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams, useLocation, generatePath } from 'react-router-dom'
 import { useScrollRestoration } from './useScrollRestoration'
 import { PlayerProvider } from './PlayerContext'
 import { BgSoundsProvider } from './BgSoundsContext'
@@ -31,7 +31,14 @@ import AIStatsPage from './pages/AIStatsPage'
 import MusicStatsPage from './pages/MusicStatsPage'
 import ToolsPage from './pages/ToolsPage'
 import RequestLogPage from './pages/RequestLogPage'
-import { ROUTES } from './routes'
+import { ROUTES, LEGACY_REDIRECTS } from './routes'
+
+// Old URL -> new URL: keeps :id params, ?query, #hash and router state (e.g. the AI prompt).
+function LegacyRedirect({ to }: { to: string }) {
+  const params = useParams()
+  const { search, hash, state } = useLocation()
+  return <Navigate to={{ pathname: generatePath(to, params), search, hash }} state={state} replace />
+}
 
 export default function AppRoutes() {
   const mainRef = useRef<HTMLElement>(null)
@@ -48,7 +55,8 @@ export default function AppRoutes() {
           <Header />
           <main className="main" ref={mainRef}>
             <Routes>
-              <Route path={ROUTES.home}            element={<ArtistsPage />} />
+              <Route path={ROUTES.home}            element={<Navigate to={ROUTES.music} replace />} />
+              <Route path={ROUTES.music}           element={<ArtistsPage />} />
               <Route path={ROUTES.discover}    element={<DiscoverPage />} />
               <Route path={ROUTES.artist}  element={<ArtistPage />} />
               <Route path={ROUTES.album}   element={<AlbumPage />} />
@@ -68,6 +76,7 @@ export default function AppRoutes() {
               <Route path={ROUTES.musicStats} element={<MusicStatsPage />} />
               <Route path={ROUTES.tools}       element={<ToolsPage />} />
               <Route path={ROUTES.debug}       element={<RequestLogPage />} />
+              {LEGACY_REDIRECTS.map(([from, to]) => <Route key={from} path={from} element={<LegacyRedirect to={to} />} />)}
             </Routes>
           </main>
         </div>

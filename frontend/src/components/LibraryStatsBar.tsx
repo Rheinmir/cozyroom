@@ -28,7 +28,7 @@ export default function LibraryStatsBar({ current, style }: { current?: Section;
 
   return (
     <div className="stats-bar" style={style}>
-      {chip('artists', stats.artists, ROUTES.home)}
+      {chip('artists', stats.artists, ROUTES.music)}
       {chip('albums', stats.albums, ROUTES.albums)}
       {chip('tracks', stats.tracks, ROUTES.tracks)}
     </div>

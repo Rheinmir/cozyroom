@@ -403,7 +403,7 @@ export default function RadialNav() {
   }
 
   const innerItems: RadialItem[] = [
-    { route: ROUTES.home,          label: t('nav.artists'),                     icon: <IcHome /> },
+    { route: ROUTES.music,         label: t('nav.artists'),                     icon: <IcHome /> },
     { route: ROUTES.ai,        label: 'AI',                                 icon: <IcAI /> },
     { route: ROUTES.playlists, label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist /> },
     { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, onAction: () => { setBgPanelOpen(true); setOpen(false) } },
@@ -629,14 +629,14 @@ export default function RadialNav() {
       label: item.label,
       active: item.route === 'star-track'
         ? isStarred
-        : location.pathname === item.route || (item.route !== '/' && location.pathname.startsWith(item.route)),
+        : location.pathname === item.route || (item.route !== ROUTES.music && location.pathname.startsWith(item.route)),
       onClick: () => { if (item.onAction) item.onAction(); else navigate(item.route) },
     })),
     ...outerItems.map((item): MenuCell => ({
       key: item.route,
       icon: item.icon,
       label: item.label,
-      active: location.pathname === item.route || (item.route !== '/' && location.pathname.startsWith(item.route)),
+      active: location.pathname === item.route || (item.route !== ROUTES.music && location.pathname.startsWith(item.route)),
       onClick: () => navigate(item.route),
     })),
   ]

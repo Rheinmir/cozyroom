@@ -35,7 +35,7 @@ export default function ArtistPage() {
 
   return (
     <div className="page">
-      <BackButton to={ROUTES.home} label="Artists" />
+      <BackButton to={ROUTES.music} label="Artists" />
       <div className="artist-hero">
         <div className="artist-hero-avatar">
           <ArtistHeroImg url={artistImageUrl} name={artistName} />

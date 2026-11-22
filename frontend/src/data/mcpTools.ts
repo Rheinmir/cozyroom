@@ -11,62 +11,62 @@ export interface McpTool {
 
 export const MCP_TOOLS: McpTool[] = [
   {
-    name: 'search_music', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.home, prompt: 'tÃ¬m bÃ i hÃ¡t ',
+    name: 'search_music', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.music, prompt: 'tÃ¬m bÃ i hÃ¡t ',
     description: 'TÃ¬m bÃ i hÃ¡t, nghá»‡ sÄ©, album trong thÆ° viá»‡n',
     flow: ['Nháº­n tÃªn bÃ i / nghá»‡ sÄ© tá»« user', 'Gá»i search_music(query=...)', 'Láº¥y id tá»« káº¿t quáº£ tracks[]', 'DÃ¹ng id Ä‘Ã³ cho play_track hoáº·c add_to_playlist'],
   },
   {
-    name: 'list_artists', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.home, prompt: 'xem danh sÃ¡ch nghá»‡ sÄ©',
+    name: 'list_artists', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.music, prompt: 'xem danh sÃ¡ch nghá»‡ sÄ©',
     description: 'Liá»‡t kÃª táº¥t cáº£ nghá»‡ sÄ© trong thÆ° viá»‡n',
     flow: ['Gá»i list_artists()', 'Nháº­n danh sÃ¡ch artists[]', 'DÃ¹ng id nghá»‡ sÄ© cho get_artist hoáº·c list_albums'],
   },
   {
-    name: 'get_artist', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.home, prompt: 'xem thÃ´ng tin nghá»‡ sÄ© ',
+    name: 'get_artist', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.music, prompt: 'xem thÃ´ng tin nghá»‡ sÄ© ',
     description: 'Xem chi tiáº¿t nghá»‡ sÄ©: album, sá»‘ bÃ i, thá»ƒ loáº¡i',
     flow: ['CÃ³ artist id (tá»« list_artists hoáº·c search_music)', 'Gá»i get_artist(id=...)', 'Nháº­n album_count, track_count, genres'],
   },
   {
-    name: 'list_albums', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.home, prompt: 'xem album cá»§a nghá»‡ sÄ© ',
+    name: 'list_albums', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.music, prompt: 'xem album cá»§a nghá»‡ sÄ© ',
     description: 'Liá»‡t kÃª album theo nghá»‡ sÄ©',
     flow: ['Cáº§n artist_id', 'Gá»i list_albums(artist_id=...)', 'Nháº­n albums[] vá»›i id, title, year', 'DÃ¹ng album_id cho list_tracks'],
   },
   {
-    name: 'list_tracks', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.home, prompt: 'xem bÃ i hÃ¡t trong album ',
+    name: 'list_tracks', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.music, prompt: 'xem bÃ i hÃ¡t trong album ',
     description: 'Liá»‡t kÃª bÃ i hÃ¡t theo album',
     flow: ['Cáº§n album_id', 'Gá»i list_tracks(album_id=...)', 'Nháº­n tracks[] vá»›i id, title, duration_s', 'DÃ¹ng id cho play_track'],
   },
   {
-    name: 'scan_library', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.home, prompt: 'quÃ©t láº¡i thÆ° viá»‡n nháº¡c',
+    name: 'scan_library', category: 'ðŸŽµ Music', categoryColor: '#dddddd', uiRoute: ROUTES.music, prompt: 'quÃ©t láº¡i thÆ° viá»‡n nháº¡c',
     description: 'QuÃ©t láº¡i thÆ° viá»‡n Ä‘á»ƒ cáº­p nháº­t bÃ i má»›i',
     flow: ['Gá»i scan_library()', 'Chá» tráº£ vá» tracks_scanned', 'KHÃ”NG cáº§n gá»i trÆ°á»›c khi download_youtube â€” download tá»± index'],
   },
   {
-    name: 'play_track', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.home, prompt: 'phÃ¡t bÃ i ',
+    name: 'play_track', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.music, prompt: 'phÃ¡t bÃ i ',
     description: 'PhÃ¡t má»™t bÃ i hÃ¡t tá»« thÆ° viá»‡n',
     flow: ['Láº¥y track id tá»« search_music hoáº·c list_tracks', 'Gá»i play_track(id=...) â€” KHÃ”NG dÃ¹ng playlist_id á»Ÿ Ä‘Ã¢y', 'Tráº£ vá» _frontend_action â†’ player báº¯t Ä‘áº§u phÃ¡t'],
   },
   {
-    name: 'toggle_play', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.home, prompt: 'táº¡m dá»«ng / tiáº¿p tá»¥c nháº¡c',
+    name: 'toggle_play', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.music, prompt: 'táº¡m dá»«ng / tiáº¿p tá»¥c nháº¡c',
     description: 'PhÃ¡t / Táº¡m dá»«ng nháº¡c Ä‘ang phÃ¡t',
     flow: ['Gá»i toggle_play() â€” khÃ´ng cáº§n tham sá»‘', 'Player tá»± toggle pause/resume'],
   },
   {
-    name: 'next_track', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.home, prompt: 'bÃ i tiáº¿p theo',
+    name: 'next_track', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.music, prompt: 'bÃ i tiáº¿p theo',
     description: 'Chuyá»ƒn sang bÃ i tiáº¿p theo',
     flow: ['Gá»i next_track() â€” khÃ´ng cáº§n tham sá»‘', 'Player chuyá»ƒn sang bÃ i káº¿ trong queue'],
   },
   {
-    name: 'prev_track', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.home, prompt: 'bÃ i trÆ°á»›c',
+    name: 'prev_track', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.music, prompt: 'bÃ i trÆ°á»›c',
     description: 'Quay láº¡i bÃ i trÆ°á»›c',
     flow: ['Gá»i prev_track() â€” khÃ´ng cáº§n tham sá»‘'],
   },
   {
-    name: 'set_shuffle_mode', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.home, prompt: 'báº­t shuffle ngáº«u nhiÃªn',
+    name: 'set_shuffle_mode', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.music, prompt: 'báº­t shuffle ngáº«u nhiÃªn',
     description: 'Äáº·t cháº¿ Ä‘á»™ phÃ¡t ngáº«u nhiÃªn',
     flow: ['mode cÃ³ 3 giÃ¡ trá»‹: "off" | "shuffle" | "smart"', 'Gá»i set_shuffle_mode(mode="smart") Ä‘á»ƒ báº­t Smart Mix', 'smart = AI tá»± chá»n bÃ i tiáº¿p theo dá»±a trÃªn context'],
   },
   {
-    name: 'set_repeat', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.home, prompt: 'báº­t repeat',
+    name: 'set_repeat', category: 'â–¶ï¸ Player', categoryColor: '#bbbbbb', uiRoute: ROUTES.music, prompt: 'báº­t repeat',
     description: 'Äáº·t cháº¿ Ä‘á»™ láº·p',
     flow: ['mode: "off" | "one" | "all"', 'Gá»i set_repeat(mode="all") Ä‘á»ƒ láº·p toÃ n bá»™ queue'],
   },
