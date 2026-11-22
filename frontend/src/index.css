@@ -5468,7 +5468,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   }
 }
 :where(.vinyl-card) button { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; box-sizing: border-box; cursor: pointer; text-align: inherit; }
-:where(.vinyl-card) button:focus-visible { outline: 2px solid #f98f60; outline-offset: 2px; }
+:where(.vinyl-card) button:focus-visible { outline: 2px solid #c24e1c; outline-offset: 2px; }
 .vinyl-card > * { position: absolute; }
 
 .vinyl-skip { right: calc(24 * var(--p)); top: calc(59.5 * var(--p)); font-size: calc(13.5 * var(--p)); font-weight: 500; color: #1b1b19; padding: calc(6 * var(--p)); }
@@ -5519,8 +5519,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .vinyl-sleeve-edge { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,.92); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .vinyl-sleeve-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .3s; }
 .vinyl-sleeve-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(240,205,195,.30) 0%, rgba(235,170,150,.08) 55%, rgba(120,70,60,.10) 100%); }
+/* caption scrim: soft vertical gradient, keeps the white sleeve text >= 4.5:1 on ANY cover (checked on a pure-white one) */
+.vinyl-sleeve-shade::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48,24,20,0) 8%, rgba(48,24,20,.62) 33%, rgba(48,24,20,.62) 67%, rgba(48,24,20,.3) 100%); }
 .vinyl-sleeve-text { position: absolute; left: calc(29 * var(--p)); top: calc(54 * var(--p)); color: #fff; display: flex; flex-direction: column; max-width: calc(190 * var(--p)); }
-.vinyl-sleeve-text small { font-size: calc(11.5 * var(--p)); opacity: .7; line-height: 1.2; }
+.vinyl-sleeve-text small { font-size: calc(11.5 * var(--p)); opacity: 1; line-height: 1.2; }
 .vinyl-sleeve-text strong { margin-top: calc(4 * var(--p)); font-size: calc(22.8 * var(--p)); font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vinyl-sleeve-play { position: absolute; right: calc(28 * var(--p)); top: calc(51 * var(--p)); width: calc(32 * var(--p)); height: calc(32 * var(--p)); border-radius: 50%; background: #fff; display: flex !important; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
 
@@ -5542,17 +5544,17 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .vinyl-bar-btn { position: absolute !important; left: calc(18 * var(--p)); top: calc(9 * var(--p)); width: calc(36 * var(--p)); height: calc(36 * var(--p)); border-radius: 50%; background: #1f1b1a; display: flex !important; align-items: center; justify-content: center; }
 .vinyl-wave { position: absolute; left: calc(69 * var(--p)); top: 0; width: calc(185 * var(--p)); height: 100%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-.vinyl-wave:focus-visible { outline: 2px solid #f98f60; outline-offset: 4px; border-radius: 6px; }
+.vinyl-wave:focus-visible { outline: 2px solid #c24e1c; outline-offset: 4px; border-radius: 6px; }
 .vinyl-wave i { display: block; width: calc(2.6 * var(--p)); border-radius: 2px; background: #f4a07e; }
-.vinyl-wave i.on { background: #ee7f4f; }
+.vinyl-wave i.on { background: #d9561f; }
 .vinyl-time { position: absolute; right: calc(19 * var(--p)); top: 50%; transform: translateY(-50%); font-size: calc(11.5 * var(--p)); color: #6b6b70; font-variant-numeric: tabular-nums; }
 
 .vinyl-title { left: 0; right: 0; top: calc(603 * var(--p)); margin: 0; text-align: center; font-family: 'Geist', -apple-system, sans-serif; font-size: calc(34.5 * var(--p)); line-height: calc(34 * var(--p)); font-weight: 700; letter-spacing: -.04em; color: #1b1b19; }
-.vinyl-sub { left: 0; right: 0; top: calc(683.5 * var(--p)); margin: 0; text-align: center; font-size: calc(16.3 * var(--p)); line-height: calc(20 * var(--p)); color: #85868f; }
+.vinyl-sub { left: 0; right: 0; top: calc(683.5 * var(--p)); margin: 0; text-align: center; font-size: calc(16.3 * var(--p)); line-height: calc(20 * var(--p)); color: #6b6c75; }
 .vinyl-dots { left: 0; right: 0; top: calc(748.5 * var(--p)); display: flex; justify-content: center; gap: calc(11 * var(--p)); }
-.vinyl-dots button { width: calc(9 * var(--p)); height: calc(9 * var(--p)); border-radius: 50%; background: #dad0cf; position: relative; }
+.vinyl-dots button { width: calc(9 * var(--p)); height: calc(9 * var(--p)); border-radius: 50%; background: #948886; position: relative; }
 .vinyl-dots button::after { content: ''; position: absolute; inset: calc(-8 * var(--p)); } /* bigger tap target */
-.vinyl-dots button.on { background: #f98f60; }
+.vinyl-dots button.on { background: #d9561f; }
 .vinyl-cta { left: calc(40 * var(--p)); top: calc(785 * var(--p)); width: calc(333 * var(--p)); height: calc(53 * var(--p)); border-radius: calc(27 * var(--p)); background: #1b1b19; color: #fff; display: flex !important; align-items: center; justify-content: center; gap: calc(12 * var(--p)); font-size: calc(15.5 * var(--p)); font-weight: 400; }
 
 /* While the vinyl tab is showing, hide the header/body/controls underneath. */
