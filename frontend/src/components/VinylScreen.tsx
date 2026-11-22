@@ -35,6 +35,13 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
     if (duration > 0) seek(((e.clientX - r.left) / r.width) * duration)
   }
 
+  const onWaveKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = e.key === 'ArrowRight' ? 5 : e.key === 'ArrowLeft' ? -5 : 0
+    if (!step || duration <= 0) return
+    e.preventDefault()
+    seek(Math.max(0, Math.min(duration, progress + step)))
+  }
+
   return (
     <div className="vinyl-screen">
       <div className="vinyl-card">
@@ -62,8 +69,10 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
               <small>{t('vinyl.collection')}</small>
               <strong>{track.album_title ?? track.title}</strong>
             </div>
-            <button className="vinyl-sleeve-play" onClick={() => { seek(0); if (!isPlaying) toggle() }} aria-label={t('player.play', 'Play')}>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="#1b1b1d"><polygon points="7,3 20,12 7,21"/></svg>
+            <button className="vinyl-sleeve-play" onClick={toggle} aria-label={isPlaying ? t('player.pause', 'Pause') : t('player.play', 'Play')}>
+              {isPlaying
+                ? <svg viewBox="0 0 24 24" width="12" height="12" fill="#1b1b1d"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                : <svg viewBox="0 0 24 24" width="12" height="12" fill="#1b1b1d"><polygon points="7,3 20,12 7,21"/></svg>}
             </button>
           </div>
         </div>
@@ -99,7 +108,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
               ? <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
               : <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><polygon points="7,3 20,12 7,21"/></svg>}
           </button>
-          <div className="vinyl-wave" onClick={onWave} role="slider" aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(progress)}>
+          <div className="vinyl-wave" onClick={onWave} onKeyDown={onWaveKey} tabIndex={0} role="slider" aria-label={t('player.now_playing')} aria-valuetext={`${fmt(progress)} / ${fmt(duration)}`} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(progress)}>
             {BARS.map((h, i) => <i key={i} className={i < playedBars ? 'on' : ''} style={{ height: h, opacity: i < playedBars ? 1 : Math.max(0.28, 1 - i / BARS.length) }} />)}
           </div>
           <span className="vinyl-time">{fmt(duration)}</span>

@@ -5542,6 +5542,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 }
 .vinyl-bar-btn { position: absolute !important; left: calc(18 * var(--p)); top: calc(9 * var(--p)); width: calc(36 * var(--p)); height: calc(36 * var(--p)); border-radius: 50%; background: #1f1b1a; display: flex !important; align-items: center; justify-content: center; }
 .vinyl-wave { position: absolute; left: calc(69 * var(--p)); top: 0; width: calc(185 * var(--p)); height: 100%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.vinyl-wave:focus-visible { outline: 2px solid #f98f60; outline-offset: 4px; border-radius: 6px; }
 .vinyl-wave i { display: block; width: calc(2.6 * var(--p)); border-radius: 2px; background: #f4a07e; }
 .vinyl-wave i.on { background: #ee7f4f; }
 .vinyl-time { position: absolute; right: calc(19 * var(--p)); top: 50%; transform: translateY(-50%); font-size: calc(11.5 * var(--p)); color: #6b6b70; font-variant-numeric: tabular-nums; }
