@@ -77,10 +77,11 @@ export default function PlayerBar() {
     playbackError, setPlaybackError,
     queueOpen, setQueueOpen,
     npoOpen: open, setNpoOpen: setOpen,
+    npoTab: mobileTab, setNpoTab: setMobileTab,
+    npoQueue, setNpoQueue,
   } = usePlayer()
   const { isPlaying: bgPlaying, panelOpen: bgPanelOpen, setPanelOpen: setBgPanelOpen } = useBgSounds()
 
-  const [mobileTab,    setMobileTab]    = useState<'player' | 'lyrics'>('player')
   const [artistInfo,   setArtistInfo]   = useState<ArtistDetail | null>(null)
   const [trActive,     setTrActive]     = useState(false)
   const [autoTranslate, setAutoTranslate] = useState(() => localStorage.getItem('lyrics-auto-translate') !== '0')
@@ -417,9 +418,9 @@ export default function PlayerBar() {
                   when closed), so without this a second, "invisible" copy
                   of the same panel MobileSearchBar renders would sit here
                   regardless of NPO's visibility and intercept clicks. */}
-              {queueOpen && open && (
+              {npoQueue && open && (
                 <>
-                  <div className="queue-panel-backdrop" onClick={() => setQueueOpen(false)} />
+                  <div className="queue-panel-backdrop" onClick={() => setNpoQueue(false)} />
                   <div className="queue-panel">
                     <QueueList />
                   </div>
@@ -427,8 +428,8 @@ export default function PlayerBar() {
               )}
               <div className="npo-icon-row">
                 <button
-                  className={'npo-queue-btn ctrl-btn' + (queueOpen ? ' ctrl-btn--active' : '')}
-                  onClick={() => setQueueOpen(v => !v)}
+                  className={'npo-queue-btn ctrl-btn' + (npoQueue ? ' ctrl-btn--active' : '')}
+                  onClick={() => setNpoQueue(!npoQueue)}
                   title={t('player.queue')}
                 >
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -468,7 +469,7 @@ export default function PlayerBar() {
               </div>
             </div>
             {mobileTab === 'player' && (
-              <VinylScreen onSkip={() => setOpen(false)} onLyrics={() => setMobileTab('lyrics')} onQueue={() => setQueueOpen(true)} />
+              <VinylScreen onSkip={() => setOpen(false)} onLyrics={() => setMobileTab('lyrics')} onQueue={() => setNpoQueue(true)} />
             )}
           </div>
         </>

@@ -1610,3 +1610,9 @@
 - Moi: ROUTES doi sang /music/..., /video, /read/..., /explore/trending, /system/...; LEGACY_REDIRECTS (15 dong) + LegacyRedirect giu :id, query, hash, state. Them isRoute() cho header search.
 - Kiem: 20 URL cu deu redirect dung (kem ?q va #hash); 20 URL moi mo duoc; href Sidebar/MobileNav/card dung; header search tren trang chi tiet khong bi cuop.
 - Them concepts/UrlPathStandard.md + dong index.
+
+## 2026-11-23 — url-standard step 3 — Now Playing overlay in the URL (branch kozu/np-url)
+
+- Moi: ?np=1|lyrics|queue trong PlayerContext (npoOpen/npoTab/npoQueue lay tu URL). Mo overlay day 1 history entry; Back/Esc/nut dong dong no; doi tab va queue dung replace; deep link dong thi chi bo param.
+- Kiem: 32 kiem tra Playwright o 390 va 1440 deu pass (open, tab, queue, Back, Forward, Esc, deep link, giu ?q, roi trang thi dong).
+- Khong doi: queue o thanh player (ngoai overlay) van la state thuong.

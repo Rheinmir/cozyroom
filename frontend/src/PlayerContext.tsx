@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { Track } from './types'
 import { fetchSmartQueue, lastfmNowPlaying, lastfmScrobble, recordPlay } from './api'
 import { getOfflineObjectURL } from './offlineStore'
@@ -43,6 +44,12 @@ type PlayerCtx = {
   // duplicate copy of the exact same panel underneath it.
   npoOpen:    boolean
   setNpoOpen: Dispatch<SetStateAction<boolean>>
+  // The overlay lives in the URL (?np=1 | lyrics | queue) so Back closes it and
+  // it can be shared/bookmarked. Tab and the in-overlay queue panel come from it too.
+  npoTab:      'player' | 'lyrics'
+  setNpoTab:   (t: 'player' | 'lyrics') => void
+  npoQueue:    boolean
+  setNpoQueue: (open: boolean) => void
 }
 
 const Ctx = createContext<PlayerCtx>({} as PlayerCtx)
@@ -196,7 +203,38 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [coverColors, setCoverColors] = useState<string[]>(['#1db954', '#191414']) // default palette
   const [playbackError, setPlaybackError] = useState<{ code: number; message: string; trackId: string } | null>(null)
   const [queueOpen, setQueueOpen] = useState(false)
-  const [npoOpen, setNpoOpen] = useState(false)
+  // Now Playing overlay state is the ?np= search param (see PlayerCtx.npoOpen).
+  const navigate = useNavigate()
+  const location = useLocation()
+  const locRef = useRef(location)
+  locRef.current = location
+  const np = new URLSearchParams(location.search).get('np')
+  const npoOpen = np !== null
+  const npoTab: 'player' | 'lyrics' = np === 'lyrics' ? 'lyrics' : 'player'
+  const npoQueue = np === 'queue'
+  const setNp = useCallback((next: string | null) => {
+    const loc = locRef.current
+    const sp = new URLSearchParams(loc.search)
+    const wasOpen = sp.has('np')
+    const to = (s: URLSearchParams) => ({ pathname: loc.pathname, search: s.toString() ? `?${s}` : '', hash: loc.hash })
+    if (next === null) {
+      if (!wasOpen) return
+      // We pushed the entry when opening -> Back closes it. A deep link (no pushed entry): just drop the param.
+      if ((loc.state as { np?: boolean } | null)?.np) { navigate(-1); return }
+      sp.delete('np'); navigate(to(sp), { replace: true })
+    } else {
+      sp.set('np', next)
+      if (wasOpen) navigate(to(sp), { replace: true, state: loc.state })
+      else navigate(to(sp), { state: { np: true } })
+    }
+  }, [navigate])
+  const setNpoOpen = useCallback<Dispatch<SetStateAction<boolean>>>(v => {
+    const open = new URLSearchParams(locRef.current.search).has('np')
+    const next = typeof v === 'function' ? v(open) : v
+    if (next !== open) setNp(next ? '1' : null)
+  }, [setNp])
+  const setNpoTab = useCallback((t: 'player' | 'lyrics') => setNp(t === 'lyrics' ? 'lyrics' : '1'), [setNp])
+  const setNpoQueue = useCallback((o: boolean) => setNp(o ? 'queue' : '1'), [setNp])
 
   // Set crossOrigin + preload="auto" so browser buffers ahead aggressively
   useEffect(() => {
@@ -917,7 +955,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setRepeat, setShuffleMode: handleSetShuffleMode, setQuality, setCoverColors,
       playbackError, setPlaybackError,
       queueOpen, setQueueOpen,
-      npoOpen, setNpoOpen,
+      npoOpen, setNpoOpen, npoTab, setNpoTab, npoQueue, setNpoQueue,
     }}>
       {children}
     </Ctx.Provider>
