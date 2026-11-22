@@ -5569,3 +5569,59 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
    (it showed as a black blob in light theme and a grey ring in dark). */
 .radial-bubble--mark { background: transparent; box-shadow: none; color: var(--text); }
 .radial-bubble--mark:hover { box-shadow: none; }
+/* ── Home hub ("/") ─────────────────────────────────── */
+.sidebar-brand-home { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; text-decoration: none; }
+.sidebar-brand-home:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; border-radius: 8px; }
+.hub-page { display: flex; flex-direction: column; gap: 20px; min-height: 100%; }
+.hub-head { display: flex; flex-direction: column; gap: 6px; }
+.hub-title { margin: 0; font-family: var(--font-display); font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
+.hub-sub { margin: 0 0 8px; font-size: 15px; color: var(--text-muted); }
+.hub-continue { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: var(--radius); background: var(--glass-fill); box-shadow: inset 0 0 0 1px var(--hairline); }
+.hub-continue-cover { width: 56px; height: 56px; flex: none; border-radius: 10px; overflow: hidden; background: var(--elevated); box-shadow: inset 0 0 0 1px var(--hairline); }
+.hub-continue-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hub-continue-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hub-continue-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+.hub-continue-title { font-size: 16px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-continue-artist { font-size: 13px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-continue-bar { height: 3px; margin-top: 8px; border-radius: 2px; background: var(--glass-fill-2); overflow: hidden; }
+.hub-continue-bar i { display: block; height: 100%; background: var(--green); }
+.hub-continue-link { flex: none; padding: 8px 14px; border-radius: 999px; font-size: 13px; color: var(--text); text-decoration: none; background: transparent; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1px var(--hairline-strong); transition: box-shadow .15s; }
+.hub-continue-link:hover { box-shadow: inset 0 0 0 1px var(--text); }
+.hub-continue .play-btn { width: 44px; height: 44px; border: 0; cursor: pointer; }
+.hub-grid { flex: 1; min-height: 0; display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(120px, 1fr)); }
+.hub-tile { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; padding: 20px; border-radius: calc(var(--radius) + 3px); color: var(--text); text-decoration: none; background: var(--glass-fill); box-shadow: inset 0 0 0 1px var(--hairline); transition: transform .2s, box-shadow .2s; }
+.hub-tile:hover, .hub-tile:focus-visible { transform: translateY(-3px); box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 8px 20px -8px rgba(255,255,255,.2); }
+.hub-tile:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.hub-tile-ico { color: var(--text-muted); display: flex; }
+.hub-tile:hover .hub-tile-ico, .hub-tile:focus-visible .hub-tile-ico { color: var(--text); }
+.hub-tile-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.hub-tile-name { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.hub-tile-desc { font-size: 13px; color: var(--text-muted); }
+.hub-tile-count { margin-top: 6px; font-family: 'Geist Mono', 'SFMono-Regular', monospace; font-size: 12px; color: var(--text-muted); }
+.hub-tile--music { grid-column: 1 / span 2; grid-row: 1 / span 2; padding: 28px; }
+.hub-tile--music .hub-tile-name { font-size: 34px; }
+.hub-tile--music .hub-tile-ico svg { width: 44px; height: 44px; }
+.hub-tile--music .hub-tile-desc { font-size: 15px; }
+.hub-tile--explore, .hub-tile--system { grid-column: span 2; }
+@media (max-width: 900px) {
+  .hub-page { gap: 14px; }
+  .hub-title { font-size: 28px; }
+  .hub-sub { font-size: 14px; margin-bottom: 4px; }
+  .hub-continue { padding: 10px 12px; gap: 12px; }
+  .hub-continue-cover { width: 48px; height: 48px; }
+  .hub-continue-open { display: none; }
+  .hub-grid { gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(88px, auto); }
+  .hub-tile { padding: 14px; gap: 8px; }
+  .hub-tile-ico svg { width: 24px; height: 24px; }
+  .hub-tile-name { font-size: 18px; }
+  .hub-tile-desc { font-size: 12px; line-height: 1.3; }
+  .hub-tile--music { grid-column: 1 / -1; grid-row: auto; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; padding: 16px; }
+  .hub-tile--music .hub-tile-ico svg { width: 36px; height: 36px; }
+  .hub-tile--music .hub-tile-name { font-size: 24px; }
+  .hub-tile--music .hub-tile-desc { font-size: 13px; }
+  .hub-tile--explore, .hub-tile--system { grid-column: auto; }
+}
+/* light theme: --text-muted is .55 black = 4.45:1 on the tile fill; hub text is a bit darker so it stays >= 4.5:1 */
+:root[data-theme="light"] .hub-sub, :root[data-theme="light"] .hub-continue-label, :root[data-theme="light"] .hub-continue-artist,
+:root[data-theme="light"] .hub-tile-desc, :root[data-theme="light"] .hub-tile-count { color: rgba(0,0,0,.66); }
+@media (prefers-reduced-motion: reduce) { .hub-tile { transition: none; } .hub-tile:hover, .hub-tile:focus-visible { transform: none; } }

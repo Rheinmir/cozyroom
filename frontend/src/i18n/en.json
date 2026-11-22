@@ -91,6 +91,51 @@
     "sub2": "playlists and keep every sound close.",
     "cta": "Start Listening"
   },
+  "hub": {
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Good afternoon",
+    "greeting_evening": "Good evening",
+    "subtitle": "Your homelab, in one place.",
+    "continue": "Continue",
+    "nothing": "Nothing playing yet",
+    "start": "Start with Music",
+    "resume": "Resume",
+    "pause": "Pause",
+    "open_player": "Open player",
+    "modules": "Modules",
+    "tracks_count_one": "{{count}} track",
+    "tracks_count_other": "{{count}} tracks",
+    "tiles": {
+      "music": {
+        "name": "Music",
+        "desc": "Artists, albums, playlists"
+      },
+      "video": {
+        "name": "Video",
+        "desc": "Films and shows"
+      },
+      "read": {
+        "name": "Read",
+        "desc": "Books and comics"
+      },
+      "ai": {
+        "name": "AI",
+        "desc": "Chat, tools and memory"
+      },
+      "notes": {
+        "name": "Notes",
+        "desc": "Boards and quick notes"
+      },
+      "explore": {
+        "name": "Explore",
+        "desc": "GitHub trending"
+      },
+      "system": {
+        "name": "System",
+        "desc": "Tools and request log"
+      }
+    }
+  },
   "player": {
     "hint": "Select a track to start playing",
     "now_playing": "Now Playing",

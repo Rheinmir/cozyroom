@@ -11,6 +11,7 @@ import PlayerBar from './components/PlayerBar'
 import MobileNav from './components/MobileNav'
 import RadialNav from './components/RadialNav'
 import InstallBanner from './components/InstallBanner'
+import HomePage from './pages/HomePage'
 import ArtistsPage from './pages/ArtistsPage'
 import DiscoverPage from './pages/DiscoverPage'
 import ArtistPage from './pages/ArtistPage'
@@ -55,7 +56,7 @@ export default function AppRoutes() {
           <Header />
           <main className="main" ref={mainRef}>
             <Routes>
-              <Route path={ROUTES.home}            element={<Navigate to={ROUTES.music} replace />} />
+              <Route path={ROUTES.home}            element={<HomePage />} />
               <Route path={ROUTES.music}           element={<ArtistsPage />} />
               <Route path={ROUTES.discover}    element={<DiscoverPage />} />
               <Route path={ROUTES.artist}  element={<ArtistPage />} />

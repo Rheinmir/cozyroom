@@ -91,6 +91,51 @@
     "sub2": "và giữ mọi giai điệu thật gần.",
     "cta": "Bắt đầu nghe"
   },
+  "hub": {
+    "greeting_morning": "Chào buổi sáng",
+    "greeting_afternoon": "Chào buổi chiều",
+    "greeting_evening": "Chào buổi tối",
+    "subtitle": "Cả homelab của bạn, gói gọn một chỗ.",
+    "continue": "Tiếp tục",
+    "nothing": "Chưa phát gì",
+    "start": "Bắt đầu với Nhạc",
+    "resume": "Phát tiếp",
+    "pause": "Tạm dừng",
+    "open_player": "Mở trình phát",
+    "modules": "Các mục",
+    "tracks_count_one": "{{count}} bài",
+    "tracks_count_other": "{{count}} bài",
+    "tiles": {
+      "music": {
+        "name": "Nhạc",
+        "desc": "Nghệ sĩ, album, playlist"
+      },
+      "video": {
+        "name": "Phim",
+        "desc": "Phim và video"
+      },
+      "read": {
+        "name": "Đọc",
+        "desc": "Sách và truyện tranh"
+      },
+      "ai": {
+        "name": "AI",
+        "desc": "Chat, công cụ và bộ nhớ"
+      },
+      "notes": {
+        "name": "Ghi chú",
+        "desc": "Bảng và ghi chú nhanh"
+      },
+      "explore": {
+        "name": "Khám phá",
+        "desc": "GitHub trending"
+      },
+      "system": {
+        "name": "Hệ thống",
+        "desc": "Công cụ và nhật ký request"
+      }
+    }
+  },
   "player": {
     "hint": "Chọn bài hát để bắt đầu phát",
     "now_playing": "Đang phát",
