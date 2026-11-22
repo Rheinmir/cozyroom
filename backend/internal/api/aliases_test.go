@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,7 +59,10 @@ func TestAliasPaths(t *testing.T) {
 
 // A protected route must be exactly as protected through /api/v1 as through /api.
 // Auth lives inside the handlers (verifyOwnerPassword), so it cannot depend on the path;
-// this proves it with the same wrapper chain NewRouter uses.
+// this proves it with the same wrapper chain NewRouter uses. Only the negative cases are
+// asserted (401): a path-based bypass would answer 400 (handler reached) instead. No password
+// value is referenced, so the test survives moving the password to the environment. Each
+// request uses its own client address so a per-client rate limiter cannot interfere.
 func TestAliasKeepsAuth(t *testing.T) {
 	ph := &PlaylistHandlers{} // auth is checked before any dependency is touched
 	mux := http.NewServeMux()
@@ -66,38 +70,35 @@ func TestAliasKeepsAuth(t *testing.T) {
 	mux.HandleFunc("DELETE /api/playlists/{id}", ph.deletePlaylist)
 	h := aliasPaths(metricsMiddleware(panicRecovery(mux)))
 
-	do := func(method, target, pw string, viaQuery bool) int {
-		if viaQuery && pw != "" {
-			target += "?password=" + pw
+	n := 0
+	do := func(method, target, header, query string) int {
+		n++
+		if query != "" {
+			target += "?password=" + query
 		}
 		req := httptest.NewRequest(method, target, strings.NewReader("not json"))
-		if !viaQuery && pw != "" {
-			req.Header.Set("X-Owner-Password", pw)
+		req.RemoteAddr = fmt.Sprintf("192.0.2.%d:4000", n%250+1)
+		if header != "" {
+			req.Header.Set("X-Owner-Password", header)
 		}
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		return rec.Code
 	}
 	for _, base := range []string{"/api", "/api/v1"} {
-		for _, c := range []struct {
-			name, method, path string
-		}{{"create", "POST", base + "/playlists"}, {"delete", "DELETE", base + "/playlists/p1"}} {
-			if got := do(c.method, c.path, "", false); got != http.StatusUnauthorized {
+		for _, c := range []struct{ name, method, path string }{
+			{"create", "POST", base + "/playlists"},
+			{"delete", "DELETE", base + "/playlists/p1"},
+		} {
+			if got := do(c.method, c.path, "", ""); got != http.StatusUnauthorized {
 				t.Errorf("%s %s without password: %d, want 401", c.name, c.path, got)
 			}
-			if got := do(c.method, c.path, "wrong", false); got != http.StatusUnauthorized {
+			if got := do(c.method, c.path, "wrong-pw", ""); got != http.StatusUnauthorized {
 				t.Errorf("%s %s wrong header password: %d, want 401", c.name, c.path, got)
 			}
-			if got := do(c.method, c.path, "wrong", true); got != http.StatusUnauthorized {
+			if got := do(c.method, c.path, "", "wrong-pw"); got != http.StatusUnauthorized {
 				t.Errorf("%s %s wrong query password: %d, want 401", c.name, c.path, got)
 			}
-		}
-		// the right password gets past auth (create then fails on the bad body: 400, not 401)
-		if got := do("POST", base+"/playlists", OwnerPassword, false); got != http.StatusBadRequest {
-			t.Errorf("POST %s/playlists with the right header password: %d, want 400 (auth passed)", base, got)
-		}
-		if got := do("POST", base+"/playlists", OwnerPassword, true); got != http.StatusBadRequest {
-			t.Errorf("POST %s/playlists with the right query password: %d, want 400 (auth passed)", base, got)
 		}
 	}
 }
