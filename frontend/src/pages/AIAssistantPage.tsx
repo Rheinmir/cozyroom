@@ -12,6 +12,7 @@ import FavoritePill from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
 import { MCP_TOOLS } from '../data/mcpTools'
 import { useFlipUp } from '../useFlipPosition'
+import { ROUTES, paths } from '../routes'
 
 type Role = 'user' | 'assistant'
 
@@ -156,7 +157,7 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
           )}
           {localAlbumId && (
             <Link
-              to={`/album/${localAlbumId}`}
+              to={paths.album(localAlbumId)}
               className="ai-media-card-mode-btn"
               style={{ textAlign: 'center', textDecoration: 'none' }}
               title="Xem album trong thư viện"
@@ -870,8 +871,8 @@ export default function AIAssistantPage() {
           onChange={e => setModel(e.target.value)}
           disabled={loading}
         />
-        <Link to="/tools" style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>🛠</Link>
-        <Link to="/ai/stats" style={{ fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>📊</Link>
+        <Link to={ROUTES.tools} style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>🛠</Link>
+        <Link to={ROUTES.aiStats} style={{ fontSize: 11, opacity: 0.4, color: 'inherit', textDecoration: 'none', flexShrink: 0 }}>📊</Link>
       </div>
 
       {memoryOpen && (

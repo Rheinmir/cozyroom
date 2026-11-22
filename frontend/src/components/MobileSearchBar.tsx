@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import QueueList from './QueueList'
+import { paths } from '../routes'
 
 // Mobile-only floating "search island", mirroring the media-control pill
 // directly above it — the desktop/top-header search bar (Header.tsx) stays
@@ -27,7 +28,7 @@ export default function MobileSearchBar() {
     const q = e.target.value
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      if (q.trim()) navigate(`/search?q=${encodeURIComponent(q)}`, { replace: true })
+      if (q.trim()) navigate(paths.search(q), { replace: true })
       else navigate(-1)
     }, 300)
   }

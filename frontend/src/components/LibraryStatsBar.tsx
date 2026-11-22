@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchStats } from '../api'
+import { ROUTES } from '../routes'
 
 type Section = 'artists' | 'albums' | 'tracks'
 
@@ -27,9 +28,9 @@ export default function LibraryStatsBar({ current, style }: { current?: Section;
 
   return (
     <div className="stats-bar" style={style}>
-      {chip('artists', stats.artists, '/')}
-      {chip('albums', stats.albums, '/albums')}
-      {chip('tracks', stats.tracks, '/tracks')}
+      {chip('artists', stats.artists, ROUTES.home)}
+      {chip('albums', stats.albums, ROUTES.albums)}
+      {chip('tracks', stats.tracks, ROUTES.tracks)}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ROUTES } from '../routes'
 
 const IconHome = () => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
@@ -48,14 +49,14 @@ export default function MobileNav() {
   const { t } = useTranslation()
   return (
     <nav className="mobile-nav">
-      <NavLink to="/" end className={btn} title={t('nav.home')} aria-label={t('nav.home')}><IconHome /></NavLink>
-      <NavLink to="/search" className={btn} title={t('nav.search')} aria-label={t('nav.search')}><IconSearch /></NavLink>
-      <NavLink to="/videos" className={btn} title={t('nav.films')} aria-label={t('nav.films')}><IconVideo /></NavLink>
-      <NavLink to="/ebooks" className={btn} title={t('nav.books')} aria-label={t('nav.books')}><IconBook /></NavLink>
-      <NavLink to="/comics" className={btn} title={t('nav.comics')} aria-label={t('nav.comics')}><IconComics /></NavLink>
-      <NavLink to="/trending" className={btn} title={t('nav.trending')} aria-label={t('nav.trending')}><IconTrending /></NavLink>
-      <NavLink to="/playlists" className={btn} title={t('nav.playlists', { defaultValue: 'Playlists' })} aria-label={t('nav.playlists', { defaultValue: 'Playlists' })}><IconPlaylist /></NavLink>
-      <NavLink to="/ai" className={btn} title={t('nav.ai')} aria-label={t('nav.ai')}><IconAI /></NavLink>
+      <NavLink to={ROUTES.home} end className={btn} title={t('nav.home')} aria-label={t('nav.home')}><IconHome /></NavLink>
+      <NavLink to={ROUTES.search} className={btn} title={t('nav.search')} aria-label={t('nav.search')}><IconSearch /></NavLink>
+      <NavLink to={ROUTES.videos} className={btn} title={t('nav.films')} aria-label={t('nav.films')}><IconVideo /></NavLink>
+      <NavLink to={ROUTES.ebooks} className={btn} title={t('nav.books')} aria-label={t('nav.books')}><IconBook /></NavLink>
+      <NavLink to={ROUTES.comics} className={btn} title={t('nav.comics')} aria-label={t('nav.comics')}><IconComics /></NavLink>
+      <NavLink to={ROUTES.trending} className={btn} title={t('nav.trending')} aria-label={t('nav.trending')}><IconTrending /></NavLink>
+      <NavLink to={ROUTES.playlists} className={btn} title={t('nav.playlists', { defaultValue: 'Playlists' })} aria-label={t('nav.playlists', { defaultValue: 'Playlists' })}><IconPlaylist /></NavLink>
+      <NavLink to={ROUTES.ai} className={btn} title={t('nav.ai')} aria-label={t('nav.ai')}><IconAI /></NavLink>
     </nav>
   )
 }

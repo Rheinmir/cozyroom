@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf'
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
+import { ROUTES } from '../routes'
 
 interface Ebook {
   id: string
@@ -171,7 +172,7 @@ export default function EbookReaderPage() {
   return (
     <div className={`reader-page theme-${theme}`}>
       <header className="reader-header">
-        <Link to="/ebooks" className="reader-back">
+        <Link to={ROUTES.ebooks} className="reader-back">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
           </svg>

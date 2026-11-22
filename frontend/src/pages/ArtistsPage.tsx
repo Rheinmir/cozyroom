@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchArtists, imgSrc } from '../api'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
+import { paths } from '../routes'
 
 const AVATAR_GRADIENTS = [
   'radial-gradient(125% 125% at 30% 22%, oklch(0.64 0.17 262) 0%, oklch(0.4 0.13 300) 46%, oklch(0.17 0.06 340) 100%)',
@@ -85,7 +86,7 @@ export default function ArtistsPage() {
             return (
               <Link
                 key={a.id}
-                to={`/artist/${a.id}`}
+                to={paths.artist(a.id)}
                 className="artist-card"
                 id={isFirstOfLetter ? `artist-letter-${letter}` : undefined}
               >

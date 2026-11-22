@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { fetchVideos, Video, LIBRARY_STALE_TIME } from '../api'
 import Spinner from '../components/Spinner'
+import { paths } from '../routes'
 
 function formatDuration(s: number) {
   if (!s) return ''
@@ -16,7 +17,7 @@ const FALLBACK_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 
 function VideoCard({ v }: { v: Video }) {
   return (
-    <Link to={`/video/${v.id}`} className="video-poster-card" style={{ textDecoration: 'none' }}>
+    <Link to={paths.video(v.id)} className="video-poster-card" style={{ textDecoration: 'none' }}>
       <div className="video-poster-img">
         <img
           src={v.poster_url || getFallbackPoster(v.id)}

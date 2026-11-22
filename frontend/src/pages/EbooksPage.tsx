@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { imgSrc, fetchEbooks, Ebook, LIBRARY_STALE_TIME } from '../api'
 import { useDialogs } from '../DialogContext'
 import Spinner from '../components/Spinner'
+import { paths } from '../routes'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return '0 Bytes'
@@ -29,7 +30,7 @@ function EbookCard({
   const handleClick = (ev: React.MouseEvent) => {
     ev.preventDefault()
     // Password check is now handled at the filter level or session level
-    navigate(`/ebook/${e.id}`)
+    navigate(paths.ebook(e.id))
   }
 
   const handleCollectionClick = (ev: React.MouseEvent) => {

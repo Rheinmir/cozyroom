@@ -7,6 +7,7 @@ import type { Playlist } from '../api'
 import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../api'
 import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
 import CozyroomMark from './CozyroomMark'
+import { ROUTES } from '../routes'
 
 // Was exactly 56px — the same height as the media-control pill next to it,
 // which read as coincidental/unintentional rather than a deliberate size
@@ -402,9 +403,9 @@ export default function RadialNav() {
   }
 
   const innerItems: RadialItem[] = [
-    { route: '/',          label: t('nav.artists'),                     icon: <IcHome /> },
-    { route: '/ai',        label: 'AI',                                 icon: <IcAI /> },
-    { route: '/playlists', label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist /> },
+    { route: ROUTES.home,          label: t('nav.artists'),                     icon: <IcHome /> },
+    { route: ROUTES.ai,        label: 'AI',                                 icon: <IcAI /> },
+    { route: ROUTES.playlists, label: t('nav.playlists', { defaultValue: 'Playlist' }), icon: <IcPlaylist /> },
     { route: 'bg-sounds',  label: 'Sounds', icon: <IcSounds />, onAction: () => { setBgPanelOpen(true); setOpen(false) } },
     ...(track ? [
       { route: 'star-track',   label: isStarred ? t('nav.unstar', { defaultValue: 'Bỏ sao' }) : t('nav.star', { defaultValue: 'Yêu thích' }), icon: isStarred ? <IcStar /> : <IcStarBorder />, onAction: handleStarToggle },
@@ -413,14 +414,14 @@ export default function RadialNav() {
   ]
 
   const outerItems: RadialItem[] = [
-    { route: '/videos',    label: t('nav.films'),                       icon: <IcVideo /> },
-    { route: '/ebooks',    label: t('nav.ebooks', { defaultValue: 'Sách' }), icon: <IcBook /> },
-    { route: '/comics',    label: t('nav.comics'),                      icon: <IcComics /> },
-    { route: '/trending',  label: t('nav.trending'),                    icon: <IcTrend /> },
-    { route: '/search',    label: t('nav.search'),                      icon: <IcSearch /> },
+    { route: ROUTES.videos,    label: t('nav.films'),                       icon: <IcVideo /> },
+    { route: ROUTES.ebooks,    label: t('nav.ebooks', { defaultValue: 'Sách' }), icon: <IcBook /> },
+    { route: ROUTES.comics,    label: t('nav.comics'),                      icon: <IcComics /> },
+    { route: ROUTES.trending,  label: t('nav.trending'),                    icon: <IcTrend /> },
+    { route: ROUTES.search,    label: t('nav.search'),                      icon: <IcSearch /> },
   ]
 
-  const isTrending = location.pathname.startsWith('/trending')
+  const isTrending = location.pathname.startsWith(ROUTES.trending)
   const auraSize = isTrending ? 560 : 300
   const auraOffset = auraSize / 2
 

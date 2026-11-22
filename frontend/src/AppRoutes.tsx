@@ -31,6 +31,7 @@ import AIStatsPage from './pages/AIStatsPage'
 import MusicStatsPage from './pages/MusicStatsPage'
 import ToolsPage from './pages/ToolsPage'
 import RequestLogPage from './pages/RequestLogPage'
+import { ROUTES } from './routes'
 
 export default function AppRoutes() {
   const mainRef = useRef<HTMLElement>(null)
@@ -47,26 +48,26 @@ export default function AppRoutes() {
           <Header />
           <main className="main" ref={mainRef}>
             <Routes>
-              <Route path="/"            element={<ArtistsPage />} />
-              <Route path="/discover"    element={<DiscoverPage />} />
-              <Route path="/artist/:id"  element={<ArtistPage />} />
-              <Route path="/album/:id"   element={<AlbumPage />} />
-              <Route path="/albums"      element={<AlbumsPage />} />
-              <Route path="/tracks"      element={<TracksPage />} />
-              <Route path="/search"      element={<SearchPage />} />
-              <Route path="/videos"      element={<VideosPage />} />
-              <Route path="/video/:id"   element={<VideoPlayerPage />} />
-              <Route path="/trending"    element={<TrendingPage />} />
-              <Route path="/ebooks"      element={<EbooksPage />} />
-              <Route path="/ebook/:id"   element={<EbookReaderPage />} />
-              <Route path="/comics"      element={<ComicsPage />} />
-              <Route path="/playlists"   element={<PlaylistsPage />} />
-              <Route path="/notes"       element={<NotesPage />} />
-              <Route path="/ai"          element={<AIAssistantPage />} />
-              <Route path="/ai/stats"    element={<AIStatsPage />} />
-              <Route path="/stats/music" element={<MusicStatsPage />} />
-              <Route path="/tools"       element={<ToolsPage />} />
-              <Route path="/debug"       element={<RequestLogPage />} />
+              <Route path={ROUTES.home}            element={<ArtistsPage />} />
+              <Route path={ROUTES.discover}    element={<DiscoverPage />} />
+              <Route path={ROUTES.artist}  element={<ArtistPage />} />
+              <Route path={ROUTES.album}   element={<AlbumPage />} />
+              <Route path={ROUTES.albums}      element={<AlbumsPage />} />
+              <Route path={ROUTES.tracks}      element={<TracksPage />} />
+              <Route path={ROUTES.search}      element={<SearchPage />} />
+              <Route path={ROUTES.videos}      element={<VideosPage />} />
+              <Route path={ROUTES.video}   element={<VideoPlayerPage />} />
+              <Route path={ROUTES.trending}    element={<TrendingPage />} />
+              <Route path={ROUTES.ebooks}      element={<EbooksPage />} />
+              <Route path={ROUTES.ebook}   element={<EbookReaderPage />} />
+              <Route path={ROUTES.comics}      element={<ComicsPage />} />
+              <Route path={ROUTES.playlists}   element={<PlaylistsPage />} />
+              <Route path={ROUTES.notes}       element={<NotesPage />} />
+              <Route path={ROUTES.ai}          element={<AIAssistantPage />} />
+              <Route path={ROUTES.aiStats}    element={<AIStatsPage />} />
+              <Route path={ROUTES.musicStats} element={<MusicStatsPage />} />
+              <Route path={ROUTES.tools}       element={<ToolsPage />} />
+              <Route path={ROUTES.debug}       element={<RequestLogPage />} />
             </Routes>
           </main>
         </div>

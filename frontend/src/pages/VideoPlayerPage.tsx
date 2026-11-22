@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Hls from 'hls.js'
 import BackButton from '../components/BackButton'
+import { ROUTES } from '../routes'
 
 export default function VideoPlayerPage() {
   const { id } = useParams()
@@ -27,7 +28,7 @@ export default function VideoPlayerPage() {
 
   return (
     <div className="video-player-page">
-      <BackButton onClick={() => navigate('/videos')} label="Back to Films" />
+      <BackButton onClick={() => navigate(ROUTES.videos)} label="Back to Films" />
       <div className="video-player-wrap">
         <video ref={videoRef} controls autoPlay>
           Your browser does not support the video tag.

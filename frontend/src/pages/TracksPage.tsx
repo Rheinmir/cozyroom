@@ -7,6 +7,7 @@ import { usePlayer } from '../PlayerContext'
 import FavoritePill from '../components/FavoritePill'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
+import { paths } from '../routes'
 
 const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')]
 function letterOf(name: string) {
@@ -71,7 +72,7 @@ export default function TracksPage() {
                   </td>
                   <td className="col-album">
                     <Link
-                      to={`/album/${t2.album_id}`}
+                      to={paths.album(t2.album_id)}
                       className="text-muted"
                       onClick={e => e.stopPropagation()}
                     >

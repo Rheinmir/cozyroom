@@ -9,6 +9,7 @@ import type { YouTubeResult, Genre } from '../api'
 import FavoritePill from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
+import { ROUTES, paths } from '../routes'
 
 type SearchResult = {
   artists: Artist[]
@@ -459,7 +460,7 @@ export default function SearchPage() {
                   <h2 className="section-title">{t('search.albums')}</h2>
                   <div className="album-grid search-album-grid">
                     {genreAlbums.map(al => (
-                      <Link key={al.id} to={`/album/${al.id}`} className="album-card">
+                      <Link key={al.id} to={paths.album(al.id)} className="album-card">
                         <div className="album-cover">
                           {al.cover_url
                             ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -505,7 +506,7 @@ export default function SearchPage() {
                           </td>
                           <td className="col-album">
                             <Link
-                              to={`/album/${t2.album_id}`}
+                              to={paths.album(t2.album_id)}
                               className="text-muted"
                               onClick={e => e.stopPropagation()}
                             >
@@ -556,7 +557,7 @@ export default function SearchPage() {
         <div className="search-empty-ai">
           <p className="text-muted">{t('search.no_results')}</p>
           <p className="text-muted">{t('search.ask_ai')}</p>
-          <Link to="/ai" state={{ prompt: q }} className="search-ask-ai-btn">
+          <Link to={ROUTES.ai} state={{ prompt: q }} className="search-ask-ai-btn">
             {t('search.ask_ai_button')}
           </Link>
         </div>
@@ -567,7 +568,7 @@ export default function SearchPage() {
           <h2 className="section-title">{t('search.artists')}</h2>
           <div className="search-artist-list">
             {artists.map(a => (
-              <Link key={a.id} to={`/artist/${a.id}`} className="search-artist-row">
+              <Link key={a.id} to={paths.artist(a.id)} className="search-artist-row">
                 <div className="search-avatar" style={{ background: gradientFor(a.name) }}>{a.name.charAt(0).toUpperCase()}</div>
                 <div>
                   <p className="search-row-title">{a.name}</p>
@@ -584,7 +585,7 @@ export default function SearchPage() {
           <h2 className="section-title">{t('search.albums')}</h2>
           <div className="album-grid search-album-grid">
             {albums.map(al => (
-              <Link key={al.id} to={`/album/${al.id}`} className="album-card">
+              <Link key={al.id} to={paths.album(al.id)} className="album-card">
                 <div className="album-cover">
                   {al.cover_url
                     ? <img src={imgSrc(al.cover_url, 200)} alt={al.title} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -630,7 +631,7 @@ export default function SearchPage() {
                   </td>
                   <td className="col-album">
                     <Link
-                      to={`/album/${t2.album_id}`}
+                      to={paths.album(t2.album_id)}
                       className="text-muted"
                       onClick={e => e.stopPropagation()}
                     >

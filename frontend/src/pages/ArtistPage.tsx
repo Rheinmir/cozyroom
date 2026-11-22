@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchAlbums, imgSrc } from '../api'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
+import { ROUTES, paths } from '../routes'
 
 function AlbumCoverImg({ url, title }: { url: string; title: string }) {
   const [err, setErr] = useState(false)
@@ -34,7 +35,7 @@ export default function ArtistPage() {
 
   return (
     <div className="page">
-      <BackButton to="/" label="Artists" />
+      <BackButton to={ROUTES.home} label="Artists" />
       <div className="artist-hero">
         <div className="artist-hero-avatar">
           <ArtistHeroImg url={artistImageUrl} name={artistName} />
@@ -49,7 +50,7 @@ export default function ArtistPage() {
       <h2 className="section-title">Albums</h2>
       <div className="album-grid">
         {albums.map(al => (
-          <Link key={al.id} to={`/album/${al.id}`} className="album-card">
+          <Link key={al.id} to={paths.album(al.id)} className="album-card">
             <div className="album-cover">
               <AlbumCoverImg url={al.cover_url} title={al.title} />
               <div className="album-play-overlay">

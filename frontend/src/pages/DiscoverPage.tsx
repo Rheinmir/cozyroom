@@ -7,6 +7,7 @@ import type { Track } from '../types'
 import { usePlayer } from '../PlayerContext'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
+import { paths } from '../routes'
 
 const cover = (albumId: string, w: number) => imgSrc(`/api/covers/${albumId}`, w)
 
@@ -94,7 +95,7 @@ export default function DiscoverPage() {
       {hero.length > 0 && (
         <div className="discover-hero">
           {hero.map(al => (
-            <Link key={al.id} to={`/album/${al.id}`} className="discover-hero-card">
+            <Link key={al.id} to={paths.album(al.id)} className="discover-hero-card">
               {al.cover_url
                 ? <img src={imgSrc(al.cover_url, 600)} alt={al.title} loading="lazy" />
                 : <div className="discover-hero-nocover">♪</div>}
@@ -118,7 +119,7 @@ export default function DiscoverPage() {
           <h2 className="discover-section-title">{t('search.albums')}</h2>
           <div className="discover-shelf">
             {shelfAlbums.map(al => (
-              <Link key={al.id} to={`/album/${al.id}`} className="discover-shelf-album">
+              <Link key={al.id} to={paths.album(al.id)} className="discover-shelf-album">
                 <div className="discover-shelf-cover">
                   {al.cover_url ? <img src={imgSrc(al.cover_url, 240)} alt={al.title} loading="lazy" /> : <span className="no-cover">♪</span>}
                 </div>
@@ -135,7 +136,7 @@ export default function DiscoverPage() {
           <h2 className="discover-section-title">{t('nav.artists')}</h2>
           <div className="discover-shelf">
             {shelfArtists.map(a => (
-              <Link key={a.id} to={`/artist/${a.id}`} className="discover-shelf-artist">
+              <Link key={a.id} to={paths.artist(a.id)} className="discover-shelf-artist">
                 <div className="discover-shelf-avatar">
                   {a.image_url ? <img src={imgSrc(a.image_url, 200)} alt={a.name} loading="lazy" /> : <span>{a.name.charAt(0).toUpperCase()}</span>}
                 </div>

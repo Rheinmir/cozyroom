@@ -1,6 +1,7 @@
 import { useRef } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation, matchPath } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ROUTES } from '../routes'
 
 export default function Header() {
   const { t } = useTranslation()
@@ -13,14 +14,14 @@ export default function Header() {
   // Search the CURRENT tab's own content instead of always jumping to the music
   // search. Each list page reads ?q= and filters its own list; music is default.
   const ctx =
-    pathname.startsWith('/ebooks') ? { path: '/ebooks', label: t('nav.ebooks') } :
-    pathname.startsWith('/comics') ? { path: '/comics', label: t('nav.comics') } :
-    pathname.startsWith('/videos') || pathname.startsWith('/video/') ? { path: '/videos', label: t('nav.films') } :
-    pathname.startsWith('/albums') ? { path: '/albums', label: t('search.albums') } :
-    pathname.startsWith('/tracks') ? { path: '/tracks', label: t('search.tracks') } :
-    { path: '/search', label: '' }
+    pathname.startsWith(ROUTES.ebooks) ? { path: ROUTES.ebooks, label: t('nav.ebooks') } :
+    pathname.startsWith(ROUTES.comics) ? { path: ROUTES.comics, label: t('nav.comics') } :
+    pathname.startsWith(ROUTES.videos) || matchPath({ path: ROUTES.video, end: false }, pathname) ? { path: ROUTES.videos, label: t('nav.films') } :
+    pathname.startsWith(ROUTES.albums) ? { path: ROUTES.albums, label: t('search.albums') } :
+    pathname.startsWith(ROUTES.tracks) ? { path: ROUTES.tracks, label: t('search.tracks') } :
+    { path: ROUTES.search, label: '' }
 
-  const placeholder = ctx.path === '/search' ? t('search.placeholder') : `Tìm trong ${ctx.label}…`
+  const placeholder = ctx.path === ROUTES.search ? t('search.placeholder') : `Tìm trong ${ctx.label}…`
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value

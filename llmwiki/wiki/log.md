@@ -1598,3 +1598,9 @@
 - Bo cuc trong hop 413x896, scale bang 1 don vi CSS (--p) nen giu ti le tu 390 den 1440px.
 - Do: SSIM so voi anh tham chieu 0.869 (390) / 0.862 (1440); sai so hop phan tu <= 0.72%; muc tieu 97% KHONG dat bang pixel-SSIM (anh tham chieu la anh chup man hinh, font khac).
 - Chua tao wiki entry rieng: cho owner duyet Step 1.
+
+## 2026-11-23 — url-standard step 1 — routes.ts + path builders (branch kozu/routes-table)
+
+- Moi: frontend/src/routes.ts (ROUTES + paths.artist/album/video/ebook/search). 20 file doi chuoi duong dan cung sang ROUTES/paths. Khong doi URL nao.
+- Kiem: tsc khong loi moi; 20 route deu mo duoc; href cua Sidebar, MobileNav, stats bar, card artist/album giong het truoc; header search giu theo tab.
+- Cap nhat concepts/frontend-component-map.md bang harness/scripts/index-frontend.py.

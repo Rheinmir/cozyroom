@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MCP_TOOLS } from '../data/mcpTools'
 import type { McpTool } from '../data/mcpTools'
+import { ROUTES } from '../routes'
 
 const CATEGORIES = [...new Set(MCP_TOOLS.map(t => t.category))]
 
@@ -105,7 +106,7 @@ export default function ToolsPage() {
   })
 
   const handleUse = (tool: McpTool) => {
-    navigate('/ai', { state: { prompt: `/${tool.name} ` } })
+    navigate(ROUTES.ai, { state: { prompt: `/${tool.name} ` } })
   }
 
   return (

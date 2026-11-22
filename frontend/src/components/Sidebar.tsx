@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchLastfmStatus } from '../api'
 import type { LastfmStatus } from '../api'
 import CozyroomMark from './CozyroomMark'
+import { ROUTES } from '../routes'
 
 const COLLAPSED_W = '56px'
 const EXPANDED_W  = '220px'
@@ -94,7 +95,7 @@ export default function Sidebar() {
 
       <div className="sidebar-section">
         {!collapsed && <p className="sidebar-label">{t('nav.library')}</p>}
-        <NavLink to="/discover" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.discover')}>
+        <NavLink to={ROUTES.discover} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.discover')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
@@ -103,7 +104,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.discover')}</span>}
         </NavLink>
-        <NavLink to="/videos" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.films')}>
+        <NavLink to={ROUTES.videos} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.films')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <rect x="2" y="6" width="16" height="11" rx="1.5" fill="currentColor" />
@@ -112,7 +113,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.films')}</span>}
         </NavLink>
-        <NavLink to="/ebooks" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ebooks')}>
+        <NavLink to={ROUTES.ebooks} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ebooks')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <path d="M2 4c2-1 5-1 8 1v11c-3-2-6-2-8-1z" fill="currentColor" />
@@ -121,7 +122,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.ebooks')}</span>}
         </NavLink>
-        <NavLink to="/comics" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.comics')}>
+        <NavLink to={ROUTES.comics} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.comics')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <rect x="2" y="3" width="16" height="11" rx="2" fill="currentColor" />
@@ -133,7 +134,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.comics')}</span>}
         </NavLink>
-        <NavLink to="/trending" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.trending')}>
+        <NavLink to={ROUTES.trending} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.trending')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <path d="M2 15l5-5 3 3 6-7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -142,7 +143,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.trending')}</span>}
         </NavLink>
-        <NavLink to="/playlists" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.playlists', { defaultValue: 'Playlists' })}>
+        <NavLink to={ROUTES.playlists} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.playlists', { defaultValue: 'Playlists' })}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <circle cx="5" cy="15" r="2.5" fill="currentColor" />
@@ -152,7 +153,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.playlists', { defaultValue: 'Playlists' })}</span>}
         </NavLink>
-        <NavLink to="/notes" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Notes">
+        <NavLink to={ROUTES.notes} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Notes">
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <rect x="3" y="2" width="14" height="16" rx="1.5" fill="currentColor" />
@@ -163,7 +164,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">Notes</span>}
         </NavLink>
-        <NavLink to="/ai" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ai')}>
+        <NavLink to={ROUTES.ai} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title={t('nav.ai')}>
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9A2.5 2.5 0 0 1 17 5.5v5A2.5 2.5 0 0 1 14.5 13H8l-3.5 3v-3H5.5A2.5 2.5 0 0 1 3 10.5z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
@@ -174,7 +175,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">{t('nav.ai')}</span>}
         </NavLink>
-        <NavLink to="/stats/music" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Số liệu nghe nhạc">
+        <NavLink to={ROUTES.musicStats} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Số liệu nghe nhạc">
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <rect x="2" y="10" width="3.5" height="8" rx="1" fill="currentColor" />
@@ -184,7 +185,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span className="nav-link-text">Số liệu nghe</span>}
         </NavLink>
-        <NavLink to="/debug" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Request Log">
+        <NavLink to={ROUTES.debug} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')} title="Request Log">
           <span className="nav-link-icon">
             <svg viewBox="0 0 20 20" width="18" height="18">
               <circle cx="10" cy="10" r="2" fill="currentColor" />
