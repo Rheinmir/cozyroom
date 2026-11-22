@@ -120,7 +120,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
         <div className="vinyl-dots">
           <button onClick={onLyrics} aria-label={t('player.lyrics')} />
           <button onClick={onQueue} aria-label={t('vinyl.playlist')} />
-          <button className="on" aria-label={t('player.now_playing')} />
+          <button className="on" aria-current="true" aria-label={t('player.now_playing')} />
         </div>
 
         <button className="vinyl-cta" onClick={() => (isPlaying ? onLyrics() : toggle())}>
