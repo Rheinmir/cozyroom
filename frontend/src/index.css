@@ -5627,3 +5627,11 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
 :root[data-theme="light"] .hub-sub, :root[data-theme="light"] .hub-continue-label, :root[data-theme="light"] .hub-continue-artist,
 :root[data-theme="light"] .hub-tile-desc, :root[data-theme="light"] .hub-tile-count { color: rgba(0,0,0,.66); }
 @media (prefers-reduced-motion: reduce) { .hub-tile { transition: none; } .hub-tile:hover, .hub-tile:focus-visible { transform: none; } }
+
+/* Lyrics tab on phones: .npo-back-zone (left 35%, full height) used to sit on top of the header, so the close
+   chevron and the left edge of the "Now Playing" tab could not be tapped. The header now stacks above the zone;
+   it passes empty taps through (pointer-events none) so the zone below still goes back to the player tab. */
+@media (max-width: 640px) {
+  .npo-header { position: relative; z-index: 3; pointer-events: none; }
+  .npo-tabs-mobile { pointer-events: auto; }
+}

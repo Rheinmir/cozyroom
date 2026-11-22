@@ -1632,3 +1632,9 @@
 
 - Moi: pages/HomePage.tsx (greeting + chips thong ke, the Continue tu PlayerContext, 7 tile module), .hub-* trong index.css, hub.* i18n en/vi; AppRoutes: "/" render HomePage (truoc: redirect /music); logo Sidebar va nut Home mobile ve "/".
 - Kiem: Playwright 390/768/1440 (khong tran, khong chong, mot man hinh tu 900px, href 7 tile, Tab, focus ring, rong/co track, vi); tuong phan chu >= 4.5:1 dark va light (do that); chay lai bo kiem tra redirect/link/overlay: xanh.
+
+## 2026-11-23 — lyrics tab: close chevron tappable on phones (branch kozu/lyrics-close-tap)
+
+- Loi: o <=640px .npo-back-zone (35% trai, cao het) de len header nen khong bam duoc chevron dong va mep trai tab "Now Playing".
+- Sua: header position:relative z-index:3 + pointer-events:none (tab switcher pointer-events:auto). Ccham vao goc header khi chevron an van quay ve tab player.
+- Kiem: Playwright 390x844, 360x640, 640x900: truoc 5 FAIL, sau 0 FAIL; bo kiem tra overlay ?np= van xanh.
