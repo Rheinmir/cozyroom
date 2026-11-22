@@ -4,10 +4,8 @@ import { usePlayer } from '../PlayerContext'
 import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation } from '../api'
 import { useFlipUp } from '../useFlipPosition'
 import type { LyricsData, SourceInfo } from '../api'
-import { checkOwner, getOwnerPw, setOwnerPw } from '../ownerAuth'
+import { checkOwner, getOwnerPw, setOwnerPw, clearOwnerPw } from '../ownerAuth'
 
-const AUTH_KEY = 'hs-lyrics-auth'
-const grantAuth = () => localStorage.setItem(AUTH_KEY, '1')
 
 const SS = 'lyr:'
 type CacheEntry = { results: LyricsData[]; sources: SourceInfo[]; beCached: boolean }
@@ -261,7 +259,6 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
       if (!(await checkOwner(pw))) { setSaveMsg(t('lyrics.wrong_password')); return }
       setOwnerPw(pw)
       ownerPw = pw
-      grantAuth()
     }
     if (!data) { setSaveMsg(t('lyrics.none_selected')); return }
 
@@ -290,6 +287,13 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
       setPw('')
       doFetch(trackId, true)
     } catch (e) {
+      // Stored password no longer valid (changed on the server): forget it and ask again.
+      if (e instanceof Error && e.message.startsWith('HTTP 401')) {
+        clearOwnerPw()
+        setPwVisible(true)
+        setSaveMsg(t('lyrics.wrong_password'))
+        return
+      }
       setSaveMsg(e instanceof Error ? e.message : 'Network error')
       console.error('[save lyrics]', e)
     } finally {
