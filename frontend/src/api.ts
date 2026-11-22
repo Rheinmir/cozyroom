@@ -1,6 +1,8 @@
 import type { Artist, Album, Track, Stats } from './types'
+import { API, MEDIA } from './endpoints'
 
-const RESIZABLE_RE = /^\/api\/(covers|artist-images|ebook-covers)\//
+// Backend JSON still emits the old /api/covers/... form; the frontend builds /media/covers/... — accept both.
+const RESIZABLE_RE = /^\/(api|media)\/(covers|artist-images|ebook-covers)\//
 export const imgSrc = (url: string | undefined, w: number): string => {
   if (!url) return ''
   return RESIZABLE_RE.test(url) ? `${url}?w=${w}` : url
@@ -19,23 +21,23 @@ export const LIBRARY_STALE_TIME = 24 * 60 * 60_000
 
 export type ArtistDetail = { id: string; name: string; album_count: number; track_count: number; genres: string[] }
 
-export const fetchStats        = ()               => get<Stats>('/api/stats')
-export const fetchArtistDetail = (id: string)     => get<ArtistDetail>(`/api/artists/${id}`)
-export const fetchArtists = ()              => get<Artist[]>('/api/artists')
+export const fetchStats        = ()               => get<Stats>(`${API}/stats`)
+export const fetchArtistDetail = (id: string)     => get<ArtistDetail>(`${API}/artists/${id}`)
+export const fetchArtists = ()              => get<Artist[]>(`${API}/artists`)
 export const fetchAlbums  = (artistId?: string) =>
-  get<Album[]>(`/api/albums${artistId ? `?artist_id=${artistId}` : ''}`)
-export const fetchAlbum   = (albumId: string)   => get<Album>(`/api/albums/${albumId}`)
+  get<Album[]>(`${API}/albums${artistId ? `?artist_id=${artistId}` : ''}`)
+export const fetchAlbum   = (albumId: string)   => get<Album>(`${API}/albums/${albumId}`)
 export const fetchTracks  = (albumId: string)   =>
-  get<Track[] | null>(`/api/tracks?album_id=${albumId}`).then(t => t ?? [])  // null = empty album; never crash the page
-export const streamUrl        = (trackId: string)   => `/stream/${trackId}`
-export const fetchSmartQueue  = (trackId: string)   => get<Track[]>(`/api/smart-queue?track_id=${trackId}&limit=30`)
+  get<Track[] | null>(`${API}/tracks?album_id=${albumId}`).then(t => t ?? [])  // null = empty album; never crash the page
+export const streamUrl        = (trackId: string)   => `${MEDIA}/audio/${trackId}`
+export const fetchSmartQueue  = (trackId: string)   => get<Track[]>(`${API}/smart-queue?track_id=${trackId}&limit=30`)
 
 // ---- Genres (Browse grid in Search) ----
 export type Genre = { name: string; track_count: number; cover_url: string }
 export type GenreDetail = { albums: Album[]; tracks: (Track & { album_title: string })[] }
 
-export const fetchGenres = () => get<Genre[]>('/api/genres')
-export const fetchGenreDetail = (genre: string) => get<GenreDetail>(`/api/genres/${encodeURIComponent(genre)}`)
+export const fetchGenres = () => get<Genre[]>(`${API}/genres`)
+export const fetchGenreDetail = (genre: string) => get<GenreDetail>(`${API}/genres/${encodeURIComponent(genre)}`)
 
 export type Ebook = {
   id: string
@@ -47,7 +49,7 @@ export type Ebook = {
   is_nsfw?: boolean
   collection?: string
 }
-export const fetchEbooks = () => get<Ebook[]>('/api/ebooks')
+export const fetchEbooks = () => get<Ebook[]>(`${API}/ebooks`)
 
 export type Video = {
   id: string
@@ -58,7 +60,7 @@ export type Video = {
   poster_url?: string
   group_name?: string
 }
-export const fetchVideos = () => get<Video[]>('/api/videos')
+export const fetchVideos = () => get<Video[]>(`${API}/videos`)
 
 export type LyricLine    = { time: number; text: string }
 export type LyricsData   = { synced: LyricLine[]; plain: string; source: string }
@@ -67,14 +69,14 @@ export type LyricsMulti  = { results: LyricsData[]; sources: SourceInfo[]; cache
 
 export const fetchLyrics = (trackId: string, signal?: AbortSignal) =>
   signal
-    ? fetch(`/api/lyrics/${trackId}`, { signal }).then(r => {
+    ? fetch(`${API}/lyrics/${trackId}`, { signal }).then(r => {
         if (!r.ok) throw new Error(`${r.status} /api/lyrics/${trackId}`)
         return r.json() as Promise<LyricsMulti>
       })
-    : get<LyricsMulti>(`/api/lyrics/${trackId}`)
+    : get<LyricsMulti>(`${API}/lyrics/${trackId}`)
 
 export const saveLyrics = (trackId: string, lrc: string): Promise<void> =>
-  fetch(`/api/lyrics/${trackId}`, {
+  fetch(`${API}/lyrics/${trackId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ lrc }),
@@ -86,28 +88,28 @@ export const saveLyrics = (trackId: string, lrc: string): Promise<void> =>
   })
 
 export const bustLyricsCache = (trackId: string): Promise<void> =>
-  fetch(`/api/lyrics/${trackId}`, { method: 'DELETE' }).then(() => {})
+  fetch(`${API}/lyrics/${trackId}`, { method: 'DELETE' }).then(() => {})
 
 export const fetchLyricsTranslation = (trackId: string, lang = 'vi') =>
-  get<{ lines: string[] }>(`/api/lyrics/${trackId}/translate?lang=${lang}`)
+  get<{ lines: string[] }>(`${API}/lyrics/${trackId}/translate?lang=${lang}`)
 
 export const detectLyricsLanguage = (text: string) =>
-  get<{ lang: string; confidence: number }>(`/api/lyrics/detect-language?text=${encodeURIComponent(text)}`)
+  get<{ lang: string; confidence: number }>(`${API}/lyrics/detect-language?text=${encodeURIComponent(text)}`)
 
 // Last.fm
 export type LastfmStatus = { connected: boolean; username: string; configured: boolean }
 
-export const fetchLastfmStatus = () => get<LastfmStatus>('/api/lastfm/status')
+export const fetchLastfmStatus = () => get<LastfmStatus>(`${API}/lastfm/status`)
 
 export const lastfmNowPlaying = (artist: string, track: string, album: string): Promise<void> =>
-  fetch('/api/lastfm/now-playing', {
+  fetch(`${API}/lastfm/now-playing`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ artist, track, album }),
   }).then(() => {})
 
 export const lastfmScrobble = (artist: string, track: string, album: string, timestamp: number): Promise<void> =>
-  fetch('/api/lastfm/scrobble', {
+  fetch(`${API}/lastfm/scrobble`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ artist, track, album, timestamp }),
@@ -115,7 +117,7 @@ export const lastfmScrobble = (artist: string, track: string, album: string, tim
 
 // ---- Play stats ----
 export const recordPlay = (trackId: string): Promise<void> =>
-  fetch(`/api/tracks/${trackId}/play`, { method: 'POST' }).then(() => {})
+  fetch(`${API}/tracks/${trackId}/play`, { method: 'POST' }).then(() => {})
 
 export type TopPlayedTrack = {
   id: string
@@ -129,18 +131,18 @@ export type DailyPlayCount = { date: string; plays: number }
 export type PlayStats = { top: TopPlayedTrack[]; daily: DailyPlayCount[] }
 
 export const fetchPlayStats = (days = 30): Promise<PlayStats> =>
-  get<PlayStats>(`/api/stats/plays?days=${days}`)
+  get<PlayStats>(`${API}/stats/plays?days=${days}`)
 
 export const fetchMusicInsight = (): Promise<{ insight: string }> =>
-  get<{ insight: string }>('/api/ai/music-insight')
+  get<{ insight: string }>(`${API}/ai/music-insight`)
 
 export const backfillLastfmPlayCounts = (): Promise<void> =>
-  fetch('/api/lastfm/backfill-play-counts', { method: 'POST' }).then(r => {
+  fetch(`${API}/lastfm/backfill-play-counts`, { method: 'POST' }).then(r => {
     if (!r.ok) throw new Error('backfill failed')
   })
 
 export type LastfmBackfillStatus = { running: boolean; done: number; total: number; error: string }
-export const fetchLastfmBackfillStatus = () => get<LastfmBackfillStatus>('/api/lastfm/backfill-play-counts')
+export const fetchLastfmBackfillStatus = () => get<LastfmBackfillStatus>(`${API}/lastfm/backfill-play-counts`)
 
 // ---- Scraper (Comics) ----
 export type ComicResult = {
@@ -167,49 +169,49 @@ export type ComicsDownload = {
 
 export type LocalChapter = { id: string; page_count: number }
 
-export const fetchDownloads = () => get<ComicsDownload[]>('/api/scraper/downloads')
+export const fetchDownloads = () => get<ComicsDownload[]>(`${API}/scraper/downloads`)
 export const deleteDownload = (id: string): Promise<void> =>
-  fetch(`/api/scraper/downloads/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(() => {})
+  fetch(`${API}/scraper/downloads/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(() => {})
 export const retryDownload = (id: string): Promise<void> =>
-  fetch(`/api/scraper/downloads/${encodeURIComponent(id)}/retry`, { method: 'POST' }).then(() => {})
+  fetch(`${API}/scraper/downloads/${encodeURIComponent(id)}/retry`, { method: 'POST' }).then(() => {})
 export const enqueueEHDownload = (gid: string, token: string): Promise<void> =>
-  fetch(`/api/scraper/enqueue/eh/${encodeURIComponent(gid)}/${encodeURIComponent(token)}`, { method: 'POST' }).then(() => {})
+  fetch(`${API}/scraper/enqueue/eh/${encodeURIComponent(gid)}/${encodeURIComponent(token)}`, { method: 'POST' }).then(() => {})
 export const enqueueMDDownload = (mangaId: string): Promise<void> =>
-  fetch(`/api/scraper/enqueue/md/${encodeURIComponent(mangaId)}`, { method: 'POST' }).then(() => {})
+  fetch(`${API}/scraper/enqueue/md/${encodeURIComponent(mangaId)}`, { method: 'POST' }).then(() => {})
 export const fetchLocalChapters = (id: string) =>
-  get<LocalChapter[]>(`/api/scraper/local/${encodeURIComponent(id)}/chapters`)
+  get<LocalChapter[]>(`${API}/scraper/local/${encodeURIComponent(id)}/chapters`)
 
 export type EHentaiPage = { index: number; link: string }
 
 export type LatestResponse = { results: ComicResult[]; fetchedAt?: string }
 
 export const fetchLatestMangaDex = () =>
-  get<LatestResponse>('/api/scraper/md/latest')
+  get<LatestResponse>(`${API}/scraper/md/latest`)
 
 export const fetchLatestEHentai = () =>
-  get<LatestResponse>('/api/scraper/eh/latest')
+  get<LatestResponse>(`${API}/scraper/eh/latest`)
 
 export const searchMangaDex = (q: string) =>
-  get<{ results: ComicResult[] }>(`/api/scraper/md/search?q=${encodeURIComponent(q)}`)
+  get<{ results: ComicResult[] }>(`${API}/scraper/md/search?q=${encodeURIComponent(q)}`)
 
 export const fetchMangaChapters = (id: string) =>
   get<Array<{ id: string; chapter: string; title: string; volume: string; group: string; uploaded: string }>>(
-    `/api/scraper/md/chapters/${id}`
+    `${API}/scraper/md/chapters/${id}`
   )
 
 export const fetchMangaPages = (id: string) =>
-  get<string[]>(`/api/scraper/md/pages/${id}`)
+  get<string[]>(`${API}/scraper/md/pages/${id}`)
 
 export const searchEHentai = (q: string, page?: number) =>
   get<{ results: ComicResult[]; nextPage: number }>(
-    `/api/scraper/eh/search?q=${encodeURIComponent(q)}${page ? '&page=' + page : ''}`
+    `${API}/scraper/eh/search?q=${encodeURIComponent(q)}${page ? '&page=' + page : ''}`
   )
 
 export const fetchEHentaiDetail = (url: string) =>
-  get<ComicResult>(`/api/scraper/eh/detail?url=${encodeURIComponent(url)}`)
+  get<ComicResult>(`${API}/scraper/eh/detail?url=${encodeURIComponent(url)}`)
 
 export const fetchEHentaiPages = (url: string) =>
-  get<EHentaiPage[]>(`/api/scraper/eh/pages?url=${encodeURIComponent(url)}`)
+  get<EHentaiPage[]>(`${API}/scraper/eh/pages?url=${encodeURIComponent(url)}`)
 
 // ---- Trending ----
 export type TrendingRepo = {
@@ -240,16 +242,16 @@ export type YouTubeResult = {
 }
 
 export const searchYoutube = (q: string): Promise<YouTubeResult[]> =>
-  get<YouTubeResult[]>(`/api/youtube/search?q=${encodeURIComponent(q)}`)
+  get<YouTubeResult[]>(`${API}/youtube/search?q=${encodeURIComponent(q)}`)
 
 export const fetchYouTubeChannel = (url: string, offset = 0, q = ''): Promise<YouTubeResult[]> => {
   const params = new URLSearchParams({ url, offset: String(offset) })
   if (q) params.set('q', q)
-  return get<YouTubeResult[]>(`/api/youtube/channel?${params}`)
+  return get<YouTubeResult[]>(`${API}/youtube/channel?${params}`)
 }
 
 export const downloadYoutube = (id: string, title?: string, artist?: string): Promise<{ status: string; tracks_scanned: number }> =>
-  fetch('/api/youtube/download', {
+  fetch(`${API}/youtube/download`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, title, artist }),
@@ -259,15 +261,15 @@ export const downloadYoutube = (id: string, title?: string, artist?: string): Pr
   })
 
 export const fetchTrending = (date?: string) =>
-  get<TrendingRepo[]>(`/api/trending${date ? `?date=${date}` : ''}`)
+  get<TrendingRepo[]>(`${API}/trending${date ? `?date=${date}` : ''}`)
 
-export const fetchTrendingDates = () => get<string[]>('/api/trending/dates')
+export const fetchTrendingDates = () => get<string[]>(`${API}/trending/dates`)
 
 export const fetchTrendingHistory = (id: string) =>
-  get<StarPoint[]>(`/api/trending/history?id=${encodeURIComponent(id)}`)
+  get<StarPoint[]>(`${API}/trending/history?id=${encodeURIComponent(id)}`)
 
 export const triggerTrendingRefresh = () =>
-  fetch('/api/trending/refresh', { method: 'POST' }).then(r => r.json())
+  fetch(`${API}/trending/refresh`, { method: 'POST' }).then(r => r.json())
 
 // ---- Playlists ----
 export type Playlist = {
@@ -280,13 +282,13 @@ export type Playlist = {
 }
 
 export const fetchPlaylists = (): Promise<Playlist[]> =>
-  get<Playlist[]>('/api/playlists')
+  get<Playlist[]>(`${API}/playlists`)
 
 export const fetchPlaylistTracks = (id: string): Promise<Track[]> =>
-  get<Track[]>(`/api/playlists/${encodeURIComponent(id)}/tracks`)
+  get<Track[]>(`${API}/playlists/${encodeURIComponent(id)}/tracks`)
 
 export const createPlaylist = (name: string, password?: string): Promise<Playlist> =>
-  fetch('/api/playlists', {
+  fetch(`${API}/playlists`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -302,7 +304,7 @@ export const createPlaylist = (name: string, password?: string): Promise<Playlis
   })
 
 export const deletePlaylist = (id: string, password?: string): Promise<void> =>
-  fetch(`/api/playlists/${encodeURIComponent(id)}`, {
+  fetch(`${API}/playlists/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: password ? { 'X-Owner-Password': password } : {},
   }).then(async r => {
@@ -313,7 +315,7 @@ export const deletePlaylist = (id: string, password?: string): Promise<void> =>
   })
 
 export const renamePlaylist = (id: string, name: string, password?: string): Promise<Playlist> =>
-  fetch(`/api/playlists/${encodeURIComponent(id)}`, {
+  fetch(`${API}/playlists/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -329,7 +331,7 @@ export const renamePlaylist = (id: string, name: string, password?: string): Pro
   })
 
 export const addTrackToPlaylist = (playlistId: string, trackId: string, password?: string): Promise<void> =>
-  fetch(`/api/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+  fetch(`${API}/playlists/${encodeURIComponent(playlistId)}/tracks`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -344,7 +346,7 @@ export const addTrackToPlaylist = (playlistId: string, trackId: string, password
   })
 
 export const removeTrackFromPlaylist = (playlistId: string, trackId: string, password?: string): Promise<void> =>
-  fetch(`/api/playlists/${encodeURIComponent(playlistId)}/tracks/${encodeURIComponent(trackId)}`, {
+  fetch(`${API}/playlists/${encodeURIComponent(playlistId)}/tracks/${encodeURIComponent(trackId)}`, {
     method: 'DELETE',
     headers: password ? { 'X-Owner-Password': password } : {},
   }).then(async r => {
@@ -383,7 +385,7 @@ const kanbanJSON = <T>(url: string, method: string, body: unknown, creds: Kanban
 
 // -- Auth (register/login are unauthenticated by definition; no creds yet) --
 export const registerKanbanUser = (username: string, password: string): Promise<{ username: string; status: string }> =>
-  fetch('/api/kanban/register', {
+  fetch(`${API}/kanban/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -396,7 +398,7 @@ export const registerKanbanUser = (username: string, password: string): Promise<
   })
 
 export const loginKanbanUser = (username: string, password: string): Promise<{ token: string; username: string; color: string; expires_at: number }> =>
-  fetch('/api/kanban/login', {
+  fetch(`${API}/kanban/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -409,20 +411,20 @@ export const loginKanbanUser = (username: string, password: string): Promise<{ t
   })
 
 export const logoutKanbanUser = (token: string): Promise<void> =>
-  fetch('/api/kanban/logout', { method: 'POST', headers: { 'X-Kanban-Session': token } }).then(() => undefined)
+  fetch(`${API}/kanban/logout`, { method: 'POST', headers: { 'X-Kanban-Session': token } }).then(() => undefined)
 
 export type KanbanUser = { id: string; username: string; color: string }
 export type KanbanPendingUser = { id: string; username: string; created_at: number }
 
 export const listApprovedKanbanUsers = (creds: KanbanCreds) =>
-  kanbanFetch<KanbanUser[]>('/api/kanban/users', creds, {}, 'to list users')
+  kanbanFetch<KanbanUser[]>(`${API}/kanban/users`, creds, {}, 'to list users')
 export const listPendingKanbanUsers = (password: string) =>
-  kanbanFetch<KanbanPendingUser[]>('/api/kanban/admin/pending', { password }, {}, 'to list pending users')
+  kanbanFetch<KanbanPendingUser[]>(`${API}/kanban/admin/pending`, { password }, {}, 'to list pending users')
 export const approveKanbanUser = (id: string, password: string, boardId?: string, roleId?: string) =>
-  kanbanJSON<void>(`/api/kanban/admin/users/${encodeURIComponent(id)}/approve`, 'POST',
+  kanbanJSON<void>(`${API}/kanban/admin/users/${encodeURIComponent(id)}/approve`, 'POST',
     { board_id: boardId, role_id: roleId }, { password }, 'to approve user')
 export const rejectKanbanUser = (id: string, password: string) =>
-  kanbanFetch<void>(`/api/kanban/admin/users/${encodeURIComponent(id)}/reject`, { password }, { method: 'POST' }, 'to reject user')
+  kanbanFetch<void>(`${API}/kanban/admin/users/${encodeURIComponent(id)}/reject`, { password }, { method: 'POST' }, 'to reject user')
 
 // -- Boards / columns / labels --
 export type KanbanBoard = { id: string; name: string; position: number; created_at: number }
@@ -430,40 +432,40 @@ export type KanbanColumn = { id: string; board_id: string; name: string; positio
 export type KanbanLabel = { id: string; board_id: string; name: string; color: string }
 
 export const listBoards = (creds: KanbanCreds) =>
-  kanbanFetch<KanbanBoard[]>('/api/boards', creds, {}, 'to list boards')
+  kanbanFetch<KanbanBoard[]>(`${API}/boards`, creds, {}, 'to list boards')
 export const createBoard = (name: string, creds: KanbanCreds) =>
-  kanbanJSON<KanbanBoard>('/api/boards', 'POST', { name }, creds, 'to create board')
+  kanbanJSON<KanbanBoard>(`${API}/boards`, 'POST', { name }, creds, 'to create board')
 export const updateBoard = (id: string, patch: { name: string; position: number }, creds: KanbanCreds) =>
-  kanbanJSON<void>(`/api/boards/${encodeURIComponent(id)}`, 'PUT', patch, creds, 'to update board')
+  kanbanJSON<void>(`${API}/boards/${encodeURIComponent(id)}`, 'PUT', patch, creds, 'to update board')
 export const deleteBoard = (id: string, creds: KanbanCreds) =>
-  kanbanFetch<void>(`/api/boards/${encodeURIComponent(id)}`, creds, { method: 'DELETE' }, 'to delete board')
+  kanbanFetch<void>(`${API}/boards/${encodeURIComponent(id)}`, creds, { method: 'DELETE' }, 'to delete board')
 
 export const listColumns = (boardId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanColumn[]>(`/api/boards/${encodeURIComponent(boardId)}/columns`, creds, {}, 'to list columns')
+  kanbanFetch<KanbanColumn[]>(`${API}/boards/${encodeURIComponent(boardId)}/columns`, creds, {}, 'to list columns')
 export const createColumn = (boardId: string, name: string, creds: KanbanCreds) =>
-  kanbanJSON<KanbanColumn>(`/api/boards/${encodeURIComponent(boardId)}/columns`, 'POST', { name }, creds, 'to create column')
+  kanbanJSON<KanbanColumn>(`${API}/boards/${encodeURIComponent(boardId)}/columns`, 'POST', { name }, creds, 'to create column')
 export const updateColumn = (boardId: string, columnId: string, patch: { name: string; position: number }, creds: KanbanCreds) =>
-  kanbanJSON<void>(`/api/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`, 'PUT', patch, creds, 'to update column')
+  kanbanJSON<void>(`${API}/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`, 'PUT', patch, creds, 'to update column')
 export const deleteColumn = (boardId: string, columnId: string, creds: KanbanCreds) =>
-  kanbanFetch<void>(`/api/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`, creds, { method: 'DELETE' }, 'to delete column')
+  kanbanFetch<void>(`${API}/boards/${encodeURIComponent(boardId)}/columns/${encodeURIComponent(columnId)}`, creds, { method: 'DELETE' }, 'to delete column')
 
 export const listLabels = (boardId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanLabel[]>(`/api/boards/${encodeURIComponent(boardId)}/labels`, creds, {}, 'to list labels')
+  kanbanFetch<KanbanLabel[]>(`${API}/boards/${encodeURIComponent(boardId)}/labels`, creds, {}, 'to list labels')
 export const createLabel = (boardId: string, label: { name: string; color: string }, creds: KanbanCreds) =>
-  kanbanJSON<KanbanLabel>(`/api/boards/${encodeURIComponent(boardId)}/labels`, 'POST', label, creds, 'to create label')
+  kanbanJSON<KanbanLabel>(`${API}/boards/${encodeURIComponent(boardId)}/labels`, 'POST', label, creds, 'to create label')
 export const deleteLabel = (boardId: string, labelId: string, creds: KanbanCreds) =>
-  kanbanFetch<void>(`/api/boards/${encodeURIComponent(boardId)}/labels/${encodeURIComponent(labelId)}`, creds, { method: 'DELETE' }, 'to delete label')
+  kanbanFetch<void>(`${API}/boards/${encodeURIComponent(boardId)}/labels/${encodeURIComponent(labelId)}`, creds, { method: 'DELETE' }, 'to delete label')
 
 // -- Roles / members (per-board — role is a membership fact, not a global user attribute) --
 export type KanbanBoardRole = { id: string; board_id: string; name: string; is_system: boolean }
 export type KanbanBoardMember = { user_id: string; username: string; role_id: string; role_name: string }
 
 export const listBoardRoles = (boardId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanBoardRole[]>(`/api/boards/${encodeURIComponent(boardId)}/roles`, creds, {}, 'to list roles')
+  kanbanFetch<KanbanBoardRole[]>(`${API}/boards/${encodeURIComponent(boardId)}/roles`, creds, {}, 'to list roles')
 export const listBoardMembers = (boardId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanBoardMember[]>(`/api/boards/${encodeURIComponent(boardId)}/members`, creds, {}, 'to list members')
+  kanbanFetch<KanbanBoardMember[]>(`${API}/boards/${encodeURIComponent(boardId)}/members`, creds, {}, 'to list members')
 export const upsertBoardMember = (boardId: string, userId: string, roleId: string, creds: KanbanCreds) =>
-  kanbanJSON<void>(`/api/boards/${encodeURIComponent(boardId)}/members`, 'POST', { user_id: userId, role_id: roleId }, creds, 'to assign role')
+  kanbanJSON<void>(`${API}/boards/${encodeURIComponent(boardId)}/members`, 'POST', { user_id: userId, role_id: roleId }, creds, 'to assign role')
 
 // -- Notes --
 export type KanbanNote = {
@@ -495,33 +497,33 @@ export type KanbanNoteInput = {
 }
 
 export const listNotes = (boardId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanNote[]>(`/api/notes?board_id=${encodeURIComponent(boardId)}`, creds, {}, 'to list notes')
+  kanbanFetch<KanbanNote[]>(`${API}/notes?board_id=${encodeURIComponent(boardId)}`, creds, {}, 'to list notes')
 export const createNote = (note: KanbanNoteInput, creds: KanbanCreds) =>
-  kanbanJSON<KanbanNote>('/api/notes', 'POST', note, creds, 'to create note')
+  kanbanJSON<KanbanNote>(`${API}/notes`, 'POST', note, creds, 'to create note')
 export const updateNote = (id: string, note: KanbanNoteInput & { position: number }, creds: KanbanCreds) =>
-  kanbanJSON<void>(`/api/notes/${encodeURIComponent(id)}`, 'PUT', note, creds, 'to update note')
+  kanbanJSON<void>(`${API}/notes/${encodeURIComponent(id)}`, 'PUT', note, creds, 'to update note')
 export const deleteNote = (id: string, creds: KanbanCreds) =>
-  kanbanFetch<void>(`/api/notes/${encodeURIComponent(id)}`, creds, { method: 'DELETE' }, 'to delete note')
+  kanbanFetch<void>(`${API}/notes/${encodeURIComponent(id)}`, creds, { method: 'DELETE' }, 'to delete note')
 
 // -- Subtasks / comments --
 export type KanbanSubtask = { id: string; note_id: string; title: string; done: boolean; position: number }
 export type KanbanComment = { id: string; note_id: string; author_label: string; content: string; created_at: number }
 
 export const listSubtasks = (noteId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanSubtask[]>(`/api/notes/${encodeURIComponent(noteId)}/subtasks`, creds, {}, 'to list subtasks')
+  kanbanFetch<KanbanSubtask[]>(`${API}/notes/${encodeURIComponent(noteId)}/subtasks`, creds, {}, 'to list subtasks')
 export const createSubtask = (noteId: string, title: string, creds: KanbanCreds) =>
-  kanbanJSON<KanbanSubtask>(`/api/notes/${encodeURIComponent(noteId)}/subtasks`, 'POST', { title }, creds, 'to create subtask')
+  kanbanJSON<KanbanSubtask>(`${API}/notes/${encodeURIComponent(noteId)}/subtasks`, 'POST', { title }, creds, 'to create subtask')
 export const updateSubtask = (noteId: string, subtaskId: string, patch: { title: string; done: boolean; position: number }, creds: KanbanCreds) =>
-  kanbanJSON<void>(`/api/notes/${encodeURIComponent(noteId)}/subtasks/${encodeURIComponent(subtaskId)}`, 'PUT', patch, creds, 'to update subtask')
+  kanbanJSON<void>(`${API}/notes/${encodeURIComponent(noteId)}/subtasks/${encodeURIComponent(subtaskId)}`, 'PUT', patch, creds, 'to update subtask')
 export const deleteSubtask = (noteId: string, subtaskId: string, creds: KanbanCreds) =>
-  kanbanFetch<void>(`/api/notes/${encodeURIComponent(noteId)}/subtasks/${encodeURIComponent(subtaskId)}`, creds, { method: 'DELETE' }, 'to delete subtask')
+  kanbanFetch<void>(`${API}/notes/${encodeURIComponent(noteId)}/subtasks/${encodeURIComponent(subtaskId)}`, creds, { method: 'DELETE' }, 'to delete subtask')
 
 export const listComments = (noteId: string, creds: KanbanCreds) =>
-  kanbanFetch<KanbanComment[]>(`/api/notes/${encodeURIComponent(noteId)}/comments`, creds, {}, 'to list comments')
+  kanbanFetch<KanbanComment[]>(`${API}/notes/${encodeURIComponent(noteId)}/comments`, creds, {}, 'to list comments')
 export const createComment = (noteId: string, content: string, creds: KanbanCreds) =>
-  kanbanJSON<KanbanComment>(`/api/notes/${encodeURIComponent(noteId)}/comments`, 'POST', { content }, creds, 'to create comment')
+  kanbanJSON<KanbanComment>(`${API}/notes/${encodeURIComponent(noteId)}/comments`, 'POST', { content }, creds, 'to create comment')
 export const deleteComment = (noteId: string, commentId: string, creds: KanbanCreds) =>
-  kanbanFetch<void>(`/api/notes/${encodeURIComponent(noteId)}/comments/${encodeURIComponent(commentId)}`, creds, { method: 'DELETE' }, 'to delete comment')
+  kanbanFetch<void>(`${API}/notes/${encodeURIComponent(noteId)}/comments/${encodeURIComponent(commentId)}`, creds, { method: 'DELETE' }, 'to delete comment')
 
 // ---- Debug / Request Log ----
 export type RequestEntry = {
@@ -552,10 +554,10 @@ const ownerFetch = <T>(url: string, ownerPassword: string): Promise<T> =>
   })
 
 export const fetchRequestLog = (ownerPassword: string) =>
-  ownerFetch<RequestEntry[]>('/api/debug/requests', ownerPassword)
+  ownerFetch<RequestEntry[]>(`${API}/debug/requests`, ownerPassword)
 export const fetchDebugInstance = (ownerPassword: string) =>
-  ownerFetch<DebugInstance>('/api/debug/instance', ownerPassword)
+  ownerFetch<DebugInstance>(`${API}/debug/instance`, ownerPassword)
 export const fetchDebugServices = (ownerPassword: string) =>
-  ownerFetch<DebugServiceCheck[]>('/api/debug/services', ownerPassword)
+  ownerFetch<DebugServiceCheck[]>(`${API}/debug/services`, ownerPassword)
 export const fetchDebugTraceroute = (ownerPassword: string) =>
-  ownerFetch<DebugTraceroute>('/api/debug/traceroute', ownerPassword)
+  ownerFetch<DebugTraceroute>(`${API}/debug/traceroute`, ownerPassword)

@@ -13,6 +13,7 @@ import type { LyricsViewHandle } from './LyricsView'
 import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
 import VinylScreen from './VinylScreen'
+import { MEDIA } from '../endpoints'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -142,7 +143,7 @@ export default function PlayerBar() {
     let cancelled = false
     const img = new Image()
     img.crossOrigin = 'Anonymous'
-    img.src = `/api/covers/${track.album_id}?w=80`
+    img.src = `${MEDIA}/covers/${track.album_id}?w=80`
     img.onload = () => {
       if (cancelled) return
       const canvas = document.createElement('canvas')
@@ -289,7 +290,7 @@ export default function PlayerBar() {
                 <img
                   src={track.album_id?.startsWith('yt:')
                     ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg`
-                    : `/api/covers/${track.album_id}?w=80`}
+                    : `${MEDIA}/covers/${track.album_id}?w=80`}
                   alt=""
                   onError={e => { (e.target as HTMLImageElement).style.visibility = 'hidden' }}
                 />
@@ -320,7 +321,7 @@ export default function PlayerBar() {
           {/* ── Unified Now Playing overlay (desktop + mobile) ── */}
           <div className={'npo' + (open ? ' npo--open' : '') + (ctrlsVisible ? ' npo--ctrls-active' : '') + (mobileTab === 'player' ? ' npo--vinyl' : ' npo--lyrics')} onTouchStart={showCtrls}>
             <div className="npo-bg">
-              <img src={track.album_id?.startsWith('yt:') ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg` : `/api/covers/${track.album_id}?w=512`} alt="" key={track.id} onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
+              <img src={track.album_id?.startsWith('yt:') ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg` : `${MEDIA}/covers/${track.album_id}?w=512`} alt="" key={track.id} onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
               <div 
                 className="npo-bg-overlay" 
                 style={{ background: `linear-gradient(160deg, ${coverColors[0]}66 0%, #121212f2 80%)` }} 
@@ -373,7 +374,7 @@ export default function PlayerBar() {
                   <img
                     src={track.album_id?.startsWith('yt:')
                       ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/hqdefault.jpg`
-                      : `/api/covers/${track.album_id}?w=512`}
+                      : `${MEDIA}/covers/${track.album_id}?w=512`}
                     alt={track.title}
                     style={{ opacity: 0 }}
                     onLoad={e => { (e.target as HTMLImageElement).style.opacity = '1' }}

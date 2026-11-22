@@ -5,6 +5,7 @@ import type { Track } from './types'
 import { fetchSmartQueue, lastfmNowPlaying, lastfmScrobble, recordPlay } from './api'
 import { getOfflineObjectURL } from './offlineStore'
 import pkg from '../package.json'
+import { API, MEDIA } from './endpoints'
 
 export type RepeatMode  = 'off' | 'one' | 'all'
 export type ShuffleMode = 'off' | 'shuffle' | 'smart'
@@ -78,14 +79,14 @@ function loadSaved(): SavedState | null {
  * attempt (start, network retry, quality fallback), never for preload. */
 function streamUrl(trackId: string, q: Quality | 'lossless-clean', clientId?: string, attemptId?: string): string {
   if (trackId.startsWith('yt:')) {
-    return `/api/youtube/stream/${trackId.slice(3)}`
+    return `${MEDIA}/youtube/${trackId.slice(3)}`
   }
   const params = new URLSearchParams()
   if (q === 'lossless-clean' || q === '320') params.set('q', q)
   if (clientId) params.set('client_id', clientId)
   if (attemptId) params.set('attempt_id', attemptId)
   const qs = params.toString()
-  return `/stream/${trackId}${qs ? '?' + qs : ''}`
+  return `${MEDIA}/audio/${trackId}${qs ? '?' + qs : ''}`
 }
 
 // crypto.randomUUID is only defined in secure contexts (HTTPS/localhost) —
@@ -593,7 +594,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       })
 
       // Send error details to backend for tracing!
-      fetch('/api/playback/error', {
+      fetch(`${API}/playback/error`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react'
+import { API } from './endpoints'
 
 export type BgSoundName = string
 
@@ -58,7 +59,7 @@ export function BgSoundsProvider({ children }: { children: ReactNode }) {
   const playingRef = useRef<BgSoundName | null>(null)
 
   useEffect(() => {
-    fetch('/api/ambient-sounds')
+    fetch(`${API}/ambient-sounds`)
       .then(r => r.ok ? r.json() : [])
       .then((list: AvailableSound[]) => setAmbientSounds(list))
       .catch(() => {})
@@ -77,7 +78,7 @@ export function BgSoundsProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current
     audio.volume = volume
     audio.loop = true
-    audio.src = `/api/ambient-sounds/${encodeURIComponent(name)}`
+    audio.src = `${API}/ambient-sounds/${encodeURIComponent(name)}`
     // Randomize start position for fresh feel each play — noise files are short so skip
     if (!NOISE_NAMES.has(name)) {
       audio.addEventListener('loadedmetadata', function onMeta() {

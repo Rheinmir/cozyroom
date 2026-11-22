@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Hls from 'hls.js'
 import BackButton from '../components/BackButton'
 import { ROUTES } from '../routes'
+import { MEDIA } from '../endpoints'
 
 export default function VideoPlayerPage() {
   const { id } = useParams()
@@ -13,7 +14,7 @@ export default function VideoPlayerPage() {
     const video = videoRef.current
     if (!video || !id) return
 
-    const src = `/hls/${id}/index.m3u8`
+    const src = `${MEDIA}/hls/${id}/index.m3u8`
 
     if (Hls.isSupported()) {
       const hlsInstance = new Hls()

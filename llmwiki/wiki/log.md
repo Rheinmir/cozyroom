@@ -1616,3 +1616,9 @@
 - Moi: ?np=1|lyrics|queue trong PlayerContext (npoOpen/npoTab/npoQueue lay tu URL). Mo overlay day 1 history entry; Back/Esc/nut dong dong no; doi tab va queue dung replace; deep link dong thi chi bo param.
 - Kiem: 32 kiem tra Playwright o 390 va 1440 deu pass (open, tab, queue, Back, Forward, Esc, deep link, giu ?q, roi trang thi dong).
 - Khong doi: queue o thanh player (ngoai overlay) van la state thuong.
+
+## 2026-11-23 — url-standard step 4 — /api/v1 and /media aliases (branch kozu/media-api-v1)
+
+- Moi: backend/internal/api/aliases.go (+ test) bao ngoai cung trong NewRouter; 9 dong rewrite trong nginx.conf; frontend/src/endpoints.ts (API, MEDIA); 18 file frontend doi sang /api/v1 va /media; service worker regex nhan ca hai dang; vite proxy /media; README ghi chu alias.
+- Kiem: Go test (bang rewrite, Range/query giu nguyen, auth qua /api/v1); nginx local + backend gia: 9 rewrite dung, Range 206, Cache-Control di qua, location dung (SSE/chat/audio/video/hls/yt); Playwright voi service worker that: cover cache duoi /media/covers, load offline tu cache, /api/v1 cache offline, player goi /media/audio kem Range, duong cu van chay.
+- Khong lam: deploy, doi k8s, cham DB/container; backend that khong chay duoc o day (can Postgres) nen e2e dung backend gia co cung bang alias.

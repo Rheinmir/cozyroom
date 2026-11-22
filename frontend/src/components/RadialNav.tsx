@@ -8,6 +8,7 @@ import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../
 import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
 import CozyroomMark from './CozyroomMark'
 import { ROUTES } from '../routes'
+import { MEDIA } from '../endpoints'
 
 // Was exactly 56px — the same height as the media-control pill next to it,
 // which read as coincidental/unintentional rather than a deliberate size
@@ -817,7 +818,7 @@ export default function RadialNav() {
               key={track.id}
               src={track.album_id?.startsWith('yt:')
                 ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
-                : `/api/covers/${track.album_id}?w=80`}
+                : `${MEDIA}/covers/${track.album_id}?w=80`}
               alt={track.title}
               draggable={false}
               onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}

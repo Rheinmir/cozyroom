@@ -5,6 +5,7 @@ import { fetchLastfmStatus } from '../api'
 import type { LastfmStatus } from '../api'
 import CozyroomMark from './CozyroomMark'
 import { ROUTES } from '../routes'
+import { API } from '../endpoints'
 
 const COLLAPSED_W = '56px'
 const EXPANDED_W  = '220px'
@@ -53,7 +54,7 @@ export default function Sidebar() {
     if (!user || !pass) return
     setBusy(true); setErr('')
     try {
-      const r = await fetch('/api/lastfm/login', {
+      const r = await fetch(`${API}/lastfm/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, password: pass }),
@@ -67,7 +68,7 @@ export default function Sidebar() {
   }
 
   const handleDisconnect = () => {
-    fetch('/api/lastfm/disconnect', { method: 'DELETE' })
+    fetch(`${API}/lastfm/disconnect`, { method: 'DELETE' })
       .then(() => setLfm(s => s ? { ...s, connected: false, username: '' } : s))
       .catch(() => {})
   }

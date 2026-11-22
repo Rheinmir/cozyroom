@@ -343,5 +343,5 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 
 	mux.Handle("/", spaHandler{root: "./dist"})
 
-	return metricsMiddleware(panicRecovery(mux)), dl, aiH
+	return aliasPaths(metricsMiddleware(panicRecovery(mux))), dl, aiH
 }

@@ -10,6 +10,7 @@ import {
 } from '../api'
 import { useDialogs } from '../DialogContext'
 import BackButton from '../components/BackButton'
+import { API } from '../endpoints'
 
 type Source = 'md' | 'eh'
 type ViewMode = 'scroll' | 'page'
@@ -27,8 +28,8 @@ function FallbackCover() {
 function dlCoverSrc(dl: ComicsDownload): string {
   if (!dl.cover) return ''
   if (dl.cover.startsWith('/')) return dl.cover
-  if (dl.source === 'eh') return `/api/scraper/eh/image?url=${encodeURIComponent(dl.cover)}`
-  return `/api/scraper/md/img?url=${encodeURIComponent(dl.cover)}`
+  if (dl.source === 'eh') return `${API}/scraper/eh/image?url=${encodeURIComponent(dl.cover)}`
+  return `${API}/scraper/md/img?url=${encodeURIComponent(dl.cover)}`
 }
 
 function DownloadCard({ dl, onRead, onDelete, onRetry, onDownload }: {
@@ -254,7 +255,7 @@ export default function ComicsPage() {
       }
     } else {
       const idx = startIdx != null ? startIdx : (ch.index != null ? ch.index - 1 : 0)
-      setPages(chapterList.map(p => `/api/scraper/eh/image?url=${encodeURIComponent(p.id)}`))
+      setPages(chapterList.map(p => `${API}/scraper/eh/image?url=${encodeURIComponent(p.id)}`))
       setCurrentPageIdx(Math.max(0, idx))
     }
   }
@@ -274,7 +275,7 @@ export default function ComicsPage() {
       setLoading(true)
       try {
         const pg = await fetchEHentaiPages(galleryUrl)
-        setPages((pg || []).map(p => `/api/scraper/eh/image?url=${encodeURIComponent(p.link)}`))
+        setPages((pg || []).map(p => `${API}/scraper/eh/image?url=${encodeURIComponent(p.link)}`))
       } catch (e: any) {
         setLoadError(e.message || 'Failed to load pages')
         setReading(null)
@@ -303,7 +304,7 @@ export default function ComicsPage() {
     // EH or MD fallback: flat page list
     if (dl.page_count === 0) return
     setPages(Array.from({ length: dl.page_count }, (_, i) =>
-      `/api/scraper/local/${dl.id}/${String(i + 1).padStart(4, '0')}.jpg`
+      `${API}/scraper/local/${dl.id}/${String(i + 1).padStart(4, '0')}.jpg`
     ))
     setReading({ title: dl.title })
     setCurrentPageIdx(0)
@@ -313,7 +314,7 @@ export default function ComicsPage() {
 
   const openLocalChapter = (dlId: string, ch: LocalChapter) => {
     setPages(Array.from({ length: ch.page_count }, (_, i) =>
-      `/api/scraper/local/${dlId}/${ch.id}/${String(i + 1).padStart(4, '0')}.jpg`
+      `${API}/scraper/local/${dlId}/${ch.id}/${String(i + 1).padStart(4, '0')}.jpg`
     ))
     setCurrentPageIdx(0)
     setImgErrors(0)

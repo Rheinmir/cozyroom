@@ -2,11 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { imgSrc } from '../api'
 import type { Track } from '../types'
+import { MEDIA } from '../endpoints'
 
 const coverOf = (t: Track, w: number) =>
   t.album_id?.startsWith('yt:')
     ? `https://i.ytimg.com/vi/${t.album_id.slice(3)}/hqdefault.jpg`
-    : imgSrc(`/api/covers/${t.album_id}`, w)
+    : imgSrc(`${MEDIA}/covers/${t.album_id}`, w)
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 

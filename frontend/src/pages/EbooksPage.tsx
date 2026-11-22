@@ -5,6 +5,7 @@ import { imgSrc, fetchEbooks, Ebook, LIBRARY_STALE_TIME } from '../api'
 import { useDialogs } from '../DialogContext'
 import Spinner from '../components/Spinner'
 import { paths } from '../routes'
+import { API } from '../endpoints'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return '0 Bytes'
@@ -106,7 +107,7 @@ export default function EbooksPage() {
       if (!password) return
     }
 
-    fetch(`/api/ebooks/${id}/nsfw`, {
+    fetch(`${API}/ebooks/${id}/nsfw`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_nsfw: !current, password })
@@ -124,7 +125,7 @@ export default function EbooksPage() {
   }
 
   const handleUpdateCollection = (id: string, collection: string) => {
-    fetch(`/api/ebooks/${id}/collection`, {
+    fetch(`${API}/ebooks/${id}/collection`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ collection })

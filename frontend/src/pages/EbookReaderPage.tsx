@@ -6,6 +6,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.vers
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { ROUTES } from '../routes'
+import { API } from '../endpoints'
 
 interface Ebook {
   id: string
@@ -27,7 +28,7 @@ interface TocEntry {
 function HtmlPage({ id, index, fontSize, desktopMode }: { id: string; index: number; fontSize: number; desktopMode: boolean }) {
   const [html, setHtml] = useState('')
   useEffect(() => {
-    fetch(`/api/ebooks/${id}/page/${index}`)
+    fetch(`${API}/ebooks/${id}/page/${index}`)
       .then(r => r.text())
       .then(setHtml)
       .catch(console.error)
@@ -86,7 +87,7 @@ export default function EbookReaderPage() {
     setReadMode((localStorage.getItem(`epub-mode-${id}`) as 'paged' | 'scroll') || 'paged')
     document.querySelector('.shell')?.classList.add('reader-active')
 
-    fetch('/api/ebooks')
+    fetch(`${API}/ebooks`)
       .then(r => r.json())
       .then(async (ebooks: Ebook[]) => {
         const found = ebooks.find(e => e.id === id)
@@ -95,8 +96,8 @@ export default function EbookReaderPage() {
 
         if (found.format === 'epub') {
           const [pageList, tocList] = await Promise.all([
-            fetch(`/api/ebooks/${id}/pages`).then(r => r.json()),
-            fetch(`/api/ebooks/${id}/toc`).then(r => r.json()).catch(() => []),
+            fetch(`${API}/ebooks/${id}/pages`).then(r => r.json()),
+            fetch(`${API}/ebooks/${id}/toc`).then(r => r.json()).catch(() => []),
           ])
           setPages(pageList || [])
           setToc(tocList || [])
@@ -118,7 +119,7 @@ export default function EbookReaderPage() {
   }, [id])
 
   const saveProgress = (p: string) => {
-    fetch(`/api/ebooks/${id}/progress`, {
+    fetch(`${API}/ebooks/${id}/progress`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ progress: p }),
@@ -260,7 +261,7 @@ export default function EbookReaderPage() {
         {ebook.format === 'pdf' ? (
           <div className={`pdf-viewer-wrap ${readMode}`}>
             <Document
-              file={`/api/ebooks/${id}/content`}
+              file={`${API}/ebooks/${id}/content`}
               onLoadSuccess={({ numPages }) => setNumPages(numPages)}
               loading={<div className="pdf-loading">Loading PDF…</div>}
             >
@@ -288,7 +289,7 @@ export default function EbookReaderPage() {
           <div className={`epub-paged-view${pages[currentPage].type === 'html' ? ' epub-paged-html' : ''}`}>
             {pages[currentPage].type === 'image' ? (
               <div className="epub-img-page">
-                <img src={`/api/ebooks/${id}/page/${currentPage}`} alt={`Page ${currentPage + 1}`} />
+                <img src={`${API}/ebooks/${id}/page/${currentPage}`} alt={`Page ${currentPage + 1}`} />
               </div>
             ) : (
               <HtmlPage id={id!} index={currentPage} fontSize={fontSize} desktopMode={desktopMode} />
@@ -302,7 +303,7 @@ export default function EbookReaderPage() {
             {pages.map(page => (
               page.type === 'image' ? (
                 <div key={page.index} className="epub-img-page">
-                  <img src={`/api/ebooks/${id}/page/${page.index}`} alt={`Page ${page.index + 1}`} loading="lazy" />
+                  <img src={`${API}/ebooks/${id}/page/${page.index}`} alt={`Page ${page.index + 1}`} loading="lazy" />
                 </div>
               ) : (
                 <HtmlPage key={page.index} id={id!} index={page.index} fontSize={fontSize} desktopMode={desktopMode} />

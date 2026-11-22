@@ -54,6 +54,8 @@ docker compose up --build
 
 ## API reference
 
+> **Path aliases.** Every `/api/...` path below is also served as `/api/v1/...` (canonical for new clients). Audio/video/images are also under `/media/`: `/media/audio/{id}` = `/stream/{id}`, `/media/video/{id}` = `/stream-video/{id}`, `/media/hls/...` = `/hls/...`, `/media/covers|artist-images|video-posters|ebook-covers/{id}` = `/api/<same>/{id}`, `/media/youtube/{id}` = `/api/youtube/stream/{id}`. The old paths keep working. Rewrites live in `backend/internal/api/aliases.go` and `nginx.conf`.
+
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/health` | Health check |

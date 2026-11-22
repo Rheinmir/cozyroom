@@ -5,6 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
+import { API } from '../endpoints'
 
 interface DayStat { date: string; count: number; failed: number; tokens_in: number; tokens_out: number; avg_ms: number }
 interface KV      { name: string; count: number }
@@ -96,7 +97,7 @@ export default function AIStatsPage() {
   const PAGE = 50
 
   useEffect(() => {
-    fetch('/api/ai/stats')
+    fetch(`${API}/ai/stats`)
       .then(r => r.json())
       .then(d => { setStats(d); setLoading(false) })
       .catch(() => setLoading(false))
@@ -107,14 +108,14 @@ export default function AIStatsPage() {
     if (extremeModel) p.set('model', extremeModel)
     if (dateFrom) p.set('from', dateFrom)
     if (dateTo) p.set('to', dateTo)
-    fetch(`/api/ai/extremes?${p}`).then(r => r.json()).then(d => setExtremes(d)).catch(() => {})
+    fetch(`${API}/ai/extremes?${p}`).then(r => r.json()).then(d => setExtremes(d)).catch(() => {})
   }, [extremeModel, dateFrom, dateTo])
 
   useEffect(() => { localStorage.setItem('ai-model-prices', JSON.stringify(modelPrices)) }, [modelPrices])
 
   // Load prices from DB on mount (DB wins over localStorage)
   useEffect(() => {
-    fetch('/api/ai/model-prices').then(r => r.json()).then((list: Array<{model: string; price_in: number; price_out: number; cached_in?: number; cached_out?: number}>) => {
+    fetch(`${API}/ai/model-prices`).then(r => r.json()).then((list: Array<{model: string; price_in: number; price_out: number; cached_in?: number; cached_out?: number}>) => {
       if (list.length > 0) {
         setModelPrices(prev => {
           const next = { ...prev }
@@ -131,7 +132,7 @@ export default function AIStatsPage() {
     priceSyncRef.current = setTimeout(() => {
       const payload = Object.entries(modelPrices).map(([model, p]) => ({ model, price_in: p.i, price_out: p.o, cached_in: p.ci, cached_out: p.co }))
       if (payload.length > 0) {
-        fetch('/api/ai/model-prices', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {})
+        fetch(`${API}/ai/model-prices`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {})
       }
     }, 1000)
   }, [modelPrices])
@@ -141,7 +142,7 @@ export default function AIStatsPage() {
     const p = new URLSearchParams()
     if (dateFrom) p.set('from', dateFrom)
     if (dateTo) p.set('to', dateTo)
-    fetch(`/api/ai/stats/daily?${p}`).then(r => r.json()).then(d => setDailyModelData(d)).catch(() => {})
+    fetch(`${API}/ai/stats/daily?${p}`).then(r => r.json()).then(d => setDailyModelData(d)).catch(() => {})
   }, [dateFrom, dateTo])
 
   const updatePrice = (model: string, field: 'i' | 'o' | 'ci' | 'co', val: string) => {
@@ -171,7 +172,7 @@ export default function AIStatsPage() {
       setOcrPending({ b64, mime, dataUrl, prompt: '' })
       setOcrText('⏳ Đang nhận dạng...')
       try {
-        const resp = await fetch('/api/ai/ocr-text', {
+        const resp = await fetch(`${API}/ai/ocr-text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image_b64: b64, mime }),
@@ -234,7 +235,7 @@ export default function AIStatsPage() {
     if (!ocrPending) return
     setOcrLoading(true)
     try {
-      const resp = await fetch('/api/ai/ocr-pricing', {
+      const resp = await fetch(`${API}/ai/ocr-pricing`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: ocrPending.prompt }),
@@ -268,14 +269,14 @@ export default function AIStatsPage() {
   }
 
   const handleDislike = async (id: string) => {
-    await fetch(`/api/ai/logs/${id}/dislike`, { method: 'POST' })
+    await fetch(`${API}/ai/logs/${id}/dislike`, { method: 'POST' })
     setLogs(prev => prev.map(l => l.id === id ? { ...l, failed: 1, fail_reason: 'user_dislike' } : l))
   }
 
   const loadLogs = useCallback(async (failedOnly: boolean, page: number) => {
     setLogsLoading(true)
     try {
-      const url = `/api/ai/logs?limit=${PAGE}&offset=${page * PAGE}${failedOnly ? '&failed=1' : ''}`
+      const url = `${API}/ai/logs?limit=${PAGE}&offset=${page * PAGE}${failedOnly ? '&failed=1' : ''}`
       const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()

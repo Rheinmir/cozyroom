@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { imgSrc } from '../api'
+import { MEDIA } from '../endpoints'
 
 // "Up Next" list — shows the current play queue (past + current + upcoming),
 // highlights the playing track, and lets the user jump to any entry.
@@ -30,7 +31,7 @@ export default function QueueList() {
           >
             <div className="queue-item-cover">
               {!isYt
-                ? <img src={imgSrc(`/api/covers/${qt.album_id}`, 80)} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                ? <img src={imgSrc(`${MEDIA}/covers/${qt.album_id}`, 80)} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 : <span className="no-cover" style={{ fontSize: 18 }}>♪</span>
               }
             </div>

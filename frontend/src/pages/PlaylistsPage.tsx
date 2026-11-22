@@ -16,6 +16,7 @@ import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
 import { saveOfflineTrack, deleteOfflineTrack, listOfflineTrackIds } from '../offlineStore'
 import type { Track } from '../types'
+import { MEDIA } from '../endpoints'
 
 function useDominantColor(src: string | undefined): string {
   const [rgb, setRgb] = useState('40, 40, 55')
@@ -73,7 +74,7 @@ function PlaylistCoverMosaic({ coverIds, name = '' }: { coverIds?: string[]; nam
   if (uniqueCovers.length < 4) {
     return (
       <div className="playlist-cover-mosaic items-1">
-        <img src={`/api/covers/${uniqueCovers[0]}`} alt=""
+        <img src={`${MEDIA}/covers/${uniqueCovers[0]}`} alt=""
           onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
       </div>
     )
@@ -83,7 +84,7 @@ function PlaylistCoverMosaic({ coverIds, name = '' }: { coverIds?: string[]; nam
   return (
     <div className="playlist-cover-mosaic items-4">
       {uniqueCovers.slice(0, 4).map(aid => (
-        <img key={aid} src={`/api/covers/${aid}`} alt=""
+        <img key={aid} src={`${MEDIA}/covers/${aid}`} alt=""
           onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
       ))}
     </div>
@@ -137,7 +138,7 @@ export default function PlaylistsPage() {
     }
     setDownloadingIds(prev => new Set(prev).add(trackId))
     try {
-      const res = await fetch(`/stream/${trackId}?q=320`)
+      const res = await fetch(`${MEDIA}/audio/${trackId}?q=320`)
       if (!res.ok) throw new Error('download failed')
       const blob = await res.blob()
       const result = await saveOfflineTrack(trackId, blob, '320')
@@ -195,7 +196,7 @@ export default function PlaylistsPage() {
   })
 
   const currentPlaylist = allLists.find(l => l.id === selectedPlaylistId)
-  const coverSrc = currentPlaylist?.cover_ids?.[0] ? `/api/covers/${currentPlaylist.cover_ids[0]}` : undefined
+  const coverSrc = currentPlaylist?.cover_ids?.[0] ? `${MEDIA}/covers/${currentPlaylist.cover_ids[0]}` : undefined
   const dominantRgb = useDominantColor(coverSrc)
 
   // Resolve tracks for local/permanent playlist

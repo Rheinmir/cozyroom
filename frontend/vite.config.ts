@@ -16,7 +16,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Cover images — cache aggressively, but fall back to network if cache miss
-            urlPattern: /\/api\/covers\//,
+            urlPattern: /\/(api|media)\/covers\//,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'covers',
@@ -26,7 +26,7 @@ export default defineConfig({
           },
           {
             // Artist images — same
-            urlPattern: /\/api\/artist-images\//,
+            urlPattern: /\/(api|media)\/artist-images\//,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'artist-images',
@@ -36,7 +36,7 @@ export default defineConfig({
           },
           {
             // Stable library lists — serve from cache instantly, revalidate in background
-            urlPattern: /\/api\/(artists|albums|stats)(\?|$)/,
+            urlPattern: /\/api(\/v1)?\/(artists|albums|stats)(\?|$)/,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'api-data',
@@ -45,7 +45,7 @@ export default defineConfig({
           },
           {
             // Search and tracks — network first (fresher results)
-            urlPattern: /\/api\/(tracks|search)/,
+            urlPattern: /\/api(\/v1)?\/(tracks|search)/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-data-search',
@@ -75,6 +75,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8080',
       '/stream': 'http://localhost:8080',
+      '/media': 'http://localhost:8080',
       '/stream-video': 'http://localhost:8080',
       '/hls': 'http://localhost:8080',
     },

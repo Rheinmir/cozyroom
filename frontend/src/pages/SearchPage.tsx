@@ -10,6 +10,7 @@ import FavoritePill from '../components/FavoritePill'
 import Spinner from '../components/Spinner'
 import BackButton from '../components/BackButton'
 import { ROUTES, paths } from '../routes'
+import { API } from '../endpoints'
 
 type SearchResult = {
   artists: Artist[]
@@ -39,7 +40,7 @@ function gradientFor(name: string) {
 }
 
 const fetchSearch = (q: string): Promise<SearchResult> =>
-  fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json())
+  fetch(`${API}/search?q=${encodeURIComponent(q)}`).then(r => r.json())
 
 function fmtDuration(s: number): string {
   const m = Math.floor(s / 60)

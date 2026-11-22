@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { fetchVideos, Video, LIBRARY_STALE_TIME } from '../api'
 import Spinner from '../components/Spinner'
 import { paths } from '../routes'
+import { MEDIA } from '../endpoints'
 
 function formatDuration(s: number) {
   if (!s) return ''
@@ -12,7 +13,7 @@ function formatDuration(s: number) {
   return `${m}m`
 }
 
-const getFallbackPoster = (id: string) => `/api/video-posters/${id}`
+const getFallbackPoster = (id: string) => `${MEDIA}/video-posters/${id}`
 const FALLBACK_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3Crect width='200' height='300' fill='%23222'/%3E%3Cpath d='M60 100h80v20H60zm0 40h80v10H60zm0 30h80v10H60zm0 30h50v10H60z' fill='%23555'/%3E%3C/svg%3E"
 
 function VideoCard({ v }: { v: Video }) {

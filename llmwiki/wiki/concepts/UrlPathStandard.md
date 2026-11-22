@@ -27,14 +27,19 @@ Every UI URL is defined once in `frontend/src/routes.ts`. Scheme: `/<module>/<co
 - Old URLs: `LEGACY_REDIRECTS` (15 rows) renders `<LegacyRedirect>`: keeps `:id`, `?query`, `#hash` and router state; `replace` so Back does not loop. Remove after two releases (owner decides).
 - Unchanged on purpose: `/video/:id`, `/ai`, `/ai/stats`, `/notes`, all `/api/*`, `/stream*`, `/hls`, `/mcp`, `/metrics`.
 - Overlay state: the Now Playing overlay is the `?np=` param: `np=1` (player tab), `np=lyrics`, `np=queue` (queue panel inside the overlay). Opening pushes one history entry (router state `{np:true}`); Back, Esc and the close button close it (Back when we pushed it, else replace, so a deep link stays in the app). Tab and queue changes use replace. Other params (`?q=`) are kept. The standalone bar queue stays plain state. Code: `PlayerContext.tsx` (`npoOpen`, `npoTab`, `npoQueue`).
-- Next steps (not done yet): `/media/*` and `/api/v1/*` aliases with nginx, service worker regex + version bump, home hub page.
+- API and media paths: `/api/v1/*` is canonical for REST; `/media/audio|video|hls|covers|artist-images|video-posters|ebook-covers|youtube/...` for bytes. Old paths keep working. Implemented as a REWRITE, not duplicate routes: Go `aliasPaths` middleware (`backend/internal/api/aliases.go`, outermost in `NewRouter`) and nine `rewrite ... last` lines at the top of `nginx.conf`. A rewritten URI re-enters the old `location` blocks, so SSE, timeouts, no-buffering and Range apply unchanged. Keep the two tables in sync.
+- Handlers, metrics labels, the debug request log and auth all see the OLD path. Auth is inside the handlers (`verifyOwnerPassword`, kanban tokens), not path middleware, so /api/v1 is protected exactly like /api (test `TestAliasKeepsAuth`).
+- Frontend: `src/endpoints.ts` (`API`, `MEDIA`). Backend JSON still emits old-style `cover_url` (`/api/covers/...`); `imgSrc` and the service worker accept both forms.
+- Service worker: runtime caching regexes accept both `/api` and `/media` forms; file name stays `sw3.js` (content change makes autoUpdate refresh it).
+- Next steps (not done yet): home hub page; backend emitting new-style URLs; remove legacy aliases after two releases (owner decides).
 
 ## Gotchas
+- nginx `rewrite` runs before `location` matching; the URI passed to the backend is the rewritten, decoded one.
 - nginx `location /mcp` is a prefix match; no new UI prefix may start with `/mcp`, `/api`, `/stream`, `/hls`, `/metrics`.
 - Prefix checks like `pathname.startsWith('/music/albums')` would also match the detail page. Use `isRoute()`.
 - RadialNav "active" check treats `ROUTES.music` as exact-only (else it is active on every `/music/*` page).
 
 ## Origin
 - Issue room `rebuild-the-vinyl-player-screen-to-match-the-refer`, Step 2 plan (message m1a204000b776beb), approved with owner answers (m1a20401e69b06cc).
-- Code: branch `kozu/routes-table` (7cf5766, no URL change), `kozu/url-paths` (bb642c7, new scheme + redirects, now on main), `kozu/np-url` (overlay state).
+- Code: `kozu/routes-table` (7cf5766), `kozu/url-paths` (bb642c7), `kozu/np-url` (ff3efc5), all on main; `kozu/media-api-v1` (API and media aliases).
 - Reviewed by Kusa: routes.ts step ĐẠT.

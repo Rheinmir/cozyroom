@@ -13,6 +13,7 @@ import Spinner from '../components/Spinner'
 import { MCP_TOOLS } from '../data/mcpTools'
 import { useFlipUp } from '../useFlipPosition'
 import { ROUTES, paths } from '../routes'
+import { API, MEDIA } from '../endpoints'
 
 type Role = 'user' | 'assistant'
 
@@ -76,14 +77,14 @@ function MediaCard({ action, onPlay, onNext, onPrev }: {
   const ytId = action.id?.startsWith('yt:') ? action.id.slice(3) : null
   const localAlbumId = action.album_id && !action.album_id.startsWith('yt:') ? action.album_id : null
   const coverUrl = localAlbumId
-    ? `/api/covers/${localAlbumId}`
+    ? `${MEDIA}/covers/${localAlbumId}`
     : ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : null
 
   const handleDownload = async () => {
     if (!ytId || dlState !== 'idle') return
     setDlState('loading')
     try {
-      await fetch('/api/youtube/download', {
+      await fetch(`${API}/youtube/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: ytId, title: action.title || '', artist: action.artist || '' }),
@@ -198,7 +199,7 @@ function ReactionBar({ logId }: { logId: string }) {
     setSelected(prev === emoji ? null : emoji)
     setOpen(false)
     if (emoji === '👎' && prev !== emoji) {
-      await fetch(`/api/ai/logs/${logId}/dislike`, { method: 'POST' }).catch(() => {})
+      await fetch(`${API}/ai/logs/${logId}/dislike`, { method: 'POST' }).catch(() => {})
     }
   }
 
@@ -501,7 +502,7 @@ export default function AIAssistantPage() {
   const loadMemory = useCallback(async () => {
     setMemoryLoading(true)
     try {
-      const res = await fetch('/api/ai/memory')
+      const res = await fetch(`${API}/ai/memory`)
       if (res.ok) {
         const data = await res.json()
         setFacts(data.facts || [])
@@ -518,7 +519,7 @@ export default function AIAssistantPage() {
   const loadSessions = useCallback(async () => {
     setSessionsLoading(true)
     try {
-      const res = await fetch('/api/ai/sessions')
+      const res = await fetch(`${API}/ai/sessions`)
       if (res.ok) {
         const data = await res.json()
         setSessions(data.sessions || [])
@@ -533,7 +534,7 @@ export default function AIAssistantPage() {
   }, [loadSessions])
 
   const deleteFact = async (key: string) => {
-    await fetch(`/api/ai/memory/${encodeURIComponent(key)}`, { method: 'DELETE' })
+    await fetch(`${API}/ai/memory/${encodeURIComponent(key)}`, { method: 'DELETE' })
     setFacts(prev => prev.filter(f => f.key !== key))
   }
 
@@ -549,7 +550,7 @@ export default function AIAssistantPage() {
   }
 
   const restoreSession = async (sessionId: string) => {
-    const res = await fetch(`/api/ai/sessions/${sessionId}/messages`)
+    const res = await fetch(`${API}/ai/sessions/${sessionId}/messages`)
     if (!res.ok) return
     const data = await res.json()
     const msgs: typeof data.messages = data.messages || []
@@ -587,7 +588,7 @@ export default function AIAssistantPage() {
     try {
       const text = await file.text()
       const data = JSON.parse(text)
-      const res = await fetch('/api/ai/memory', {
+      const res = await fetch(`${API}/ai/memory`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -610,7 +611,7 @@ export default function AIAssistantPage() {
       player.setShuffleMode('smart')
       player.play(t, [t])
     } else if (action.type === 'download_youtube' && action.id) {
-      fetch('/api/youtube/download', {
+      fetch(`${API}/youtube/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: action.id, title: action.title || '', artist: action.artist || '' }),
@@ -664,7 +665,7 @@ export default function AIAssistantPage() {
     const MAX_RETRIES = 1
 
     try {
-      const res = await fetch('/api/ai/chat/stream', {
+      const res = await fetch(`${API}/ai/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -889,7 +890,7 @@ export default function AIAssistantPage() {
                 danger: true,
               })
               if (!ok) return
-              await fetch('/api/ai/memory', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: '{"facts":[]}' })
+              await fetch(`${API}/ai/memory`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: '{"facts":[]}' })
               setFacts([])
             }}>🗑 Xóa tất cả</button>
           </div>

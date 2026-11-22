@@ -8,8 +8,9 @@ import { usePlayer } from '../PlayerContext'
 import LibraryStatsBar from '../components/LibraryStatsBar'
 import Spinner from '../components/Spinner'
 import { paths } from '../routes'
+import { MEDIA } from '../endpoints'
 
-const cover = (albumId: string, w: number) => imgSrc(`/api/covers/${albumId}`, w)
+const cover = (albumId: string, w: number) => imgSrc(`${MEDIA}/covers/${albumId}`, w)
 
 // Fisher-Yates, seeded off the array length + a rotating salt so the mix is
 // fresh-ish per mount but stable across a render pass (not re-shuffled on every
