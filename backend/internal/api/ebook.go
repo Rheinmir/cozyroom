@@ -42,7 +42,11 @@ func (h *handlers) setEbookNSFW(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Password != "owner712002" {
+	if ok, tooMany := ownerAuthPW(r, req.Password); !ok {
+		if tooMany {
+			http.Error(w, "too many attempts", http.StatusTooManyRequests)
+			return
+		}
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}

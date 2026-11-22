@@ -50,13 +50,13 @@
 | [sources/skill-propose.md](sources/skill-propose.md) | source | Workflow skill: plan-before-code gate — steps, rules, draft creation |
 | [sources/skill-verify-before-commit.md](sources/skill-verify-before-commit.md) | source | Workflow skill: pre-commit quality gate — typecheck, lint, test, Docker rebuild |
 | [concepts/JellyfinFeatures.md](concepts/JellyfinFeatures.md) | concept | 4 Jellyfin-inspired features: MetadataProvider abstraction, Trickplay sprites, CanDirectPlay, Resume State |
-| [concepts/EbookEnhancements.md](concepts/EbookEnhancements.md) | concept | NSFW tagging (owner712002), cover blurring, and PDF cover extraction |
+| [concepts/EbookEnhancements.md](concepts/EbookEnhancements.md) | concept | NSFW tagging (<owner password>), cover blurring, and PDF cover extraction |
 | [concepts/EbookThemes.md](concepts/EbookThemes.md) | concept | Fix Ebook Blank Screen via Themes & Style Normalization |
 | [concepts/ComicsDownloader.md](concepts/ComicsDownloader.md) | concept | Comics offline pre-fetch engine: 6h background download, local serving, retry/delete UI |
 | [concepts/LyricsReliability.md](concepts/LyricsReliability.md) | concept | Lyrics fixes: silent save reload, empty-cache poisoning, mobile panel overlay |
 | [sources/190526-translate-shortcut-overlay.md](sources/190526-translate-shortcut-overlay.md) | source | Translate shortcut + touch-to-reveal overlay buttons — implementation record (commit ab52f60) |
 | [concepts/PlayerBugfixes190526.md](concepts/PlayerBugfixes190526.md) | concept | Player bugfixes 2026-05-19: lyrics stale-fetch race, gapless duration 0:00, progress bar fill |
-| [concepts/FavoritePlaylistPill.md](concepts/FavoritePlaylistPill.md) | concept | Playlists Management via FavoritePill - local storage (localStorage) and permanent storage (SQLite + owner712002 password verification) |
+| [concepts/FavoritePlaylistPill.md](concepts/FavoritePlaylistPill.md) | concept | Playlists Management via FavoritePill - local storage (localStorage) and permanent storage (SQLite + <owner password> password verification) |
 | [sources/draft/190526-remove-tab-toast-lyrics-back-fe.md](sources/draft/190526-remove-tab-toast-lyrics-back-fe.md) | draft | Proposal: remove tab toast on mobile NPO, replace with left-zone tap to return to Now Playing |
 | [draft/orca/210626-player-duration-persist.md](draft/orca/210626-player-duration-persist.md) | draft | Propose: seed duration từ track.duration_s khi restore session — fix progress bar 0:00 sau F5 |
 | [sources/draft/230526-4-issues-wiki-search-lyrics-cover-fe.md](sources/draft/230526-4-issues-wiki-search-lyrics-cover-fe.md) | draft | Proposal: wiki migration to llmwiki, restore broken search bar (AppRoutes.tsx missing), lyrics scroll lag, cover image race |
@@ -73,7 +73,7 @@
 | [sources/draft/240526-drawer-ai-stardelta-fix-fe-be.md](sources/draft/240526-drawer-ai-stardelta-fix-fe-be.md) | draft | Fix: drawer AI cards, star_delta always 0 (midnight query bug), date picker hidden |
 | [sources/draft/240526-youtube-search-stream-download.md](sources/draft/240526-youtube-search-stream-download.md) | draft | Proposal: YouTube Search, Direct Stream, and High-Quality Download using yt-dlp |
 | [sources/draft/240526-youtube-downloads-consolidation.md](sources/draft/240526-youtube-downloads-consolidation.md) | draft | Proposal: Group YouTube Downloads under 'YouTube Downloads' per Uploader and Fix Scanner Metadata Overwrite |
-| [sources/draft/260525-favorite-playlist-pill.md](sources/draft/260525-favorite-playlist-pill.md) | draft | Proposal: Favorite Playlist Pill (Star + Dropdown) with Local & Permanent Storage (owner712002) |
+| [sources/draft/260525-favorite-playlist-pill.md](sources/draft/260525-favorite-playlist-pill.md) | draft | Proposal: Favorite Playlist Pill (Star + Dropdown) with Local & Permanent Storage (<owner password>) |
 | [sources/draft/260525-trending-radial-menu-controls-fe.md](sources/draft/260525-trending-radial-menu-controls-fe.md) | draft | Proposal: Moving Trending Page Controls to Nightingale Rose Radial Menu (Layer 3) |
 | [sources/draft/260526-mcp-server-ai-chat-tab-be-fe.md](sources/draft/260526-mcp-server-ai-chat-tab-be-fe.md) | draft | Proposal: MCP server (HTTP/SSE + stdio) + AI Chat tab — 14 tools, Claude haiku, player actions |
 | [concepts/MCPServer.md](concepts/MCPServer.md) | concept | MCP server + AI chat tab: 14 tools, RTK compression, HTTP/stdio transport, Claude haiku tool use loop |
@@ -165,7 +165,7 @@
 | [sources/draft/110726-db-architecture-infographic.md](sources/draft/110726-db-architecture-infographic.md) | draft | Infographic docs-site-macos: so sánh kiến trúc DB cũ (Postgres primary/standby) vs mới (CockroachDB 3-node) — lợi thế/cái giá |
 | [sources/120726-mobile-stream-stutter-postmortem.md](sources/120726-mobile-stream-stutter-postmortem.md) | source | Postmortem: mobile stutter — ffmpeg transcode chặn+không cache; fix: disk cache + per-track quality memory, TTFB 6.4s→0.67s |
 | [sources/draft/180726-stream-observability-infra.md](sources/draft/180726-stream-observability-infra.md) | draft (done) | Observability real-time cho stream nhạc qua k8s — triển khai thật; phát hiện lớn: Grafana datasource hỏng lâu ngày, backend QoS BestEffort, replicas 3 là frontend không phải backend |
-| [sources/draft/230726-kanban-quick-note-be-fe.md](sources/draft/230726-kanban-quick-note-be-fe.md) | draft (done) | Kanban Quick Note riêng tư 1 người dùng, gate bằng owner712002 — implement + deploy K8s thật, verify CRUD full lifecycle |
+| [sources/draft/230726-kanban-quick-note-be-fe.md](sources/draft/230726-kanban-quick-note-be-fe.md) | draft (done) | Kanban Quick Note riêng tư 1 người dùng, gate bằng <owner password> — implement + deploy K8s thật, verify CRUD full lifecycle |
 | [sources/280726-playback-chunk-repeat-ios-background-diagnosis.md](sources/280726-playback-chunk-repeat-ios-background-diagnosis.md) | source | Chẩn đoán: chunk lặp (retry logic AudioReliability) + không chạy nền iOS (AudioContext visualizer GaplessPlayback) — 2 lỗi độc lập |
 | [sources/draft/280726-fix-chunk-repeat-ios-background-fe.md](sources/draft/280726-fix-chunk-repeat-ios-background-fe.md) | draft (done) | Fix chunk lặp (backoff+guard retry) + iOS không chạy nền (skip AudioContext) — implement + deploy K8s thật |
 | [sources/draft/010826-debug-reporter-be-fe.md](sources/draft/010826-debug-reporter-be-fe.md) | draft | Proposal: nút debug nổi + element picker, báo lỗi UI lưu queue Postgres, agent đọc qua MCP tool, tạo issue GitHub thủ công khi yêu cầu |

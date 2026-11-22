@@ -142,6 +142,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /metrics", promhttp.Handler())
+	mux.HandleFunc("GET /api/owner/check", ownerCheck)
 	mux.HandleFunc("GET /api/debug/requests", handleRequestLog)
 	mux.HandleFunc("GET /api/debug/instance", debugInstance)
 	mux.HandleFunc("GET /api/debug/services", debugServices)

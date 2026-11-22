@@ -18,7 +18,7 @@
 
 - User chốt trade-off: role theo **từng board** (không phải global) → thiết kế lại thành membership `kanban_board_members(board_id,user_id,role_id)`, không phải `kanban_users.role_id`
 - Implement 7 task: `db.go` (kanban_roles + kanban_board_members + seed board `default` + backfill user cũ), `auth_kanban.go` (`hasPermission` fail-closed, `approveUser` nhận board_id/role_id), `boards.go` (seed role khi tạo board mới + tự gán admin cho người tạo + endpoint `/members`), `notes.go` (permission trên note/subtask/comment), wire routes, `api.ts`, `NotesPage.tsx` (dropdown role khi approve + panel đổi role thành viên)
-- Verify runtime thật (local Postgres throwaway trước, rồi production): backfill user cũ trước migration → đúng role member; viewer đọc OK/ghi 403; member tạo note OK, tạo board OK (tự thành admin board đó), tạo cột trên board default (chỉ là member) → 403 đúng; owner712002 không đổi hành vi
+- Verify runtime thật (local Postgres throwaway trước, rồi production): backfill user cũ trước migration → đúng role member; viewer đọc OK/ghi 403; member tạo note OK, tạo board OK (tự thành admin board đó), tạo cột trên board default (chỉ là member) → 403 đúng; <owner password> không đổi hành vi
 - Deploy production: backend `sha256:179edf7e...`, frontend `sha256:b07ea3ab...`, cả 2 rollout thành công 0 restart
 - Verify trực tiếp trên production qua curl thật (không chỉ local): toàn bộ nhánh trên đều đúng trên `music.giatbh.io.vn`; dọn sạch 2 user test + 1 board test sau khi xong
 - Còn 16/17 module trong roadmap — module tiếp theo do user chọn
@@ -63,11 +63,11 @@
 
 ## 2026-08-03 — propose — kanban-notes-upgrade-be-fe
 
-- User (`/fable5`): "kanban của chúng ta đổi sang full bộ của kaneo cho giàu chức năng" → xác minh trước: `/notes` hiện tại là board 1-người-dùng, 3 cột cứng, gate `owner712002` (tra `notes.go`/`NotesPage.tsx`/draft gốc `230726-kanban-quick-note-be-fe.md`); kaneo (`usekaneo/kaneo`) là project management tool React+Hono+Postgres, MIT, có multi-user/workspace thật (WebFetch README) — không phải component nhỏ
+- User (`/fable5`): "kanban của chúng ta đổi sang full bộ của kaneo cho giàu chức năng" → xác minh trước: `/notes` hiện tại là board 1-người-dùng, 3 cột cứng, gate `<owner password>` (tra `notes.go`/`NotesPage.tsx`/draft gốc `230726-kanban-quick-note-be-fe.md`); kaneo (`usekaneo/kaneo`) là project management tool React+Hono+Postgres, MIT, có multi-user/workspace thật (WebFetch README) — không phải component nhỏ
 - Làm rõ 3 vòng qua `AskUserQuestion` vì mỗi câu trả lời của user lại đảo hướng: (1) port vào `/notes` hiện có vs deploy kaneo như service riêng → chọn port; (2) mức "đa user" → ban đầu chọn "chỉ nhãn tên, không tài khoản thật" → user đảo lại thành "đăng ký + owner approve kiểu Gitea"; (3) phạm vi hệ thống auth mới → chỉ áp dụng cho kanban, không đụng `verifyOwnerPassword` ở Playlists/Ebook NSFW
 - Draft: `wiki/sources/draft/030826-kanban-notes-upgrade-be-fe.md` (8 task: schema+backfill, auth register/login/session+admin-approve, notes.go đổi gate+field mới, boards.go CRUD, wire routes, api.ts client, NotesPage.tsx redesign, CSS+verify)
 - Sequence diagram: `html/030826-kanban-notes-upgrade-be-fe-seq.html`
-- Thiết kế auth: bcrypt (`golang.org/x/crypto` đã có sẵn trong go.mod, không thêm dependency) + session token `crypto/rand`, không JWT; `verifyKanbanAccess` = `verifyOwnerPassword` (owner712002, không đổi) HOẶC session user đã approve
+- Thiết kế auth: bcrypt (`golang.org/x/crypto` đã có sẵn trong go.mod, không thêm dependency) + session token `crypto/rand`, không JWT; `verifyKanbanAccess` = `verifyOwnerPassword` (<owner password>, không đổi) HOẶC session user đã approve
 - Trạng thái: proposed — CHƯA code, đang chờ user duyệt plan; ghi rõ trong draft: chưa đọc trực tiếp schema/source thật của kaneo, bộ field board-level là suy ra từ hiểu biết chung kanban tool cùng lớp (PRIOR, không phải OBSERVED)
 
 ## 2026-08-03 — deploy — music-play-stats-chart + storytelling + provider fix
@@ -1108,7 +1108,7 @@
 - Promoted draft `120526-fix-audio-interruption-audio.md` → `wiki/concepts/AudioReliability.md`.
 
 ## 2026-05-12 — feature — Ebook NSFW & PDF Cover Extraction
-- Triển khai tính năng đánh dấu NSFW cho Ebook với bảo mật bằng mật khẩu (`owner712002`).
+- Triển khai tính năng đánh dấu NSFW cho Ebook với bảo mật bằng mật khẩu (`<owner password>`).
 - Tự động làm mờ (`blur`) ảnh bìa các sách NSFW trong thư viện.
 - Tích hợp `poppler-utils` (pdftoppm) vào Docker để trích xuất trang đầu PDF làm ảnh bìa.
 - Cập nhật schema database (`is_nsfw` column) và API đồng bộ trạng thái.
@@ -1186,14 +1186,14 @@
 
 ## 2026-05-25 — propose — Favorite Playlist Pill (Star + Dropdown)
 - Tạo draft proposal `wiki/sources/draft/260525-favorite-playlist-pill.md` để chuẩn bị cho chức năng tạo/quản lý playlist yêu thích.
-- Đề xuất giải pháp lưu trữ song song: Local (localStorage) và Permanent (SQLite + xác thực mật khẩu `owner712002`).
+- Đề xuất giải pháp lưu trữ song song: Local (localStorage) và Permanent (SQLite + xác thực mật khẩu `<owner password>`).
 - Mô tả chi tiết giao diện Capsule/Pill `[ ★ | ▾ ]` cho mỗi bài hát và trang quản lý Playlist mới.
 - Cập nhật `wiki/index.md`.
 
 ## 2026-05-25 — feature — Favorite Playlist Pill (Star + Dropdown)
 - Triển khai thành công cụm nút Capsule/Pill `[ ★ | ▾ ]` bên cạnh mỗi dòng bài hát để yêu thích nhanh hoặc chọn đưa vào nhiều playlist.
 - Hoàn thiện cơ chế lưu trữ kép linh hoạt: Local Playlists (lưu JSON vào `localStorage`) và Permanent Playlists (SQLite DB trên server).
-- Tích hợp Modal xác thực mật khẩu chủ sở hữu `owner712002` ở phía client và xác thực chặt chẽ trên Go backend khi ghi dữ liệu vĩnh viễn.
+- Tích hợp Modal xác thực mật khẩu chủ sở hữu `<owner password>` ở phía client và xác thực chặt chẽ trên Go backend khi ghi dữ liệu vĩnh viễn.
 - Cập nhật trang quản lý Playlists để xem, phát và tổ chức bài hát từ mọi loại danh sách phát.
 - Promoted draft `260525-favorite-playlist-pill.md` → `wiki/concepts/FavoritePlaylistPill.md`.
 - Cập nhật `wiki/index.md`.
@@ -1465,7 +1465,7 @@
 
 ## 2026-07-23 — orca-workflow (query → propose) — kanban-quick-note-be-fe
 
-- User yêu cầu: thêm Kanban Quick Note cho 1 user, gate bằng mật khẩu `owner712002` trước khi vào màn hình note
+- User yêu cầu: thêm Kanban Quick Note cho 1 user, gate bằng mật khẩu `<owner password>` trước khi vào màn hình note
 - `/query`: tìm thấy tiền lệ `verifyOwnerPassword`/`OwnerPassword` có sẵn trong `backend/internal/api/playlists.go` (dòng 19-27) và password modal pattern trong `frontend/src/components/FavoritePill.tsx` (dòng ~178-190) — tái dùng thay vì làm mới
 - Khác biệt quan trọng surface trong proposal: Playlists chỉ gate WRITE (list công khai), nhưng Kanban Note phải gate CẢ GET vì là dữ liệu riêng tư — nếu chép y nguyên pattern Playlists sẽ lộ dữ liệu
 - Trade-off nêu rõ không tự chọn ngầm: kéo-thả bằng HTML5 DnD gốc (không thêm dependency) + nút chuyển cột cho mobile, thay vì thêm thư viện `@dnd-kit` (project chưa có lib DnD nào)

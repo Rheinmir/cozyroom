@@ -14,7 +14,7 @@ Implement a password-protected NSFW tagging system for ebooks that persists to t
 - **Frontend:**
     - `src/pages/EbooksPage.tsx`:
         - Add a "Tag NSFW" button/context menu item.
-        - Implement a password prompt modal (Password: `owner712002`).
+        - Implement a password prompt modal (Password: `<owner password>`).
         - Apply CSS filter `blur(20px)` to images where `is_nsfw` is true.
     - `src/index.css`: Add styling for `.nsfw-blurred` and the NSFW toggle UI.
 
@@ -25,7 +25,7 @@ Implement a password-protected NSFW tagging system for ebooks that persists to t
 ## 4. Minimal Implementation Plan
 1. **Schema & Domain:** Add `IsNSFW` to the Go entity and run an `ALTER TABLE` migration in the database initialization.
 2. **PDF Extraction:** Enhance `ScanEbooks` to use `ffmpeg -i input.pdf -frames:v 1 output.jpg` for PDFs.
-3. **NSFW API:** Create a handler that verifies the `owner712002` password and updates the `is_nsfw` column for the given ebook ID.
+3. **NSFW API:** Create a handler that verifies the `<owner password>` password and updates the `is_nsfw` column for the given ebook ID.
 4. **Frontend Logic:**
     - Update the `EbookCard` to conditionally apply a blur class.
     - Add a toggle that triggers a `window.prompt` (or custom modal) for the password before sending the API request.

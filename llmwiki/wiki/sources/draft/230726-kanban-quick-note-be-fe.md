@@ -1,6 +1,6 @@
 ---
 type: draft
-title: Kanban Quick Note - bang note rieng tu 1 nguoi dung gate bang mat khau owner712002
+title: Kanban Quick Note - bang note rieng tu 1 nguoi dung gate bang mat khau <owner password>
 status: done
 tags: [feature, kanban, notes, owner-password, be-fe]
 timestamp: 2026-07-23
@@ -20,19 +20,19 @@ Toàn bộ 5 task đã code xong, build + push image + rollout thật lên clust
 - `go build ./...` + `go vet ./...` sạch; `npx tsc --noEmit` sạch cho mọi file mới sửa (1 lỗi TS còn lại ở `TrendingChartMode.tsx` là pre-existing, không liên quan)
 - Build & push `100.88.197.64:5000/cozyroom-backend:k8s` (digest `sha256:0a118cf0...`) và `.../cozyroom-frontend:k8s` (digest `sha256:7f883373...`)
 - `kubectl rollout restart deployment/backend deployment/frontend -n cozyroom-k8s` → cả 2 `successfully rolled out`, `backend` 1/1 0 restart, `frontend` 3/3 0 restart sau rollout
-- Verify gate thật qua `curl`: `GET /api/notes` không kèm `X-Owner-Password` → `401`; kèm đúng `owner712002` → `200 []`
+- Verify gate thật qua `curl`: `GET /api/notes` không kèm `X-Owner-Password` → `401`; kèm đúng `<owner password>` → `200 []`
 - Verify CRUD full lifecycle thật trên Postgres production: `POST /api/notes` → tạo thành công (`id: edde5672e1d82205`), `GET` thấy lại đúng note, `DELETE` → `204`, `GET` lại → rỗng — dọn sạch để user tự thử từ đầu
 - `/notes` route trả `200` qua SPA fallback đúng như các route khác
 
 Không có regression: site chính (`/`) vẫn `200`, không đụng gì tới `verifyOwnerPassword`/`OwnerPassword` gốc.
 
 ## What
-Thêm một trang Kanban Quick Note riêng tư cho 1 người dùng (owner) — toàn bộ trang bị khoá sau màn hình nhập mật khẩu `owner712002`, không phải chỉ khoá từng thao tác ghi như cơ chế Playlists hiện có. Tái sử dụng đúng pattern xác thực đã tồn tại trong code (`verifyOwnerPassword` ở backend, password modal ở frontend) thay vì dựng cơ chế mới.
+Thêm một trang Kanban Quick Note riêng tư cho 1 người dùng (owner) — toàn bộ trang bị khoá sau màn hình nhập mật khẩu `<owner password>`, không phải chỉ khoá từng thao tác ghi như cơ chế Playlists hiện có. Tái sử dụng đúng pattern xác thực đã tồn tại trong code (`verifyOwnerPassword` ở backend, password modal ở frontend) thay vì dựng cơ chế mới.
 
 ## Tiền lệ đã tra cứu (qua `/query`)
 
-- Backend: `backend/internal/api/playlists.go` dòng 19-27 đã có sẵn `const OwnerPassword = "owner712002"` và hàm `verifyOwnerPassword(r *http.Request) bool` (check header `X-Owner-Password` hoặc query `password`) — cùng package `api` nên handler mới gọi thẳng được, không cần export thêm hay import gì mới.
-- Frontend: `frontend/src/components/FavoritePill.tsx` dòng ~178-190 đã có sẵn pattern modal nhập mật khẩu, so khớp chuỗi `'owner712002'` phía client, rồi lưu vào state `sessionPassword` trong phiên làm việc để khỏi hỏi lại nhiều lần.
+- Backend: `backend/internal/api/playlists.go` dòng 19-27 đã có sẵn `const OwnerPassword = "<owner password>"` và hàm `verifyOwnerPassword(r *http.Request) bool` (check header `X-Owner-Password` hoặc query `password`) — cùng package `api` nên handler mới gọi thẳng được, không cần export thêm hay import gì mới.
+- Frontend: `frontend/src/components/FavoritePill.tsx` dòng ~178-190 đã có sẵn pattern modal nhập mật khẩu, so khớp chuỗi `'<owner password>'` phía client, rồi lưu vào state `sessionPassword` trong phiên làm việc để khỏi hỏi lại nhiều lần.
 - Khác biệt quan trọng với Playlists: Playlists cho phép XEM công khai, chỉ khoá thao tác GHI. Yêu cầu lần này là khoá **toàn bộ trang** (cả xem lẫn sửa) vì đây là note riêng tư 1 người — nên gate phải chặn ngay khi vào route `/notes`, không đợi tới lúc bấm nút ghi.
 - Không có concept "note" hay "kanban" nào tồn tại trong wiki trước đây — đây là tính năng hoàn toàn mới, không đụng dữ liệu/bảng nào có sẵn.
 - Đã migrate SQLite → PostgreSQL (`280526-sqlite-to-postgres.md`) — bảng mới phải theo đúng convention Postgres hiện tại: placeholder `$1 $2...`, timestamp dạng `INTEGER NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::INTEGER)` (khớp `db.go`).
@@ -94,7 +94,7 @@ Thêm một trang Kanban Quick Note riêng tư cho 1 người dùng (owner) — 
 ## Success criteria
 
 - Vào `/notes` khi chưa nhập mật khẩu → không thấy bất kỳ nội dung note nào (kể cả gọi thẳng `curl /api/notes` không kèm password → 401/403, không lộ dữ liệu)
-- Nhập đúng `owner712002` → thấy bảng Kanban 3 cột, tạo/sửa/xoá card hoạt động, lưu xuống Postgres thật
+- Nhập đúng `<owner password>` → thấy bảng Kanban 3 cột, tạo/sửa/xoá card hoạt động, lưu xuống Postgres thật
 - Kéo-thả đổi cột/vị trí trên desktop hoạt động; trên mobile có nút thay thế chuyển cột
 - F5 reload sau khi nhập đúng mật khẩu 1 lần trong phiên → không phải nhập lại (giữ đúng hành vi session hiện có của Playlists)
 - Không có regression ở `/api/playlists*` hay `/api/ebooks/*/nsfw` (dùng chung `verifyOwnerPassword` nhưng không đổi logic hàm đó)

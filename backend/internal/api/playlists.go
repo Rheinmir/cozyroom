@@ -16,16 +16,6 @@ type PlaylistHandlers struct {
 	db *sql.DB
 }
 
-const OwnerPassword = "owner712002"
-
-func verifyOwnerPassword(r *http.Request) bool {
-	pw := r.Header.Get("X-Owner-Password")
-	if pw == "" {
-		pw = r.URL.Query().Get("password")
-	}
-	return pw == OwnerPassword
-}
-
 func genHexID() string {
 	b := make([]byte, 8)
 	_, _ = rand.Read(b)

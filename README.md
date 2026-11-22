@@ -110,3 +110,6 @@ cozyroom/
 ├── docker-compose.yml
 └── nginx.conf
 ```
+## Owner password
+
+The owner password is read from the environment variable `COZYROOM_OWNER_PASSWORD` (k8s: Secret `cozyroom-owner`, key `password`, see `k8s/secret.yaml.example`). It is never in code, in the frontend bundle or in docs. Unset or empty means every owner endpoint refuses (fail closed). The browser asks the server (`GET /api/owner/check`, header `X-Owner-Password`); a password in a URL is not accepted. Wrong tries wait 500 ms and are capped at 10 per minute per client (then 429).

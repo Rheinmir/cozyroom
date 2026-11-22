@@ -9,6 +9,7 @@ import {
 } from '../api'
 import { useDialogs } from '../DialogContext'
 import { useFlipUp } from '../useFlipPosition'
+import { checkOwner } from '../ownerAuth'
 
 // Helper for session password storage
 const getSessionPassword = () => sessionStorage.getItem('cozyroom_owner_password') || ''
@@ -183,9 +184,9 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
     setShowPasswordModal(true)
   }
 
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
     const trimmed = passwordInput.trim()
-    if (trimmed !== 'owner712002') {
+    if (!(await checkOwner(trimmed))) {
       setPasswordError('Mật khẩu sai!')
       return
     }

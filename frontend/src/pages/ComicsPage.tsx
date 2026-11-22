@@ -11,6 +11,7 @@ import {
 import { useDialogs } from '../DialogContext'
 import BackButton from '../components/BackButton'
 import { API } from '../endpoints'
+import { checkOwner, getOwnerPw, setOwnerPw } from '../ownerAuth'
 
 type Source = 'md' | 'eh'
 type ViewMode = 'scroll' | 'page'
@@ -168,12 +169,12 @@ export default function ComicsPage() {
   // Reset pagination whenever the visible list itself changes
   useEffect(() => { setVisibleCount(PAGE_SIZE) }, [source, dlFilter, searchActive, results])
 
-  const handleSourceChange = (s: Source) => {
+  const handleSourceChange = async (s: Source) => {
     if (s === 'eh') {
-      const password = localStorage.getItem('ebook-nsfw-pass')
-      if (password !== 'owner712002') {
+      const password = getOwnerPw()
+      if (!password || !(await checkOwner(password))) {
         const input = window.prompt('Nhập mật khẩu để truy cập nguồn NSFW (E-Hentai):')
-        if (input === 'owner712002') { localStorage.setItem('ebook-nsfw-pass', input) }
+        if (input && (await checkOwner(input))) { setOwnerPw(input) }
         else { if (input !== null) toast('Sai mật khẩu!', 'error'); return }
       }
     }

@@ -6,6 +6,7 @@ import { useDialogs } from '../DialogContext'
 import Spinner from '../components/Spinner'
 import { paths } from '../routes'
 import { API } from '../endpoints'
+import { checkOwner, getOwnerPw, setOwnerPw, clearOwnerPw } from '../ownerAuth'
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return '0 Bytes'
@@ -101,7 +102,7 @@ export default function EbooksPage() {
     queryClient.setQueryData<Ebook[]>(['ebooks'], prev => prev?.map(e => e.id === id ? { ...e, ...patch } : e))
 
   const handleToggleNSFW = (id: string, current: boolean) => {
-    let password = localStorage.getItem('ebook-nsfw-pass')
+    let password: string | null = getOwnerPw() || null
     if (!password) {
       password = window.prompt('Nhập mật khẩu để thay đổi trạng thái NSFW:')
       if (!password) return
@@ -114,10 +115,10 @@ export default function EbooksPage() {
     })
     .then(res => {
       if (res.ok) {
-        localStorage.setItem('ebook-nsfw-pass', password!)
+        setOwnerPw(password!)
         patchEbook(id, { is_nsfw: !current })
       } else {
-        localStorage.removeItem('ebook-nsfw-pass')
+        clearOwnerPw()
         toast('Sai mật khẩu hoặc lỗi server!', 'error')
       }
     })
@@ -140,20 +141,20 @@ export default function EbooksPage() {
     .catch(console.error)
   }
 
-  const handleFilterNSFWChange = (val: 'all' | 'nsfw' | 'clean') => {
+  const handleFilterNSFWChange = async (val: 'all' | 'nsfw' | 'clean') => {
     if (val === 'clean') {
       setFilterNSFW(val)
       return
     }
 
     // Check password if switching to NSFW or All
-    const password = localStorage.getItem('ebook-nsfw-pass')
-    if (password === 'owner712002') {
+    const password = getOwnerPw()
+    if (password && (await checkOwner(password))) {
       setFilterNSFW(val)
     } else {
       const input = window.prompt('Nhập mật khẩu để xem nội dung NSFW:')
-      if (input === 'owner712002') {
-        localStorage.setItem('ebook-nsfw-pass', input)
+      if (input && (await checkOwner(input))) {
+        setOwnerPw(input)
         setFilterNSFW(val)
       } else {
         if (input !== null) toast('Sai mật khẩu!', 'error')

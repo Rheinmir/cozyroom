@@ -75,7 +75,7 @@ func hasPermission(db *sql.DB, identity kanbanIdentity, boardID, resource, actio
 }
 
 // verifyKanbanAccess must remain a strict superset of verifyOwnerPassword —
-// owner712002 keeps working exactly as before; an approved user's session is
+// the owner password keeps working exactly as before; an approved user's session is
 // an additional way in, never a replacement.
 func verifyKanbanAccess(db *sql.DB, r *http.Request) (kanbanIdentity, bool) {
 	if verifyOwnerPassword(r) {
@@ -235,7 +235,7 @@ func (h *KanbanAuthHandlers) listApprovedUsers(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(users)
 }
 
-// GET /api/kanban/admin/pending — owner712002 ONLY, never a regular session,
+// GET /api/kanban/admin/pending — the owner password ONLY, never a regular session,
 // so an approved user can never see or approve other people's registrations.
 func (h *KanbanAuthHandlers) listPending(w http.ResponseWriter, r *http.Request) {
 	if !verifyOwnerPassword(r) {

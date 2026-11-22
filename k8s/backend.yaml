@@ -76,6 +76,12 @@ spec:
               value: /data/ebook-covers
             - name: CLOAK_PROXY_URL
               value: "http://cloak-proxy:8765"
+            - name: COZYROOM_OWNER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cozyroom-owner
+                  key: password
+                  optional: true   # unset = every owner endpoint refuses (fail closed); the pod and the music keep running
             - name: OPENROUTER_API_KEY
               valueFrom:
                 secretKeyRef:

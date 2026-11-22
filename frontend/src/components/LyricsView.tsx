@@ -4,6 +4,7 @@ import { usePlayer } from '../PlayerContext'
 import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation } from '../api'
 import { useFlipUp } from '../useFlipPosition'
 import type { LyricsData, SourceInfo } from '../api'
+import { checkOwner } from '../ownerAuth'
 
 const AUTH_KEY = 'hs-lyrics-auth'
 const isAuthed  = () => localStorage.getItem(AUTH_KEY) === '1'
@@ -255,8 +256,10 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
   }
 
   const handleSave = async () => {
-    if (!isAuthed() && pw !== 'admin123' && pw !== 'owner712002') { setSaveMsg(t('lyrics.wrong_password')); return }
-    if (pw === 'owner712002') grantAuth()
+    if (!isAuthed()) {
+      if (!(await checkOwner(pw))) { setSaveMsg(t('lyrics.wrong_password')); return }
+      grantAuth()
+    }
     if (!data) { setSaveMsg(t('lyrics.none_selected')); return }
 
     // Step 1: build LRC string

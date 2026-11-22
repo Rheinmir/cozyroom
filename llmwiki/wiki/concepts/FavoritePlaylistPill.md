@@ -1,6 +1,6 @@
 ---
 name: FavoritePlaylistPill
-description: Playlists Management via FavoritePill - local storage (localStorage) and permanent storage (SQLite + owner712002 password verification)
+description: Playlists Management via FavoritePill - local storage (localStorage) and permanent storage (SQLite + <owner password> password verification)
 ---
 
 # FavoritePlaylistPill
@@ -27,14 +27,14 @@ Cụm nút `FavoritePill.tsx` hiển thị bên phải của mỗi dòng bài h�
 | Đặc tính | Local Playlists (Cục bộ) | Permanent Playlists (Vĩnh viễn) |
 |----------|--------------------------|--------------------------------|
 | **Vị trí lưu** | Trình duyệt (`localStorage`) | Máy chủ (Cơ sở dữ liệu SQLite) |
-| **Xác thực** | Không yêu cầu mật khẩu | Yêu cầu mật khẩu chủ: `owner712002` |
+| **Xác thực** | Không yêu cầu mật khẩu | Yêu cầu mật khẩu chủ: `<owner password>` |
 | **Độ bền vững** | Bị xóa nếu xóa cache/cookie | Lưu vĩnh viễn, đồng bộ trên các thiết bị |
 | **Giới hạn** | Chỉ hoạt động trên trình duyệt hiện tại | Hoạt động mọi lúc mọi nơi |
 
 ### Cơ chế Gate Mật khẩu
 Đối với các thao tác ghi dữ liệu vĩnh viễn (Permanent):
 - Khi người dùng tạo hoặc thêm bài hát vào playlist vĩnh viễn lần đầu, giao diện sẽ kích hoạt một Popup/Modal yêu cầu nhập mật khẩu.
-- Nếu nhập đúng mật khẩu `owner712002`, thông tin sẽ được lưu trữ và ghi nhớ trong phiên làm việc để tránh việc phải nhập lại nhiều lần. Nhập sai sẽ hiển thị thông báo lỗi và từ chối ghi dữ liệu.
+- Nếu nhập đúng mật khẩu `<owner password>`, thông tin sẽ được lưu trữ và ghi nhớ trong phiên làm việc để tránh việc phải nhập lại nhiều lần. Nhập sai sẽ hiển thị thông báo lỗi và từ chối ghi dữ liệu.
 
 ---
 
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS playlist_tracks (
 | Đường dẫn file | Vai trò thay đổi |
 |----------------|------------------|
 | [backend/internal/db/db.go](file:///C:/Users/olive/orca/workspaces/home-spotify/m/backend/internal/db/db.go) | Thực hiện migration tạo bảng `playlists` và `playlist_tracks` |
-| [backend/internal/api/routes.go](file:///C:/Users/olive/orca/workspaces/home-spotify/m/backend/internal/api/routes.go) | Định nghĩa các routes quản lý playlist và check password `owner712002` |
+| [backend/internal/api/routes.go](file:///C:/Users/olive/orca/workspaces/home-spotify/m/backend/internal/api/routes.go) | Định nghĩa các routes quản lý playlist và check password `<owner password>` |
 | [frontend/src/components/FavoritePill.tsx](file:///C:/Users/olive/orca/workspaces/home-spotify/m/frontend/src/components/FavoritePill.tsx) | Thành phần UI Capsule `[★ ▾]` và logic xử lý localStorage + API client |
 | [frontend/src/pages/PlaylistsPage.tsx](file:///C:/Users/olive/orca/workspaces/home-spotify/m/frontend/src/pages/PlaylistsPage.tsx) | Trang quản lý danh sách phát: Hiển thị, phát nhạc, tạo và dọn dẹp playlist |
 

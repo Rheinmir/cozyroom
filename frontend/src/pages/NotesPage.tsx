@@ -14,12 +14,12 @@ import {
   listComments, createComment, deleteComment,
 } from '../api'
 import { useDialogs } from '../DialogContext'
+import { checkOwner } from '../ownerAuth'
 
 const OWNER_PW_KEY = 'cozyroom_owner_password'
 const TOKEN_KEY = 'cozyroom_kanban_token'
 const USERNAME_KEY = 'cozyroom_kanban_username'
 const COLOR_KEY = 'cozyroom_kanban_color'
-const OWNER_PASSWORD = 'owner712002'
 
 const PRIORITIES: { key: string; label: string }[] = [
   { key: '', label: 'Không đặt' },
@@ -65,13 +65,14 @@ function GateScreen({ onEnter }: { onEnter: (s: Session) => void }) {
       .finally(() => setBusy(false))
   }
 
-  const doOwnerEnter = () => {
-    if (ownerInput.trim() !== OWNER_PASSWORD) {
+  const doOwnerEnter = async () => {
+    const pw = ownerInput.trim()
+    if (!(await checkOwner(pw))) {
       setError('Mật khẩu owner sai!')
       return
     }
-    sessionStorage.setItem(OWNER_PW_KEY, ownerInput.trim())
-    onEnter({ creds: { password: OWNER_PASSWORD }, isOwner: true, username: 'owner', color: '#ffffff' })
+    sessionStorage.setItem(OWNER_PW_KEY, pw)
+    onEnter({ creds: { password: pw }, isOwner: true, username: 'owner', color: '#ffffff' })
   }
 
   return (
@@ -415,15 +416,22 @@ export default function NotesPage() {
   // Restore session (owner or logged-in user) — no board/note API call happens
   // before one of these two credentials is confirmed present.
   useEffect(() => {
+    const restoreUser = () => {
+      const token = sessionStorage.getItem(TOKEN_KEY)
+      if (token) {
+        setSession({ creds: { token }, isOwner: false, username: sessionStorage.getItem(USERNAME_KEY) || '', color: sessionStorage.getItem(COLOR_KEY) || '#888' })
+      }
+    }
     const ownerPw = sessionStorage.getItem(OWNER_PW_KEY)
-    if (ownerPw === OWNER_PASSWORD) {
-      setSession({ creds: { password: OWNER_PASSWORD }, isOwner: true, username: 'owner', color: '#ffffff' })
+    if (ownerPw) {
+      // The server decides; a stale stored password is dropped.
+      checkOwner(ownerPw).then(ok => {
+        if (ok) setSession({ creds: { password: ownerPw }, isOwner: true, username: 'owner', color: '#ffffff' })
+        else { sessionStorage.removeItem(OWNER_PW_KEY); restoreUser() }
+      })
       return
     }
-    const token = sessionStorage.getItem(TOKEN_KEY)
-    if (token) {
-      setSession({ creds: { token }, isOwner: false, username: sessionStorage.getItem(USERNAME_KEY) || '', color: sessionStorage.getItem(COLOR_KEY) || '#888' })
-    }
+    restoreUser()
   }, [])
 
   const loadBoard = useCallback((boardId: string, creds: KanbanCreds) => {
@@ -578,7 +586,7 @@ export default function NotesPage() {
         </p>
       </div>
 
-      {session.isOwner && activeBoardId && <AdminPendingPanel password={OWNER_PASSWORD} boardId={activeBoardId} />}
+      {session.isOwner && activeBoardId && <AdminPendingPanel password={session.creds.password ?? ''} boardId={activeBoardId} />}
 
       <div className="notes-board-switcher">
         {boards.map(b => (
