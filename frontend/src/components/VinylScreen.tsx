@@ -31,6 +31,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
 
   const cycleShuffle = () => setShuffleMode(shuffleMode === 'off' ? 'smart' : shuffleMode === 'smart' ? 'shuffle' : 'off')
   const cycleRepeat = () => setRepeat(repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off')
+  const repeatLabel = t('player.repeat', { defaultValue: 'Repeat' }) + ': ' + t(`player.repeat_${repeat}`, { defaultValue: repeat === 'off' ? 'off' : repeat === 'all' ? 'all' : 'one' })
   const shuffleLabel = shuffleMode === 'off' ? t('player.smart_radio_hint') : shuffleMode === 'smart' ? t('player.smart_radio_active') : t('player.shuffle_active')
 
   const next3 = queue.slice(queueIdx + 1, queueIdx + 4)
@@ -137,7 +138,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
           </button>
           <button onClick={prev} aria-label={t('player.previous')} title={t('player.previous')}><IconPrev size={26} /></button>
           <button onClick={next} aria-label={t('player.next')} title={t('player.next')}><IconNext size={26} /></button>
-          <button className={repeat !== 'off' ? 'on' : ''} onClick={cycleRepeat} aria-label={t('player.repeat', { defaultValue: 'Repeat' })} title={t('player.repeat', { defaultValue: 'Repeat' })}>
+          <button className={repeat !== 'off' ? 'on' : ''} onClick={cycleRepeat} aria-pressed={repeat !== 'off'} aria-label={repeatLabel} title={repeatLabel}>
             <IconRepeat size={22} one={repeat === 'one'} />
           </button>
         </div>
