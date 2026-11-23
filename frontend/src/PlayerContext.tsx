@@ -251,15 +251,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!s?.track) return
     const trackId = s.track.id
     const q = s.quality ?? 'lossless'
+    // YouTube tracks live on their own element (getActive() returns it): restoring onto audioA left
+    // the track "loaded" on an element nothing controls, so play/pause did nothing after a reload.
+    const el = trackId.startsWith('yt:') ? audioYT.current : audioA.current
     getOfflineObjectURL(trackId).then(offlineUrl => {
-      audioA.current.src = offlineUrl ?? streamUrl(trackId, resolveQuality(trackId, q))
-      audioA.current.preload = 'auto'
+      el.src = offlineUrl ?? streamUrl(trackId, resolveQuality(trackId, q))
+      el.preload = 'auto'
       const seek = () => {
-        audioA.current.currentTime = s.progress ?? 0
-        audioA.current.play().then(() => setPlaying(true)).catch(() => {})
+        el.currentTime = s.progress ?? 0
+        el.play().then(() => setPlaying(true)).catch(() => {})
       }
-      audioA.current.addEventListener('loadedmetadata', seek, { once: true })
-      audioA.current.load()
+      el.addEventListener('loadedmetadata', seek, { once: true })
+      el.load()
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -314,12 +317,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       an.fftSize = 256
       an.smoothingTimeConstant = 0.8
 
-      // Connect both audio elements to the same analyser → destination
+      // Connect all audio elements to the same analyser → destination
       const srcA = ctx.createMediaElementSource(audioA.current)
       srcA.connect(an)
 
       const srcB = ctx.createMediaElementSource(audioB.current)
       srcB.connect(an)
+
+      // YouTube tracks play on their own element (same-origin /media/youtube): feed it to the analyser too,
+      // otherwise the equalizer stays silent for them.
+      const srcY = ctx.createMediaElementSource(audioYT.current)
+      srcY.connect(an)
 
       an.connect(ctx.destination)
       audioCtxRef.current = ctx

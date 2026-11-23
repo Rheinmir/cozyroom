@@ -1650,3 +1650,5 @@
 
 - Nguyen nhan lo lua mat: analyser chi tao khi nguoi dung bam play; phat lai sau reload khong co gesture nen Equalizer khong hien. Giai phap: PlayerContext lang nghe pointerdown/keydown (capture) mot lan: initAudioCtx() (idempotent, iOS bo qua), va neu co bai ma chua phat thi tap vao CHO TRONG (khong phai link/nut/input) se phat. Phim bam chi mo khoa.
 - Equalizer: khong co analyser (iOS) thi chay chuyen dong gia khi dang phat; reduced-motion thi dung yen.
+
+- player merge 2b/5 — YouTube: restore dat bai yt: len audioYT (truoc: audioA, nen play/pause khong dieu khien dung element sau reload) va noi audioYT vao analyser (equalizer co du lieu cho bai YouTube). Test: /media/youtube sau tap: currentTime tang, bars max 0.99.
