@@ -5,6 +5,7 @@ import { fetchLyrics, saveLyrics, bustLyricsCache, fetchLyricsTranslation } from
 import { useFlipUp } from '../useFlipPosition'
 import type { LyricsData, SourceInfo } from '../api'
 import { checkOwner, getOwnerPw, setOwnerPw, clearOwnerPw } from '../ownerAuth'
+import { IconGlobe, IconBolt, IconClose } from './Icons'
 
 
 const SS = 'lyr:'
@@ -395,7 +396,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
                 <button className="lyrics-save-btn" onClick={handleSave} disabled={saving}>
                   {saving ? '…' : 'OK'}
                 </button>
-                <button className="lyrics-cancel-btn" onClick={() => { setPwVisible(false); setPw(''); setSaveMsg('') }}>✕</button>
+                <button className="lyrics-cancel-btn" onClick={() => { setPwVisible(false); setPw(''); setSaveMsg('') }} aria-label="Cancel"><IconClose size={14} /></button>
               </div>
             )}
             <button
@@ -404,14 +405,14 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
               title={showTr ? t('player.hide_translation') : t('player.show_translation')}
               disabled={translating}
             >
-              {translating ? '…' : '🌐'}
+              {translating ? '…' : <IconGlobe />}
             </button>
             {onToggleAutoTranslate && (
               <button
                 className={'lyrics-tr-btn' + (autoTranslate ? ' lyrics-tr-btn--active' : '')}
                 onClick={onToggleAutoTranslate}
                 title={autoTranslate ? t('player.auto_translate_on') : t('player.auto_translate_off')}
-              >⚡</button>
+              ><IconBolt /></button>
             )}
             <button className="lyrics-refresh-btn" onClick={handleRefresh} title={t('lyrics.refetch')}>
               <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
