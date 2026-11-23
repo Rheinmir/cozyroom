@@ -190,6 +190,7 @@
     "add_to_playlist": "Thêm vào playlist",
     "my_playlists": "Danh sách phát",
     "no_playlists": "Chưa có danh sách phát nào",
+    "no_match": "Không có playlist nào khớp",
     "create_placeholder": "Tên danh sách mới...",
     "create_btn": "Tạo",
     "password_required": "Yêu cầu Mật khẩu",
