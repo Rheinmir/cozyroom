@@ -245,21 +245,22 @@ export default function Sidebar() {
       )}
 
       <div className="sidebar-toggles">
-        {/* One radio group: a click picks THAT theme at once (no stepping through the others). The collapsed rail shows one icon that cycles. */}
-        <div className="lang-toggle" role="radiogroup" aria-label="Giao diện" onClick={collapsed ? () => chooseTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]) : undefined}
-          title={collapsed ? `Giao diện: ${THEME_LABEL[theme]} → ${THEME_LABEL[THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]]}` : undefined}>
-          <span className="toggle-icon" aria-hidden="true">
+        {/* A click on an option sets THAT theme at once (no stepping through the others). The collapsed rail shows one icon button that cycles. */}
+        <div className="lang-toggle" role="group" aria-label="Giao diện">
+          <button type="button" className="toggle-icon" aria-label={`Giao diện: ${THEME_LABEL[theme]} → ${THEME_LABEL[THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]]}`} title={`Giao diện: ${THEME_LABEL[theme]} → ${THEME_LABEL[THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]]}`} onClick={() => chooseTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length])}>
+            <span aria-hidden="true">
             {theme === 'dark'
               ? <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               : theme === 'warm'
               ? <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c1 3.5 5.5 5.5 5.5 10.2A5.5 5.5 0 0 1 12 19a5.5 5.5 0 0 1-5.5-5.8c0-2 1-3.4 2.2-4.6.3 1.4 1 2.2 1.8 2.6C10.2 8.2 10.5 5.5 12 3z"/></svg>
               : <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>}
           </span>
+          </button>
           {THEMES.map((th, i) => (
             <Fragment key={th}>
               {i > 0 && <span className="lang-sep" aria-hidden="true">·</span>}
-              <button type="button" role="radio" aria-checked={theme === th} className={theme === th ? 'lang-opt lang-opt--active' : 'lang-opt'}
-                onClick={e => { e.stopPropagation(); chooseTheme(th) }}>{THEME_NAME[th]}</button>
+              <button type="button" aria-pressed={theme === th} className={theme === th ? 'lang-opt lang-opt--active' : 'lang-opt'}
+                onClick={() => chooseTheme(th)}>{THEME_NAME[th]}</button>
             </Fragment>
           ))}
         </div>

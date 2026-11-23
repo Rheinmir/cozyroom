@@ -22,7 +22,7 @@ Scope: `/`, `/music/discover`, `/music/albums/<id>`, the sidebar theme toggle; w
 1. Accessibility 7/10. Worst: starred state was white (`.fav-star--active` `#fff !important`) = invisible on Light and Warm; sitewide focus ring white = invisible on Light. Fix: ink token, dark ring on Light, Warm ring #c24e1c. By eye still owed: keyboard order, alt text meaning.
 2. Visual hierarchy 8/10. Worst: none measured. The Warm page top was whiter than the sidebar (gradient surface -> bg): solid canvas in Warm.
 3. Consistency 6/10 -> 8/10. Worst: hard-coded dark glass `rgba(28,28,30,.5)` in 7 rules (stat chips, back button, search island) = cool grey chips on a peach page. Fix: token `--chrome-glass` per theme. Drift left: `.fav-pill` and others still hold some white-alpha literals.
-4. Antipattern 7/10. Worst: the theme toggle cycled Dark -> Light -> Warm on every click (a click on "Warm" stopped at Light). Fix: radio group, each option sets its theme at once; collapsed rail keeps one cycling icon.
+4. Antipattern 7/10. Worst: the theme toggle cycled Dark -> Light -> Warm on every click (a click on "Warm" stopped at Light). Fix: a role=group of aria-pressed buttons (no radio role without arrow keys), each option sets its theme at once; the collapsed rail has one real icon button (keyboard reachable) that cycles.
 
 Verdict: PASS for the measured items after the fixes (advisory). Open for the owner's eye: the floating bubble overlap at 390, dark/light sidebar tone vs canvas (intentional), pages not audited.
 

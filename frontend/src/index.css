@@ -4061,6 +4061,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .lang-opt--active { color: var(--text); }
 button.lang-opt { background: none; border: 0; padding: 4px 3px; min-height: 24px; font-family: inherit; cursor: pointer; }   /* radio options of the theme toggle */
 button.lang-opt:hover { color: var(--text); }
+button.toggle-icon { background: none; border: 0; padding: 0; cursor: pointer; }   /* collapsed rail: the theme icon is a real button */
 .lang-sep { font-size: 10px; color: var(--border); }
 
 /* Mode toggle */
