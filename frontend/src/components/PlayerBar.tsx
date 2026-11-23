@@ -14,6 +14,7 @@ import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
 import VinylScreen from './VinylScreen'
 import { MEDIA } from '../endpoints'
+import { IconGlobe, IconBolt, IconWarning, IconClose, IconSparkle } from './Icons'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -255,7 +256,7 @@ export default function PlayerBar() {
                 </svg>
               </button>
               <button className={'smart-badge' + (shuffleMode === 'smart' ? ' smart-badge--active' : '')} onClick={() => setShuffleMode(shuffleMode === 'smart' ? 'off' : 'smart')} title={shuffleMode === 'smart' ? t('player.smart_on') : t('player.smart_off')}>
-                ✦ SMART
+                <IconSparkle size={11} /> SMART
               </button>
               <button className={'quality-btn' + (quality === 'lossless' ? ' quality-btn--lossless' : ' quality-btn--320')} onClick={() => setQuality(quality === 'lossless' ? '320' : 'lossless')}>
                 {quality === 'lossless' ? 'LOSSLESS' : '320K'}
@@ -386,7 +387,7 @@ export default function PlayerBar() {
                   {artistInfo && <div className="npo-info-artist">{artistInfo.name}</div>}
                   <div className="npo-info-badges">
                     <button className={'smart-badge' + (shuffleMode === 'smart' ? ' smart-badge--active' : '')} onClick={() => setShuffleMode(shuffleMode === 'smart' ? 'off' : 'smart')} title={shuffleMode === 'smart' ? t('player.smart_on') : t('player.smart_off')}>
-                      ✦ SMART
+                      <IconSparkle size={11} /> SMART
                     </button>
                     <button className={'quality-btn' + (quality === 'lossless' ? ' quality-btn--lossless' : ' quality-btn--320')} onClick={() => setQuality(quality === 'lossless' ? '320' : 'lossless')}>
                       {quality === 'lossless' ? 'LOSSLESS' : '320K'}
@@ -441,12 +442,12 @@ export default function PlayerBar() {
                   className={'npo-translate-btn ctrl-btn' + (trActive ? ' ctrl-btn--active' : '')}
                   onClick={() => lyricsRef.current?.toggleTranslation()}
                   title={trActive ? t('player.hide_translation') : t('player.show_translation')}
-                >🌐</button>
+                ><IconGlobe /></button>
                 <button
                   className={'npo-auto-translate-btn ctrl-btn' + (autoTranslate ? ' ctrl-btn--active' : '')}
                   onClick={() => setAutoTranslate(v => !v)}
                   title={autoTranslate ? t('player.auto_translate_on') : t('player.auto_translate_off')}
-                >⚡</button>
+                ><IconBolt /></button>
               </div>
               <div className="npo-progress">
                 <input type="range" className="progress-bar" style={progressStyle} min={0} max={duration || 1} step={0.5} value={progress} onChange={e => seek(Number(e.target.value))} />
@@ -477,14 +478,14 @@ export default function PlayerBar() {
       )}
       {playbackError && (
         <div className="playback-error-toast">
-          <div className="playback-error-icon">⚠️</div>
+          <div className="playback-error-icon"><IconWarning size={20} /></div>
           <div className="playback-error-content">
             <div className="playback-error-title">{t('player.playback_failed')}</div>
             <div className="playback-error-msg">
               {t('player.playback_error', { message: playbackError.message, code: playbackError.code })}
             </div>
           </div>
-          <button className="playback-error-close" onClick={() => setPlaybackError(null)}>✕</button>
+          <button className="playback-error-close" onClick={() => setPlaybackError(null)} aria-label="Close"><IconClose size={16} /></button>
         </div>
       )}
       <BackgroundSoundsPanel />

@@ -1,0 +1,25 @@
+import type { ReactNode } from 'react'
+
+// The app's one icon set: 24px grid, stroke = currentColor, round caps — the same style as the
+// inline icons in Sidebar / MobileNav / PlayerBar. Use these instead of emoji or text glyphs.
+type P = { size?: number; className?: string }
+
+const Svg = ({ size = 18, className, children, fill }: P & { children: ReactNode; fill?: boolean }) => (
+  <svg
+    viewBox="0 0 24 24" width={size} height={size} className={className} aria-hidden="true" focusable="false"
+    fill={fill ? 'currentColor' : 'none'} stroke={fill ? 'none' : 'currentColor'}
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', flex: 'none' }}
+  >
+    {children}
+  </svg>
+)
+
+export const IconGlobe   = (p: P) => <Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.5 3.9 5.5 3.9 9S14.6 18.5 12 21c-2.6-2.5-3.9-5.5-3.9-9S9.4 5.5 12 3z" /></Svg>
+export const IconBolt    = (p: P) => <Svg {...p}><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z" /></Svg>
+export const IconWarning = (p: P) => <Svg {...p}><path d="M12 4l9 16H3z" /><path d="M12 10v4.5M12 17.5v.01" /></Svg>
+export const IconClose   = (p: P) => <Svg {...p}><path d="M6 6l12 12M18 6L6 18" /></Svg>
+export const IconCheck   = (p: P) => <Svg {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></Svg>
+export const IconNote    = (p: P) => <Svg {...p}><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="16" r="2.5" /></Svg>
+export const IconSparkle = (p: P) => <Svg {...p}><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /></Svg>
+// "now playing" marker: three bars
+export const IconBars    = (p: P) => <Svg {...p}><path d="M6 18v-6M12 18V6M18 18v-9" /></Svg>

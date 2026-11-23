@@ -1641,3 +1641,7 @@
 - 2026-11-23 09:29 — session `3397f03d` — 2 tool calls — files: hub-contrast.mjs, hub-sample.py
 
 - 2026-11-23 — index sync: bo 16 dong index tro toi 13 file khong ton tai (khong co trong lich su git).
+
+## 2026-11-23 — player merge 1/5 — Icons.tsx + emoji swap in the player area (branch kozu/player-merge)
+
+- Moi: components/Icons.tsx (globe, bolt, warning, close, check, note, sparkle, bars; 24px, stroke currentColor). Thay emoji trong PlayerBar (🌐 ⚡ ⚠️ ✕ ✦), LyricsView, QueueList, BackgroundSoundsPanel. Trang khac (AI, Notes, Ebooks, Search, Comics, AIStats) chua dung.
