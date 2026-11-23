@@ -2272,7 +2272,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   overflow-y: auto;
 }
 .npo-tabs { display: none; }
-.npo-tabs-mobile { display: none; }
 /* Desktop: the NPO is a fullscreen overlay that covers the persistent
    player-bar, so it must carry its own transport controls (they used to be
    display:none here, leaving no way to control playback in the view). */
@@ -2320,30 +2319,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   /* NPO is a fullscreen takeover — the floating search island must not
      show through/under it. */
   .shell:has(.npo--open) .mobile-search-island { display: none; }
-
-  /* Mobile tabs inside overlay header — always visible */
-  .npo-tabs-mobile {
-    display: flex;
-    background: rgba(255, 255, 255, 0.08);
-    padding: 3px;
-    border-radius: 20px;
-    gap: 4px;
-  }
-  .npo-tab-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .npo-tab-btn--active {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-  }
 
   /* body fills remaining height; each tab panel fills it via flex */
   .npo-body {
@@ -5558,10 +5533,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .vinyl-cta { left: calc(40 * var(--p)); top: calc(785 * var(--p)); width: calc(333 * var(--p)); height: calc(53 * var(--p)); border-radius: calc(27 * var(--p)); background: #1b1b19; color: #fff; display: flex !important; align-items: center; justify-content: center; gap: calc(12 * var(--p)); font-size: calc(15.5 * var(--p)); font-weight: 400; }
 
 /* While the vinyl tab is showing, hide the header/body/controls underneath. */
-.npo--vinyl > .npo-header, .npo--vinyl > .npo-body, .npo--vinyl > .npo-controls { visibility: hidden; }
+.npo--vinyl > .npo-body, .npo--vinyl > .npo-controls { visibility: hidden; }
 .npo--vinyl .queue-panel, .npo--vinyl .queue-panel-backdrop { visibility: visible; z-index: 10; }
-/* Lyrics tab on desktop: the tab switcher is hidden by default there — show it so there is a way back to the vinyl tab. */
-@media (min-width: 641px) { .npo--lyrics .npo-tabs-mobile { display: flex; background: rgba(255,255,255,.08); padding: 3px; border-radius: 20px; gap: 4px; } .npo--lyrics .npo-tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 16px; cursor: pointer; } .npo--lyrics .npo-tab-btn--active { background: rgba(255,255,255,.15); color: #fff; } }
 
 body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
 
@@ -5633,5 +5606,19 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
    it passes empty taps through (pointer-events none) so the zone below still goes back to the player tab. */
 @media (max-width: 640px) {
   .npo-header { position: relative; z-index: 3; pointer-events: none; }
-  .npo-tabs-mobile { pointer-events: auto; }
+  .npo-toggle { pointer-events: auto; }
 }
+
+/* ── Now Playing toggle (Vinyl | Lyrics): same header in both versions, all widths ── */
+.npo-header { position: relative; z-index: 6; }
+.npo-toggle { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.08); }
+.npo-toggle button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; }
+.npo-toggle button[aria-checked="true"] { background: rgba(255,255,255,.15); color: #fff; }
+.npo-toggle button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* On the peach vinyl surface the header stays visible: toggle only, centred (Skip closes the screen) */
+.npo--vinyl > .npo-header { justify-content: center; }
+.npo--vinyl .npo-btn-back, .npo--vinyl .npo-btn-dots { display: none; }
+.npo--vinyl .npo-toggle { background: rgba(27,27,25,.08); }
+.npo--vinyl .npo-toggle button { color: #5d5e67; }
+.npo--vinyl .npo-toggle button[aria-checked="true"] { background: #1b1b19; color: #fff; }
+.npo--vinyl .npo-toggle button:focus-visible { outline-color: #c24e1c; }

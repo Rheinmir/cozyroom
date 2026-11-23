@@ -14,7 +14,8 @@ import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
 import VinylScreen from './VinylScreen'
 import { MEDIA } from '../endpoints'
-import { IconGlobe, IconBolt, IconWarning, IconClose, IconSparkle } from './Icons'
+import { IconGlobe, IconBolt, IconWarning, IconClose, IconSparkle, IconDisc, IconLyrics } from './Icons'
+import NpoToggle from './NpoToggle'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -338,21 +339,16 @@ export default function PlayerBar() {
                 </svg>
               </button>
 
-              {/* Mobile Tab Switcher */}
-              <div className="npo-tabs-mobile">
-                <button 
-                  className={`npo-tab-btn ${mobileTab === 'player' ? 'npo-tab-btn--active' : ''}`} 
-                  onClick={() => setMobileTab('player')}
-                >
-                  {t('player.now_playing')}
-                </button>
-                <button 
-                  className={`npo-tab-btn ${mobileTab === 'lyrics' ? 'npo-tab-btn--active' : ''}`} 
-                  onClick={() => setMobileTab('lyrics')}
-                >
-                  {t('player.lyrics')}
-                </button>
-              </div>
+              {/* One screen, two versions: Vinyl | Lyrics. Same toggle at every width, in both versions. */}
+              <NpoToggle
+                value={mobileTab}
+                onChange={setMobileTab}
+                label={t('player.now_playing') + ' / ' + t('player.lyrics')}
+                options={[
+                  { value: 'player', label: t('player.now_playing'), icon: <IconDisc size={16} /> },
+                  { value: 'lyrics', label: t('player.lyrics'), icon: <IconLyrics size={16} /> },
+                ]}
+              />
 
               {/* lyrics settings — 3 dots, no circle */}
               <button className="npo-btn-dots" onClick={() => lyricsRef.current?.toggleTools()} title="Lyric settings">

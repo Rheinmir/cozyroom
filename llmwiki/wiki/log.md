@@ -1655,3 +1655,7 @@
 - Equalizer: khong co analyser (iOS) thi chay chuyen dong gia khi dang phat; reduced-motion thi dung yen.
 
 - player merge 2b/5 — YouTube: restore dat bai yt: len audioYT (truoc: audioA, nen play/pause khong dieu khien dung element sau reload) va noi audioYT vao analyser (equalizer co du lieu cho bai YouTube). Test: /media/youtube sau tap: currentTime tang, bars max 0.99.
+
+## 2026-11-23 — player merge 3/5 — one shell, Vinyl | Lyrics toggle in both versions (branch kozu/player-merge)
+
+- NpoToggle.tsx: radiogroup (aria-checked, roving tabindex, Left/Right/Up/Down/Home/End). Header luon hien o ca hai ban, moi do rong; ban vinyl an chevron va dots, giu toggle + Skip. Bo CSS cu .npo-tabs-mobile/.npo-tab-btn. Icons: IconDisc, IconLyrics.
