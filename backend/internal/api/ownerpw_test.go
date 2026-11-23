@@ -238,3 +238,30 @@ func TestOwnerFailMapIsPruned(t *testing.T) {
 		t.Fatalf("stale keys must be pruned, map still holds %d", n)
 	}
 }
+
+// Positive twin of TestAliasKeepsAuth (which only asserts the 401 cases): with the right password
+// the handler is reached through /api and through /api/v1. "not json" makes the handler answer 400
+// AFTER the password check, so 400 means "let in", 401 means "refused".
+func TestOwnerPasswordReachesHandlerThroughAliases(t *testing.T) {
+	ownerEnv(t, testOwnerPw)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/playlists", (&PlaylistHandlers{}).createPlaylist)
+	h := aliasPaths(metricsMiddleware(panicRecovery(mux)))
+	for i, base := range []string{"/api", "/api/v1"} {
+		for _, c := range []struct {
+			pw   string
+			want int
+		}{{testOwnerPw, http.StatusBadRequest}, {"wrong-" + testOwnerPw, http.StatusUnauthorized}, {"", http.StatusUnauthorized}} {
+			req := httptest.NewRequest("POST", base+"/playlists", strings.NewReader("not json"))
+			req.RemoteAddr = "192.0.2." + strconv.Itoa(i*10+len(c.pw)%9+1) + ":4000" // own client per case: the rate limiter must not interfere
+			if c.pw != "" {
+				req.Header.Set("X-Owner-Password", c.pw)
+			}
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+			if rec.Code != c.want {
+				t.Errorf("POST %s/playlists with password %q: %d, want %d", base, c.pw, rec.Code, c.want)
+			}
+		}
+	}
+}
