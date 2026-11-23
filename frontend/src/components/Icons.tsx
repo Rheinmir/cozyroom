@@ -25,5 +25,9 @@ export const IconStar = ({ filled, ...p }: P & { filled?: boolean }) => <Svg {..
 export const IconChevronDown = (p: P) => <Svg {...p}><path d="M6 9l6 6 6-6" /></Svg>
 export const IconDisc    = (p: P) => <Svg {...p}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3" /><path d="M12 3a9 9 0 0 1 7 3.4" /></Svg>
 export const IconLyrics  = (p: P) => <Svg {...p}><path d="M4 7h16M4 12h11M4 17h7" /></Svg>
+export const IconPrev    = (p: P) => <Svg {...p}><path d="M18 6v12L8.5 12z" /><path d="M5.5 6v12" /></Svg>
+export const IconNext    = (p: P) => <Svg {...p}><path d="M6 6v12l9.5-6z" /><path d="M18.5 6v12" /></Svg>
+export const IconShuffle = (p: P) => <Svg {...p}><path d="M3 7h3.5c5 0 5 10 10 10H21M3 17h3.5c1.8 0 3-.9 4-2M13.5 9c1-1.2 2.2-2 4-2H21" /><path d="M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5" /></Svg>
+export const IconRepeat  = ({ one, ...p }: P & { one?: boolean }) => <Svg {...p}><path d="M4 11V9a3 3 0 0 1 3-3h12M16 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H5M8 21l-3-3 3-3" />{one && <path d="M11.5 10.5L13 9.5v5" />}</Svg>
 // "now playing" marker: three bars
 export const IconBars    = (p: P) => <Svg {...p}><path d="M6 18v-6M12 18V6M18 18v-9" /></Svg>

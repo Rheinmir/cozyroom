@@ -390,7 +390,7 @@ export default function PlayerBar() {
                     </button>
                   </div>
                 </div>
-                <Equalizer />
+                {mobileTab === 'lyrics' && <Equalizer />}
               </div>
 
               {/* Tab 2 / right col: track title + lyrics */}
