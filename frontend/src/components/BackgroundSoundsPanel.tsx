@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useBgSounds } from '../BgSoundsContext'
 import { IconClose, IconCheck } from './Icons'
+import { useTranslation } from 'react-i18next'
 
 export default function BackgroundSoundsPanel() {
+  const { t } = useTranslation()
   const { sounds, active, volume, panelOpen, setPanelOpen, setActive, setVolume } = useBgSounds()
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -32,7 +34,7 @@ export default function BackgroundSoundsPanel() {
         </span>
         <span className="bgsounds-title">Background Sounds</span>
         {active && <span className="bgsounds-active-name">{sounds.find(s => s.name === active)?.label ?? active}</span>}
-        <button className="bgsounds-close" onClick={() => setPanelOpen(false)} aria-label="Close"><IconClose size={14} /></button>
+        <button className="bgsounds-close" onClick={() => setPanelOpen(false)} aria-label={t('player.close')}><IconClose size={14} /></button>
       </div>
 
       <ul className="bgsounds-list">

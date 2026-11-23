@@ -14,7 +14,8 @@ import FavoritePill from './FavoritePill'
 import QueueList from './QueueList'
 import VinylScreen from './VinylScreen'
 import { MEDIA } from '../endpoints'
-import { IconGlobe, IconBolt, IconWarning, IconClose, IconSparkle } from './Icons'
+import { IconGlobe, IconBolt, IconWarning, IconClose, IconSparkle, IconDisc, IconLyrics } from './Icons'
+import NpoToggle from './NpoToggle'
 
 const fmt = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -332,27 +333,22 @@ export default function PlayerBar() {
             {/* header */}
             <div className="npo-header">
               {/* mobile: chevron back */}
-              <button className="npo-btn-back" onClick={() => setOpen(false)} aria-label="Close">
+              <button className="npo-btn-back" onClick={() => setOpen(false)} aria-label={t('player.close')}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="28" height="28">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
 
-              {/* Mobile Tab Switcher */}
-              <div className="npo-tabs-mobile">
-                <button 
-                  className={`npo-tab-btn ${mobileTab === 'player' ? 'npo-tab-btn--active' : ''}`} 
-                  onClick={() => setMobileTab('player')}
-                >
-                  {t('player.now_playing')}
-                </button>
-                <button 
-                  className={`npo-tab-btn ${mobileTab === 'lyrics' ? 'npo-tab-btn--active' : ''}`} 
-                  onClick={() => setMobileTab('lyrics')}
-                >
-                  {t('player.lyrics')}
-                </button>
-              </div>
+              {/* One screen, two versions: Vinyl | Lyrics. Same toggle at every width, in both versions. */}
+              <NpoToggle
+                value={mobileTab}
+                onChange={setMobileTab}
+                label={t('player.now_playing') + ' / ' + t('player.lyrics')}
+                options={[
+                  { value: 'player', label: t('player.now_playing'), icon: <IconDisc size={16} /> },
+                  { value: 'lyrics', label: t('player.lyrics'), icon: <IconLyrics size={16} /> },
+                ]}
+              />
 
               {/* lyrics settings — 3 dots, no circle */}
               <button className="npo-btn-dots" onClick={() => lyricsRef.current?.toggleTools()} title="Lyric settings">
@@ -394,7 +390,7 @@ export default function PlayerBar() {
                     </button>
                   </div>
                 </div>
-                <Equalizer />
+                {mobileTab === 'lyrics' && <Equalizer />}
               </div>
 
               {/* Tab 2 / right col: track title + lyrics */}
@@ -485,7 +481,7 @@ export default function PlayerBar() {
               {t('player.playback_error', { message: playbackError.message, code: playbackError.code })}
             </div>
           </div>
-          <button className="playback-error-close" onClick={() => setPlaybackError(null)} aria-label="Close"><IconClose size={16} /></button>
+          <button className="playback-error-close" onClick={() => setPlaybackError(null)} aria-label={t('player.close')}><IconClose size={16} /></button>
         </div>
       )}
       <BackgroundSoundsPanel />

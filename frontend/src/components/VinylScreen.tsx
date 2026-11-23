@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { imgSrc } from '../api'
 import type { Track } from '../types'
+import Equalizer from './Equalizer'
+import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icons'
 import { MEDIA } from '../endpoints'
 
 const coverOf = (t: Track, w: number) =>
@@ -24,8 +26,12 @@ type Props = {
 // Now Playing tab; fully driven by the current track + queue.
 export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
   const { t } = useTranslation()
-  const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue } = usePlayer()
+  const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue, prev, next, shuffleMode, setShuffleMode, repeat, setRepeat } = usePlayer()
   if (!track) return null
+
+  const cycleShuffle = () => setShuffleMode(shuffleMode === 'off' ? 'smart' : shuffleMode === 'smart' ? 'shuffle' : 'off')
+  const cycleRepeat = () => setRepeat(repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off')
+  const shuffleLabel = shuffleMode === 'off' ? t('player.smart_radio_hint') : shuffleMode === 'smart' ? t('player.smart_radio_active') : t('player.shuffle_active')
 
   const next3 = queue.slice(queueIdx + 1, queueIdx + 4)
   const pct = duration > 0 ? Math.min(1, progress / duration) : 0
@@ -49,6 +55,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
         <button className="vinyl-skip" onClick={onSkip}>{t('vinyl.skip')}</button>
 
         <div className="vinyl-stage">
+          <div className="vinyl-fire" aria-hidden="true"><Equalizer /></div>
           <div className={'vinyl-disc' + (isPlaying ? ' vinyl-disc--spin' : '')}>
             <div className="vinyl-label">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -124,10 +131,16 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
           <button className="on" aria-current="true" aria-label={t('player.now_playing')} />
         </div>
 
-        <button className="vinyl-cta" onClick={() => (isPlaying ? onLyrics() : toggle())}>
-          {t('vinyl.cta')}
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-        </button>
+        <div className="vinyl-transport" role="group" aria-label={t('player.now_playing')}>
+          <button className={shuffleMode !== 'off' ? 'on' : ''} onClick={cycleShuffle} aria-label={shuffleLabel} title={shuffleLabel}>
+            {shuffleMode === 'smart' ? <IconSparkle size={22} /> : <IconShuffle size={22} />}
+          </button>
+          <button onClick={prev} aria-label={t('player.previous')} title={t('player.previous')}><IconPrev size={26} /></button>
+          <button onClick={next} aria-label={t('player.next')} title={t('player.next')}><IconNext size={26} /></button>
+          <button className={repeat !== 'off' ? 'on' : ''} onClick={cycleRepeat} aria-label={t('player.repeat', { defaultValue: 'Repeat' })} title={t('player.repeat', { defaultValue: 'Repeat' })}>
+            <IconRepeat size={22} one={repeat === 'one'} />
+          </button>
+        </div>
       </div>
     </div>
   )

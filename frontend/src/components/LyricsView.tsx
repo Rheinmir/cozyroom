@@ -396,7 +396,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
                 <button className="lyrics-save-btn" onClick={handleSave} disabled={saving}>
                   {saving ? '…' : 'OK'}
                 </button>
-                <button className="lyrics-cancel-btn" onClick={() => { setPwVisible(false); setPw(''); setSaveMsg('') }} aria-label="Cancel"><IconClose size={14} /></button>
+                <button className="lyrics-cancel-btn" onClick={() => { setPwVisible(false); setPw(''); setSaveMsg('') }} aria-label={t('auth.cancel')}><IconClose size={14} /></button>
               </div>
             )}
             <button

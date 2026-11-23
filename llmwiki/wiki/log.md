@@ -1655,3 +1655,13 @@
 - Equalizer: khong co analyser (iOS) thi chay chuyen dong gia khi dang phat; reduced-motion thi dung yen.
 
 - player merge 2b/5 — YouTube: restore dat bai yt: len audioYT (truoc: audioA, nen play/pause khong dieu khien dung element sau reload) va noi audioYT vao analyser (equalizer co du lieu cho bai YouTube). Test: /media/youtube sau tap: currentTime tang, bars max 0.99.
+
+## 2026-11-23 — player merge 3/5 — one shell, Vinyl | Lyrics toggle in both versions (branch kozu/player-merge)
+
+- NpoToggle.tsx: radiogroup (aria-checked, roving tabindex, Left/Right/Up/Down/Home/End). Header luon hien o ca hai ban, moi do rong; ban vinyl an chevron va dots, giu toggle + Skip. Bo CSS cu .npo-tabs-mobile/.npo-tab-btn. Icons: IconDisc, IconLyrics.
+
+## 2026-11-23 — player merge 4/5 — desktop vinyl layout, transport row, no Start button, fireplace in the vinyl version (branch kozu/player-merge)
+
+- Bo nut "Bat dau nghe" (+ key vinyl.cta, CSS .vinyl-cta). Cho nut: hang transport shuffle/prev/next/repeat (icon that: IconPrev/IconNext/IconShuffle/IconRepeat). Truoc do ban vinyl khong co prev/next/shuffle/repeat vi controls cu bi an.
+- Desktop >= 1000px: cung cac khoi, 2 cot tren nen peach full-bleed (khong khung dien thoai): trai dia + bia + lo lua (Equalizer); phai tieu de, playlist, thanh song, transport, dots. --ys dich stage len, --p scale.
+- Equalizer chi mount o ban dang hien (lyrics hoac vinyl) de khong chay hai vong rAF.

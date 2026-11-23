@@ -10,6 +10,7 @@ import {
 import { useDialogs } from '../DialogContext'
 import { useFlipUp } from '../useFlipPosition'
 import { checkOwner } from '../ownerAuth'
+import { IconStar, IconChevronDown } from './Icons'
 
 // Helper for session password storage
 const getSessionPassword = () => sessionStorage.getItem('cozyroom_owner_password') || ''
@@ -253,7 +254,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
           onClick={handleStarClick}
           title={isStarred ? t('playlist.remove_star', { defaultValue: 'Starred' }) : t('playlist.add_star', { defaultValue: 'Star' })}
         >
-          {isStarred ? '★' : '☆'}
+          <IconStar filled={isStarred} size={16} />
         </button>
         <div className="fav-sep" />
         <button 
@@ -261,7 +262,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
           onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); if (!isOpen) loadLists(); }}
           title={t('playlist.add_to_playlist', { defaultValue: 'Add to playlist' })}
         >
-          ▾
+          <IconChevronDown size={12} />
         </button>
         
         {isOpen && (
