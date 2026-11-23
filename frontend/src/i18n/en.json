@@ -152,6 +152,8 @@
     "auto_translate_on": "Auto-translate: on (non-Vietnamese songs auto-translate)",
     "auto_translate_off": "Auto-translate: off",
     "lyrics": "Lyrics",
+    "ui_vinyl": "Vinyl",
+    "ui_stage": "Stage",
     "queue": "Up Next",
     "queue_empty": "Queue is empty",
     "playback_failed": "Playback Failed",

@@ -5461,9 +5461,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   content: ''; position: absolute; inset: 0; border-radius: 50%;
   background: conic-gradient(from 20deg, transparent 0 14%, rgba(255,235,225,.30) 22%, transparent 34% 62%, rgba(255,235,225,.18) 72%, transparent 84%);
 }
-.vinyl-disc--spin { animation: vinyl-screen-spin 8s linear infinite; }
+/* the spin is only paused, never removed: removing it snaps the disc back to angle 0 */
+.vinyl-disc { animation: vinyl-screen-spin 8s linear infinite; animation-play-state: paused; }
+.vinyl-disc--spin { animation-play-state: running; }
 @keyframes vinyl-screen-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .vinyl-disc--spin { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .vinyl-disc { animation: none; } }
 .vinyl-label {
   position: absolute; left: 50%; top: 50%; width: calc(106 * var(--p)); height: calc(106 * var(--p));
   transform: translate(-50%, -50%); border-radius: 50%;

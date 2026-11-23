@@ -343,10 +343,10 @@ export default function PlayerBar() {
               <NpoToggle
                 value={mobileTab}
                 onChange={setMobileTab}
-                label={t('player.now_playing') + ' / ' + t('player.lyrics')}
+                label={t('player.ui_vinyl') + ' / ' + t('player.ui_stage')}
                 options={[
-                  { value: 'player', label: t('player.now_playing'), icon: <IconDisc size={16} /> },
-                  { value: 'lyrics', label: t('player.lyrics'), icon: <IconLyrics size={16} /> },
+                  { value: 'player', label: t('player.ui_vinyl'), icon: <IconDisc size={16} /> },
+                  { value: 'lyrics', label: t('player.ui_stage'), icon: <IconLyrics size={16} /> },
                 ]}
               />
 
