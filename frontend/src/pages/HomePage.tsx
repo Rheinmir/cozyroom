@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
-import { fetchStats, imgSrc } from '../api'
+import { fetchStats, fetchAlbums, fetchVideos, fetchEbooks, imgSrc } from '../api'
 import { MEDIA } from '../endpoints'
 import { ROUTES } from '../routes'
 
@@ -39,6 +39,17 @@ export default function HomePage() {
   const { t } = useTranslation()
   const { track, isPlaying, progress, duration, toggle, setNpoOpen } = usePlayer()
   const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: fetchStats, staleTime: 5 * 60_000 })
+
+  // Real library art behind the media tiles; cached queries other pages already use.
+  const { data: albums } = useQuery({ queryKey: ['albums'], queryFn: () => fetchAlbums(), staleTime: 5 * 60_000 })
+  const { data: videos } = useQuery({ queryKey: ['videos'], queryFn: fetchVideos, staleTime: 5 * 60_000 })
+  const { data: ebooks } = useQuery({ queryKey: ['ebooks'], queryFn: fetchEbooks, staleTime: 5 * 60_000 })
+  const pick = <T,>(xs: T[] | undefined, f: (x: T) => string | undefined) => xs?.map(f).find(Boolean)
+  const art: Record<string, string | undefined> = {
+    music: pick(albums, a => a.cover_url && imgSrc(a.cover_url, 640)),
+    video: pick(videos, v => v.poster_url && imgSrc(v.poster_url, 480)),
+    read:  pick(ebooks, b => b.cover_url && imgSrc(b.cover_url, 480)),
+  }
 
   const h = new Date().getHours()
   const greeting = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'
@@ -88,7 +99,8 @@ export default function HomePage() {
 
       <nav className="hub-grid" aria-label={t('hub.modules')}>
         {TILES.map(({ key, to }) => (
-          <Link key={key} to={to} className={`hub-tile hub-tile--${key}`}>
+          <Link key={key} to={to} className={`hub-tile hub-tile--${key}${art[key] ? ' has-art' : ''}`}>
+            {art[key] && <img className="hub-tile-art" src={art[key]} alt="" loading="lazy" onError={e => { (e.target as HTMLImageElement).remove() }} />}
             <span className="hub-tile-ico">{ICONS[key]}</span>
             <span className="hub-tile-text">
               <span className="hub-tile-name">{t(`hub.tiles.${key}.name`)}</span>
