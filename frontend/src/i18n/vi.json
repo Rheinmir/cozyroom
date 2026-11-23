@@ -84,11 +84,7 @@
   "vinyl": {
     "skip": "Bỏ qua",
     "collection": "Bộ sưu tập",
-    "playlist": "Danh sách phát",
-    "title1": "Âm nhạc của bạn.",
-    "title2": "Thế giới nhỏ của bạn.",
-    "sub1": "Lưu bài yêu thích, tạo danh sách phát",
-    "sub2": "và giữ mọi giai điệu thật gần."
+    "playlist": "Danh sách phát"
   },
   "hub": {
     "greeting_morning": "Chào buổi sáng",

@@ -84,11 +84,7 @@
   "vinyl": {
     "skip": "Skip",
     "collection": "My Collection",
-    "playlist": "My Playlist",
-    "title1": "Your music.",
-    "title2": "Your little world.",
-    "sub1": "Save your favourites, create",
-    "sub2": "playlists and keep every sound close."
+    "playlist": "My Playlist"
   },
   "hub": {
     "greeting_morning": "Good morning",

@@ -5,6 +5,7 @@ import type { Track } from '../types'
 import Equalizer from './Equalizer'
 import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icons'
 import { MEDIA } from '../endpoints'
+import { useLyricsLine } from './useLyricsLine'
 
 const coverOf = (t: Track, w: number) =>
   t.album_id?.startsWith('yt:')
@@ -18,8 +19,8 @@ const BARS = [3,6,10,6,14,8,18,10,22,14,30,20,36,24,32,18,26,12,22,10,18,8,16,6,
 
 type Props = {
   onSkip: () => void        // close the overlay
-  onLyrics: () => void      // dot 1 / CTA while playing
-  onQueue: () => void       // dot 2 and the "+" tile
+  onLyrics: () => void      // tap on the lyric line
+  onQueue: () => void       // the "+" tile and the playlist chevron
 }
 
 // Peach "Your music. Your little world." screen. Mounted by PlayerBar as the
@@ -27,6 +28,7 @@ type Props = {
 export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
   const { t } = useTranslation()
   const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue, prev, next, shuffleMode, setShuffleMode, repeat, setRepeat } = usePlayer()
+  const line = useLyricsLine(track)
   if (!track) return null
 
   const cycleShuffle = () => setShuffleMode(shuffleMode === 'off' ? 'smart' : shuffleMode === 'smart' ? 'shuffle' : 'off')
@@ -123,14 +125,8 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
           <span className="vinyl-time">{fmt(duration)}</span>
         </div>
 
-        <h2 className="vinyl-title">{t('vinyl.title1')}<br />{t('vinyl.title2')}</h2>
-        <p className="vinyl-sub">{t('vinyl.sub1')}<br />{t('vinyl.sub2')}</p>
-
-        <div className="vinyl-dots">
-          <button onClick={onLyrics} aria-label={t('player.lyrics')} />
-          <button onClick={onQueue} aria-label={t('vinyl.playlist')} />
-          <button className="on" aria-current="true" aria-label={t('player.now_playing')} />
-        </div>
+        <h2 className="vinyl-title"><button className="vinyl-lyric" onClick={onLyrics} title={t('player.lyrics')}>{line.cur}</button></h2>
+        <p className="vinyl-sub" aria-hidden="true" onClick={onLyrics}>{line.next}</p>
 
         <div className="vinyl-transport" role="group" aria-label={t('player.now_playing')}>
           <button className={shuffleMode !== 'off' ? 'on' : ''} onClick={cycleShuffle} aria-label={shuffleLabel} title={shuffleLabel}>

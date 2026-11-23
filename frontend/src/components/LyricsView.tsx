@@ -10,7 +10,7 @@ import { IconGlobe, IconBolt, IconClose } from './Icons'
 
 const SS = 'lyr:'
 type CacheEntry = { results: LyricsData[]; sources: SourceInfo[]; beCached: boolean }
-const cache = {
+export const cache = {
   has: (id: string) => sessionStorage.getItem(SS + id) !== null,
   get: (id: string): CacheEntry => {
     try {
@@ -28,6 +28,12 @@ const cache = {
     } catch {}
   },
   delete: (id: string) => sessionStorage.removeItem(SS + id),
+}
+
+export const pickBest = (list: LyricsData[]) => {
+  let best = list.findIndex(r => (r.synced?.length ?? 0) > 0)
+  if (best < 0) best = list.findIndex(r => r.source !== 'embedded')
+  return best < 0 ? 0 : best
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -90,12 +96,6 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
   // the call always reaches the latest handler.
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
-
-  const pickBest = (list: LyricsData[]) => {
-    let best = list.findIndex(r => (r.synced?.length ?? 0) > 0)
-    if (best < 0) best = list.findIndex(r => r.source !== 'embedded')
-    return best < 0 ? 0 : best
-  }
 
   const doFetch = (id: string, silent = false, signal?: AbortSignal) => {
     if (!silent) { setLoading(true); setResults([]); setSources([]); setSelected(0) }
