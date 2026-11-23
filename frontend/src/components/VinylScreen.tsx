@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { imgSrc } from '../api'
@@ -6,6 +7,7 @@ import Equalizer from './Equalizer'
 import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icons'
 import { MEDIA } from '../endpoints'
 import { useLyricsLine } from './useLyricsLine'
+import { synthLevel } from './eqSynth'
 
 const coverOf = (t: Track, w: number) =>
   t.album_id?.startsWith('yt:')
@@ -27,7 +29,35 @@ type Props = {
 // Now Playing tab; fully driven by the current track + queue.
 export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
   const { t } = useTranslation()
-  const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue, prev, next, shuffleMode, setShuffleMode, repeat, setRepeat } = usePlayer()
+  const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue, prev, next, shuffleMode, setShuffleMode, repeat, setRepeat, analyser } = usePlayer()
+  const barEls = useRef<(HTMLElement | null)[]>([])
+
+  // Bars dance while playing: live analyser data (same formula as the fireplace), else a synthetic wave.
+  // Heights go straight to the DOM (no React state, 60 fps) and rest at the static shape when paused or reduced-motion.
+  useEffect(() => {
+    if (!isPlaying || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const data = analyser ? new Uint8Array(analyser.frequencyBinCount) : null
+    const used = data ? Math.floor(data.length * 0.6) : 0
+    const cur = BARS.map(() => 1)
+    let raf = 0
+    const draw = () => {
+      raf = requestAnimationFrame(draw)
+      if (analyser && data) analyser.getByteFrequencyData(data)
+      const live = !!data && data.some(v => v > 0)
+      const now = performance.now()
+      BARS.forEach((h, i) => {
+        let v: number
+        if (live) { const raw = data![Math.floor((i / BARS.length) * used)] / 255; v = raw > 0.001 ? Math.max(0, (20 * Math.log10(raw) + 60) / 60) : 0 }
+        else v = synthLevel(now, i)
+        const target = (3 + v * 33 * (0.45 + 0.55 * h / 36)) / h   // keep the bar shape as the envelope
+        cur[i] += (target - cur[i]) * 0.35
+        const el = barEls.current[i]
+        if (el) el.style.transform = `scaleY(${cur[i].toFixed(3)})`
+      })
+    }
+    draw()
+    return () => { cancelAnimationFrame(raf); barEls.current.forEach(el => { if (el) el.style.transform = '' }) }
+  }, [isPlaying, analyser])
   const line = useLyricsLine(track)
   if (!track) return null
 
@@ -120,7 +150,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
               : <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><polygon points="7,3 20,12 7,21"/></svg>}
           </button>
           <div className="vinyl-wave" onClick={onWave} onKeyDown={onWaveKey} tabIndex={0} role="slider" aria-label={t('player.now_playing')} aria-valuetext={`${fmt(progress)} / ${fmt(duration)}`} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(progress)}>
-            {BARS.map((h, i) => <i key={i} className={i < playedBars ? 'on' : ''} style={{ height: h, opacity: i < playedBars ? 1 : Math.max(0.28, 1 - i / BARS.length) }} />)}
+            {BARS.map((h, i) => <i key={i} ref={el => { barEls.current[i] = el }} className={i < playedBars ? 'on' : ''} style={{ height: h, opacity: i < playedBars ? 1 : Math.max(0.28, 1 - i / BARS.length) }} />)}
           </div>
           <span className="vinyl-time">{fmt(duration)}</span>
         </div>
