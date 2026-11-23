@@ -21,5 +21,7 @@ export const IconClose   = (p: P) => <Svg {...p}><path d="M6 6l12 12M18 6L6 18" 
 export const IconCheck   = (p: P) => <Svg {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></Svg>
 export const IconNote    = (p: P) => <Svg {...p}><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="16" r="2.5" /></Svg>
 export const IconSparkle = (p: P) => <Svg {...p}><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /></Svg>
+export const IconStar = ({ filled, ...p }: P & { filled?: boolean }) => <Svg {...p} fill={filled}><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z" /></Svg>
+export const IconChevronDown = (p: P) => <Svg {...p}><path d="M6 9l6 6 6-6" /></Svg>
 // "now playing" marker: three bars
 export const IconBars    = (p: P) => <Svg {...p}><path d="M6 18v-6M12 18V6M18 18v-9" /></Svg>

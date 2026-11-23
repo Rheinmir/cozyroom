@@ -332,7 +332,7 @@ export default function PlayerBar() {
             {/* header */}
             <div className="npo-header">
               {/* mobile: chevron back */}
-              <button className="npo-btn-back" onClick={() => setOpen(false)} aria-label="Close">
+              <button className="npo-btn-back" onClick={() => setOpen(false)} aria-label={t('player.close')}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="28" height="28">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
@@ -485,7 +485,7 @@ export default function PlayerBar() {
               {t('player.playback_error', { message: playbackError.message, code: playbackError.code })}
             </div>
           </div>
-          <button className="playback-error-close" onClick={() => setPlaybackError(null)} aria-label="Close"><IconClose size={16} /></button>
+          <button className="playback-error-close" onClick={() => setPlaybackError(null)} aria-label={t('player.close')}><IconClose size={16} /></button>
         </div>
       )}
       <BackgroundSoundsPanel />

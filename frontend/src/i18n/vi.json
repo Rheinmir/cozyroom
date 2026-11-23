@@ -139,6 +139,7 @@
   "player": {
     "hint": "Chọn bài hát để bắt đầu phát",
     "now_playing": "Đang phát",
+    "close": "Đóng",
     "previous": "Trước",
     "next": "Tiếp",
     "pause": "Tạm dừng",

@@ -139,6 +139,7 @@
   "player": {
     "hint": "Select a track to start playing",
     "now_playing": "Now Playing",
+    "close": "Close",
     "previous": "Previous",
     "next": "Next",
     "pause": "Pause",
