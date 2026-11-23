@@ -1645,3 +1645,8 @@
 ## 2026-11-23 — player merge 1/5 — Icons.tsx + emoji swap in the player area (branch kozu/player-merge)
 
 - Moi: components/Icons.tsx (globe, bolt, warning, close, check, note, sparkle, bars; 24px, stroke currentColor). Thay emoji trong PlayerBar (🌐 ⚡ ⚠️ ✕ ✦), LyricsView, QueueList, BackgroundSoundsPanel. Trang khac (AI, Notes, Ebooks, Search, Comics, AIStats) chua dung.
+
+## 2026-11-23 — player merge 2/5 — tap anywhere unlocks audio and starts music; fireplace works again (branch kozu/player-merge)
+
+- Nguyen nhan lo lua mat: analyser chi tao khi nguoi dung bam play; phat lai sau reload khong co gesture nen Equalizer khong hien. Giai phap: PlayerContext lang nghe pointerdown/keydown (capture) mot lan: initAudioCtx() (idempotent, iOS bo qua), va neu co bai ma chua phat thi tap vao CHO TRONG (khong phai link/nut/input) se phat. Phim bam chi mo khoa.
+- Equalizer: khong co analyser (iOS) thi chay chuyen dong gia khi dang phat; reduced-motion thi dung yen.

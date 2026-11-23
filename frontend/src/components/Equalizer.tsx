@@ -16,26 +16,30 @@ export default function Equalizer() {
   useEffect(() => { colorsRef.current = coverColors }, [coverColors])
 
   useEffect(() => {
-    if (!analyser) return
-
-    const binCount = analyser.frequencyBinCount
+    // No analyser (iOS keeps plain audio for background playback; or no gesture yet): animate the bars
+    // with smooth synthetic motion while playing. Reduced motion: they rest.
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const binCount = analyser ? analyser.frequencyBinCount : 0
     dataRef.current = new Uint8Array(binCount) as Uint8Array<ArrayBuffer>
     const usedBins  = Math.floor(binCount * RANGE)
 
     const draw = () => {
       rafRef.current = requestAnimationFrame(draw)
-      analyser.getByteFrequencyData(dataRef.current!)
+      if (analyser) analyser.getByteFrequencyData(dataRef.current!)
+      const t = performance.now()
 
       const palette = colorsRef.current || ['#1db954', '#191414']
       const gradient = `linear-gradient(to bottom, ${palette[0]}, ${palette[1] || palette[0]})`
 
       for (let i = 0; i < BARS; i++) {
-        const bin = Math.floor((i / BARS) * usedBins)
-        const raw = dataRef.current![bin] / 255
-
-        const val = raw > 0.001
-          ? Math.max(0, (20 * Math.log10(raw) + 60) / 60)
-          : 0
+        let val: number
+        if (analyser) {
+          const bin = Math.floor((i / BARS) * usedBins)
+          const raw = dataRef.current![bin] / 255
+          val = raw > 0.001 ? Math.max(0, (20 * Math.log10(raw) + 60) / 60) : 0
+        } else {
+          val = calm ? 0 : Math.max(0, Math.min(1, 0.4 + 0.3 * Math.sin(t * 0.004 + i * 0.55) * Math.sin(t * 0.0013 + i * 0.21) + 0.2 * Math.sin(t * 0.009 + i * 1.7)))
+        }
 
         const scale = isPlayRef.current ? Math.max(0.04, val) : 0.04
 
@@ -61,8 +65,6 @@ export default function Equalizer() {
     draw()
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [analyser])
-
-  if (!analyser) return null
 
   return (
     <div className="eq-container">
