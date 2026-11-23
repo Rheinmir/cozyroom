@@ -76,6 +76,18 @@ spec:
               value: /data/ebook-covers
             - name: CLOAK_PROXY_URL
               value: "http://cloak-proxy:8765"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
             - name: COZYROOM_OWNER_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -131,7 +143,7 @@ spec:
       volumes:
         - name: music
           hostPath:
-            path: /mnt/f/250930music
+            path: /mnt/k/music-from-F/250930music
         - name: films
           hostPath:
             path: /mnt/f/Films
