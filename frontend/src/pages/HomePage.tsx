@@ -47,8 +47,10 @@ export default function HomePage() {
   const pick = <T,>(xs: T[] | undefined, f: (x: T) => string | undefined) => xs?.map(f).find(Boolean)
   const art: Record<string, string | undefined> = {
     music: pick(albums, a => a.cover_url && imgSrc(a.cover_url, 640)),
-    video: pick(videos, v => v.poster_url && imgSrc(v.poster_url, 480)),
-    read:  pick(ebooks, b => b.cover_url && imgSrc(b.cover_url, 480)),
+    // the videos API has no poster_url today: the Videos page falls back to /media/video-posters/<id>, so do the same
+    video: pick(videos, v => imgSrc(v.poster_url || `${MEDIA}/video-posters/${v.id}`, 480)),
+    // never put an NSFW cover on the hub (the Ebooks page blurs and gates them)
+    read:  pick(ebooks, b => !b.is_nsfw && b.cover_url ? imgSrc(b.cover_url, 480) : undefined),
   }
 
   const h = new Date().getHours()
