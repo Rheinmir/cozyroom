@@ -6,7 +6,6 @@ import { usePlayer } from '../PlayerContext'
 import { fetchStats, imgSrc } from '../api'
 import { MEDIA } from '../endpoints'
 import { ROUTES } from '../routes'
-import LibraryStatsBar from '../components/LibraryStatsBar'
 
 const Ico = ({ children }: { children: ReactNode }) => (
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
@@ -53,7 +52,6 @@ export default function HomePage() {
       <header className="hub-head">
         <h1 className="hub-title">{t(`hub.greeting_${greeting}`)}</h1>
         <p className="hub-sub">{t('hub.subtitle')}</p>
-        <LibraryStatsBar style={{ marginBottom: 0 }} />
       </header>
 
       <section className="hub-continue" aria-label={t('hub.continue')}>
