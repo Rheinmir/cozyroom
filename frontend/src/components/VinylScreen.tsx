@@ -8,6 +8,8 @@ import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icon
 import { MEDIA } from '../endpoints'
 import { useLyricsLine } from './useLyricsLine'
 import { synthLevel } from './eqSynth'
+import { labelColors } from './vinylLabel'
+import FavoritePill from './FavoritePill'
 
 const coverOf = (t: Track, w: number) =>
   t.album_id?.startsWith('yt:')
@@ -20,16 +22,16 @@ const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).p
 const BARS = [3,6,10,6,14,8,18,10,22,14,30,20,36,24,32,18,26,12,22,10,18,8,16,6,14,6,12,5,10,5,9,4,8,4,7,3,6,3]
 
 type Props = {
-  onSkip: () => void        // close the overlay
+  onClose: () => void       // close the overlay (tap on empty space outside the content, wide screens)
   onLyrics: () => void      // tap on the lyric line
   onQueue: () => void       // the "+" tile and the playlist chevron
 }
 
 // Peach "Your music. Your little world." screen. Mounted by PlayerBar as the
 // Now Playing tab; fully driven by the current track + queue.
-export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
+export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
   const { t } = useTranslation()
-  const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue, prev, next, shuffleMode, setShuffleMode, repeat, setRepeat, analyser } = usePlayer()
+  const { track, queue, queueIdx, isPlaying, progress, duration, toggle, seek, playFromQueue, prev, next, shuffleMode, setShuffleMode, repeat, setRepeat, analyser, coverColors } = usePlayer()
   const barEls = useRef<(HTMLElement | null)[]>([])
 
   // Bars dance while playing: live analyser data (same formula as the fireplace), else a synthetic wave.
@@ -82,26 +84,30 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
     seek(Math.max(0, Math.min(duration, progress + step)))
   }
 
+  // coverColors is the app-wide default green until the cover is read: keep the original orange for it
+  const [labelA, labelB] = coverColors[0] === '#1db954' ? labelColors(undefined) : labelColors(coverColors[0])
+
+  // Tap on empty space = close. Phone width: never (mistaps). 641-999px: only outside the phone card. 1000px+: the card is the full canvas.
+  const onBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    const wide = window.matchMedia('(min-width: 1000px)').matches
+    const medium = window.matchMedia('(min-width: 641px)').matches
+    const el = e.target as HTMLElement
+    if (e.target === e.currentTarget ? medium : wide && el.classList.contains('vinyl-card')) onClose()
+  }
+
   return (
-    <div className="vinyl-screen">
+    <div className="vinyl-screen" onClick={onBackdrop}>
       <div className="vinyl-card">
-        <button className="vinyl-skip" onClick={onSkip}>{t('vinyl.skip')}</button>
 
         <div className="vinyl-stage">
           <div className="vinyl-fire" aria-hidden="true"><Equalizer /></div>
           <div className={'vinyl-disc' + (isPlaying ? ' vinyl-disc--spin' : '')}>
-            <div className="vinyl-label">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 10v4" />
-              </svg>
+            <div className="vinyl-label" style={{ '--label-a': labelA, '--label-b': labelB } as React.CSSProperties}>
+              <span>Vinyl</span>
               <i />
             </div>
           </div>
-          <div className="vinyl-tag" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1b1b1d" strokeWidth="2" strokeLinejoin="round">
-              <path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.7a4.3 4.3 0 0 1 7.5 2.6c0 5.6-7.5 10.2-7.5 10.2z" />
-            </svg>
-          </div>
+          <FavoritePill key={track.id} trackId={track.id} variant="heart" className="vinyl-tag" />
           <div className="vinyl-sleeve">
             <img className="vinyl-sleeve-img" src={coverOf(track, 512)} alt="" onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
             <div className="vinyl-sleeve-shade" />
@@ -109,6 +115,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
             <div className="vinyl-sleeve-text">
               <small>{t('vinyl.collection')}</small>
               <strong>{track.album_title ?? track.title}</strong>
+              {track.album_title && track.album_title !== track.title && <em>{track.title}</em>}
             </div>
             <button className="vinyl-sleeve-play" onClick={toggle} aria-label={isPlaying ? t('player.pause', 'Pause') : t('player.play', 'Play')}>
               {isPlaying
@@ -132,9 +139,12 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
             {[0, 1, 2].map(i => {
               const q = next3[i]
               return q
-                ? <button key={q.id + i} className="vinyl-thumb" onClick={() => playFromQueue(queueIdx + 1 + i)} aria-label={q.title}>
-                    <img src={coverOf(q, 128)} alt="" onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
-                  </button>
+                ? <span key={q.id + i} className="vinyl-thumb-wrap">
+                    <button className="vinyl-thumb" onClick={() => playFromQueue(queueIdx + 1 + i)} aria-label={q.title}>
+                      <img src={coverOf(q, 128)} alt="" onError={e => { (e.target as HTMLImageElement).style.opacity = '0' }} />
+                    </button>
+                    <span className="vinyl-thumb-tip" aria-hidden="true">{q.title}</span>
+                  </span>
                 : <span key={'e' + i} className="vinyl-thumb vinyl-thumb--empty" />
             })}
             <button className="vinyl-thumb vinyl-thumb--add" onClick={onQueue} aria-label={t('player.queue', 'Queue')}>
@@ -144,11 +154,7 @@ export default function VinylScreen({ onSkip, onLyrics, onQueue }: Props) {
         </div>
 
         <div className="vinyl-bar">
-          <button className="vinyl-bar-btn" onClick={toggle} aria-label={isPlaying ? t('player.pause', 'Pause') : t('player.play', 'Play')}>
-            {isPlaying
-              ? <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-              : <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><polygon points="7,3 20,12 7,21"/></svg>}
-          </button>
+          <span className="vinyl-elapsed" aria-hidden="true">{fmt(progress)}</span>
           <div className="vinyl-wave" onClick={onWave} onKeyDown={onWaveKey} tabIndex={0} role="slider" aria-label={t('player.now_playing')} aria-valuetext={`${fmt(progress)} / ${fmt(duration)}`} aria-valuemin={0} aria-valuemax={Math.round(duration)} aria-valuenow={Math.round(progress)}>
             {BARS.map((h, i) => <i key={i} ref={el => { barEls.current[i] = el }} className={i < playedBars ? 'on' : ''} style={{ height: h, opacity: i < playedBars ? 1 : Math.max(0.28, 1 - i / BARS.length) }} />)}
           </div>

@@ -38,9 +38,12 @@ export const saveLocalPlaylists = (lists: Playlist[]) => {
 
 type FavoritePillProps = {
   trackId: string
+  // 'heart': only the favorite toggle, as a heart button (same Favorites action and state as the star). Default: the full pill.
+  variant?: 'pill' | 'heart'
+  className?: string
 }
 
-export default function FavoritePill({ trackId }: FavoritePillProps) {
+export default function FavoritePill({ trackId, variant = 'pill', className }: FavoritePillProps) {
   const { t } = useTranslation()
   const { toast } = useDialogs()
   const [isOpen, setIsOpen] = useState(false)
@@ -246,6 +249,60 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
     }
   }
 
+  const passwordModal = showPasswordModal && (
+        <div className="password-modal-overlay" onClick={e => e.stopPropagation()}>
+          <div className="password-modal">
+            <h3>{t('playlist.password_required', { defaultValue: 'Yêu cầu Mật khẩu' })}</h3>
+            <p>{t('playlist.password_desc', { defaultValue: 'Vui lòng nhập mật khẩu chủ sở hữu để chỉnh sửa dữ liệu vĩnh viễn.' })}</p>
+            <input 
+              className="dropdown-input" 
+              type="password" 
+              placeholder="Nhập mật khẩu..." 
+              value={passwordInput}
+              onChange={e => { setPasswordInput(e.target.value); setPasswordError(''); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handlePasswordSubmit()
+              }}
+              autoFocus
+            />
+            {passwordError && (
+              <span style={{ color: '#ef4444', fontSize: 12 }}>{passwordError}</span>
+            )}
+            <div className="password-modal-actions">
+              <button 
+                type="button"
+                className="modal-btn modal-btn--cancel" 
+                onClick={() => setShowPasswordModal(false)}
+              >
+                {t('playlist.cancel', { defaultValue: 'Hủy' })}
+              </button>
+              <button 
+                type="button"
+                className="modal-btn modal-btn--confirm" 
+                onClick={handlePasswordSubmit}
+              >
+                {t('playlist.confirm', { defaultValue: 'Xác nhận' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      
+  )
+
+  if (variant === 'heart') {
+    const label = isStarred ? t('playlist.remove_star', { defaultValue: 'Starred' }) : t('playlist.add_star', { defaultValue: 'Star' })
+    return (
+      <>
+        <button type="button" className={className} aria-pressed={isStarred} aria-label={label} title={label} onClick={handleStarClick}>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill={isStarred ? '#1b1b1d' : 'none'} stroke="#1b1b1d" strokeWidth="2" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.7a4.3 4.3 0 0 1 7.5 2.6c0 5.6-7.5 10.2-7.5 10.2z" />
+          </svg>
+        </button>
+        {passwordModal}
+      </>
+    )
+  }
+
   return (
     <div className="fav-pill-wrapper" style={{ display: 'inline-block' }} ref={dropdownRef}>
       <div className="fav-pill" ref={pillRef} onClick={e => e.stopPropagation()}>
@@ -336,45 +393,7 @@ export default function FavoritePill({ trackId }: FavoritePillProps) {
         )}
       </div>
 
-      {/* Password prompt Modal */}
-      {showPasswordModal && (
-        <div className="password-modal-overlay" onClick={e => e.stopPropagation()}>
-          <div className="password-modal">
-            <h3>{t('playlist.password_required', { defaultValue: 'Yêu cầu Mật khẩu' })}</h3>
-            <p>{t('playlist.password_desc', { defaultValue: 'Vui lòng nhập mật khẩu chủ sở hữu để chỉnh sửa dữ liệu vĩnh viễn.' })}</p>
-            <input 
-              className="dropdown-input" 
-              type="password" 
-              placeholder="Nhập mật khẩu..." 
-              value={passwordInput}
-              onChange={e => { setPasswordInput(e.target.value); setPasswordError(''); }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handlePasswordSubmit()
-              }}
-              autoFocus
-            />
-            {passwordError && (
-              <span style={{ color: '#ef4444', fontSize: 12 }}>{passwordError}</span>
-            )}
-            <div className="password-modal-actions">
-              <button 
-                type="button"
-                className="modal-btn modal-btn--cancel" 
-                onClick={() => setShowPasswordModal(false)}
-              >
-                {t('playlist.cancel', { defaultValue: 'Hủy' })}
-              </button>
-              <button 
-                type="button"
-                className="modal-btn modal-btn--confirm" 
-                onClick={handlePasswordSubmit}
-              >
-                {t('playlist.confirm', { defaultValue: 'Xác nhận' })}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {passwordModal}
     </div>
   )
 }

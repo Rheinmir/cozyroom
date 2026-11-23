@@ -5446,7 +5446,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 :where(.vinyl-card) button:focus-visible { outline: 2px solid #c24e1c; outline-offset: 2px; }
 .vinyl-card > * { position: absolute; }
 
-.vinyl-skip { right: calc(24 * var(--p)); top: calc(59.5 * var(--p)); font-size: calc(13.5 * var(--p)); font-weight: 500; color: #1b1b19; padding: calc(6 * var(--p)); }
 
 .vinyl-stage { left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
 .vinyl-stage > * { position: absolute; pointer-events: auto; }
@@ -5468,12 +5467,15 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .vinyl-label {
   position: absolute; left: 50%; top: 50%; width: calc(106 * var(--p)); height: calc(106 * var(--p));
   transform: translate(-50%, -50%); border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, #f59463, #e87a4a);
+  background: radial-gradient(circle at 50% 40%, var(--label-a, #f59463), var(--label-b, #e87a4a));
   display: flex; align-items: center; justify-content: center; padding-bottom: calc(18 * var(--p));
+  color: #1b1b19; transition: background .6s;
 }
-.vinyl-label svg { width: calc(22 * var(--p)); height: calc(22 * var(--p)); opacity: .9; }
+.vinyl-label span { font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'Noto Serif', Georgia, serif; font-style: italic; font-weight: 600; font-size: calc(19 * var(--p)); letter-spacing: .02em; line-height: 1; }
 .vinyl-label i { position: absolute; left: 50%; top: 62%; width: calc(9 * var(--p)); height: calc(9 * var(--p)); transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 40% 35%, #f2e0d8, #a8a09c); }
 
+.vinyl-tag { border: 0; cursor: pointer; }
+.vinyl-tag:focus-visible { outline: 2px solid #c24e1c; outline-offset: 2px; }
 .vinyl-tag {
   left: calc(261 * var(--p)); top: calc((124 - var(--ys, 0)) * var(--p)); width: calc(45 * var(--p)); height: calc(64 * var(--p));
   background: #ffcfbf; border-radius: calc(8 * var(--p));
@@ -5495,10 +5497,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .vinyl-sleeve-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .3s; }
 .vinyl-sleeve-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(240,205,195,.30) 0%, rgba(235,170,150,.08) 55%, rgba(120,70,60,.10) 100%); }
 /* caption scrim: soft vertical gradient, keeps the white sleeve text >= 4.5:1 on ANY cover (checked on a pure-white one) */
-.vinyl-sleeve-shade::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48,24,20,0) 8%, rgba(48,24,20,.62) 33%, rgba(48,24,20,.62) 67%, rgba(48,24,20,.3) 100%); }
+.vinyl-sleeve-shade::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48,24,20,0) 8%, rgba(48,24,20,.62) 33%, rgba(48,24,20,.62) 78%, rgba(48,24,20,.3) 100%); }
 .vinyl-sleeve-text { position: absolute; left: calc(29 * var(--p)); top: calc(54 * var(--p)); color: #fff; display: flex; flex-direction: column; max-width: calc(190 * var(--p)); }
 .vinyl-sleeve-text small { font-size: calc(11.5 * var(--p)); opacity: 1; line-height: 1.2; }
 .vinyl-sleeve-text strong { margin-top: calc(4 * var(--p)); font-size: calc(22.8 * var(--p)); font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vinyl-sleeve-text em { margin-top: calc(2 * var(--p)); font-style: normal; font-size: calc(14 * var(--p)); font-weight: 500; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vinyl-sleeve-play { position: absolute; right: calc(28 * var(--p)); top: calc(51 * var(--p)); width: calc(32 * var(--p)); height: calc(32 * var(--p)); border-radius: 50%; background: #fff; display: flex !important; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
 
 .vinyl-playlist {
@@ -5510,6 +5513,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .vinyl-chev { width: calc(28 * var(--p)); height: calc(28 * var(--p)); display: flex !important; align-items: center; justify-content: center; }
 .vinyl-thumbs { position: absolute; left: calc(19 * var(--p)); top: calc(55 * var(--p)); display: flex; gap: calc(11 * var(--p)); }
 .vinyl-thumb { width: calc(64 * var(--p)); height: calc(56 * var(--p)); border-radius: calc(9 * var(--p)); overflow: hidden; background: #ecd9d4; display: block; flex: none; }
+/* title tooltip: hover and keyboard focus (the thumb clips its content, so the tip sits next to it, not inside) */
+.vinyl-thumb-wrap { position: relative; flex: none; display: block; }
+.vinyl-thumb-tip { position: absolute; left: 0; bottom: calc(100% + 6 * var(--p)); z-index: 5; max-width: calc(200 * var(--p)); padding: calc(4 * var(--p)) calc(9 * var(--p)); border-radius: calc(8 * var(--p)); background: #1b1b19; color: #fff; font-size: calc(11.5 * var(--p)); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: translateY(2px); pointer-events: none; transition: opacity .15s, transform .15s; }
+.vinyl-thumb-wrap:nth-child(n+3) .vinyl-thumb-tip { left: auto; right: 0; }
+.vinyl-thumb-wrap:hover .vinyl-thumb-tip, .vinyl-thumb-wrap:focus-within .vinyl-thumb-tip { opacity: 1; transform: none; }
 .vinyl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .vinyl-thumb--add { width: calc(58 * var(--p)); background: #f3e7e5; display: flex !important; align-items: center; justify-content: center; }
 
@@ -5517,7 +5525,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   left: calc(47 * var(--p)); top: calc(515 * var(--p)); width: calc(318 * var(--p)); height: calc(54 * var(--p));
   background: #fffaf8; border-radius: calc(27 * var(--p)); box-shadow: 0 calc(8 * var(--p)) calc(24 * var(--p)) rgba(190,130,120,.18), inset 0 0 0 1px rgba(255,255,255,.8);
 }
-.vinyl-bar-btn { position: absolute !important; left: calc(18 * var(--p)); top: calc(9 * var(--p)); width: calc(36 * var(--p)); height: calc(36 * var(--p)); border-radius: 50%; background: #1f1b1a; display: flex !important; align-items: center; justify-content: center; }
+.vinyl-elapsed { position: absolute; left: calc(14 * var(--p)); top: 0; width: calc(50 * var(--p)); height: 100%; display: flex; align-items: center; justify-content: center; font-size: calc(11.5 * var(--p)); color: #6b6b70; font-variant-numeric: tabular-nums; }
 .vinyl-wave { position: absolute; left: calc(69 * var(--p)); top: 0; width: calc(185 * var(--p)); height: 100%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .vinyl-wave:focus-visible { outline: 2px solid #c24e1c; outline-offset: 4px; border-radius: 6px; }
 .vinyl-wave i { display: block; width: calc(2.6 * var(--p)); border-radius: 2px; background: #f4a07e; }
@@ -5529,6 +5537,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 .vinyl-sub { left: 0; right: 0; top: calc(683.5 * var(--p)); margin: 0; text-align: center; font-size: calc(16.3 * var(--p)); line-height: calc(20 * var(--p)); color: #6b6c75; padding: 0 calc(20 * var(--p)); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
 .vinyl-fire { left: calc(56 * var(--p)); top: calc(var(--fire-top, 846) * var(--p)); width: calc(300 * var(--p)); height: calc(44 * var(--p)); pointer-events: none; }
 .vinyl-fire .eq-container { height: 100%; margin: 0; }
+.vinyl-fire { filter: brightness(.55) saturate(1.5); } /* the cover colours are pale: darken them on the peach background */
 .vinyl-fire .eq-wrap { width: 100%; }
 .vinyl-transport { left: calc(40 * var(--p)); top: calc(788 * var(--p)); width: calc(333 * var(--p)); height: calc(48 * var(--p)); display: flex; align-items: center; justify-content: space-between; }
 .vinyl-transport button { width: calc(52 * var(--p)); height: calc(48 * var(--p)); display: flex; align-items: center; justify-content: center; border-radius: calc(24 * var(--p)); color: #1b1b19; transition: background .15s, color .15s; }
@@ -5539,6 +5548,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 /* While the vinyl tab is showing, hide the header/body/controls underneath. */
 .npo--vinyl > .npo-body, .npo--vinyl > .npo-controls { visibility: hidden; }
 .npo--vinyl .queue-panel, .npo--vinyl .queue-panel-backdrop { visibility: visible; z-index: 10; }
+.npo--vinyl .queue-panel-backdrop { position: fixed; inset: 0; } /* tap outside the sheet closes it, on desktop too */
 
 body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
 
@@ -5619,9 +5629,11 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
 .npo-toggle button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; }
 .npo-toggle button[aria-checked="true"] { background: rgba(255,255,255,.15); color: #fff; }
 .npo-toggle button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-/* On the peach vinyl surface the header stays visible: toggle only, centred (Skip closes the screen) */
+/* On the peach vinyl surface the header stays visible: toggle centred, close chevron top-right (also: tap outside on wide screens, Esc) */
 .npo--vinyl > .npo-header { justify-content: center; }
-.npo--vinyl .npo-btn-back, .npo--vinyl .npo-btn-dots { display: none; }
+.npo--vinyl .npo-btn-dots { display: none; }
+.npo--vinyl .npo-btn-back { display: flex; position: absolute; right: 16px; top: 16px; opacity: 1; pointer-events: auto; color: #1b1b19; }
+.npo--vinyl .npo-btn-back:focus-visible { outline: 2px solid #c24e1c; outline-offset: 2px; border-radius: 8px; }
 .npo--vinyl .npo-toggle { background: rgba(27,27,25,.08); }
 .npo--vinyl .npo-toggle button { color: #5d5e67; }
 .npo--vinyl .npo-toggle button[aria-checked="true"] { background: #1b1b19; color: #fff; }
@@ -5637,15 +5649,16 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
     --ys: 100;
     --fire-top: 306;
     position: relative; left: auto; top: auto; transform: none;
-    width: 100%; height: auto; min-height: 100cqh; padding-top: 56px;
-    display: grid; grid-template-columns: calc(413 * var(--p)) calc(380 * var(--p)); justify-content: center; column-gap: calc(48 * var(--p));
+    width: 100%; height: auto; min-height: 100cqh;
+    display: grid; grid-template-columns: calc(300 * var(--p)) calc(380 * var(--p)); justify-content: center; column-gap: calc(48 * var(--p));
     align-content: center; row-gap: calc(18 * var(--p));
     border-radius: 0; box-shadow: none; background: none; overflow: visible;
   }
   .vinyl-card > * { position: relative; left: auto; top: auto; right: auto; grid-column: 2; justify-self: center; }
-  .vinyl-card > .vinyl-stage { grid-column: 1; grid-row: 1 / span 6; width: calc(413 * var(--p)); height: calc(300 * var(--p)); align-self: center; }
+  /* centring: the visible disc block is x 56..356, y ~13..380 (reference px) of the 413px stage. Column = that width, stage shifted
+     left to match, and stage height set so the box centre is the block's centre (measured), which is also the right column's centre. */
+  .vinyl-card > .vinyl-stage { grid-column: 1; grid-row: 1 / span 5; justify-self: start; left: calc(-56 * var(--p)); width: calc(413 * var(--p)); height: calc(393 * var(--p)); align-self: center; }
   .vinyl-stage > .vinyl-fire { width: calc(300 * var(--p)); height: calc(84 * var(--p)); }
-  .vinyl-card > .vinyl-skip { position: absolute; top: calc(14 * var(--p)); right: calc(28 * var(--p)); grid-column: auto; }
   .vinyl-card > .vinyl-title { width: calc(380 * var(--p)); }
   .vinyl-card > .vinyl-sub { width: calc(380 * var(--p)); }
   .vinyl-card > .vinyl-transport { width: calc(333 * var(--p)); }

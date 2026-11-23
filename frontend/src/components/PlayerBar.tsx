@@ -467,7 +467,7 @@ export default function PlayerBar() {
               </div>
             </div>
             {mobileTab === 'player' && (
-              <VinylScreen onSkip={() => setOpen(false)} onLyrics={() => setMobileTab('lyrics')} onQueue={() => setNpoQueue(true)} />
+              <VinylScreen onClose={() => setOpen(false)} onLyrics={() => setMobileTab('lyrics')} onQueue={() => setNpoQueue(true)} />
             )}
           </div>
         </>
