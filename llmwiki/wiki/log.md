@@ -1641,3 +1641,7 @@
 - 2026-11-23 09:29 — session `3397f03d` — 2 tool calls — files: hub-contrast.mjs, hub-sample.py
 
 - 2026-11-23 — index sync: bo 16 dong index tro toi 13 file khong ton tai (khong co trong lich su git).
+
+## 2026-11-23 — playlist search in the picker (branch kozu/playlist-search)
+
+- Owner: go ten playlist moi vao o "Tao" khong loc danh sach. Code co san o commit 0b65edd (nhanh kipan-playlist-search) nhung chua bao gio vao main. Cherry-pick (8b46a97) + them key i18n playlist.no_match (en, vi). Loc khong phan biet hoa/thuong va dau (d = d). Test Playwright 1440 va 390: loc, khong khop, xoa o thi hien lai, Tao van tao playlist.

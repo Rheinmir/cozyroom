@@ -189,6 +189,7 @@
     "add_to_playlist": "Add to playlist",
     "my_playlists": "Playlists",
     "no_playlists": "No playlists yet",
+    "no_match": "No playlist matches",
     "create_placeholder": "New playlist name...",
     "create_btn": "Create",
     "password_required": "Password Required",
