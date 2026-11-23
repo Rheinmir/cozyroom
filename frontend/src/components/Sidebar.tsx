@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchLastfmStatus } from '../api'
@@ -9,6 +9,7 @@ import { API } from '../endpoints'
 import { THEMES, getTheme, setTheme, type Theme } from '../theme'
 
 const THEME_LABEL: Record<Theme, string> = { dark: 'Tối', light: 'Sáng', warm: 'Ấm' }
+const THEME_NAME: Record<Theme, string> = { dark: 'Dark', light: 'Light', warm: 'Warm' }
 
 const COLLAPSED_W = '56px'
 const EXPANDED_W  = '220px'
@@ -27,8 +28,7 @@ export default function Sidebar() {
   const [theme, setThemeState] = useState<Theme>(getTheme)
   const passRef = useRef<HTMLInputElement>(null)
 
-  const toggleTheme = () => {
-    const next = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]
+  const chooseTheme = (next: Theme) => {
     setThemeState(next)
     setTheme(next)
   }
@@ -245,7 +245,9 @@ export default function Sidebar() {
       )}
 
       <div className="sidebar-toggles">
-        <div className="lang-toggle" onClick={toggleTheme} title={`Giao diện: ${THEME_LABEL[theme]} → ${THEME_LABEL[THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]]}`}>
+        {/* One radio group: a click picks THAT theme at once (no stepping through the others). The collapsed rail shows one icon that cycles. */}
+        <div className="lang-toggle" role="radiogroup" aria-label="Giao diện" onClick={collapsed ? () => chooseTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]) : undefined}
+          title={collapsed ? `Giao diện: ${THEME_LABEL[theme]} → ${THEME_LABEL[THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]]}` : undefined}>
           <span className="toggle-icon" aria-hidden="true">
             {theme === 'dark'
               ? <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -253,11 +255,13 @@ export default function Sidebar() {
               ? <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c1 3.5 5.5 5.5 5.5 10.2A5.5 5.5 0 0 1 12 19a5.5 5.5 0 0 1-5.5-5.8c0-2 1-3.4 2.2-4.6.3 1.4 1 2.2 1.8 2.6C10.2 8.2 10.5 5.5 12 3z"/></svg>
               : <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>}
           </span>
-          <span className={theme === 'dark' ? 'lang-opt lang-opt--active' : 'lang-opt'}>Dark</span>
-          <span className="lang-sep">·</span>
-          <span className={theme === 'light' ? 'lang-opt lang-opt--active' : 'lang-opt'}>Light</span>
-          <span className="lang-sep">·</span>
-          <span className={theme === 'warm' ? 'lang-opt lang-opt--active' : 'lang-opt'}>Warm</span>
+          {THEMES.map((th, i) => (
+            <Fragment key={th}>
+              {i > 0 && <span className="lang-sep" aria-hidden="true">·</span>}
+              <button type="button" role="radio" aria-checked={theme === th} className={theme === th ? 'lang-opt lang-opt--active' : 'lang-opt'}
+                onClick={e => { e.stopPropagation(); chooseTheme(th) }}>{THEME_NAME[th]}</button>
+            </Fragment>
+          ))}
         </div>
 
         <div className="lang-toggle" onClick={toggleLang} title={i18n.language === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}>
