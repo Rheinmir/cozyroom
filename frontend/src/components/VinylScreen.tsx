@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { imgSrc } from '../api'
 import type { Track } from '../types'
-import Equalizer from './Equalizer'
 import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icons'
 import { MEDIA } from '../endpoints'
 import { useLyricsLine } from './useLyricsLine'
 import { synthLevel } from './eqSynth'
 import { labelColors } from './vinylLabel'
+import { noteFor } from './noteBag'
 import FavoritePill from './FavoritePill'
 
 const coverOf = (t: Track, w: number) =>
@@ -100,10 +100,10 @@ export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
       <div className="vinyl-card">
 
         <div className="vinyl-stage">
-          <div className="vinyl-fire" aria-hidden="true"><Equalizer /></div>
           <div className={'vinyl-disc' + (isPlaying ? ' vinyl-disc--spin' : '')}>
             <div className="vinyl-label" style={{ '--label-a': labelA, '--label-b': labelB } as React.CSSProperties}>
               <span>{track.artist_name}</span>
+              <b aria-hidden="true">{noteFor(track.id)}</b>
             </div>
           </div>
           <FavoritePill key={track.id} trackId={track.id} variant="heart" className="vinyl-tag" />
