@@ -2,6 +2,7 @@
 
 | File | Type | Summary |
 |------|------|---------|
+| [sources/draft/231126-qc-uiux-themes.md](sources/draft/231126-qc-uiux-themes.md) | draft (done) | qc-uiux audit of Dark/Light/Warm: tap targets, contrast, chip glass token, direct theme toggle |
 | [sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md](sources/draft/240826-ai-agent-bulk-download-playlist-fix-be.md) | draft (done) | Fix AI agent bị kẹt tạo playlist bulk: download_youtube tải đồng bộ + trả track_id thật (bỏ _frontend_action), round-cap tool-calling 6→25 + hướng dẫn model batch tool-call — deploy production, verify pod mới OK |
 | [[K3s infra topology]] | concept | WSL2 này chính là node control-plane k3s; kubectl qua wsl bash; vị trí Prometheus/Grafana/Pushgateway thật |
 | [[Stream observability findings]] | concept | Backend QoS BestEffort (không limit), Grafana datasource từng trỏ sai localhost, Telegram alert chưa từng hoạt động |

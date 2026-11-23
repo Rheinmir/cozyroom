@@ -706,6 +706,8 @@ button, a, [role="button"], input, select, textarea {
 :root[data-theme="warm"] .main { background: var(--bg); }   /* the surface->bg gradient made the page top whiter than the sidebar */
 .sidebar-brand-home svg { color: var(--accent); }   /* hearth logo in amber (dark and light) */
 :root[data-theme="warm"] .sidebar-brand-home svg { color: #d9561f; }
+/* Light theme: the sitewide ring is white, invisible on a light canvas (WCAG 2.4.7). */
+:root[data-theme="light"] a:focus-visible, :root[data-theme="light"] button:focus-visible, :root[data-theme="light"] input:focus-visible, :root[data-theme="light"] textarea:focus-visible, :root[data-theme="light"] select:focus-visible, :root[data-theme="light"] [tabindex]:focus-visible, :root[data-theme="light"] [role="button"]:focus-visible { outline-color: rgba(0,0,0,.75) !important; }
 :root[data-theme="warm"] a:focus-visible, :root[data-theme="warm"] button:focus-visible, :root[data-theme="warm"] input:focus-visible,
 :root[data-theme="warm"] textarea:focus-visible, :root[data-theme="warm"] select:focus-visible, :root[data-theme="warm"] [tabindex]:focus-visible,
 :root[data-theme="warm"] [role="button"]:focus-visible { outline-color: #c24e1c !important; }
