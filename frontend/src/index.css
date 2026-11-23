@@ -577,20 +577,20 @@ button, a, [role="button"], input, select, textarea {
 
 /* ── Design tokens ─────────────────────────────────── */
 :root {
-  --bg:            #050505;
-  --surface:       #0e0e0e;
+  --bg:            #0b0a09;   /* warm near-black: "the room at night" */
+  --surface:       #161412;
   --surface-hover: rgba(255,255,255,.07);
-  --elevated:      #111111;
+  --elevated:      #1d1a17;
   --border:        rgba(255,255,255,.12);
   --green:         #ffffff;
   --green-hover:   #e0e0e0;
   --purple:        #ffffff;
   --text:          rgba(255,255,255,.92);
-  --text-muted:    rgba(255,255,255,.55);
-  --text-faint:    rgba(255,255,255,.32);
-  --sidebar-glass: rgba(5,5,5,.85);
-  --header-glass:  rgba(5,5,5,.7);
-  --player-glass:  rgba(5,5,5,.88);
+  --text-muted:    rgba(245,238,228,.58);   /* warm ivory */
+  --text-faint:    rgba(245,238,228,.34);
+  --sidebar-glass: rgba(16,14,12,.85);
+  --header-glass:  rgba(11,10,9,.7);
+  --player-glass:  rgba(11,10,9,.88);
   --sidebar-w:          220px;
   --sidebar-collapsed-w: 56px;
   --player-h:      72px;
@@ -609,6 +609,11 @@ button, a, [role="button"], input, select, textarea {
   --border-strong: rgba(255,255,255,.22);  /* hover / emphasized borders (.15–.3) */
   --glass-fill-strong: rgba(255,255,255,.2);  /* prominent/active fills (.16–.4) */
   --hairline-strong:   rgba(255,255,255,.3);  /* strong inset highlights (.16+) */
+
+  /* Hearth accent ("desk lamp" amber): the logo flame, ember spinner and the warm focus ring. --green/--purple stay as they are. */
+  --accent:        #ffb454;
+  --accent-hover:  #ffc477;
+  --accent-rgb:    255, 180, 84;
 
   /* ── Chart categorical palette ───────────────────────
      One cohesive, muted palette applied to EVERY chart (categorical series,
@@ -672,6 +677,34 @@ button, a, [role="button"], input, select, textarea {
      on both Void Black and the white light-theme card, so no override here.
      --chart-fail/warn/caution/ok/-grid/-axis inherit (semantic or var-based). */
 }
+
+/* ── Warm theme ─────────────────────────────────────────
+   The peach "vinyl" palette for the whole app: cream canvas, off-white cards, warm ink, orange accent.
+   Structural tokens only, like the light theme (accent tokens stay as they are for the same reason). */
+:root[data-theme="warm"] {
+  --bg:            #fdf3f2;
+  --surface:       #fffaf8;
+  --surface-hover: rgba(120,60,40,.06);
+  --elevated:      #fff4f0;
+  --border:        rgba(120,60,40,.16);
+  --text:          #1b1b19;
+  --text-muted:    #5f5a58;
+  --text-faint:    rgba(27,27,25,.4);
+  --sidebar-glass: rgba(253,243,242,.88);
+  --header-glass:  rgba(253,243,242,.72);
+  --player-glass:  rgba(255,250,248,.9);
+  --glass-fill:    rgba(120,60,40,.06);
+  --glass-fill-2:  rgba(120,60,40,.1);
+  --hairline:      rgba(120,60,40,.16);
+  --border-strong: rgba(120,60,40,.28);
+  --glass-fill-strong: rgba(120,60,40,.2);
+  --hairline-strong:   rgba(120,60,40,.28);
+}
+.sidebar-brand-home svg { color: var(--accent); }   /* hearth logo in amber (dark and light) */
+:root[data-theme="warm"] .sidebar-brand-home svg { color: #d9561f; }
+:root[data-theme="warm"] a:focus-visible, :root[data-theme="warm"] button:focus-visible, :root[data-theme="warm"] input:focus-visible,
+:root[data-theme="warm"] textarea:focus-visible, :root[data-theme="warm"] select:focus-visible, :root[data-theme="warm"] [tabindex]:focus-visible,
+:root[data-theme="warm"] [role="button"]:focus-visible { outline-color: #c24e1c !important; }
 
 /* Sitewide keyboard-focus ring. Many components below set `outline: none`
    on :focus without a replacement indicator, which is invisible on the
@@ -5662,3 +5695,40 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
   .vinyl-card > .vinyl-title { order: 1; } .vinyl-card > .vinyl-sub { order: 2; } .vinyl-card > .vinyl-playlist { order: 3; }
   .vinyl-card > .vinyl-bar { order: 4; } .vinyl-card > .vinyl-transport { order: 5; }
 }
+
+/* ── Campfire mark ─────────────────────────────────────
+   Inner flame is a pale ember tint so the two-tone fire reads at any size;
+   on hover the brand fire breathes (scale + skew from its base). */
+.cozy-mark-core { fill: #fff0cc; }
+.cozy-mark-flame { transform-box: fill-box; transform-origin: 50% 100%; }
+.sidebar-brand:hover .cozy-mark-flame { animation: cozy-flicker 1.1s ease-in-out infinite; }
+@keyframes cozy-flicker {
+  0%, 100% { transform: scale(1, 1) skewX(0deg); }
+  25%      { transform: scale(.96, 1.06) skewX(-3deg); }
+  50%      { transform: scale(1.03, .95) skewX(2deg); }
+  75%      { transform: scale(.98, 1.04) skewX(-1deg); }
+}
+
+/* ── Ember loading indicator (Spinner.tsx) ─────────────
+   Soft pills rising from their base like flame tongues: deep orange at the
+   root → amber → pale ember tip, with a warm glow. Rhythm is centre-out. */
+.ember-spinner { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.ember-row { display: flex; align-items: flex-end; flex-shrink: 0; }
+.ember-row i {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(to top, #ff7a2f 0%, var(--accent) 55%, #fff0cc 100%);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), .45), 0 0 2px rgba(255, 140, 60, .6);
+  transform-origin: 50% 100%;
+  animation: ember-rise 0.9s ease-in-out infinite;
+}
+.ember-label { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+@keyframes ember-rise {
+  0%, 100% { transform: scaleY(.42); opacity: .55; }
+  50%      { transform: scaleY(1);   opacity: 1; }
+}
+:root[data-theme="light"] .ember-row i {
+  background: linear-gradient(to top, #c24e0c 0%, var(--accent) 55%, #e6a24f 100%);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), .3);
+}
+@media (prefers-reduced-motion: reduce) { .ember-row i { animation: none; } }
