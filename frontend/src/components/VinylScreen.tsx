@@ -84,7 +84,7 @@ export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
     seek(Math.max(0, Math.min(duration, progress + step)))
   }
 
-  // coverColors is the app-wide default green until the cover is read: keep the original orange for it
+  // coverColors is the app-wide default green until the cover is read: use the faded orange for it
   const [labelA, labelB] = coverColors[0] === '#1db954' ? labelColors(undefined) : labelColors(coverColors[0])
 
   // Tap on empty space = close. Phone width: never (mistaps). 641-999px: only outside the phone card. 1000px+: the card is the full canvas.
@@ -103,8 +103,7 @@ export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
           <div className="vinyl-fire" aria-hidden="true"><Equalizer /></div>
           <div className={'vinyl-disc' + (isPlaying ? ' vinyl-disc--spin' : '')}>
             <div className="vinyl-label" style={{ '--label-a': labelA, '--label-b': labelB } as React.CSSProperties}>
-              <span>Vinyl</span>
-              <i />
+              <span>{track.artist_name}</span>
             </div>
           </div>
           <FavoritePill key={track.id} trackId={track.id} variant="heart" className="vinyl-tag" />

@@ -1,6 +1,6 @@
-// Pastel label colours for the vinyl disc, from the cover's main colour. Same feel as the old fixed orange
-// (#f59463 -> #e87a4a): saturated but light. Grey/unknown covers keep that orange.
-const ORANGE: [string, string] = ['#f59463', '#e87a4a']
+// Aged (faded print) label colours for the vinyl disc, from the cover's main colour: light, low saturation.
+// Grey/unknown covers get a faded orange.
+const ORANGE: [string, string] = ['hsl(20 42% 78%)', 'hsl(18 38% 70%)']
 
 export function labelColors(hex: string | undefined): [string, string] {
   const m = /^#([0-9a-f]{6})$/i.exec(hex ?? '')
@@ -9,5 +9,5 @@ export function labelColors(hex: string | undefined): [string, string] {
   const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min
   if (d < 0.08) return ORANGE   // grey cover: no usable hue
   const h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
-  return [`hsl(${Math.round(h * 60)} 80% 80%)`, `hsl(${Math.round(h * 60)} 72% 74%)`]
+  return [`hsl(${Math.round(h * 60)} 38% 78%)`, `hsl(${Math.round(h * 60)} 34% 70%)`]
 }

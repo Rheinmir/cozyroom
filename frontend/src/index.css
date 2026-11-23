@@ -5468,11 +5468,10 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   position: absolute; left: 50%; top: 50%; width: calc(106 * var(--p)); height: calc(106 * var(--p));
   transform: translate(-50%, -50%); border-radius: 50%;
   background: radial-gradient(circle at 50% 40%, var(--label-a, #f59463), var(--label-b, #e87a4a));
-  display: flex; align-items: center; justify-content: center; padding-bottom: calc(18 * var(--p));
+  display: flex; align-items: center; justify-content: center;
   color: #1b1b19; transition: background .6s;
 }
-.vinyl-label span { font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'Noto Serif', Georgia, serif; font-style: italic; font-weight: 600; font-size: calc(19 * var(--p)); letter-spacing: .02em; line-height: 1; }
-.vinyl-label i { position: absolute; left: 50%; top: 62%; width: calc(9 * var(--p)); height: calc(9 * var(--p)); transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 40% 35%, #f2e0d8, #a8a09c); }
+.vinyl-label span { max-width: calc(78 * var(--p)); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: center; font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'Noto Serif', Georgia, serif; font-style: italic; font-weight: 600; font-size: calc(12.5 * var(--p)); letter-spacing: .02em; line-height: 1.25; }
 
 .vinyl-tag { border: 0; cursor: pointer; }
 .vinyl-tag:focus-visible { outline: 2px solid #c24e1c; outline-offset: 2px; }

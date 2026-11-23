@@ -21,6 +21,7 @@ for (let h = 0; h < 360; h += 3) for (const css of labelColors(hex(h))) {
   worst = Math.min(worst, ratio)
 }
 if (worst < 4.5) throw new Error('contrast too low: ' + worst.toFixed(2))
-if (labelColors('#808080')[0] !== '#f59463') throw new Error('grey must keep the orange')
-if (labelColors(undefined)[1] !== '#e87a4a') throw new Error('missing colour must keep the orange')
+const orange = labelColors(undefined).join()
+if (labelColors('#808080').join() !== orange) throw new Error('grey must get the faded orange')
+for (const css of labelColors(undefined)) if ((hslLum(css) + 0.05) / (INK + 0.05) < 4.5) throw new Error('orange contrast too low')
 console.log('ok, worst contrast', worst.toFixed(2))
