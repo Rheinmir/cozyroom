@@ -1638,3 +1638,6 @@
 - Loi: o <=640px .npo-back-zone (35% trai, cao het) de len header nen khong bam duoc chevron dong va mep trai tab "Now Playing".
 - Sua: header position:relative z-index:3 + pointer-events:none (tab switcher pointer-events:auto). Ccham vao goc header khi chevron an van quay ve tab player.
 - Kiem: Playwright 390x844, 360x640, 640x900: truoc 5 FAIL, sau 0 FAIL; bo kiem tra overlay ?np= van xanh.
+- 2026-11-23 09:29 — session `3397f03d` — 2 tool calls — files: hub-contrast.mjs, hub-sample.py
+
+- 2026-11-23 — index sync: bo 16 dong index tro toi 13 file khong ton tai (khong co trong lich su git).
