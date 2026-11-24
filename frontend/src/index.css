@@ -2685,6 +2685,9 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
      multiple small ripples) to dodge the old flat-at-top/bottom-edges bug,
      but a single 56px-tall period read better once it didn't need to hide
      a color mismatch anymore. */
+  /* Body layer is 100% - 11px, not - 12px: it overlaps the wave tile by 1px.
+     Edge to edge, both antialiased edges summed to < 1 alpha at
+     fractional widths and drew a thin vertical seam (owner, iPhone). */
   .player-mini-progress-fill {
     position: relative;
     height: 100%;
@@ -2702,13 +2705,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     -webkit-mask-image:
       linear-gradient(white, white),
       url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiA1NiI+PHBhdGggZD0iTTYgMCBDIDE0IDEwIDE0IDE4IDYgMjggQyAtMiAzOCAtMiA0NiA2IDU2IEwgMCA1NiBMIDAgMCBaIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==");
-    -webkit-mask-size: calc(100% - 12px) 100%, 12px 56px;
+    -webkit-mask-size: calc(100% - 11px) 100%, 12px 56px;
     -webkit-mask-repeat: no-repeat, repeat-y;
     -webkit-mask-composite: source-over;
     mask-image:
       linear-gradient(white, white),
       url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiA1NiI+PHBhdGggZD0iTTYgMCBDIDE0IDEwIDE0IDE4IDYgMjggQyAtMiAzOCAtMiA0NiA2IDU2IEwgMCA1NiBMIDAgMCBaIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==");
-    mask-size: calc(100% - 12px) 100%, 12px 56px;
+    mask-size: calc(100% - 11px) 100%, 12px 56px;
     mask-repeat: no-repeat, repeat-y;
     mask-composite: add;
     animation: mask-wave-flow 2.4s linear infinite;
@@ -2739,13 +2742,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     -webkit-mask-image:
       linear-gradient(white, white),
       url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiA1NiI+PHBhdGggZD0iTTYgMCBDIDE0IDEwIDE0IDE4IDYgMjggQyAtMiAzOCAtMiA0NiA2IDU2IEwgMCA1NiBMIDAgMCBaIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==");
-    -webkit-mask-size: calc(100% - 12px) 100%, 12px 56px;
+    -webkit-mask-size: calc(100% - 11px) 100%, 12px 56px;
     -webkit-mask-repeat: no-repeat, repeat-y;
     -webkit-mask-composite: source-over;
     mask-image:
       linear-gradient(white, white),
       url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiA1NiI+PHBhdGggZD0iTTYgMCBDIDE0IDEwIDE0IDE4IDYgMjggQyAtMiAzOCAtMiA0NiA2IDU2IEwgMCA1NiBMIDAgMCBaIiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==");
-    mask-size: calc(100% - 12px) 100%, 12px 56px;
+    mask-size: calc(100% - 11px) 100%, 12px 56px;
     mask-repeat: no-repeat, repeat-y;
     mask-composite: add;
     animation: mask-wave-flow 2.4s linear infinite;
