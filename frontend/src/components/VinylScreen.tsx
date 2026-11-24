@@ -63,10 +63,8 @@ export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
   const line = useLyricsLine(track)
   if (!track) return null
 
-  const cycleShuffle = () => setShuffleMode(shuffleMode === 'off' ? 'smart' : shuffleMode === 'smart' ? 'shuffle' : 'off')
   const cycleRepeat = () => setRepeat(repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off')
   const repeatLabel = t('player.repeat', { defaultValue: 'Repeat' }) + ': ' + t(`player.repeat_${repeat}`, { defaultValue: repeat === 'off' ? 'off' : repeat === 'all' ? 'all' : 'one' })
-  const shuffleLabel = shuffleMode === 'off' ? t('player.smart_radio_hint') : shuffleMode === 'smart' ? t('player.smart_radio_active') : t('player.shuffle_active')
 
   const next3 = queue.slice(queueIdx + 1, queueIdx + 4)
   const pct = duration > 0 ? Math.min(1, progress / duration) : 0
@@ -164,8 +162,12 @@ export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
         <p className="vinyl-sub" aria-hidden="true" onClick={onLyrics}>{line.next}</p>
 
         <div className="vinyl-transport" role="group" aria-label={t('player.now_playing')}>
-          <button className={shuffleMode !== 'off' ? 'on' : ''} onClick={cycleShuffle} aria-label={shuffleLabel} title={shuffleLabel}>
-            {shuffleMode === 'smart' ? <IconSparkle size={22} /> : <IconShuffle size={22} />}
+          {/* Shuffle and Smart are two buttons: one cycling icon hid Smart (owner 25/11) */}
+          <button className={shuffleMode === 'shuffle' ? 'on' : ''} onClick={() => setShuffleMode(shuffleMode === 'shuffle' ? 'off' : 'shuffle')} aria-pressed={shuffleMode === 'shuffle'} aria-label={t('player.shuffle_active')} title={t('player.shuffle_active')}>
+            <IconShuffle size={22} />
+          </button>
+          <button className={shuffleMode === 'smart' ? 'on' : ''} onClick={() => setShuffleMode(shuffleMode === 'smart' ? 'off' : 'smart')} aria-pressed={shuffleMode === 'smart'} aria-label={shuffleMode === 'smart' ? t('player.smart_radio_active') : t('player.smart_radio_hint')} title={shuffleMode === 'smart' ? t('player.smart_radio_active') : t('player.smart_radio_hint')}>
+            <IconSparkle size={22} />
           </button>
           <button onClick={prev} aria-label={t('player.previous')} title={t('player.previous')}><IconPrev size={26} /></button>
           <button onClick={next} aria-label={t('player.next')} title={t('player.next')}><IconNext size={26} /></button>

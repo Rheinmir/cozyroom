@@ -5587,6 +5587,8 @@ button.toggle-icon { background: none; border: 0; padding: 0; cursor: pointer; }
 .vinyl-transport button { width: calc(52 * var(--p)); height: calc(48 * var(--p)); display: flex; align-items: center; justify-content: center; border-radius: calc(24 * var(--p)); color: #1b1b19; transition: background .15s, color .15s; }
 .vinyl-transport button:hover { background: rgba(27,27,25,.07); }
 .vinyl-transport button.on { color: #c24e1c; }
+/* lyric tools (search a lyric source) stay reachable from the vinyl version: dark dots on the light card */
+.npo--vinyl .npo-btn-dots { color: #1b1b19; opacity: .75; }
 .vinyl-transport svg { width: calc(24 * var(--p)); height: calc(24 * var(--p)); }
 
 /* While the vinyl tab is showing, hide the header/body/controls underneath. */
@@ -5682,7 +5684,6 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
 .npo-toggle button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 /* On the peach vinyl surface the header stays visible: toggle centred, close chevron top-right (also: tap outside on wide screens, Esc) */
 .npo--vinyl > .npo-header { justify-content: center; }
-.npo--vinyl .npo-btn-dots { display: none; }
 .npo--vinyl .npo-btn-back { display: flex; position: absolute; right: 16px; top: 16px; opacity: 1; pointer-events: auto; color: #1b1b19; }
 .npo--vinyl .npo-btn-back:focus-visible { outline: 2px solid #c24e1c; outline-offset: 2px; border-radius: 8px; }
 .npo--vinyl .npo-toggle { background: rgba(27,27,25,.08); }
