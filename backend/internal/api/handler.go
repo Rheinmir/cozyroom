@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -17,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"cozyroom/internal/domain"
 	"cozyroom/internal/metrics"
 	"cozyroom/internal/transcode"
 	"cozyroom/internal/usecase"
@@ -341,9 +344,7 @@ func (h *handlers) listAlbums(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=300")
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(albums)
+	writeJSONETag(w, r, albums)
 }
 
 func (h *handlers) getAlbum(w http.ResponseWriter, r *http.Request) {
@@ -369,15 +370,33 @@ func (h *handlers) listTracks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=300")
-	w.Header().Set("Content-Type", "application/json")
 	if tracks == nil {
 		// nil slice encodes as `null`; the album page does tracks.length on it
 		// and the whole app goes black for an album with no tracks left.
-		w.Write([]byte("[]\n"))
+		tracks = []domain.Track{}
+	}
+	writeJSONETag(w, r, tracks)
+}
+
+// writeJSONETag sends v with an ETag and answers 304 when the client already
+// has it. The full track list is ~660 KB and the origin uplink is ~165 KB/s,
+// so a revalidation that returns 304 saves about 4 s per page open.
+func writeJSONETag(w http.ResponseWriter, r *http.Request, v any) {
+	body, err := json.Marshal(v)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(tracks)
+	sum := sha256.Sum256(body)
+	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("ETag", etag)
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(append(body, '\n'))
 }
 
 // flushWriter flushes after every Write so a live ffmpeg transcode reaches

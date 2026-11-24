@@ -190,7 +190,7 @@ export default function PlaylistsPage() {
 
   // Fetch all tracks from server (for resolving local playlists)
   const { data: allTracks = [], isLoading: isLoadingAll } = useQuery({
-    queryKey: ['all-tracks'],
+    queryKey: ['tracks', 'all'],
     queryFn: () => fetchTracks(''),
     enabled: !!selectedPlaylistId && isLocalSelected,
   })

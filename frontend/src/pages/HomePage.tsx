@@ -41,7 +41,7 @@ export default function HomePage() {
   const { data: stats } = useQuery({ queryKey: ['stats'], queryFn: fetchStats, staleTime: 5 * 60_000 })
 
   // Real library art behind the media tiles; cached queries other pages already use.
-  const { data: albums } = useQuery({ queryKey: ['albums'], queryFn: () => fetchAlbums(), staleTime: 5 * 60_000 })
+  const { data: albums } = useQuery({ queryKey: ['albums', 'all'], queryFn: () => fetchAlbums(), staleTime: 5 * 60_000 })
   const { data: videos } = useQuery({ queryKey: ['videos'], queryFn: fetchVideos, staleTime: 5 * 60_000 })
   const { data: ebooks } = useQuery({ queryKey: ['ebooks'], queryFn: fetchEbooks, staleTime: 5 * 60_000 })
   const pick = <T,>(xs: T[] | undefined, f: (x: T) => string | undefined) => xs?.map(f).find(Boolean)

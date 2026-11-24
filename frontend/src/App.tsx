@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import { useIsFetching } from '@tanstack/react-query'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import AppRoutes from './AppRoutes'
 
@@ -21,10 +22,18 @@ function AutoUpdateServiceWorker() {
   return null
 }
 
+// Thin top bar while any query loads: the origin is slow (~165 KB/s), so a
+// page can wait seconds for its data and needs a visible "loading" signal.
+function LoadingBar() {
+  const busy = useIsFetching() > 0
+  return busy ? <div className="route-loading-bar" role="progressbar" aria-label="Đang tải dữ liệu" /> : null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AutoUpdateServiceWorker />
+      <LoadingBar />
       <AppRoutes />
     </BrowserRouter>
   )
