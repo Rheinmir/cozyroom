@@ -2918,8 +2918,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* hide the whole duration column (header AND cells): hiding only the last <th> left the
+     header rule half width and an empty --:-- column eating the title's room */
   .track-table .col-album,
-  .track-table thead th:last-child { display: none; }
+  .track-table thead th:last-child,
+  .track-table .col-dur { display: none; }
   .col-num { width: 32px; }
 
   /* YouTube rows: smaller thumb + tighter gap so the title has room and the
