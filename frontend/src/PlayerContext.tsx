@@ -146,6 +146,10 @@ function saveQualityOverride(trackId: string, q: Quality | 'lossless-clean') {
 }
 /** Resolve the quality to actually use for a track: its remembered override, else the session default. */
 function resolveQuality(trackId: string, fallback: Quality): Quality | 'lossless-clean' {
+  // iPhone/iPad: raw FLAC (often 30-60 MB) through the tunnel stutters, every Range chunk
+  // pays ~0.7 s latency. The 320 kbps MP3 is ~5x smaller and cached server side after one play.
+  // ponytail: iOS always gets 320; add a per-device lossless opt-in if someone asks for it.
+  if (isIOS()) return '320'
   return loadQualityOverrides()[trackId] ?? fallback
 }
 
