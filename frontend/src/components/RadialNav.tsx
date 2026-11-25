@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
 import { useBgSounds } from '../BgSoundsContext'
 import type { Playlist } from '../api'
+import { trackArt } from '../api'
 import { fetchPlaylists, addTrackToPlaylist, removeTrackFromPlaylist } from '../api'
 import { getLocalPlaylists, saveLocalPlaylists } from './FavoritePill'
 import CozyroomMark from './CozyroomMark'
@@ -818,7 +819,7 @@ export default function RadialNav() {
               key={track.id}
               src={track.album_id?.startsWith('yt:')
                 ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
-                : `${MEDIA}/covers/${track.album_id}?w=80`}
+                : trackArt(track, 80)}
               alt={track.title}
               draggable={false}
               onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}

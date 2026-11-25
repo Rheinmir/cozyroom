@@ -8,6 +8,13 @@ export const imgSrc = (url: string | undefined, w: number): string => {
   return RESIZABLE_RE.test(url) ? `${url}?w=${w}` : url
 }
 
+// A track's own embedded picture (compilation albums have one per track); the server falls back
+// to the album cover. YouTube tracks keep their thumbnail.
+export const trackArt = (t: { id: string; album_id?: string }, w: number): string =>
+  t.album_id?.startsWith('yt:')
+    ? `https://i.ytimg.com/vi/${t.album_id.slice(3)}/hqdefault.jpg`
+    : `${MEDIA}/track-covers/${t.id}?album=${t.album_id ?? ''}&w=${w}`
+
 const get = <T>(url: string): Promise<T> =>
   fetch(url).then(r => {
     if (!r.ok) throw new Error(`${r.status} ${url}`)

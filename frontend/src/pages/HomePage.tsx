@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
-import { fetchStats, fetchAlbums, fetchVideos, fetchEbooks, imgSrc } from '../api'
+import { fetchStats, fetchAlbums, fetchVideos, fetchEbooks, imgSrc, trackArt } from '../api'
 import { MEDIA } from '../endpoints'
 import { ROUTES } from '../routes'
 
@@ -58,7 +58,7 @@ export default function HomePage() {
   const pct = duration > 0 ? Math.min(100, (progress / duration) * 100) : 0
   const cover = track?.album_id?.startsWith('yt:')
     ? `https://i.ytimg.com/vi/${track.album_id.slice(3)}/mqdefault.jpg`
-    : track ? imgSrc(`${MEDIA}/covers/${track.album_id}`, 160) : ''
+    : track ? trackArt(track, 160) : ''
 
   return (
     <div className="page hub-page">

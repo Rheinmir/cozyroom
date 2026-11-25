@@ -159,6 +159,7 @@ func NewRouter(d RouterDeps) (http.Handler, *ComicsDownloader, *AIHandlers) {
 	mux.HandleFunc("GET /api/tracks", h.listTracks)
 	mux.HandleFunc("POST /api/tracks/{id}/play", h.recordPlay)
 	mux.HandleFunc("GET /api/covers/{id}", h.cover)
+	mux.HandleFunc("GET /api/track-covers/{id}", h.trackCover)
 	mux.HandleFunc("GET /api/artist-images/{id}", h.artistImage)
 	mux.HandleFunc("GET /api/smart-queue", h.smartQueue)
 	mux.HandleFunc("GET /api/search", h.search)

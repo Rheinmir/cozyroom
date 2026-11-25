@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
-import { imgSrc } from '../api'
+import { imgSrc, trackArt } from '../api'
 import type { Track } from '../types'
 import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icons'
 import { MEDIA } from '../endpoints'
@@ -14,7 +14,7 @@ import FavoritePill from './FavoritePill'
 const coverOf = (t: Track, w: number) =>
   t.album_id?.startsWith('yt:')
     ? `https://i.ytimg.com/vi/${t.album_id.slice(3)}/hqdefault.jpg`
-    : imgSrc(`${MEDIA}/covers/${t.album_id}`, w)
+    : trackArt(t, w)
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
