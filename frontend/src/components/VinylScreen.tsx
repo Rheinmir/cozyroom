@@ -7,6 +7,7 @@ import { IconPrev, IconNext, IconShuffle, IconRepeat, IconSparkle } from './Icon
 import { MEDIA } from '../endpoints'
 import { useLyricsLine } from './useLyricsLine'
 import { synthLevel } from './eqSynth'
+import { beatInit, beatStep } from './beatSpring'
 import { labelColors } from './vinylLabel'
 import { noteFor } from './noteBag'
 import FavoritePill from './FavoritePill'
@@ -40,21 +41,17 @@ export default function VinylScreen({ onClose, onLyrics, onQueue }: Props) {
     if (!isPlaying || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
     const data = analyser ? new Uint8Array(analyser.frequencyBinCount) : null
     const used = data ? Math.floor(data.length * 0.6) : 0
-    const cur = BARS.map(() => 1)
+    const st = beatInit(BARS.length)
     let raf = 0
     const draw = () => {
       raf = requestAnimationFrame(draw)
       if (analyser && data) analyser.getByteFrequencyData(data)
       const live = !!data && data.some(v => v > 0)
       const now = performance.now()
-      BARS.forEach((h, i) => {
-        let v: number
-        if (live) { const raw = data![Math.floor((i / BARS.length) * used)] / 255; v = raw > 0.001 ? Math.max(0, (20 * Math.log10(raw) + 60) / 60) : 0 }
-        else v = synthLevel(now, i)
-        const target = (3 + v * 33 * (0.45 + 0.55 * h / 36)) / h   // keep the bar shape as the envelope
-        cur[i] += (target - cur[i]) * 0.35
+      const levels = BARS.map((_, i) => live ? data![Math.floor((i / BARS.length) * used)] / 255 : synthLevel(now, i))
+      beatStep(st, levels, BARS).forEach((sc, i) => {   // spring beat: see beatSpring.ts
         const el = barEls.current[i]
-        if (el) el.style.transform = `scaleY(${cur[i].toFixed(3)})`
+        if (el) el.style.transform = `scaleY(${sc.toFixed(3)})`
       })
     }
     draw()
