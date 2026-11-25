@@ -17,6 +17,7 @@ var aliasPrefixes = []struct{ from, to string }{
 	{"/media/video/", "/stream-video/"},
 	{"/media/hls/", "/hls/"},
 	{"/media/covers/", "/api/covers/"},
+	{"/media/track-covers/", "/api/track-covers/"},
 	{"/media/artist-images/", "/api/artist-images/"},
 	{"/media/video-posters/", "/api/video-posters/"},
 	{"/media/ebook-covers/", "/api/ebook-covers/"},

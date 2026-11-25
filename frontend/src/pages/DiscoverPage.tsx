@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { fetchPlayStats, fetchAlbums, fetchArtists, fetchTracks, fetchSmartQueue, imgSrc } from '../api'
+import { fetchPlayStats, fetchAlbums, fetchArtists, fetchTracks, fetchSmartQueue, imgSrc, trackArt } from '../api'
 import type { Track } from '../types'
 import { usePlayer } from '../PlayerContext'
 import LibraryStatsBar from '../components/LibraryStatsBar'
@@ -33,7 +33,7 @@ function TrackList({ title, tracks, onPlay }: { title: string; tracks: Track[]; 
           <button key={t.id + i} className="discover-track" onClick={() => onPlay(t)}>
             <span className="discover-track-num">{i + 1}</span>
             <span className="discover-track-cover">
-              {t.album_id ? <img src={cover(t.album_id, 80)} alt="" loading="lazy" /> : <span className="no-cover">♪</span>}
+              {t.album_id ? <img src={trackArt(t, 80)} alt="" loading="lazy" /> : <span className="no-cover">♪</span>}
             </span>
             <span className="discover-track-meta">
               <span className="discover-track-title">{t.title}</span>
