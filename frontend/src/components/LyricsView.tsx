@@ -45,7 +45,7 @@ const SOURCE_LABEL: Record<string, string> = {
   musixmatch: 'Musixmatch',
 }
 
-export type LyricsViewHandle = { toggleTranslation: () => void; toggleTools: () => void; showTranslation: () => void }
+export type LyricsViewHandle = { toggleTranslation: () => void; toggleTools: () => void; openTools: () => void; showTranslation: () => void }
 
 const LyricsView = forwardRef<LyricsViewHandle, {
   trackId: string
@@ -217,6 +217,7 @@ function LyricsView({ trackId, onTranslateActiveChange, onReady, autoTranslate, 
   useImperativeHandle(ref, () => ({
     toggleTranslation: () => toggleFnRef.current(),
     toggleTools: () => setToolsOpen(o => !o),
+    openTools: () => setToolsOpen(true),
     showTranslation: () => showFnRef.current(),
   }), [])
   useEffect(() => { onTranslateActiveChange?.(showTr) }, [showTr])

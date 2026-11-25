@@ -351,7 +351,7 @@ export default function PlayerBar() {
               />
 
               {/* lyrics settings — 3 dots, no circle */}
-              <button className="npo-btn-dots" onClick={() => lyricsRef.current?.toggleTools()} title="Lyric settings">
+              <button className="npo-btn-dots" onClick={() => { if (mobileTab === 'lyrics') lyricsRef.current?.toggleTools(); else { setMobileTab('lyrics'); lyricsRef.current?.openTools() } }} title="Lyric settings">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                   <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                 </svg>
