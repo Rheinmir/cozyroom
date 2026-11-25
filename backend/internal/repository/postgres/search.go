@@ -11,6 +11,8 @@ type SearchRepo struct{ DB *sql.DB }
 
 func (r *SearchRepo) Search(ctx context.Context, query string) (*domain.SearchResult, error) {
 	lk := "%" + query + "%"
+	// Whole phrase in one field, OR every word somewhere in title + artist (+ album):
+	// «night dance imase» mixes a title word and an artist name and matched nothing before.
 	result := &domain.SearchResult{
 		Artists: []domain.Artist{},
 		Albums:  []domain.SearchAlbum{},
@@ -38,7 +40,8 @@ func (r *SearchRepo) Search(ctx context.Context, query string) (*domain.SearchRe
 		`SELECT al.id, al.artist_id, ar.name, al.title, COALESCE(al.year,0), COALESCE(al.cover_path,'')
 		 FROM albums al JOIN artists ar ON ar.id = al.artist_id
 		 WHERE f_unaccent(al.title) ILIKE f_unaccent($1) OR f_unaccent(ar.name) ILIKE f_unaccent($1)
-		 ORDER BY al.title LIMIT 20`, lk)
+		    OR f_unaccent(al.title || ' ' || ar.name) ILIKE ALL (SELECT '%' || f_unaccent(w) || '%' FROM regexp_split_to_table(trim($2), '\s+') w)
+		 ORDER BY al.title LIMIT 20`, lk, query)
 	if err == nil {
 		seen := map[string]bool{}
 		for rows.Next() {
@@ -57,7 +60,8 @@ func (r *SearchRepo) Search(ctx context.Context, query string) (*domain.SearchRe
 		`SELECT t.id, t.album_id, al.title, t.title, COALESCE(t.track_num,0), ar.name, COALESCE(t.duration_s,0), ar.id
 		 FROM tracks t JOIN albums al ON al.id = t.album_id JOIN artists ar ON ar.id = al.artist_id
 		 WHERE f_unaccent(t.title) ILIKE f_unaccent($1) OR f_unaccent(ar.name) ILIKE f_unaccent($1) OR f_unaccent(al.title) ILIKE f_unaccent($1)
-		 ORDER BY t.title LIMIT 30`, lk)
+		    OR f_unaccent(t.title || ' ' || ar.name || ' ' || al.title) ILIKE ALL (SELECT '%' || f_unaccent(w) || '%' FROM regexp_split_to_table(trim($2), '\s+') w)
+		 ORDER BY t.title LIMIT 30`, lk, query)
 	if err == nil {
 		seen := map[string]bool{}
 		for rows.Next() {
