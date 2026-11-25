@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ROUTES, isRoute } from '../routes'
@@ -23,14 +23,23 @@ export default function Header() {
 
   const placeholder = ctx.path === ROUTES.search ? t('search.placeholder') : `Tìm trong ${ctx.label}…`
 
+  const go = (q: string) => {
+    if (q.trim()) navigate(`${ctx.path}?q=${encodeURIComponent(q)}`, { replace: true })
+    else navigate(ctx.path, { replace: true })
+  }
+  // Debounced while typing. Blur no longer cancels it (closing the iPhone keyboard dropped the
+  // search); Enter runs it at once.
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      if (q.trim()) navigate(`${ctx.path}?q=${encodeURIComponent(q)}`, { replace: true })
-      else navigate(ctx.path, { replace: true })
-    }, 300)
+    timerRef.current = setTimeout(() => go(q), 300)
   }
+  // The box is uncontrolled: follow ?q= when the page changes (it kept the old text on other pages).
+  const urlQ = params.get('q') ?? ''
+  useEffect(() => {
+    const el = inputRef.current
+    if (el && document.activeElement !== el) el.value = urlQ
+  }, [urlQ, pathname])
 
   return (
     <header className="top-header">
@@ -45,7 +54,7 @@ export default function Header() {
           placeholder={placeholder}
           defaultValue={params.get('q') ?? ''}
           onChange={handleInput}
-          onBlur={() => clearTimeout(timerRef.current)}
+          onKeyDown={e => { if (e.key === 'Enter') { clearTimeout(timerRef.current); go(e.currentTarget.value) } }}
         />
       </div>
     </header>

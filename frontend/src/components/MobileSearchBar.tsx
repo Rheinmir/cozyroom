@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePlayer } from '../PlayerContext'
@@ -24,14 +24,20 @@ export default function MobileSearchBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
+  const go = (q: string) => { if (q.trim()) navigate(paths.search(q), { replace: true }); else navigate(-1) }
+  // Debounced while typing. Blur no longer cancels it (closing the iPhone keyboard dropped the
+  // search); the keyboard's Search/Enter key runs it at once.
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      if (q.trim()) navigate(paths.search(q), { replace: true })
-      else navigate(-1)
-    }, 300)
+    timerRef.current = setTimeout(() => go(q), 300)
   }
+  // The box is uncontrolled: follow ?q= when the page changes (it kept the old text on other pages).
+  const urlQ = params.get('q') ?? ''
+  useEffect(() => {
+    const el = inputRef.current
+    if (el && document.activeElement !== el) el.value = urlQ
+  }, [urlQ])
 
   return (
     <div className="mobile-search-island">
@@ -71,7 +77,7 @@ export default function MobileSearchBar() {
           placeholder={t('search.placeholder')}
           defaultValue={params.get('q') ?? ''}
           onChange={handleInput}
-          onBlur={() => clearTimeout(timerRef.current)}
+          onKeyDown={e => { if (e.key === 'Enter') { clearTimeout(timerRef.current); go(e.currentTarget.value) } }}
         />
       </div>
     </div>
