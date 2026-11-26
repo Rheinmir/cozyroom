@@ -5756,3 +5756,28 @@ body:has(.npo--open.npo--vinyl) .radial-bubble { display: none; }
   box-shadow: 0 0 8px rgba(var(--accent-rgb), .3);
 }
 @media (prefers-reduced-motion: reduce) { .ember-row i { animation: none; } }
+
+/* ── Tracks page: dashboard-style list (pattern music-dashboard) ── */
+.tl-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.tl-sub { color: var(--text-muted); font-size: 13px; margin-top: -6px; }
+.tl-actions { display: flex; gap: 8px; }
+.tl-play, .tl-ghost { border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text); }
+.tl-play { background: var(--green); border-color: var(--green); color: #fff; }
+.tl-play:disabled, .tl-ghost:disabled { opacity: .5; cursor: default; }
+.tl-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 10px; }
+.tl-search { width: 260px; max-width: 100%; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; }
+.tl-seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
+.tl-seg button { border: 0; background: none; color: var(--text-muted); padding: 5px 12px; border-radius: 999px; font-size: 12px; cursor: pointer; }
+.tl-seg button[aria-pressed="true"] { background: var(--elevated); color: var(--text); font-weight: 600; }
+.tl-table .col-fav { width: 56px; }
+.tl-t { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tl-cv { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--elevated); }
+.tl-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tl-table .track-row--active td { background: color-mix(in srgb, var(--green) 10%, transparent); }
+.tl-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.tl-eq i { width: 3px; height: 100%; background: var(--green); border-radius: 1px; transform-origin: bottom; animation: tl-eq .9s ease-in-out infinite; }
+.tl-eq i:nth-child(2) { animation-delay: -.3s; } .tl-eq i:nth-child(3) { animation-delay: -.6s; }
+.tl-eq--paused i { animation-play-state: paused; }
+@keyframes tl-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .tl-eq i { animation: none; transform: scaleY(.6); } }
+@media (max-width: 640px) { .tl-table .col-album { display: none; } .tl-search { width: 100%; } }
