@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/dhowden/tag"
 )
@@ -31,12 +34,26 @@ func (h *handlers) trackCover(w http.ResponseWriter, r *http.Request) {
 				return nil, nil
 			}
 			defer f.Close()
+			tmp := cached + ".tmp"
 			if m, _ := tag.ReadFrom(f); m != nil && m.Picture() != nil && len(m.Picture().Data) > 0 {
-				tmp := cached + ".tmp"
 				if os.WriteFile(tmp, m.Picture().Data, 0644) == nil {
 					os.Rename(tmp, cached)
 				}
+				return nil, nil
 			}
+			// dhowden/tag cannot parse some files that do carry a front cover (foobar2000
+			// shows it; seen on the HONG KONG compilation). ffmpeg reads the attached picture.
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, "ffmpeg", "-v", "error", "-y", "-i", fp,
+				"-map", "0:v:0", "-frames:v", "1", "-c:v", "mjpeg", "-f", "image2", tmp)
+			if cmd.Run() == nil {
+				if st, err := os.Stat(tmp); err == nil && st.Size() > 0 {
+					os.Rename(tmp, cached)
+					return nil, nil
+				}
+			}
+			os.Remove(tmp)
 			return nil, nil
 		})
 	}
